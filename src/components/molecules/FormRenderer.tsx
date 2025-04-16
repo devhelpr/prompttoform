@@ -48,6 +48,7 @@ interface VisibilityCondition {
 const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
   const [formSubmissions, setFormSubmissions] = useState<Record<string, FormValues>>({});
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
   if (!formJson || !formJson.app) {
     return <div className="p-4 text-red-500">Invalid form data</div>;
@@ -393,10 +394,27 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     );
   };
 
-  const getCurrentStep = (): { currentStep: number; totalSteps: number } => {
-    // Default to the first step if not already tracking step state
+  const handleNext = () => {
     const totalSteps = formJson.app.pages?.length || 0;
-    const currentStep = 1; // In a real app, you'd likely store this in state
+    if (currentStepIndex < totalSteps - 1) {
+      setCurrentStepIndex(currentStepIndex + 1);
+    } else {
+      // Handle final submission
+      const formId = 'multistep-form';
+      handleFormSubmit(formId);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(currentStepIndex - 1);
+    }
+  };
+
+  const getCurrentStep = (): { currentStep: number; totalSteps: number } => {
+    // Use the state value instead of hardcoding
+    const totalSteps = formJson.app.pages?.length || 0;
+    const currentStep = currentStepIndex + 1; // Convert to 1-indexed for display
     
     return { currentStep, totalSteps };
   };
@@ -426,12 +444,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             currentStep === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-50'
           }`}
           disabled={currentStep === 1}
+          onClick={handlePrevious}
         >
           Previous
         </button>
         <button
           type="button"
           className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          onClick={handleNext}
         >
           {currentStep === totalSteps ? 'Submit' : 'Next'}
         </button>
