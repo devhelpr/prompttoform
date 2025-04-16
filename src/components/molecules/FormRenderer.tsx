@@ -45,6 +45,12 @@ interface VisibilityCondition {
   value: string | number | boolean;
 }
 
+// Interface for branch definition
+interface Branch {
+  condition: VisibilityCondition;
+  nextPage: string;
+}
+
 const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
   const [formSubmissions, setFormSubmissions] = useState<Record<string, FormValues>>({});
@@ -120,6 +126,157 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       }
     });
   };
+
+  // Find the index of a page by its ID
+  const findPageIndexById = (pageId: string): number => {
+    if (!formJson.app.pages) return -1;
+    return formJson.app.pages.findIndex(page => page.id === pageId);
+  };
+
+  // Check current page for decision tree branching
+  const checkForBranching = (): number | null => {
+    const currentPage = formJson.app.pages[currentStepIndex];
+    if (!currentPage || !currentPage.components) return null;
+    
+    // Look for decision tree components or components with branches in the current page
+    for (const component of currentPage.components) {
+      // Check if this component has branches property
+      if (component.props && Array.isArray(component.props.branches)) {
+        const branches = component.props.branches as Branch[];
+        
+        // Evaluate each branch condition
+        for (const branch of branches) {
+          if (isComponentVisible([branch.condition])) {
+            // We found a matching condition, return the target page index
+            const targetPageIndex = findPageIndexById(branch.nextPage);
+            if (targetPageIndex !== -1) {
+              return targetPageIndex;
+            }
+          }
+        }
+      }
+    }
+    
+    return null; // No branching found or no conditions matched
+  };
+
+  const handleNext = () => {
+    const totalSteps = formJson.app.pages?.length || 0;
+    
+    // Check for branching logic first
+    const branchTargetIndex = checkForBranching();
+    
+    if (branchTargetIndex !== null) {
+      // If we found a branch condition that matches, navigate to that page
+      setCurrentStepIndex(branchTargetIndex);
+    } else if (currentStepIndex < totalSteps - 1) {
+      // No branching or no conditions matched, just go to the next page
+      setCurrentStepIndex(currentStepIndex + 1);
+    } else {
+      // Handle final submission
+      const formId = 'multistep-form';
+      handleFormSubmit(formId);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(currentStepIndex - 1);
+    }
+  };
+
+  const getCurrentStep = (): { currentStep: number; totalSteps: number } => {
+    // Use the state value instead of hardcoding
+    const totalSteps = formJson.app.pages?.length || 0;
+    const currentStep = currentStepIndex + 1; // Convert to 1-indexed for display
+    
+    return { currentStep, totalSteps };
+  };
+  
+  const renderStepIndicator = (currentStep: number, totalSteps: number): React.ReactElement => {
+    return (
+      <div className="mb-4 flex items-center justify-between">
+        <div className="text-sm font-medium text-gray-700">
+          Step {currentStep} of {totalSteps}
+        </div>
+        <div className="w-2/3 bg-gray-200 rounded-full h-2.5">
+          <div 
+            className="bg-indigo-600 h-2.5 rounded-full" 
+            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+          ></div>
+        </div>
+      </div>
+    );
+  };
+  
+  const renderMultiStepControls = (currentStep: number, totalSteps: number): React.ReactElement => {
+    return (
+      <div className="mt-6 flex justify-between">
+        <button
+          type="button"
+          className={`px-4 py-2 border border-indigo-300 text-indigo-700 rounded-md ${
+            currentStep === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-50'
+          }`}
+          disabled={currentStep === 1}
+          onClick={handlePrevious}
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          onClick={handleNext}
+        >
+          {currentStep === totalSteps ? 'Submit' : 'Next'}
+        </button>
+      </div>
+    );
+  };
+
+  const renderMultiStepForm = (): React.ReactElement => {
+    if (!formJson.app.pages || formJson.app.pages.length === 0) {
+      return <div className="p-4 text-red-500">No pages defined in form</div>;
+    }
+
+    const { currentStep, totalSteps } = getCurrentStep();
+    const currentPageIndex = currentStep - 1;
+    
+    if (currentPageIndex < 0 || currentPageIndex >= formJson.app.pages.length) {
+      return <div className="p-4 text-red-500">Invalid page index</div>;
+    }
+
+    const currentPage = formJson.app.pages[currentPageIndex];
+    
+    return (
+      <div className="w-full">
+        {renderStepIndicator(currentStep, totalSteps)}
+        {renderPage(currentPage)}
+        {renderMultiStepControls(currentStep, totalSteps)}
+      </div>
+    );
+  };
+
+  const renderSubmissionData = (): React.ReactElement => {
+    if (Object.keys(formSubmissions).length === 0) {
+      return <div className="text-gray-500 italic">No submissions yet</div>;
+    }
+
+    return (
+      <div>
+        {Object.entries(formSubmissions).map(([formId, data]) => (
+          <div key={formId} className="mb-4 p-4 border rounded">
+            <h3 className="font-bold mb-2">Form: {formId}</h3>
+            <pre className="bg-gray-100 p-2 rounded text-sm">
+              {JSON.stringify(data, null, 2)}
+            </pre>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Display form submissions if any exist
+  const hasSubmissions = Object.keys(formSubmissions).length > 0;
 
   const renderComponent = (component: ComponentProps): React.ReactElement | null => {
     if (!component) return null;
@@ -262,13 +419,18 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         );
       
       case 'button':
+        // Skip buttons with default "Button" label
+        if (typeof props.label !== 'string' || props.label === 'Button') {
+          return null;
+        }
+        
         return (
           <button
             type={props.buttonType as "button" | "submit" | "reset" | undefined || 'button'}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
             onClick={props.onClick ? () => handleButtonClick(props.onClick as string) : undefined}
           >
-            {typeof props.label === 'string' ? props.label : 'Button'}
+            {props.label}
           </button>
         );
       
@@ -288,26 +450,12 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             {label && <h3 className="text-lg font-medium mb-4">{label}</h3>}
             <form onSubmit={(e) => {
               e.preventDefault();
-              handleFormSubmit(id);
+              // Don't submit the form directly, the Next button will handle it
             }}>
               {Array.isArray(component.children) && component.children.map((child, index) => (
                 <div key={index}>{renderComponent(child)}</div>
               ))}
-              <div className="mt-4 flex space-x-3">
-                <button
-                  type="submit"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Submit
-                </button>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Reset
-                </button>
-              </div>
+              {/* Remove Submit and Reset buttons - Next button handles submission */}
             </form>
           </div>
         );
@@ -355,6 +503,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           <div className="mb-4" dangerouslySetInnerHTML={{ __html: typeof props.content === 'string' ? props.content : '' }} />
         );
       
+      // Don't render decision tree components visually
+      case 'decisionTree':
+        return null;
+      
       default:
         return <div className="text-sm text-gray-500">Unsupported component type: {type}</div>;
     }
@@ -393,116 +545,6 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       </div>
     );
   };
-
-  const handleNext = () => {
-    const totalSteps = formJson.app.pages?.length || 0;
-    if (currentStepIndex < totalSteps - 1) {
-      setCurrentStepIndex(currentStepIndex + 1);
-    } else {
-      // Handle final submission
-      const formId = 'multistep-form';
-      handleFormSubmit(formId);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex(currentStepIndex - 1);
-    }
-  };
-
-  const getCurrentStep = (): { currentStep: number; totalSteps: number } => {
-    // Use the state value instead of hardcoding
-    const totalSteps = formJson.app.pages?.length || 0;
-    const currentStep = currentStepIndex + 1; // Convert to 1-indexed for display
-    
-    return { currentStep, totalSteps };
-  };
-  
-  const renderStepIndicator = (currentStep: number, totalSteps: number): React.ReactElement => {
-    return (
-      <div className="mb-4 flex items-center justify-between">
-        <div className="text-sm font-medium text-gray-700">
-          Step {currentStep} of {totalSteps}
-        </div>
-        <div className="w-2/3 bg-gray-200 rounded-full h-2.5">
-          <div 
-            className="bg-indigo-600 h-2.5 rounded-full" 
-            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-          ></div>
-        </div>
-      </div>
-    );
-  };
-  
-  const renderMultiStepControls = (currentStep: number, totalSteps: number): React.ReactElement => {
-    return (
-      <div className="mt-6 flex justify-between">
-        <button
-          type="button"
-          className={`px-4 py-2 border border-indigo-300 text-indigo-700 rounded-md ${
-            currentStep === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-50'
-          }`}
-          disabled={currentStep === 1}
-          onClick={handlePrevious}
-        >
-          Previous
-        </button>
-        <button
-          type="button"
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-          onClick={handleNext}
-        >
-          {currentStep === totalSteps ? 'Submit' : 'Next'}
-        </button>
-      </div>
-    );
-  };
-
-  const renderMultiStepForm = (): React.ReactElement => {
-    if (!formJson.app.pages || formJson.app.pages.length === 0) {
-      return <div className="p-4 text-red-500">No pages defined in form</div>;
-    }
-
-    const { currentStep, totalSteps } = getCurrentStep();
-    const currentPageIndex = currentStep - 1;
-    
-    if (currentPageIndex < 0 || currentPageIndex >= formJson.app.pages.length) {
-      return <div className="p-4 text-red-500">Invalid page index</div>;
-    }
-
-    const currentPage = formJson.app.pages[currentPageIndex];
-    
-    return (
-      <div className="w-full">
-        {renderStepIndicator(currentStep, totalSteps)}
-        {renderPage(currentPage)}
-        {renderMultiStepControls(currentStep, totalSteps)}
-      </div>
-    );
-  };
-
-  const renderSubmissionData = (): React.ReactElement => {
-    if (Object.keys(formSubmissions).length === 0) {
-      return <div className="text-gray-500 italic">No submissions yet</div>;
-    }
-
-    return (
-      <div>
-        {Object.entries(formSubmissions).map(([formId, data]) => (
-          <div key={formId} className="mb-4 p-4 border rounded">
-            <h3 className="font-bold mb-2">Form: {formId}</h3>
-            <pre className="bg-gray-100 p-2 rounded text-sm">
-              {JSON.stringify(data, null, 2)}
-            </pre>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  // Display form submissions if any exist
-  const hasSubmissions = Object.keys(formSubmissions).length > 0;
 
   return (
     <div className="w-full">
