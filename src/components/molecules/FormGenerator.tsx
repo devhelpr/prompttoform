@@ -28,7 +28,7 @@ const schema = schemaJson as OCIFSchema;
 const ajv = new Ajv2020();
 const validate = ajv.compile(schema);
 
-export function OCIFGenerator() {
+export function FormGenerator() {
   const [prompt, setPrompt] = useState('');
   const [generatedOCIF, setGeneratedOCIF] = useState('');
   const [parsedOCIF, setParsedOCIF] = useState<OCIFJson | null>(null);
@@ -97,11 +97,7 @@ export function OCIFGenerator() {
       }
 
       // Store string version
-      setGeneratedOCIF(JSON.stringify(parsedResponse, null, 2));
-      
-      // Create SVG-compatible JSON
-      
-      // Generate SVG if in SVG view mode
+      setGeneratedOCIF(JSON.stringify(parsedResponse, null, 2));      
     } catch (err) {
       setError('An error occurred while generating the OCIF file.');
       console.error(err);
@@ -190,7 +186,7 @@ export function OCIFGenerator() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-zinc-900">Generate OCIF</h2>
+        <h2 className="text-xl font-semibold text-zinc-900">Generate Form/UI</h2>
         <button
           onClick={() => setIsSettingsOpen(true)}
           className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

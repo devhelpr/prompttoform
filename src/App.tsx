@@ -1,11 +1,11 @@
 import { Layout } from './components/templates/Layout'
-import { OCIFGenerator } from './components/molecules/OCIFGenerator'
+import { FormGenerator } from './components/molecules/FormGenerator'
 
 function App() {
   return (
     <Layout>
       <div className="space-y-8">
-        <OCIFGenerator />
+        <FormGenerator />
       </div>
     </Layout>
   )
