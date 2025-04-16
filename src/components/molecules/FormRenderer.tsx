@@ -45,11 +45,20 @@ interface VisibilityCondition {
   value: string | number | boolean;
 }
 
-// Interface for branch definition
+// Interface for branch definition with nextPage
 interface Branch {
   condition: VisibilityCondition;
   nextPage: string;
 }
+
+// Interface for branch definition with advice
+interface AdviceBranch {
+  conditions: VisibilityCondition[];
+  advice: string;
+}
+
+// Union type for different branch types
+type BranchTypes = Branch | AdviceBranch;
 
 const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
@@ -135,29 +144,56 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
   // Check current page for decision tree branching
   const checkForBranching = (): number | null => {
-    const currentPage = formJson.app.pages[currentStepIndex];
-    if (!currentPage || !currentPage.components) return null;
-    
-    // Look for decision tree components or components with branches in the current page
-    for (const component of currentPage.components) {
-      // Check if this component has branches property
-      if (component.props && Array.isArray(component.props.branches)) {
-        const branches = component.props.branches as Branch[];
-        
-        // Evaluate each branch condition
-        for (const branch of branches) {
-          if (isComponentVisible([branch.condition])) {
-            // We found a matching condition, return the target page index
-            const targetPageIndex = findPageIndexById(branch.nextPage);
-            if (targetPageIndex !== -1) {
-              return targetPageIndex;
+    try {
+      const currentPage = formJson.app.pages[currentStepIndex];
+      if (!currentPage || !currentPage.components) return null;
+      
+      // Look for decision tree components or components with branches in the current page
+      for (const component of currentPage.components) {
+        // Check if this component has branches property
+        if (component.props && Array.isArray(component.props.branches)) {
+          const branches = component.props.branches as BranchTypes[];
+          
+          // Evaluate each branch
+          for (const branch of branches) {
+            try {
+              // Handle traditional branch with single condition and nextPage
+              if ('condition' in branch && 'nextPage' in branch) {
+                if (isComponentVisible([branch.condition])) {
+                  // We found a matching condition, return the target page index
+                  const targetPageIndex = findPageIndexById(branch.nextPage);
+                  if (targetPageIndex !== -1) {
+                    return targetPageIndex;
+                  }
+                }
+              } 
+              // Handle new branch format with multiple conditions and advice
+              else if ('conditions' in branch && 'advice' in branch) {
+                // Check if all conditions are met
+                const allConditionsMet = branch.conditions.every((condition: VisibilityCondition) => {
+                  if (!condition || typeof condition.field !== 'string') return false;
+                  return isComponentVisible([condition]);
+                });
+                
+                if (allConditionsMet && typeof branch.advice === 'string') {
+                  // If all conditions are met, set the advice in form values
+                  handleInputChange('adviceText', branch.advice);
+                  // Don't navigate to another page, just stay on the current page
+                  return currentStepIndex;
+                }
+              }
+            } catch (branchError) {
+              console.error('Error evaluating branch:', branch, branchError);
             }
           }
         }
       }
+      
+      return null; // No branching found or no conditions matched
+    } catch (error) {
+      console.error('Error in checkForBranching:', error);
+      return null;
     }
-    
-    return null; // No branching found or no conditions matched
   };
 
   const handleNext = () => {
@@ -292,7 +328,19 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       case 'text':
         return (
           <div className="mb-4">
-            <p className="text-gray-700">{typeof label === 'string' ? label : (typeof props.content === 'string' ? props.content : 'Text')}</p>
+            {typeof label === 'string' && label !== '' && (
+              <h4 className="text-base font-medium text-gray-800 mb-1">{label}</h4>
+            )}
+            <p className="text-gray-700">
+              {/* If this is the advice text component and we have advice in formValues, use that */}
+              {id === 'adviceText' && typeof formValues.adviceText === 'string' 
+                ? formValues.adviceText 
+                : (typeof props.text === 'string' 
+                    ? props.text 
+                    : (typeof props.content === 'string' ? props.content : 'Text')
+                  )
+              }
+            </p>
           </div>
         );
       
@@ -436,11 +484,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       
       case 'section':
         return (
-          <div className="mb-6 p-4 border border-gray-200 rounded-md">
-            {label && <h3 className="text-lg font-medium mb-4">{label}</h3>}
-            {Array.isArray(component.children) && component.children.map((child, index) => (
-              <div key={index}>{renderComponent(child)}</div>
-            ))}
+          <div className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
+            {label && <h3 className="text-lg font-medium mb-4 text-indigo-700">{label}</h3>}
+            <div className="space-y-3">
+              {Array.isArray(component.children) && component.children.length > 0 ? (
+                component.children.map((child, index) => (
+                  <div key={index}>{renderComponent(child)}</div>
+                ))
+              ) : (
+                <div className="text-sm text-gray-500">No content in this section</div>
+              )}
+            </div>
           </div>
         );
       
@@ -503,8 +557,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           <div className="mb-4" dangerouslySetInnerHTML={{ __html: typeof props.content === 'string' ? props.content : '' }} />
         );
       
-      // Don't render decision tree components visually
+      // Don't render decision tree components visually, but add advice display if available
       case 'decisionTree':
+        // Check if we have advice generated from this decision tree
+        if (typeof formValues.adviceText === 'string' && formValues.adviceText.trim() !== '') {
+          return (
+            <div className="mb-6 p-4 border border-gray-100 rounded-md bg-indigo-50">
+              <h3 className="text-lg font-medium mb-2 text-indigo-700">Your Health Advice</h3>
+              <p className="text-gray-700">{formValues.adviceText}</p>
+            </div>
+          );
+        }
         return null;
       
       default:
