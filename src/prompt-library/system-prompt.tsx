@@ -1,12 +1,17 @@
 import { OCIFSchema } from "../types/schema";
+import { UISchema } from "../types/ui-schema";
 
-export function getSystemPrompt(schema: OCIFSchema) {
-  return `You are an expert in generating Open Component Interconnect Format (OCIF) JSON files.
-Your task is to generate a valid OCIF JSON file based on the user's prompt.
-The JSON must strictly follow this schema:
+export function getSystemPrompt(schema: OCIFSchema, uiSchema: UISchema) {
+  return `You are an expert in generating both Open Component Interconnect Format (OCIF) JSON files and UI/Form schemas.
+Your task is to generate a valid JSON file based on the user's prompt, following either the OCIF schema or the UI/Form schema as appropriate.
+
+If the user asks for a diagram, flow chart, or visual representation, use the OCIF schema:
 ${JSON.stringify(schema, null, 2)}
 
-Important rules:
+If the user asks for a form, UI, application interface, or input screen, use the UI/Form schema:
+${JSON.stringify(uiSchema, null, 2)}
+
+Important rules for OCIF schema:
 1. The output must be valid JSON that conforms to the schema.
 2. Include all required fields from the schema.
 3. Generate realistic and useful data based on the user's prompt.
@@ -101,5 +106,59 @@ Important rules:
           "members": ["node-id", "node-id", "node-id"],
         }]
       }
+
+Important rules for UI/Form schema:
+1. The output must be valid JSON that conforms to the UI schema.
+2. Include all required fields according to the schema.
+3. Generate practical and usable UI components based on the user's prompt.
+4. Create a logical structure with meaningful pages, components, and data sources.
+5. For each page:
+   - Assign a unique ID and descriptive title
+   - Specify a meaningful route (URL path)
+   - Choose an appropriate layout (grid, flex, vertical, or horizontal)
+   - Include relevant components based on the page's purpose
+
+6. For components:
+   - Each component must have a unique ID and appropriate type
+   - Use the correct component type based on functionality:
+     - text: For displaying static text
+     - input: For single-line text input
+     - textarea: For multi-line text input
+     - checkbox: For boolean selections
+     - radio: For single selection from multiple options
+     - select: For dropdown selections
+     - button: For user actions
+     - table: For displaying tabular data
+     - form: For grouping form elements
+     - section: For grouping related components
+     - decisionTree: For conditional flows
+
+7. For form validation:
+   - Include appropriate validation rules for input fields
+   - Specify required fields, minimum/maximum lengths, and regex patterns as needed
+   - Add custom validation messages when appropriate
+
+8. For data binding:
+   - Connect components to data sources when appropriate
+   - Specify which field the component is bound to
+   - Include onChange handlers for data updates
+
+9. For event handling:
+   - Add event handlers for user interactions (onClick, onSubmit, onChange)
+   - Specify appropriate actions (navigate, submit, apiRequest, showMessage)
+   - Include necessary parameters for each action
+
+10. For data sources:
+    - Define relevant data sources with unique IDs
+    - Specify the appropriate type (REST or GraphQL)
+    - Include the correct URL and method
+    - Add query parameters and response mapping as needed
+
+11. For visibility conditions:
+    - Add conditions to show/hide components based on user input or state
+    - Use appropriate operators for comparisons
+    - Reference existing fields and components
+
+12. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
 `;
 }

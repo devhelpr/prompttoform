@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OCIF Schema",
+  "description": "Schema for the Open Component Interconnect Format",
+  "type": "object",
+  "properties": {
+    "ocif": {
+      "type": "string",
+      "description": "The OCIF version identifier"
+    },
+    "nodes": {
+      "type": "array",
+      "description": "Array of nodes in the graph",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "relations": {
+      "type": "array",
+      "description": "Array of relations between nodes",
+      "items": {
+        "$ref": "#/$defs/relation"
+      }
+    },
+    "resources": {
+      "type": "array",
+      "description": "Array of resources associated with nodes",
+      "items": {
+        "$ref": "#/$defs/resource"
+      }
+    },
+    "schemas": {
+      "type": "array",
+      "description": "Array of schemas used in the document",
+      "items": {
+        "$ref": "#/$defs/schema"
+      }
+    }
+  },
+  "required": ["ocif", "nodes"],
+  "$defs": {
+    "node": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "position": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "size": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "resource": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": ["id"]
+    },
+    "relation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": ["id", "data"]
+    },
+    "resource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "representations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "mime-type": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string"
+              }
+            },
+            "required": ["mime-type", "content"]
+          }
+        }
+      },
+      "required": ["id", "representations"]
+    },
+    "schema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "schema": {
+          "type": "object"
+        }
+      },
+      "required": ["id", "schema"]
+    }
+  }
+}

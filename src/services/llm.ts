@@ -1,4 +1,5 @@
 import { OCIFSchema } from '../types/schema';
+import { UISchema } from '../types/ui-schema';
 import { z , ZodTypeAny} from 'zod';
 
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
@@ -23,32 +24,53 @@ export async function generateStructuredOutput<T extends ZodTypeAny>({
     apiKey: apiKey,
     temperature,
   });
-  removeAdditionalProperties(schema);
+  const schemaObj = schema as unknown as Record<string, unknown>;
+  removeAdditionalProperties(schemaObj);
   const structuredLlm = model.withStructuredOutput(schema,{
     strict:false
   });
   return await structuredLlm.invoke(request);
 }
 
-function removeAdditionalProperties(schema: any): any {
+function removeAdditionalProperties(schema: Record<string, unknown>): Record<string, unknown> {
   if (schema && typeof schema === 'object') {
     delete schema.additionalProperties; // Remove from current level
     Object.values(schema).forEach(value => {
-      if (typeof value === 'object') {
-        removeAdditionalProperties(value); // Apply recursively to nested objects
+      if (typeof value === 'object' && value !== null) {
+        removeAdditionalProperties(value as Record<string, unknown>); // Apply recursively to nested objects
       }
     });
   }
+  return schema;
 }
 
 export async function generateOCIFFromPrompt(
   prompt: string,
-  schema: OCIFSchema
+  schema: OCIFSchema,
+  uiSchema: UISchema
 ): Promise<string> {
   const apiConfig = getCurrentAPIConfig();
   
   // Create a system message that instructs the model to generate valid OCIF JSON
-  const systemMessage = getSystemPrompt(schema);
+  const systemMessage = getSystemPrompt(schema, uiSchema);
+
+  try {
+    return await callLLMAPI(prompt, systemMessage, apiConfig);
+  } catch (error) {
+    console.error('Error calling API:', error);
+    throw error;
+  }
+}
+
+export async function generateUIFromPrompt(
+  prompt: string,
+  schema: OCIFSchema,
+  uiSchema: UISchema
+): Promise<string> {
+  const apiConfig = getCurrentAPIConfig();
+  
+  // Create a system message that instructs the model to generate valid UI JSON
+  const systemMessage = getSystemPrompt(schema, uiSchema);
 
   try {
     return await callLLMAPI(prompt, systemMessage, apiConfig);
