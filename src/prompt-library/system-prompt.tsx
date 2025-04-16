@@ -31,7 +31,7 @@ Important rules for UI/Form schema:
      - table: For displaying tabular data
      - form: For grouping form elements
      - section: For grouping related components
-     - decisionTree: For conditional flows
+     - decisionTree: For conditional flows based on user answers
 
 7. For form validation:
    - Include appropriate validation rules for input fields
@@ -56,9 +56,46 @@ Important rules for UI/Form schema:
 
 11. For visibility conditions:
     - Add conditions to show/hide components based on user input or state
-    - Use appropriate operators for comparisons
+    - Use appropriate operators for comparisons (==, !=, >, <, >=, <=)
     - Reference existing fields and components
 
-12. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
+12. For decision trees and branching logic:
+    - Use decisionTree components to handle conditional flows based on user answers
+    - There are two supported branch formats:
+      a. Navigation branching - used to navigate to different pages based on conditions:
+         "branches": [
+           {
+             "condition": {
+               "field": "questionFieldId", 
+               "operator": "==", 
+               "value": "yes"
+             },
+             "nextPage": "targetPageId"
+           }
+         ]
+      
+      b. Advice generation - used to display different advice based on multiple conditions:
+         "branches": [
+           {
+             "conditions": [
+               {
+                 "field": "questionFieldId1",
+                 "operator": "==",
+                 "value": "yes"
+               },
+               {
+                 "field": "questionFieldId2",
+                 "operator": "==",
+                 "value": "no"
+               }
+             ],
+             "advice": "This is the advice text to display when all conditions are met."
+           }
+         ]
+    - Ensure that field IDs in conditions match existing input field IDs
+    - For navigation branches, ensure that nextPage values match existing page IDs
+    - For multi-step wizards, branch navigation provides intuitive user flow
+
+13. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
 `;
 }
