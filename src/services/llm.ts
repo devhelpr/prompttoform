@@ -1,4 +1,3 @@
-import { OCIFSchema } from '../types/schema';
 import { UISchema } from '../types/ui-schema';
 import { z , ZodTypeAny} from 'zod';
 
@@ -44,33 +43,14 @@ function removeAdditionalProperties(schema: Record<string, unknown>): Record<str
   return schema;
 }
 
-export async function generateOCIFFromPrompt(
-  prompt: string,
-  schema: OCIFSchema,
-  uiSchema: UISchema
-): Promise<string> {
-  const apiConfig = getCurrentAPIConfig();
-  
-  // Create a system message that instructs the model to generate valid OCIF JSON
-  const systemMessage = getSystemPrompt(schema, uiSchema);
-
-  try {
-    return await callLLMAPI(prompt, systemMessage, apiConfig);
-  } catch (error) {
-    console.error('Error calling API:', error);
-    throw error;
-  }
-}
-
 export async function generateUIFromPrompt(
   prompt: string,
-  schema: OCIFSchema,
   uiSchema: UISchema
 ): Promise<string> {
   const apiConfig = getCurrentAPIConfig();
   
   // Create a system message that instructs the model to generate valid UI JSON
-  const systemMessage = getSystemPrompt(schema, uiSchema);
+  const systemMessage = getSystemPrompt(uiSchema);
 
   try {
     return await callLLMAPI(prompt, systemMessage, apiConfig);

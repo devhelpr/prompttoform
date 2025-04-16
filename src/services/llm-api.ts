@@ -131,51 +131,6 @@ export function removeMarkdownCodeBlocks(content: string): string {
   return content;
 }
 
-/**
- * Attempts to determine whether the prompt is requesting UI/form or diagram generation
- * @param prompt The user's prompt
- * @returns 'ui' if the prompt appears to be requesting UI/form, 'ocif' if diagram 
- */
-export function detectPromptType(prompt: string): 'ui' | 'ocif' {
-  // Convert to lowercase for case-insensitive matching
-  const lowerPrompt = prompt.toLowerCase();
-  
-  // Keywords that suggest UI/form generation
-  const uiKeywords = [
-    'form', 'ui', 'interface', 'input', 'screen', 'page', 'website', 
-    'web app', 'application', 'layout', 'dashboard', 'login', 'signup',
-    'registration', 'user interface', 'button', 'field', 'validation'
-  ];
-  
-  // Keywords that suggest diagram generation
-  const diagramKeywords = [
-    'diagram', 'flow', 'chart', 'graph', 'network', 'relationship', 
-    'connection', 'node', 'edge', 'visual', 'map', 'hierarchy', 
-    'structure', 'architecture', 'flowchart', 'mindmap'
-  ];
-  
-  // Count matches for each category
-  let uiScore = 0;
-  let diagramScore = 0;
-  
-  // Check for UI keywords
-  for (const keyword of uiKeywords) {
-    if (lowerPrompt.includes(keyword)) {
-      uiScore++;
-    }
-  }
-  
-  // Check for diagram keywords
-  for (const keyword of diagramKeywords) {
-    if (lowerPrompt.includes(keyword)) {
-      diagramScore++;
-    }
-  }
-  
-  // Return the category with higher score, defaulting to UI if tied or no matches
-  return diagramScore > uiScore ? 'ocif' : 'ui';
-}
-
 export async function callLLMAPI(
   prompt: string,
   systemMessage: string,
@@ -189,7 +144,6 @@ export async function callLLMAPI(
   if (apiConfig.name === 'Gemini') {
     try {
       // For Gemini, we'll use a direct API call rather than the structured output
-      // Gemini API has a different endpoint structure than other providers
       const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
       const response = await fetch(`${url}?key=${apiConfig.apiKey}`, {
         method: 'POST',
@@ -227,11 +181,8 @@ export async function callLLMAPI(
         // Check if the content is wrapped in markdown code blocks and remove them
         const cleanedContent = removeMarkdownCodeBlocks(content);
         
-        const parsedJson = JSON.parse(cleanedContent);
-        if (!parsedJson.ocif || parsedJson.ocif !== "https://canvasprotocol.org/ocif/0.4") {
-          parsedJson.ocif = "https://canvasprotocol.org/ocif/0.4";
-          return JSON.stringify(parsedJson, null, 2);
-        }
+        // Try to parse as JSON to validate
+        JSON.parse(cleanedContent);
         return cleanedContent;
       } catch (parseError: unknown) {
         // If we're running evaluation with JSON output format, this is an error

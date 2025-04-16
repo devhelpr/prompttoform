@@ -1,6 +1,6 @@
 # OCIF Generator
 
-A simple tool to generate OCIF files using various LLM APIs that are compatible with the OpenAI API specification.
+A simple tool to generate Form/ui JSON files using various LLM APIs that are compatible with the OpenAI API specification.
 
 ## Supported LLM APIs
 
@@ -35,33 +35,18 @@ npm run dev
 
 1. Open the application in your browser
 2. Click the "Settings" button to configure your preferred LLM API and API key
-3. Enter your prompt describing the OCIF diagram you want to generate
+3. Enter your prompt describing the Form/ui you want to generate
 4. Click "Generate OCIF" to create the diagram
-5. Use the "Copy to Clipboard" or "Download" buttons to save your generated OCIF file
+5. Use the "Copy to Clipboard" or "Download" buttons to save your generated JSON file
 
 ## Example Prompt
 
 Here's an example prompt to test the generator:
 
 ```
-Create a diagram with 6 nodes (a,b,c,d,e,f)... where node a,b,c are connected from a to b to c. node d and e are connected to node f. node f is connected to node a.
-node d should be an oval.
-node a should be blue and node f should be red.
-node b should be yellow and node c should be green.
-node e should be orange.
-
-make it beautiful and have the nodes have darker strokes then the fill color
-
-put nodes d,e,f in a group
+imagine a simple health-check wizard asking questions and branching based on user answers.
 ```
 
-```
-create a flow that illustrates an llm prompt evaluating pipeline
-```
-
-```
-create a complex flow that illustrates an llm prompt evaluating pipeline with a feedback loop that runs max 5 times
-```
 
 ## Features
 
@@ -71,10 +56,4 @@ create a complex flow that illustrates an llm prompt evaluating pipeline with a 
 - Copy to clipboard and download functionality
 - Settings panel for API configuration
 - Beautiful and modern UI with Tailwind CSS
-
-## Learn More
-
-- [OCIF Specification](https://canvasprotocol.org/spec)
-- [Canvas Protocol Homepage](https://canvasprotocol.org)
-- [Example OCIF File](/hello-world.ocif.json)
 
