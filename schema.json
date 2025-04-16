@@ -1,0 +1,213 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/ui-schema",
+  "title": "UI Schema",
+  "description": "Schema for describing complex UIs, including websites, forms, decision trees, and CRUD operations.",
+  "type": "object",
+  "properties": {
+    "app": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "pages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/page"
+          }
+        },
+        "dataSources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dataSource"
+          }
+        }
+      },
+      "required": ["title", "pages"]
+    }
+  },
+  "$defs": {
+    "page": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "route": {
+          "type": "string"
+        },
+        "layout": {
+          "type": "string",
+          "enum": ["grid", "flex", "vertical", "horizontal"]
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        }
+      },
+      "required": ["id", "title", "route", "components"]
+    },
+    "component": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "text",
+            "input",
+            "textarea",
+            "checkbox",
+            "radio",
+            "select",
+            "button",
+            "table",
+            "form",
+            "section",
+            "decisionTree"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "props": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        },
+        "bindings": {
+          "type": "object",
+          "properties": {
+            "dataSource": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
+            "onChange": {
+              "type": "string"
+            }
+          }
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "required": {
+              "type": "boolean"
+            },
+            "minLength": {
+              "type": "integer"
+            },
+            "maxLength": {
+              "type": "integer"
+            },
+            "pattern": {
+              "type": "string"
+            }
+          }
+        },
+        "visibilityConditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string"
+              },
+              "operator": {
+                "type": "string",
+                "enum": ["==", "!=", ">", "<", ">=", "<="]
+              },
+              "value": {}
+            },
+            "required": ["field", "operator", "value"]
+          }
+        },
+        "eventHandlers": {
+          "$ref": "#/$defs/eventHandlers"
+        }
+      },
+      "required": ["type", "id"]
+    },
+    "eventHandlers": {
+      "type": "object",
+      "properties": {
+        "onClick": {
+          "$ref": "#/$defs/action"
+        },
+        "onSubmit": {
+          "$ref": "#/$defs/action"
+        },
+        "onChange": {
+          "$ref": "#/$defs/action"
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["navigate", "submit", "apiRequest", "showMessage"]
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "dataSource": {
+          "type": "string"
+        },
+        "targetPage": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": ["type"]
+    },
+    "dataSource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["rest", "graphql"]
+        },
+        "url": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["GET", "POST", "PUT", "DELETE"]
+        },
+        "query": {
+          "type": "string"
+        },
+        "params": {
+          "type": "object"
+        },
+        "responseMapping": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": ["id", "type", "url"]
+    }
+  }
+}

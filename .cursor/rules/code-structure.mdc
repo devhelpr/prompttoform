@@ -1,0 +1,18 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# We use clean-code principles and atomic design
+
+- Put business logic in classes
+- Split components according to atomic design
+- Keep components small and use react hooks
+- Put functions and classes in separate files in a proper folder structure
+- use kebab-case for filenames
