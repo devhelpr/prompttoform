@@ -10,12 +10,7 @@ export function Layout({ children }: LayoutProps) {
       <div className="container mx-auto max-w-4xl">
         <div className="bg-white rounded-3xl shadow-xl shadow-zinc-200/50 backdrop-blur-sm animate-fade-in">
           <div className="px-6 py-8 sm:px-8 sm:py-10">
-            <div className="text-center mb-12">
-              <img 
-                src="/ocwg-ocif-logo.png" 
-                alt="OCWG OCIF Logo" 
-                className="h-16 mx-auto mb-4 rounded-md shadow-sm"
-              />
+            <div className="text-center mb-12">             
               <h1 className="text-4xl sm:text-5xl font-bold text-black mb-4">
                 Form/UI Generator
               </h1>
