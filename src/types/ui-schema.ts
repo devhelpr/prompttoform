@@ -41,6 +41,7 @@ export interface UISchema {
             $ref: string;
           };
         };
+        isEndPage: { type: string };
       };
       required: string[];
     };

@@ -23,6 +23,7 @@ interface PageProps {
   route: string;
   layout?: string;
   components: ComponentProps[];
+  isEndPage?: boolean;
 }
 
 interface FormRendererProps {
@@ -241,6 +242,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
   const handleNext = () => {
     const totalSteps = formJson.app.pages?.length || 0;
+    const currentPage = formJson.app.pages[currentStepIndex];
+    
+    // Check if current page is marked as an end page
+    if (currentPage && currentPage.isEndPage === true) {
+      // Handle final submission on end pages
+      const formId = 'multistep-form';
+      handleFormSubmit(formId);
+      return;
+    }
     
     // Check for branching logic first
     const branchTargetIndex = checkForBranching();
@@ -289,6 +299,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   };
   
   const renderMultiStepControls = (currentStep: number, totalSteps: number): React.ReactElement => {
+    const currentPage = formJson.app.pages[currentStep - 1];
+    const isEndPage = currentPage && currentPage.isEndPage === true;
+    
     return (
       <div className="mt-6 flex justify-between">
         <button
@@ -306,7 +319,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           onClick={handleNext}
         >
-          {currentStep === totalSteps ? 'Submit' : 'Next'}
+          {isEndPage || currentStep === totalSteps ? 'Submit' : 'Next'}
         </button>
       </div>
     );

@@ -17,6 +17,7 @@ Important rules for UI/Form schema:
    - Specify a meaningful route (URL path)
    - Choose an appropriate layout (grid, flex, vertical, or horizontal)
    - Include relevant components based on the page's purpose
+   - Set isEndPage to true for final pages where form submission should occur
 
 6. For components:
    - Each component must have a unique ID and appropriate type
