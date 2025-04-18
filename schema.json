@@ -49,6 +49,9 @@
           "items": {
             "$ref": "#/$defs/component"
           }
+        },
+        "isEndPage": {
+          "type": "boolean"
         }
       },
       "required": ["id", "title", "route", "components"]
