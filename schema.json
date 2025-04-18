@@ -68,8 +68,7 @@
             "button",
             "table",
             "form",
-            "section",
-            "decisionTree"
+            "section"
           ]
         },
         "id": {
@@ -175,6 +174,12 @@
         },
         "message": {
           "type": "string"
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/branch"
+          }
         }
       },
       "required": ["type"]
@@ -208,6 +213,31 @@
         }
       },
       "required": ["id", "type", "url"]
+    },
+    "branch": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": "object",
+          "properties": {
+            "field": {
+              "type": "string"
+            },
+            "operator": {
+              "type": "string",
+              "enum": ["==", "!=", ">", "<", ">=", "<="]
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": ["field", "operator", "value"]
+        },
+        "nextPage": {
+          "type": "string"
+        }
+      },
+      "required": ["condition", "nextPage"]
     }
   }
 }
