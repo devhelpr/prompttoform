@@ -40,6 +40,11 @@ interface FormValues {
   [key: string]: unknown;
 }
 
+// Add interface for validation errors
+interface ValidationErrors {
+  [key: string]: string;
+}
+
 type Option = {
   label?: string;
   value?: string;
@@ -80,6 +85,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
   const [formSubmissions, setFormSubmissions] = useState<Record<string, FormValues>>({});
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   if (!formJson || !formJson.app) {
     return <div className="p-4 text-red-500">Invalid form data</div>;
@@ -93,6 +99,12 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   };
 
   const handleFormSubmit = (formId: string) => {
+    // Validate the current page before submission
+    if (!validateCurrentPage()) {
+      // If validation fails, stop here and don't submit
+      return;
+    }
+    
     console.log(`Form ${formId} submitted:`, formValues);
     
     // Store the submission
@@ -100,6 +112,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       ...prev,
       [formId]: { ...formValues }
     }));
+
+    // Clear validation errors after successful submission
+    setValidationErrors({});
 
     // Show an alert
     alert(`Form "${formId}" submitted successfully!`);
@@ -240,9 +255,158 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     }
   };
 
+  // Validate current page's fields
+  const validateCurrentPage = (): boolean => {
+    const currentPage = formJson.app.pages[currentStepIndex];
+    if (!currentPage || !currentPage.components) return true;
+    
+    const newValidationErrors: ValidationErrors = {};
+    let isValid = true;
+    
+    // Recursively check all components and their children
+    const validateComponent = (component: ComponentProps) => {
+      const { type, id, props = {} } = component;
+      
+      // Skip validation if component isn't visible based on conditions
+      if (!isComponentVisible(component.visibilityConditions)) {
+        return;
+      }
+      
+      // Only validate input components
+      if (['input', 'textarea', 'select', 'radio', 'checkbox'].includes(type)) {
+        const value = formValues[id];
+        
+        // Required field validation
+        if (props.required) {
+          if (value === undefined || value === null || value === '') {
+            newValidationErrors[id] = `This field is required`;
+            isValid = false;
+            // Don't perform further validation if the field is empty and required
+            return;
+          }
+        }
+        
+        // If value is empty and not required, skip other validations
+        if (value === undefined || value === null || value === '') {
+          return;
+        }
+        
+        // Input-specific validations
+        if (type === 'input' || type === 'textarea') {
+          const stringValue = String(value);
+          
+          // Email validation
+          if (type === 'input' && props.inputType === 'email') {
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(stringValue)) {
+              newValidationErrors[id] = `Please enter a valid email address`;
+              isValid = false;
+              return;
+            }
+          }
+          
+          // URL validation
+          if (type === 'input' && props.inputType === 'url') {
+            try {
+              new URL(stringValue);
+            } catch {
+              newValidationErrors[id] = `Please enter a valid URL`;
+              isValid = false;
+              return;
+            }
+          }
+          
+          // Min length validation
+          if (props.minLength && typeof props.minLength === 'number') {
+            if (stringValue.length < props.minLength) {
+              newValidationErrors[id] = `Minimum length is ${props.minLength} characters`;
+              isValid = false;
+              return;
+            }
+          }
+          
+          // Max length validation
+          if (props.maxLength && typeof props.maxLength === 'number') {
+            if (stringValue.length > props.maxLength) {
+              newValidationErrors[id] = `Maximum length is ${props.maxLength} characters`;
+              isValid = false;
+              return;
+            }
+          }
+          
+          // Pattern validation
+          if (props.pattern && typeof props.pattern === 'string') {
+            try {
+              const regex = new RegExp(props.pattern);
+              if (!regex.test(stringValue)) {
+                newValidationErrors[id] = props.patternError as string || `Invalid format`;
+                isValid = false;
+                return;
+              }
+            } catch {
+              console.error(`Invalid regex pattern for field ${id}:`, props.pattern);
+            }
+          }
+        }
+        
+        // Number validation
+        if (type === 'input' && props.inputType === 'number') {
+          const numValue = Number(value);
+          
+          if (isNaN(numValue)) {
+            newValidationErrors[id] = `Please enter a valid number`;
+            isValid = false;
+            return;
+          }
+          
+          // Min value validation
+          if (props.min !== undefined && props.min !== null) {
+            const minValue = Number(props.min);
+            if (numValue < minValue) {
+              newValidationErrors[id] = `Minimum value is ${minValue}`;
+              isValid = false;
+              return;
+            }
+          }
+          
+          // Max value validation
+          if (props.max !== undefined && props.max !== null) {
+            const maxValue = Number(props.max);
+            if (numValue > maxValue) {
+              newValidationErrors[id] = `Maximum value is ${maxValue}`;
+              isValid = false;
+              return;
+            }
+          }
+        }
+      }
+      
+      // Recursively validate children components if any
+      if (Array.isArray(component.children)) {
+        component.children.forEach(validateComponent);
+      }
+    };
+    
+    // Validate all components on the current page
+    currentPage.components.forEach(validateComponent);
+    
+    // Update validation errors state
+    setValidationErrors(newValidationErrors);
+    return isValid;
+  };
+
   const handleNext = () => {
     const totalSteps = formJson.app.pages?.length || 0;
     const currentPage = formJson.app.pages[currentStepIndex];
+    
+    // Validate the current page before navigation
+    if (!validateCurrentPage()) {
+      // If validation fails, stop here and don't navigate
+      return;
+    }
+    
+    // Clear validation errors when successfully navigating
+    setValidationErrors({});
     
     // Check if current page is marked as an end page
     if (currentPage && currentPage.isEndPage === true) {
@@ -270,6 +434,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
   const handlePrevious = () => {
     if (currentStepIndex > 0) {
+      // Clear validation errors when navigating to previous page
+      setValidationErrors({});
       setCurrentStepIndex(currentStepIndex - 1);
     }
   };
@@ -380,6 +546,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       return null;
     }
 
+    // Check if component has a validation error
+    const hasError = !!validationErrors[id];
+    
     switch (type) {
       case 'text':
         return (
@@ -410,13 +579,16 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             <input
               id={id}
               type={(props.inputType as React.HTMLInputTypeAttribute) || 'text'}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className={`w-full p-2 border ${hasError ? 'border-red-500' : 'border-gray-300'} rounded-md`}
               placeholder={typeof props.placeholder === 'string' ? props.placeholder : ''}
               value={typeof formValues[id] === 'string' ? formValues[id] as string : ''}
               onChange={(e) => handleInputChange(id, e.target.value)}
               required={!!props.required}
             />
-            {typeof props.helperText === 'string' && (
+            {hasError && (
+              <p className="mt-1 text-sm text-red-500">{validationErrors[id]}</p>
+            )}
+            {typeof props.helperText === 'string' && !hasError && (
               <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
             )}
           </div>
@@ -431,31 +603,41 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             </label>
             <textarea
               id={id}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className={`w-full p-2 border ${hasError ? 'border-red-500' : 'border-gray-300'} rounded-md`}
               placeholder={typeof props.placeholder === 'string' ? props.placeholder : ''}
               rows={Number(props.rows) || 3}
               value={typeof formValues[id] === 'string' ? formValues[id] as string : ''}
               onChange={(e) => handleInputChange(id, e.target.value)}
               required={!!props.required}
             />
+            {hasError && (
+              <p className="mt-1 text-sm text-red-500">{validationErrors[id]}</p>
+            )}
           </div>
         );
       
       case 'checkbox':
         return (
-          <div className="mb-4 flex items-center">
-            <input
-              id={id}
-              type="checkbox"
-              className="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-              checked={!!formValues[id]}
-              onChange={(e) => handleInputChange(id, e.target.checked)}
-              required={!!props.required}
-            />
-            <label htmlFor={id} className="text-sm font-medium text-gray-700">
-              {typeof label === 'string' ? label : ''}
-              {!!props.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
+          <div className="mb-4 flex items-start">
+            <div className="flex items-center h-5">
+              <input
+                id={id}
+                type="checkbox"
+                className={`h-4 w-4 text-indigo-600 border-gray-300 rounded ${hasError ? 'ring-2 ring-red-500' : ''}`}
+                checked={!!formValues[id]}
+                onChange={(e) => handleInputChange(id, e.target.checked)}
+                required={!!props.required}
+              />
+            </div>
+            <div className="ml-3 text-sm">
+              <label htmlFor={id} className="font-medium text-gray-700">
+                {typeof label === 'string' ? label : ''}
+                {!!props.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              {hasError && (
+                <p className="text-red-500">{validationErrors[id]}</p>
+              )}
+            </div>
           </div>
         );
       
@@ -466,7 +648,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               {typeof label === 'string' ? label : ''}
               {!!props.required && <span className="text-red-500 ml-1">*</span>}
             </div>
-            <div className="space-y-2">
+            <div className={`space-y-2 ${hasError ? 'border border-red-500 p-2 rounded-md' : ''}`}>
               {Array.isArray(props.options) && props.options.map((option: Option, index: number) => {
                 const optionLabel = typeof option === 'string' ? option : option.label || '';
                 const optionValue = typeof option === 'string' ? option : option.value || '';
@@ -490,6 +672,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                 );
               })}
             </div>
+            {hasError && (
+              <p className="mt-1 text-sm text-red-500">{validationErrors[id]}</p>
+            )}
           </div>
         );
       
@@ -502,7 +687,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             </label>
             <select
               id={id}
-              className="w-full p-2 border border-gray-300 rounded-md bg-white"
+              className={`w-full p-2 border ${hasError ? 'border-red-500' : 'border-gray-300'} rounded-md bg-white`}
               value={typeof formValues[id] === 'string' ? formValues[id] as string : ''}
               onChange={(e) => handleInputChange(id, e.target.value)}
               required={!!props.required}
@@ -519,6 +704,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                 );
               })}
             </select>
+            {hasError && (
+              <p className="mt-1 text-sm text-red-500">{validationErrors[id]}</p>
+            )}
           </div>
         );
       
