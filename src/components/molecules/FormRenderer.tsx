@@ -92,10 +92,150 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   }
 
   const handleInputChange = (id: string, value: unknown) => {
+    // Update form values
     setFormValues(prev => ({
       ...prev,
       [id]: value
     }));
+    
+    // Clear validation error for this field if there is one and the new value passes validation
+    if (validationErrors[id]) {
+      // Clone the current errors
+      const newValidationErrors = { ...validationErrors };
+      
+      // Check if the field is now valid
+      let isNowValid = true;
+      
+      // Find component by id
+      const findAndValidateComponent = (components: ComponentProps[]): boolean => {
+        for (const component of components) {
+          if (component.id === id) {
+            const { type, props = {} } = component;
+
+            // Check if required and empty
+            if (props.required) {
+              // Special case for checkboxes: if required, value must be true
+              if (type === 'checkbox') {
+                isNowValid = !!value;
+              } 
+              // For other field types, check if empty
+              else if (value === undefined || value === null || value === '') {
+                isNowValid = false;
+              }
+              if (!isNowValid) return true; // Found and validation failed
+            }
+            
+            // Additional validation for non-empty values
+            if (value !== undefined && value !== null && value !== '') {
+              // String validation for input and textarea
+              if (type === 'input' || type === 'textarea') {
+                const stringValue = String(value);
+                
+                // Email validation (input only)
+                if (type === 'input' && props.inputType === 'email') {
+                  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  isNowValid = emailPattern.test(stringValue);
+                  if (!isNowValid) return true;
+                }
+                
+                // URL validation (input only)
+                if (type === 'input' && props.inputType === 'url') {
+                  try {
+                    new URL(stringValue);
+                  } catch {
+                    isNowValid = false;
+                    return true;
+                  }
+                }
+                
+                // Min length validation
+                if (props.minLength && typeof props.minLength === 'number') {
+                  isNowValid = stringValue.length >= props.minLength;
+                  if (!isNowValid) return true;
+                }
+                
+                // Max length validation
+                if (props.maxLength && typeof props.maxLength === 'number') {
+                  isNowValid = stringValue.length <= props.maxLength;
+                  if (!isNowValid) return true;
+                }
+                
+                // Pattern validation (primarily for input)
+                if (props.pattern && typeof props.pattern === 'string') {
+                  try {
+                    const regex = new RegExp(props.pattern);
+                    isNowValid = regex.test(stringValue);
+                    if (!isNowValid) return true;
+                  } catch {
+                    // Invalid regex, skip this validation
+                  }
+                }
+                
+                // Number validation (input only)
+                if (type === 'input' && props.inputType === 'number') {
+                  const numValue = Number(value);
+                  
+                  isNowValid = !isNaN(numValue);
+                  if (!isNowValid) return true;
+                  
+                  // Min value validation
+                  if (props.min !== undefined && props.min !== null) {
+                    isNowValid = numValue >= Number(props.min);
+                    if (!isNowValid) return true;
+                  }
+                  
+                  // Max value validation
+                  if (props.max !== undefined && props.max !== null) {
+                    isNowValid = numValue <= Number(props.max);
+                    if (!isNowValid) return true;
+                  }
+                }
+              }
+              
+              // For select fields, just having a value is valid
+              else if (type === 'select') {
+                // If we got here, the value is not empty, so it's valid
+                isNowValid = true;
+              }
+              
+              // For radio fields, just having a value is valid
+              else if (type === 'radio') {
+                // If we got here, the value is not empty, so it's valid
+                isNowValid = true;
+              }
+              
+              // For checkbox fields, check if required and selected
+              else if (type === 'checkbox') {
+                // For checkboxes, the value should be true if required
+                isNowValid = !props.required || !!value;
+              }
+            }
+            
+            return true; // Found and validated
+          }
+          
+          // Recursively check children components
+          if (Array.isArray(component.children) && component.children.length > 0) {
+            const found = findAndValidateComponent(component.children);
+            if (found) return true;
+          }
+        }
+        
+        return false; // Component not found
+      };
+      
+      // Check all components on the current page
+      const currentPage = formJson.app.pages[currentStepIndex];
+      if (currentPage && currentPage.components) {
+        findAndValidateComponent(currentPage.components);
+        
+        // If the field is now valid, remove the error
+        if (isNowValid) {
+          delete newValidationErrors[id];
+          setValidationErrors(newValidationErrors);
+        }
+      }
+    }
   };
 
   const handleFormSubmit = (formId: string) => {
@@ -278,10 +418,18 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         
         // Required field validation
         if (props.required) {
-          if (value === undefined || value === null || value === '') {
+          // Special case for checkboxes: if required, value must be true
+          if (type === 'checkbox') {
+            if (!value) {
+              newValidationErrors[id] = `This field is required`;
+              isValid = false;
+              return;
+            }
+          } 
+          // For other field types, check if empty
+          else if (value === undefined || value === null || value === '') {
             newValidationErrors[id] = `This field is required`;
             isValid = false;
-            // Don't perform further validation if the field is empty and required
             return;
           }
         }
