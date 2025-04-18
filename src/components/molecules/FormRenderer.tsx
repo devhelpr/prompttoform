@@ -10,6 +10,11 @@ interface ComponentProps {
   props?: Record<string, unknown>;
   children?: ComponentProps[];
   visibilityConditions?: VisibilityCondition[];
+  eventHandlers?: {
+    onClick?: ActionType;
+    onSubmit?: ActionType;
+    onChange?: ActionType;
+  };
 }
 
 interface PageProps {
@@ -43,6 +48,16 @@ interface VisibilityCondition {
   field: string;
   operator: 'equals' | 'notEquals' | 'greaterThan' | 'lessThan' | '==' | '!=' | '>' | '<' | '>=' | '<=';
   value: string | number | boolean;
+}
+
+// Define action type interface
+interface ActionType {
+  type: string;
+  params?: Record<string, unknown>;
+  dataSource?: string;
+  targetPage?: string;
+  message?: string;
+  branches?: Branch[];
 }
 
 // Interface for branch definition with nextPage
@@ -148,9 +163,37 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       const currentPage = formJson.app.pages[currentStepIndex];
       if (!currentPage || !currentPage.components) return null;
       
-      // Look for decision tree components or components with branches in the current page
+      // Look for components with event handlers that have navigate actions with branches
       for (const component of currentPage.components) {
-        // Check if this component has branches property
+        if (component.eventHandlers) {
+          const handlers = component.eventHandlers;
+          
+          // Check all possible event handlers
+          for (const handlerKey of ['onClick', 'onSubmit', 'onChange'] as const) {
+            const handler = handlers[handlerKey];
+            if (handler && handler.type === 'navigate' && Array.isArray(handler.branches)) {
+              
+              // Evaluate each branch
+              for (const branch of handler.branches) {
+                try {
+                  if ('condition' in branch && 'nextPage' in branch) {
+                    if (isComponentVisible([branch.condition])) {
+                      // We found a matching condition, return the target page index
+                      const targetPageIndex = findPageIndexById(branch.nextPage);
+                      if (targetPageIndex !== -1) {
+                        return targetPageIndex;
+                      }
+                    }
+                  }
+                } catch (branchError) {
+                  console.error('Error evaluating branch:', branch, branchError);
+                }
+              }
+            }
+          }
+        }
+        
+        // For backward compatibility, also check if this component has branches property
         if (component.props && Array.isArray(component.props.branches)) {
           const branches = component.props.branches as BranchTypes[];
           
@@ -559,6 +602,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       
       // Don't render decision tree components visually, but add advice display if available
       case 'decisionTree':
+        // This case is kept for backward compatibility
         // Check if we have advice generated from this decision tree
         if (typeof formValues.adviceText === 'string' && formValues.adviceText.trim() !== '') {
           return (
@@ -568,6 +612,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             </div>
           );
         }
+        console.warn("'decisionTree' component type is deprecated. Use actions with branches instead.");
         return null;
       
       default:

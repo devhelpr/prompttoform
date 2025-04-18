@@ -108,6 +108,25 @@ export interface UISchema {
         dataSource?: { type: string };
         targetPage?: { type: string };
         message?: { type: string };
+        branches?: {
+          type: string;
+          items: {
+            type: string;
+            properties: {
+              condition: {
+                type: string;
+                properties: {
+                  field: { type: string };
+                  operator: { type: string; enum: string[] };
+                  value: unknown;
+                };
+                required: string[];
+              };
+              nextPage: { type: string };
+            };
+            required: string[];
+          };
+        };
       };
       required: string[];
     };
