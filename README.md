@@ -44,7 +44,8 @@ npm run dev
 Here's an example prompt to test the generator:
 
 ```
-imagine a simple health-check wizard asking questions and branching based on user answers.
+imagine a simple health-check wizard asking questions and branching based on user answers.. make sure that if no doctor visit is needed that this is shown with a disclaimer
+
 ```
 
 

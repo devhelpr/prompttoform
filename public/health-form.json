@@ -1,0 +1,406 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/ui-schema",
+  "title": "UI Schema",
+  "description": "Schema for describing complex UIs, including websites, forms, decision trees, and CRUD operations.",
+  "type": "object",
+  "properties": {
+    "app": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "pages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/page"
+          }
+        },
+        "dataSources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dataSource"
+          }
+        }
+      },
+      "required": ["title", "pages"]
+    }
+  },
+  "$defs": {
+    "page": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "route": {
+          "type": "string"
+        },
+        "layout": {
+          "type": "string",
+          "enum": ["grid", "flex", "vertical", "horizontal"]
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        },
+        "isEndPage": {
+          "type": "boolean"
+        }
+      },
+      "required": ["id", "title", "route", "components"]
+    },
+    "component": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "text",
+            "input",
+            "textarea",
+            "checkbox",
+            "radio",
+            "select",
+            "button",
+            "table",
+            "form",
+            "section"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "props": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        },
+        "bindings": {
+          "type": "object",
+          "properties": {
+            "dataSource": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
+            "onChange": {
+              "type": "string"
+            }
+          }
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "required": {
+              "type": "boolean"
+            },
+            "minLength": {
+              "type": "integer"
+            },
+            "maxLength": {
+              "type": "integer"
+            },
+            "pattern": {
+              "type": "string"
+            }
+          }
+        },
+        "visibilityConditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string"
+              },
+              "operator": {
+                "type": "string",
+                "enum": ["==", "!=", ">", "<", ">=", "<="]
+              },
+              "value": {}
+            },
+            "required": ["field", "operator", "value"]
+          }
+        },
+        "eventHandlers": {
+          "$ref": "#/$defs/eventHandlers"
+        }
+      },
+      "required": ["type", "id"]
+    },
+    "eventHandlers": {
+      "type": "object",
+      "properties": {
+        "onClick": {
+          "$ref": "#/$defs/action"
+        },
+        "onSubmit": {
+          "$ref": "#/$defs/action"
+        },
+        "onChange": {
+          "$ref": "#/$defs/action"
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["navigate", "submit", "apiRequest", "showMessage"]
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "dataSource": {
+          "type": "string"
+        },
+        "targetPage": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/branch"
+          }
+        }
+      },
+      "required": ["type"]
+    },
+    "dataSource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["rest", "graphql"]
+        },
+        "url": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["GET", "POST", "PUT", "DELETE"]
+        },
+        "query": {
+          "type": "string"
+        },
+        "params": {
+          "type": "object"
+        },
+        "responseMapping": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": ["id", "type", "url"]
+    },
+    "branch": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": "object",
+          "properties": {
+            "field": {
+              "type": "string"
+            },
+            "operator": {
+              "type": "string",
+              "enum": ["==", "!=", ">", "<", ">=", "<="]
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": ["field", "operator", "value"]
+        },
+        "nextPage": {
+          "type": "string"
+        }
+      },
+      "required": ["condition", "nextPage"]
+    }
+  },
+  "app": {
+    "title": "Health Check Wizard",
+    "pages": [
+      {
+        "id": "startPage",
+        "title": "Welcome",
+        "route": "/",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "welcomeText",
+            "label": "Welcome to the Health Check Wizard!",
+            "props": {
+              "variant": "h5"
+            }
+          },
+          {
+            "type": "button",
+            "id": "startButton",
+            "label": "Start",
+            "eventHandlers": {
+              "onClick": {
+                "type": "navigate",
+                "targetPage": "symptomsPage"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "symptomsPage",
+        "title": "Symptoms",
+        "route": "/symptoms",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "checkbox",
+            "id": "feverCheckbox",
+            "label": "Do you have a fever?",
+            "bindings": {}
+          },
+          {
+            "type": "checkbox",
+            "id": "coughCheckbox",
+            "label": "Do you have a cough?",
+            "bindings": {}
+          },
+          {
+            "type": "checkbox",
+            "id": "bodyAchesCheckbox",
+            "label": "Do you have body aches?",
+            "bindings": {}
+          },
+          {
+            "type": "button",
+            "id": "nextButton",
+            "label": "Next",
+            "eventHandlers": {
+              "onClick": {
+                "type": "navigate",
+                "branches": [
+                  {
+                    "condition": {
+                      "field": "feverCheckbox",
+                      "operator": "==",
+                      "value": "true"
+                    },
+                    "nextPage": "doctorVisitPage"
+                  },
+                  {
+                    "condition": {
+                      "field": "coughCheckbox",
+                      "operator": "==",
+                      "value": "true"
+                    },
+                    "nextPage": "doctorVisitPage"
+                  },
+                  {
+                    "condition": {
+                      "field": "bodyAchesCheckbox",
+                      "operator": "==",
+                      "value": "true"
+                    },
+                    "nextPage": "doctorVisitPage"
+                  }
+                ],
+                "targetPage": "noVisitPage"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "doctorVisitPage",
+        "title": "Doctor Visit Recommended",
+        "route": "/doctor-visit",
+        "layout": "vertical",
+        "isEndPage": true,
+        "components": [
+          {
+            "type": "text",
+            "id": "doctorVisitText",
+            "label": "Based on your symptoms, we recommend you see a doctor.",
+            "props": {
+              "variant": "h6"
+            }
+          },
+          {
+            "type": "button",
+            "id": "restartButton",
+            "label": "Restart",
+            "eventHandlers": {
+              "onClick": {
+                "type": "navigate",
+                "targetPage": "startPage"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "noVisitPage",
+        "title": "No Doctor Visit Needed",
+        "route": "/no-visit",
+        "layout": "vertical",
+        "isEndPage": true,
+        "components": [
+          {
+            "type": "text",
+            "id": "noVisitText",
+            "label": "Based on your symptoms, a doctor's visit is likely not needed.",
+            "props": {
+              "variant": "h6"
+            }
+          },
+          {
+            "type": "text",
+            "id": "disclaimerText",
+            "label": "Disclaimer: This is not a substitute for professional medical advice. If you are concerned about your health, please consult a doctor.",
+            "props": {
+              "variant": "subtitle2"
+            }
+          },
+          {
+            "type": "button",
+            "id": "restartButton",
+            "label": "Restart",
+            "eventHandlers": {
+              "onClick": {
+                "type": "navigate",
+                "targetPage": "startPage"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "dataSources": []
+  }
+}

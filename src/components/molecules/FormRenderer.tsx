@@ -327,23 +327,43 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           // Check all possible event handlers
           for (const handlerKey of ['onClick', 'onSubmit', 'onChange'] as const) {
             const handler = handlers[handlerKey];
-            if (handler && handler.type === 'navigate' && Array.isArray(handler.branches)) {
+            if (handler && handler.type === 'navigate') {
+              // Initialize with default targetPage if specified
+              let targetPageIndex: number | null = null;
               
-              // Evaluate each branch
-              for (const branch of handler.branches) {
-                try {
-                  if ('condition' in branch && 'nextPage' in branch) {
-                    if (isComponentVisible([branch.condition])) {
-                      // We found a matching condition, return the target page index
-                      const targetPageIndex = findPageIndexById(branch.nextPage);
-                      if (targetPageIndex !== -1) {
-                        return targetPageIndex;
+              if (handler.targetPage) {
+                targetPageIndex = findPageIndexById(handler.targetPage);
+              }
+              
+              // If there are branches, try to find a matching condition
+              if (Array.isArray(handler.branches)) {
+                let branchMatched = false;
+                
+                // Evaluate each branch
+                for (const branch of handler.branches) {
+                  try {
+                    if ('condition' in branch && 'nextPage' in branch) {
+                      if (isComponentVisible([branch.condition])) {
+                        // We found a matching condition, return the target page index
+                        const branchTargetIndex = findPageIndexById(branch.nextPage);
+                        if (branchTargetIndex !== -1) {
+                          return branchTargetIndex;
+                        }
+                        branchMatched = true;
                       }
                     }
+                  } catch (branchError) {
+                    console.error('Error evaluating branch:', branch, branchError);
                   }
-                } catch (branchError) {
-                  console.error('Error evaluating branch:', branch, branchError);
                 }
+                
+                // No branches matched but we have a default targetPage
+                if (!branchMatched && targetPageIndex !== null && targetPageIndex !== -1) {
+                  return targetPageIndex;
+                }
+              } else if (targetPageIndex !== null && targetPageIndex !== -1) {
+                // No branches, but we have a targetPage
+                return targetPageIndex;
               }
             }
           }
@@ -710,7 +730,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                 ? formValues.adviceText 
                 : (typeof props.text === 'string' 
                     ? props.text 
-                    : (typeof props.content === 'string' ? props.content : 'Text')
+                    : (typeof props.content === 'string' ? props.content : '')
                   )
               }
             </p>
