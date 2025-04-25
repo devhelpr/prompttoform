@@ -1,4 +1,4 @@
-import { FormSchema, Page, Component, Action, DataSource } from "./types";
+import { FormSchema, Page, Component, Action } from "./types";
 
 export class FormGenerator {
   private schema: FormSchema;
@@ -259,6 +259,11 @@ export class FormGenerator {
           input.name = component.id;
           input.value = option.value;
 
+          // Set initial value if it exists in formData
+          if (this.formData[component.id] === option.value) {
+            input.checked = true;
+          }
+
           const label = document.createElement("label");
           label.htmlFor = input.id;
           label.textContent = option.label;
@@ -266,8 +271,10 @@ export class FormGenerator {
           // Add change listener to update formData
           input.addEventListener("change", (e) => {
             const target = e.target as HTMLInputElement;
-            this.formData[component.id] = target.value;
-            this.updateVisibility();
+            if (target.checked) {
+              this.formData[component.id] = target.value;
+              this.updateVisibility();
+            }
           });
 
           wrapper.appendChild(input);
@@ -280,20 +287,34 @@ export class FormGenerator {
     return container;
   }
 
-  private createCheckbox(component: Component): HTMLInputElement {
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.id = component.id;
-    checkbox.name = component.id;
+  private createCheckbox(component: Component): HTMLDivElement {
+    const wrapper = document.createElement("div");
+    wrapper.className = "checkbox-wrapper";
+
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.id = component.id;
+    input.name = component.id;
+
+    // Set initial value if it exists in formData
+    if (this.formData[component.id] !== undefined) {
+      input.checked = Boolean(this.formData[component.id]);
+    }
+
+    const label = document.createElement("label");
+    label.htmlFor = component.id;
+    label.textContent = component.label || "";
 
     // Add change listener to update formData
-    checkbox.addEventListener("change", (e) => {
+    input.addEventListener("change", (e) => {
       const target = e.target as HTMLInputElement;
       this.formData[component.id] = target.checked;
       this.updateVisibility();
     });
 
-    return checkbox;
+    wrapper.appendChild(input);
+    wrapper.appendChild(label);
+    return wrapper;
   }
 
   private updateVisibility(): void {
@@ -380,8 +401,33 @@ export class FormGenerator {
     const form = this.container.querySelector("form") as HTMLFormElement;
     if (!form) return;
 
-    const formData = new FormData(form);
-    this.formData = Object.fromEntries(formData.entries());
+    const formDataObj: Record<string, unknown> = {};
+
+    // Handle radio buttons and checkboxes
+    form.querySelectorAll('input[type="radio"]:checked').forEach((input) => {
+      const radio = input as HTMLInputElement;
+      formDataObj[radio.name] = radio.value;
+    });
+
+    form.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+      const checkbox = input as HTMLInputElement;
+      formDataObj[checkbox.name] = checkbox.checked;
+    });
+
+    // Handle other form elements
+    form
+      .querySelectorAll(
+        'input:not([type="radio"]):not([type="checkbox"]), select, textarea'
+      )
+      .forEach((element) => {
+        const input = element as
+          | HTMLInputElement
+          | HTMLSelectElement
+          | HTMLTextAreaElement;
+        formDataObj[input.name] = input.value;
+      });
+
+    this.formData = formDataObj;
 
     if (action.params?.url) {
       fetch(action.params.url, {
