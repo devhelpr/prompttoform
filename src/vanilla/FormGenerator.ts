@@ -143,8 +143,10 @@ export class FormGenerator {
 
     switch (component.type) {
       case "input":
-      case "text":
         element = this.createTextInput(component);
+        break;
+      case "text":
+        element = this.createText(component);
         break;
       case "textarea":
         element = this.createTextarea(component);
@@ -167,20 +169,19 @@ export class FormGenerator {
     }
 
     if (element) {
-      // Restore form data if it exists
-      if (this.formData[component.id]) {
-        if (
-          element instanceof HTMLInputElement ||
-          element instanceof HTMLTextAreaElement ||
-          element instanceof HTMLSelectElement
-        ) {
+      // Only restore form data and setup validation for input elements
+      if (
+        element instanceof HTMLInputElement ||
+        element instanceof HTMLTextAreaElement ||
+        element instanceof HTMLSelectElement
+      ) {
+        if (this.formData[component.id]) {
           element.value = this.formData[component.id] as string;
         }
+        this.setupValidation(component, element);
       }
-
-      wrapper.appendChild(element);
-      this.setupValidation(component, element);
       this.setupEventHandlers(component, element);
+      wrapper.appendChild(element);
     }
 
     return wrapper;
@@ -264,7 +265,7 @@ export class FormGenerator {
     return button;
   }
 
-  private createText(component: Component): HTMLParagraphElement {
+  private createText(component: Component): HTMLElement {
     const text = document.createElement("p");
     text.id = component.id;
     text.textContent = component.props?.text || "";
