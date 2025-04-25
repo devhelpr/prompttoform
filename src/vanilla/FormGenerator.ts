@@ -6,6 +6,7 @@ export class FormGenerator {
   private currentPage: Page | null = null;
   private formData: Record<string, unknown> = {};
   private pageHistory: string[] = [];
+  private touchedFields: Set<string> = new Set();
 
   constructor(schema: FormSchema, containerId: string) {
     this.schema = schema;
@@ -350,8 +351,15 @@ export class FormGenerator {
 
     if (
       element instanceof HTMLInputElement ||
-      element instanceof HTMLTextAreaElement
+      element instanceof HTMLTextAreaElement ||
+      element instanceof HTMLSelectElement
     ) {
+      // Add blur event to track touched state
+      element.addEventListener("blur", () => {
+        this.touchedFields.add(element.name);
+        this.validateField(element);
+      });
+
       if (component.validation.required) {
         element.required = true;
       }
@@ -367,20 +375,89 @@ export class FormGenerator {
     }
   }
 
-  private setupEventHandlers(component: Component, element: HTMLElement): void {
-    if (!component.eventHandlers) return;
-
-    if (component.eventHandlers.onChange) {
-      element.addEventListener("change", () =>
-        this.handleEvent(component.eventHandlers!.onChange!)
-      );
+  private validateField(
+    element:
+      | HTMLInputElement
+      | HTMLTextAreaElement
+      | HTMLSelectElement
+      | HTMLElement,
+    force: boolean = false
+  ): boolean {
+    if (!force && !this.touchedFields.has(element.getAttribute("name") || "")) {
+      return true;
     }
 
-    if (component.eventHandlers.onClick) {
-      element.addEventListener("click", () =>
-        this.handleEvent(component.eventHandlers!.onClick!)
-      );
+    let isValid = true;
+
+    // Handle input elements
+    if (element instanceof HTMLInputElement) {
+      if (element.type === "button") return true;
+
+      if (element.required && !element.value) {
+        isValid = false;
+        this.showValidationError(element, "This field is required");
+      } else {
+        this.clearValidationError(element);
+      }
+
+      if (element.pattern) {
+        const regex = new RegExp(element.pattern);
+        if (!regex.test(element.value)) {
+          isValid = false;
+          this.showValidationError(element, "Invalid format");
+        }
+      }
+
+      if (element.minLength && element.value.length < element.minLength) {
+        isValid = false;
+        this.showValidationError(
+          element,
+          `Minimum length is ${element.minLength}`
+        );
+      }
+      if (element.maxLength && element.value.length > element.maxLength) {
+        isValid = false;
+        this.showValidationError(
+          element,
+          `Maximum length is ${element.maxLength}`
+        );
+      }
     }
+    // Handle textarea elements
+    else if (element instanceof HTMLTextAreaElement) {
+      if (element.required && !element.value) {
+        isValid = false;
+        this.showValidationError(element, "This field is required");
+      } else {
+        this.clearValidationError(element);
+      }
+
+      if (element.minLength && element.value.length < element.minLength) {
+        isValid = false;
+        this.showValidationError(
+          element,
+          `Minimum length is ${element.minLength}`
+        );
+      }
+      if (element.maxLength && element.value.length > element.maxLength) {
+        isValid = false;
+        this.showValidationError(
+          element,
+          `Maximum length is ${element.maxLength}`
+        );
+      }
+    }
+    // Handle select elements
+    else if (element instanceof HTMLSelectElement) {
+      if (element.required && !element.value) {
+        isValid = false;
+        this.showValidationError(element, "This field is required");
+      } else {
+        this.clearValidationError(element);
+      }
+    }
+
+    return isValid;
   }
 
   private validateForm(): boolean {
@@ -390,56 +467,24 @@ export class FormGenerator {
     let isValid = true;
     const invalidFields: string[] = [];
 
+    // Mark all fields as touched when validating the form
+    form.querySelectorAll("input, select, textarea").forEach((element) => {
+      const input = element as
+        | HTMLInputElement
+        | HTMLSelectElement
+        | HTMLTextAreaElement;
+      this.touchedFields.add(input.name);
+    });
+
     // Check all form elements
     form.querySelectorAll("input, select, textarea").forEach((element) => {
       const input = element as
         | HTMLInputElement
         | HTMLSelectElement
         | HTMLTextAreaElement;
-
-      // Skip buttons
-      if (input.type === "button") return;
-
-      // Check required fields
-      if (input.required && !input.value) {
+      if (!this.validateField(input, true)) {
         isValid = false;
         invalidFields.push(input.name);
-        this.showValidationError(input, "This field is required");
-      } else {
-        this.clearValidationError(input);
-      }
-
-      // Check pattern validation
-      if (input instanceof HTMLInputElement && input.pattern) {
-        const regex = new RegExp(input.pattern);
-        if (!regex.test(input.value)) {
-          isValid = false;
-          invalidFields.push(input.name);
-          this.showValidationError(input, "Invalid format");
-        }
-      }
-
-      // Check min/max length
-      if (
-        input instanceof HTMLInputElement ||
-        input instanceof HTMLTextAreaElement
-      ) {
-        if (input.minLength && input.value.length < input.minLength) {
-          isValid = false;
-          invalidFields.push(input.name);
-          this.showValidationError(
-            input,
-            `Minimum length is ${input.minLength}`
-          );
-        }
-        if (input.maxLength && input.value.length > input.maxLength) {
-          isValid = false;
-          invalidFields.push(input.name);
-          this.showValidationError(
-            input,
-            `Maximum length is ${input.maxLength}`
-          );
-        }
       }
     });
 
@@ -455,21 +500,21 @@ export class FormGenerator {
       if (isRequired && !hasChecked) {
         isValid = false;
         invalidFields.push(name);
-        this.showValidationError(group, "Please select an option");
+        this.showValidationError(
+          group as HTMLElement,
+          "Please select an option"
+        );
       } else {
-        this.clearValidationError(group);
+        this.clearValidationError(group as HTMLElement);
       }
     });
 
     // Check checkboxes
     form.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
       const input = checkbox as HTMLInputElement;
-      if (input.required && !input.checked) {
+      if (!this.validateField(input, true)) {
         isValid = false;
         invalidFields.push(input.name);
-        this.showValidationError(input, "This field is required");
-      } else {
-        this.clearValidationError(input);
       }
     });
 
@@ -491,6 +536,22 @@ export class FormGenerator {
       existingError.remove();
     }
     element.classList.remove("invalid");
+  }
+
+  private setupEventHandlers(component: Component, element: HTMLElement): void {
+    if (!component.eventHandlers) return;
+
+    if (component.eventHandlers.onChange) {
+      element.addEventListener("change", () =>
+        this.handleEvent(component.eventHandlers!.onChange!)
+      );
+    }
+
+    if (component.eventHandlers.onClick) {
+      element.addEventListener("click", () =>
+        this.handleEvent(component.eventHandlers!.onClick!)
+      );
+    }
   }
 
   private async handleEvent(action: Action): Promise<void> {
@@ -593,6 +654,7 @@ export class FormGenerator {
   }
 
   private clearValidationErrors(): void {
+    this.touchedFields.clear();
     const errors = this.container.querySelectorAll(".validation-error");
     errors.forEach((error) => error.remove());
     const invalidElements = this.container.querySelectorAll(".invalid");
