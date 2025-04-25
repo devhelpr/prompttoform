@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Form Generator (Vanilla)</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+        margin: 0;
+        padding: 20px;
+      }
+      .page {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .component {
+        margin-bottom: 1rem;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      button {
+        padding: 0.5rem 1rem;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="form-container"></div>
+    <script type="module">
+      import { initFormGenerator } from "./src/vanilla/index.ts";
+
+      // Example schema
+      const schema = {
+        app: {
+          title: "Example Form",
+          pages: [
+            {
+              id: "page1",
+              title: "Personal Information",
+              route: "/personal",
+              components: [
+                {
+                  type: "text",
+                  id: "intro",
+                  props: {
+                    text: "Please fill out the form below",
+                  },
+                },
+                {
+                  type: "input",
+                  id: "name",
+                  label: "Name",
+                  validation: {
+                    required: true,
+                  },
+                },
+                {
+                  type: "input",
+                  id: "email",
+                  label: "Email",
+                  props: {
+                    type: "email",
+                  },
+                  validation: {
+                    required: true,
+                    pattern:
+                      "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                  },
+                },
+                {
+                  type: "button",
+                  id: "submit",
+                  label: "Submit",
+                  eventHandlers: {
+                    onClick: {
+                      type: "submit",
+                      params: {
+                        url: "/api/submit",
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      initFormGenerator(schema, "form-container");
+    </script>
+  </body>
+</html>
