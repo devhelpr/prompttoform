@@ -37,6 +37,23 @@
         border-radius: 4px;
         font-size: 1rem;
       }
+      input:invalid,
+      textarea:invalid,
+      select:invalid {
+        border-color: #dc3545;
+      }
+      .invalid {
+        border-color: #dc3545 !important;
+      }
+      .validation-error {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+      }
+      .required-marker {
+        color: #dc3545;
+        margin-left: 0.25rem;
+      }
       button {
         padding: 0.5rem 1rem;
         background-color: #007bff;
@@ -129,6 +146,7 @@
                   label: "Full Name",
                   validation: {
                     required: true,
+                    minLength: 2,
                   },
                 },
                 {
@@ -188,6 +206,9 @@
                   type: "input",
                   id: "company",
                   label: "Company Name",
+                  validation: {
+                    required: true,
+                  },
                   visibilityConditions: [
                     {
                       field: "employment-status",
@@ -200,6 +221,9 @@
                   type: "input",
                   id: "school",
                   label: "School Name",
+                  validation: {
+                    required: true,
+                  },
                   visibilityConditions: [
                     {
                       field: "employment-status",

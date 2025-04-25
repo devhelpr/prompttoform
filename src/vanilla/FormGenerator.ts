@@ -120,6 +120,13 @@ export class FormGenerator {
     if (component.label) {
       const label = document.createElement("label");
       label.textContent = component.label;
+      if (component.validation?.required) {
+        const requiredMarker = document.createElement("span");
+        requiredMarker.textContent = " *";
+        requiredMarker.className = "required-marker";
+        requiredMarker.style.color = "red";
+        label.appendChild(requiredMarker);
+      }
       wrapper.appendChild(label);
     }
 
@@ -376,15 +383,130 @@ export class FormGenerator {
     }
   }
 
+  private validateForm(): boolean {
+    const form = this.container.querySelector("form");
+    if (!form) return true;
+
+    let isValid = true;
+    const invalidFields: string[] = [];
+
+    // Check all form elements
+    form.querySelectorAll("input, select, textarea").forEach((element) => {
+      const input = element as
+        | HTMLInputElement
+        | HTMLSelectElement
+        | HTMLTextAreaElement;
+
+      // Skip buttons
+      if (input.type === "button") return;
+
+      // Check required fields
+      if (input.required && !input.value) {
+        isValid = false;
+        invalidFields.push(input.name);
+        this.showValidationError(input, "This field is required");
+      } else {
+        this.clearValidationError(input);
+      }
+
+      // Check pattern validation
+      if (input instanceof HTMLInputElement && input.pattern) {
+        const regex = new RegExp(input.pattern);
+        if (!regex.test(input.value)) {
+          isValid = false;
+          invalidFields.push(input.name);
+          this.showValidationError(input, "Invalid format");
+        }
+      }
+
+      // Check min/max length
+      if (
+        input instanceof HTMLInputElement ||
+        input instanceof HTMLTextAreaElement
+      ) {
+        if (input.minLength && input.value.length < input.minLength) {
+          isValid = false;
+          invalidFields.push(input.name);
+          this.showValidationError(
+            input,
+            `Minimum length is ${input.minLength}`
+          );
+        }
+        if (input.maxLength && input.value.length > input.maxLength) {
+          isValid = false;
+          invalidFields.push(input.name);
+          this.showValidationError(
+            input,
+            `Maximum length is ${input.maxLength}`
+          );
+        }
+      }
+    });
+
+    // Check radio groups
+    form.querySelectorAll(".radio-group").forEach((group) => {
+      const radioInputs = group.querySelectorAll('input[type="radio"]');
+      const name = (radioInputs[0] as HTMLInputElement).name;
+      const isRequired = (radioInputs[0] as HTMLInputElement).required;
+      const hasChecked = Array.from(radioInputs).some(
+        (input) => (input as HTMLInputElement).checked
+      );
+
+      if (isRequired && !hasChecked) {
+        isValid = false;
+        invalidFields.push(name);
+        this.showValidationError(group, "Please select an option");
+      } else {
+        this.clearValidationError(group);
+      }
+    });
+
+    // Check checkboxes
+    form.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+      const input = checkbox as HTMLInputElement;
+      if (input.required && !input.checked) {
+        isValid = false;
+        invalidFields.push(input.name);
+        this.showValidationError(input, "This field is required");
+      } else {
+        this.clearValidationError(input);
+      }
+    });
+
+    return isValid;
+  }
+
+  private showValidationError(element: HTMLElement, message: string): void {
+    const errorElement = document.createElement("div");
+    errorElement.className = "validation-error";
+    errorElement.textContent = message;
+    element.parentElement?.appendChild(errorElement);
+    element.classList.add("invalid");
+  }
+
+  private clearValidationError(element: HTMLElement): void {
+    const existingError =
+      element.parentElement?.querySelector(".validation-error");
+    if (existingError) {
+      existingError.remove();
+    }
+    element.classList.remove("invalid");
+  }
+
   private async handleEvent(action: Action): Promise<void> {
     switch (action.type) {
       case "navigate":
         if (action.targetPage) {
-          this.navigateToPage(action.targetPage);
+          // Validate form before navigation
+          if (this.validateForm()) {
+            this.navigateToPage(action.targetPage);
+          }
         }
         break;
       case "submit":
-        this.handleSubmit(action);
+        if (this.validateForm()) {
+          this.handleSubmit(action);
+        }
         break;
       case "apiRequest":
         await this.handleApiRequest(action);
@@ -468,5 +590,16 @@ export class FormGenerator {
     } catch (error) {
       console.error("API request failed:", error);
     }
+  }
+
+  private clearValidationErrors(): void {
+    const errors = this.container.querySelectorAll(".validation-error");
+    errors.forEach((error) => error.remove());
+    const invalidElements = this.container.querySelectorAll(".invalid");
+    invalidElements.forEach((element) => {
+      if (element instanceof HTMLElement) {
+        element.classList.remove("invalid");
+      }
+    });
   }
 }
