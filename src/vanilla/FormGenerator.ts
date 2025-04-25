@@ -362,7 +362,7 @@ export class FormGenerator {
     // Re-render components with updated visibility
     page.components.forEach((component) => {
       const componentElement = this.renderComponent(component);
-      if (this.isComponentVisible(component)) {
+      if (this.isComponentVisible(component) && componentElement) {
         form.appendChild(componentElement);
       }
     });
