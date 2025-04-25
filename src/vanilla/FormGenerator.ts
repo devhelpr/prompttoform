@@ -52,6 +52,9 @@ export class FormGenerator {
   }
 
   private renderPage(page: Page): void {
+    this.container.innerHTML = "";
+    this.clearValidationErrors();
+
     const pageContainer = document.createElement("div");
     pageContainer.className = `page ${page.layout || "vertical"}`;
 
@@ -69,17 +72,21 @@ export class FormGenerator {
     }
 
     const form = document.createElement("form");
+    form.className = "form";
     form.addEventListener("submit", (e) => e.preventDefault());
 
     page.components.forEach((component) => {
-      const componentElement = this.renderComponent(component);
       if (this.isComponentVisible(component)) {
-        form.appendChild(componentElement);
+        const element = this.renderComponent(component);
+        if (element) {
+          form.appendChild(element);
+        }
       }
     });
 
     pageContainer.appendChild(form);
     this.container.appendChild(pageContainer);
+    this.currentPage = page;
   }
 
   private isComponentVisible(component: Component): boolean {
@@ -113,13 +120,14 @@ export class FormGenerator {
     });
   }
 
-  private renderComponent(component: Component): HTMLElement {
+  private renderComponent(component: Component): HTMLElement | null {
     const wrapper = document.createElement("div");
     wrapper.className = `component ${component.type}`;
     wrapper.id = `component-${component.id}`;
 
     if (component.label) {
       const label = document.createElement("label");
+      label.htmlFor = component.id;
       label.textContent = component.label;
       if (component.validation?.required) {
         const requiredMarker = document.createElement("span");
@@ -131,10 +139,12 @@ export class FormGenerator {
       wrapper.appendChild(label);
     }
 
-    let element: HTMLElement;
+    let element: HTMLElement | null = null;
+
     switch (component.type) {
       case "input":
-        element = this.createInput(component);
+      case "text":
+        element = this.createTextInput(component);
         break;
       case "textarea":
         element = this.createTextarea(component);
@@ -144,9 +154,6 @@ export class FormGenerator {
         break;
       case "button":
         element = this.createButton(component);
-        break;
-      case "text":
-        element = this.createText(component);
         break;
       case "radio":
         element = this.createRadioGroup(component);
@@ -159,14 +166,27 @@ export class FormGenerator {
         element.textContent = `Unsupported component type: ${component.type}`;
     }
 
-    wrapper.appendChild(element);
-    this.setupValidation(component, element);
-    this.setupEventHandlers(component, element);
+    if (element) {
+      // Restore form data if it exists
+      if (this.formData[component.id]) {
+        if (
+          element instanceof HTMLInputElement ||
+          element instanceof HTMLTextAreaElement ||
+          element instanceof HTMLSelectElement
+        ) {
+          element.value = this.formData[component.id] as string;
+        }
+      }
+
+      wrapper.appendChild(element);
+      this.setupValidation(component, element);
+      this.setupEventHandlers(component, element);
+    }
 
     return wrapper;
   }
 
-  private createInput(component: Component): HTMLInputElement {
+  private createTextInput(component: Component): HTMLInputElement {
     const input = document.createElement("input");
     input.type = component.props?.type || "text";
     input.id = component.id;
@@ -354,21 +374,41 @@ export class FormGenerator {
       element instanceof HTMLTextAreaElement ||
       element instanceof HTMLSelectElement
     ) {
-      // Add blur event to track touched state
+      // Initialize form data with any existing values
+      if (element.value) {
+        this.formData[element.name] = element.value;
+      }
+
+      // Add blur event to track touched state and validate
       element.addEventListener("blur", () => {
         this.touchedFields.add(element.name);
-        this.validateField(element);
+        this.validateField(element, component.validation);
       });
 
+      // Add change event to update form data
+      element.addEventListener("change", () => {
+        this.formData[element.name] = element.value;
+        // Only validate if the field has been touched
+        if (this.touchedFields.has(element.name)) {
+          this.validateField(element, component.validation);
+        }
+      });
+
+      // Add input event to update form data in real-time
+      element.addEventListener("input", () => {
+        this.formData[element.name] = element.value;
+        // Only validate if the field has been touched
+        if (this.touchedFields.has(element.name)) {
+          this.validateField(element, component.validation);
+        }
+      });
+
+      // Only set required attribute as it's common to all elements
       if (component.validation.required) {
         element.required = true;
       }
-      if (component.validation.minLength) {
-        element.minLength = component.validation.minLength;
-      }
-      if (component.validation.maxLength) {
-        element.maxLength = component.validation.maxLength;
-      }
+
+      // Set pattern only for input elements
       if (component.validation.pattern && element instanceof HTMLInputElement) {
         element.pattern = component.validation.pattern;
       }
@@ -381,8 +421,10 @@ export class FormGenerator {
       | HTMLTextAreaElement
       | HTMLSelectElement
       | HTMLElement,
+    validation?: Component["validation"],
     force: boolean = false
   ): boolean {
+    // Don't validate if the field hasn't been touched and we're not forcing validation
     if (!force && !this.touchedFields.has(element.getAttribute("name") || "")) {
       return true;
     }
@@ -393,63 +435,75 @@ export class FormGenerator {
     if (element instanceof HTMLInputElement) {
       if (element.type === "button") return true;
 
-      if (element.required && !element.value) {
+      if (validation?.required && !element.value) {
         isValid = false;
         this.showValidationError(element, "This field is required");
       } else {
         this.clearValidationError(element);
       }
 
-      if (element.pattern) {
-        const regex = new RegExp(element.pattern);
+      if (validation?.pattern) {
+        const regex = new RegExp(validation.pattern);
         if (!regex.test(element.value)) {
           isValid = false;
           this.showValidationError(element, "Invalid format");
         }
       }
 
-      if (element.minLength && element.value.length < element.minLength) {
+      if (
+        validation?.minLength &&
+        element.value.length < validation.minLength
+      ) {
         isValid = false;
         this.showValidationError(
           element,
-          `Minimum length is ${element.minLength}`
+          `Minimum length is ${validation.minLength}`
         );
       }
-      if (element.maxLength && element.value.length > element.maxLength) {
+      if (
+        validation?.maxLength &&
+        element.value.length > validation.maxLength
+      ) {
         isValid = false;
         this.showValidationError(
           element,
-          `Maximum length is ${element.maxLength}`
+          `Maximum length is ${validation.maxLength}`
         );
       }
     }
     // Handle textarea elements
     else if (element instanceof HTMLTextAreaElement) {
-      if (element.required && !element.value) {
+      if (validation?.required && !element.value) {
         isValid = false;
         this.showValidationError(element, "This field is required");
       } else {
         this.clearValidationError(element);
       }
 
-      if (element.minLength && element.value.length < element.minLength) {
+      if (
+        validation?.minLength &&
+        element.value.length < validation.minLength
+      ) {
         isValid = false;
         this.showValidationError(
           element,
-          `Minimum length is ${element.minLength}`
+          `Minimum length is ${validation.minLength}`
         );
       }
-      if (element.maxLength && element.value.length > element.maxLength) {
+      if (
+        validation?.maxLength &&
+        element.value.length > validation.maxLength
+      ) {
         isValid = false;
         this.showValidationError(
           element,
-          `Maximum length is ${element.maxLength}`
+          `Maximum length is ${validation.maxLength}`
         );
       }
     }
     // Handle select elements
     else if (element instanceof HTMLSelectElement) {
-      if (element.required && !element.value) {
+      if (validation?.required && !element.value) {
         isValid = false;
         this.showValidationError(element, "This field is required");
       } else {
@@ -477,22 +531,25 @@ export class FormGenerator {
     });
 
     // Check all form elements
-    form.querySelectorAll("input, select, textarea").forEach((element) => {
-      const input = element as
+    this.currentPage?.components.forEach((component) => {
+      const element = form.querySelector(`#${component.id}`) as
         | HTMLInputElement
-        | HTMLSelectElement
-        | HTMLTextAreaElement;
-      if (!this.validateField(input, true)) {
+        | HTMLTextAreaElement
+        | HTMLSelectElement;
+      if (element && !this.validateField(element, component.validation, true)) {
         isValid = false;
-        invalidFields.push(input.name);
+        invalidFields.push(element.name);
       }
     });
 
     // Check radio groups
     form.querySelectorAll(".radio-group").forEach((group) => {
       const radioInputs = group.querySelectorAll('input[type="radio"]');
+      if (radioInputs.length === 0) return;
+
       const name = (radioInputs[0] as HTMLInputElement).name;
-      const isRequired = (radioInputs[0] as HTMLInputElement).required;
+      const component = this.currentPage?.components.find((c) => c.id === name);
+      const isRequired = component?.validation?.required ?? false;
       const hasChecked = Array.from(radioInputs).some(
         (input) => (input as HTMLInputElement).checked
       );
@@ -512,7 +569,10 @@ export class FormGenerator {
     // Check checkboxes
     form.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
       const input = checkbox as HTMLInputElement;
-      if (!this.validateField(input, true)) {
+      const component = this.currentPage?.components.find(
+        (c) => c.id === input.name
+      );
+      if (!this.validateField(input, component?.validation, true)) {
         isValid = false;
         invalidFields.push(input.name);
       }
