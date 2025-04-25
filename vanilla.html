@@ -15,6 +15,10 @@
       .page {
         max-width: 800px;
         margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
       .component {
         margin-bottom: 1rem;
@@ -22,6 +26,7 @@
       label {
         display: block;
         margin-bottom: 0.5rem;
+        font-weight: 500;
       }
       input,
       textarea,
@@ -30,6 +35,7 @@
         padding: 0.5rem;
         border: 1px solid #ccc;
         border-radius: 4px;
+        font-size: 1rem;
       }
       button {
         padding: 0.5rem 1rem;
@@ -38,9 +44,42 @@
         border: none;
         border-radius: 4px;
         cursor: pointer;
+        font-size: 1rem;
       }
       button:hover {
         background-color: #0056b3;
+      }
+      .back-button {
+        background-color: #6c757d;
+        margin-right: 1rem;
+      }
+      .back-button:hover {
+        background-color: #5a6268;
+      }
+      .radio-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .radio-option input[type="radio"] {
+        width: auto;
+      }
+      .progress-bar {
+        margin-bottom: 2rem;
+        height: 4px;
+        background-color: #eee;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .progress {
+        height: 100%;
+        background-color: #007bff;
+        transition: width 0.3s ease;
       }
     </style>
   </head>
@@ -49,13 +88,13 @@
     <script type="module">
       import { initFormGenerator } from "./src/vanilla/index.ts";
 
-      // Example schema
+      // Example schema with multi-step form and visibility conditions
       const schema = {
         app: {
-          title: "Example Form",
+          title: "Multi-step Form Example",
           pages: [
             {
-              id: "page1",
+              id: "personal-info",
               title: "Personal Information",
               route: "/personal",
               components: [
@@ -63,13 +102,13 @@
                   type: "text",
                   id: "intro",
                   props: {
-                    text: "Please fill out the form below",
+                    text: "Please provide your personal information",
                   },
                 },
                 {
                   type: "input",
                   id: "name",
-                  label: "Name",
+                  label: "Full Name",
                   validation: {
                     required: true,
                   },
@@ -85,6 +124,139 @@
                     required: true,
                     pattern:
                       "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                  },
+                },
+                {
+                  type: "button",
+                  id: "next",
+                  label: "Next",
+                  eventHandlers: {
+                    onClick: {
+                      type: "navigate",
+                      targetPage: "employment-info",
+                    },
+                  },
+                },
+              ],
+            },
+            {
+              id: "employment-info",
+              title: "Employment Information",
+              route: "/employment",
+              components: [
+                {
+                  type: "text",
+                  id: "employment-intro",
+                  props: {
+                    text: "Tell us about your employment",
+                  },
+                },
+                {
+                  type: "select",
+                  id: "employment-status",
+                  label: "Employment Status",
+                  props: {
+                    options: [
+                      { value: "employed", label: "Employed" },
+                      { value: "unemployed", label: "Unemployed" },
+                      { value: "student", label: "Student" },
+                    ],
+                  },
+                  validation: {
+                    required: true,
+                  },
+                },
+                {
+                  type: "input",
+                  id: "company",
+                  label: "Company Name",
+                  visibilityConditions: [
+                    {
+                      field: "employment-status",
+                      operator: "==",
+                      value: "employed",
+                    },
+                  ],
+                },
+                {
+                  type: "input",
+                  id: "school",
+                  label: "School Name",
+                  visibilityConditions: [
+                    {
+                      field: "employment-status",
+                      operator: "==",
+                      value: "student",
+                    },
+                  ],
+                },
+                {
+                  type: "button",
+                  id: "back",
+                  label: "Back",
+                  eventHandlers: {
+                    onClick: {
+                      type: "navigate",
+                      targetPage: "personal-info",
+                    },
+                  },
+                },
+                {
+                  type: "button",
+                  id: "next",
+                  label: "Next",
+                  eventHandlers: {
+                    onClick: {
+                      type: "navigate",
+                      targetPage: "preferences",
+                    },
+                  },
+                },
+              ],
+            },
+            {
+              id: "preferences",
+              title: "Preferences",
+              route: "/preferences",
+              components: [
+                {
+                  type: "text",
+                  id: "preferences-intro",
+                  props: {
+                    text: "Tell us about your preferences",
+                  },
+                },
+                {
+                  type: "radio",
+                  id: "newsletter",
+                  label: "Would you like to receive our newsletter?",
+                  props: {
+                    options: [
+                      { value: "yes", label: "Yes" },
+                      { value: "no", label: "No" },
+                    ],
+                  },
+                  validation: {
+                    required: true,
+                  },
+                },
+                {
+                  type: "checkbox",
+                  id: "terms",
+                  label: "I agree to the terms and conditions",
+                  validation: {
+                    required: true,
+                  },
+                },
+                {
+                  type: "button",
+                  id: "back",
+                  label: "Back",
+                  eventHandlers: {
+                    onClick: {
+                      type: "navigate",
+                      targetPage: "employment-info",
+                    },
                   },
                 },
                 {

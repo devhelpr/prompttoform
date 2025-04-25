@@ -5,6 +5,7 @@ export class FormGenerator {
   private container: HTMLElement;
   private currentPage: Page | null = null;
   private formData: Record<string, unknown> = {};
+  private pageHistory: string[] = [];
 
   constructor(schema: FormSchema, containerId: string) {
     this.schema = schema;
@@ -33,9 +34,20 @@ export class FormGenerator {
     }
 
     this.currentPage = page;
+    this.pageHistory.push(pageId);
     this.container.innerHTML = "";
     this.renderTitle();
     this.renderPage(page);
+  }
+
+  private goBack(): void {
+    if (this.pageHistory.length > 1) {
+      this.pageHistory.pop(); // Remove current page
+      const previousPageId = this.pageHistory.pop(); // Get previous page
+      if (previousPageId) {
+        this.navigateToPage(previousPageId);
+      }
+    }
   }
 
   private renderPage(page: Page): void {
@@ -46,12 +58,58 @@ export class FormGenerator {
     pageTitle.textContent = page.title;
     pageContainer.appendChild(pageTitle);
 
+    // Add back button if not on first page
+    if (this.pageHistory.length > 1) {
+      const backButton = document.createElement("button");
+      backButton.textContent = "Back";
+      backButton.className = "back-button";
+      backButton.addEventListener("click", () => this.goBack());
+      pageContainer.appendChild(backButton);
+    }
+
+    const form = document.createElement("form");
+    form.addEventListener("submit", (e) => e.preventDefault());
+
     page.components.forEach((component) => {
       const componentElement = this.renderComponent(component);
-      pageContainer.appendChild(componentElement);
+      if (this.isComponentVisible(component)) {
+        form.appendChild(componentElement);
+      }
     });
 
+    pageContainer.appendChild(form);
     this.container.appendChild(pageContainer);
+  }
+
+  private isComponentVisible(component: Component): boolean {
+    if (
+      !component.visibilityConditions ||
+      component.visibilityConditions.length === 0
+    ) {
+      return true;
+    }
+
+    return component.visibilityConditions.every((condition) => {
+      const fieldValue = this.formData[condition.field];
+      if (fieldValue === undefined) return false;
+
+      switch (condition.operator) {
+        case "==":
+          return fieldValue === condition.value;
+        case "!=":
+          return fieldValue !== condition.value;
+        case ">":
+          return Number(fieldValue) > Number(condition.value);
+        case "<":
+          return Number(fieldValue) < Number(condition.value);
+        case ">=":
+          return Number(fieldValue) >= Number(condition.value);
+        case "<=":
+          return Number(fieldValue) <= Number(condition.value);
+        default:
+          return true;
+      }
+    });
   }
 
   private renderComponent(component: Component): HTMLElement {
@@ -82,6 +140,12 @@ export class FormGenerator {
       case "text":
         element = this.createText(component);
         break;
+      case "radio":
+        element = this.createRadioGroup(component);
+        break;
+      case "checkbox":
+        element = this.createCheckbox(component);
+        break;
       default:
         element = document.createElement("div");
         element.textContent = `Unsupported component type: ${component.type}`;
@@ -106,6 +170,13 @@ export class FormGenerator {
       });
     }
 
+    // Add change listener to update formData
+    input.addEventListener("change", (e) => {
+      const target = e.target as HTMLInputElement;
+      this.formData[component.id] = target.value;
+      this.updateVisibility();
+    });
+
     return input;
   }
 
@@ -119,6 +190,13 @@ export class FormGenerator {
         textarea.setAttribute(key, value.toString());
       });
     }
+
+    // Add change listener to update formData
+    textarea.addEventListener("change", (e) => {
+      const target = e.target as HTMLTextAreaElement;
+      this.formData[component.id] = target.value;
+      this.updateVisibility();
+    });
 
     return textarea;
   }
@@ -139,6 +217,13 @@ export class FormGenerator {
       );
     }
 
+    // Add change listener to update formData
+    select.addEventListener("change", (e) => {
+      const target = e.target as HTMLSelectElement;
+      this.formData[component.id] = target.value;
+      this.updateVisibility();
+    });
+
     return select;
   }
 
@@ -158,6 +243,80 @@ export class FormGenerator {
     return text;
   }
 
+  private createRadioGroup(component: Component): HTMLDivElement {
+    const container = document.createElement("div");
+    container.className = "radio-group";
+
+    if (component.props?.options) {
+      component.props.options.forEach(
+        (option: { value: string; label: string }) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "radio-option";
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.id = `${component.id}-${option.value}`;
+          input.name = component.id;
+          input.value = option.value;
+
+          const label = document.createElement("label");
+          label.htmlFor = input.id;
+          label.textContent = option.label;
+
+          // Add change listener to update formData
+          input.addEventListener("change", (e) => {
+            const target = e.target as HTMLInputElement;
+            this.formData[component.id] = target.value;
+            this.updateVisibility();
+          });
+
+          wrapper.appendChild(input);
+          wrapper.appendChild(label);
+          container.appendChild(wrapper);
+        }
+      );
+    }
+
+    return container;
+  }
+
+  private createCheckbox(component: Component): HTMLInputElement {
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = component.id;
+    checkbox.name = component.id;
+
+    // Add change listener to update formData
+    checkbox.addEventListener("change", (e) => {
+      const target = e.target as HTMLInputElement;
+      this.formData[component.id] = target.checked;
+      this.updateVisibility();
+    });
+
+    return checkbox;
+  }
+
+  private updateVisibility(): void {
+    const page = this.currentPage;
+    if (!page) return;
+
+    const form = this.container.querySelector("form");
+    if (!form) return;
+
+    // Remove all components
+    while (form.firstChild) {
+      form.removeChild(form.firstChild);
+    }
+
+    // Re-render components with updated visibility
+    page.components.forEach((component) => {
+      const componentElement = this.renderComponent(component);
+      if (this.isComponentVisible(component)) {
+        form.appendChild(componentElement);
+      }
+    });
+  }
+
   private setupValidation(component: Component, element: HTMLElement): void {
     if (!component.validation) return;
 
@@ -174,7 +333,7 @@ export class FormGenerator {
       if (component.validation.maxLength) {
         element.maxLength = component.validation.maxLength;
       }
-      if (component.validation.pattern) {
+      if (component.validation.pattern && element instanceof HTMLInputElement) {
         element.pattern = component.validation.pattern;
       }
     }
@@ -184,19 +343,19 @@ export class FormGenerator {
     if (!component.eventHandlers) return;
 
     if (component.eventHandlers.onChange) {
-      element.addEventListener("change", (e) =>
-        this.handleEvent(component.eventHandlers!.onChange!, e)
+      element.addEventListener("change", () =>
+        this.handleEvent(component.eventHandlers!.onChange!)
       );
     }
 
     if (component.eventHandlers.onClick) {
-      element.addEventListener("click", (e) =>
-        this.handleEvent(component.eventHandlers!.onClick!, e)
+      element.addEventListener("click", () =>
+        this.handleEvent(component.eventHandlers!.onClick!)
       );
     }
   }
 
-  private async handleEvent(action: Action, event: Event): Promise<void> {
+  private async handleEvent(action: Action): Promise<void> {
     switch (action.type) {
       case "navigate":
         if (action.targetPage) {
