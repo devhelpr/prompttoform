@@ -54,6 +54,7 @@ export class FormGenerator {
   private renderPage(page: Page): void {
     this.container.innerHTML = "";
     this.clearValidationErrors();
+    this.touchedFields.clear(); // Clear touched fields when rendering a new page
 
     const pageContainer = document.createElement("div");
     pageContainer.className = `page ${page.layout || "vertical"}`;
@@ -413,6 +414,9 @@ export class FormGenerator {
       if (component.validation.pattern && element instanceof HTMLInputElement) {
         element.pattern = component.validation.pattern;
       }
+
+      // Clear any initial validation state
+      this.clearValidationError(element);
     }
   }
 
@@ -518,7 +522,7 @@ export class FormGenerator {
   private validateForm(): boolean {
     const form = this.container.querySelector("form");
     if (!form) return true;
-
+    console.log("validating form");
     let isValid = true;
     const invalidFields: string[] = [];
 
@@ -619,10 +623,8 @@ export class FormGenerator {
     switch (action.type) {
       case "navigate":
         if (action.targetPage) {
-          // Validate form before navigation
-          if (this.validateForm()) {
-            this.navigateToPage(action.targetPage);
-          }
+          // Don't validate on navigation, just navigate
+          this.navigateToPage(action.targetPage);
         }
         break;
       case "submit":
