@@ -421,7 +421,7 @@ export class FormGenerator {
 
         const label = document.createElement("label");
         label.className = "block text-sm font-medium text-gray-700 mb-1";
-        label.htmlFor = `${comp.id}-${index}`;
+        label.htmlFor = itemId;
         label.textContent = comp.label || "";
         if (comp.validation?.required) {
           const requiredSpan = document.createElement("span");
@@ -431,18 +431,49 @@ export class FormGenerator {
         }
         fieldContainer.appendChild(label);
 
-        const field = this.renderComponent({
-          ...comp,
-          id: `${comp.id}-${index}`,
-          props: {
-            ...comp.props,
-            required: comp.validation?.required,
-            value: item[comp.id],
-          },
-        });
-        if (field) {
-          fieldContainer.appendChild(field);
+        // Create input field directly instead of using renderComponent
+        let field: HTMLElement;
+        if (comp.type === "input") {
+          const input = document.createElement("input");
+          input.type = comp.props?.type || "text";
+          input.id = itemId;
+          input.name = itemId;
+          input.value = (item[comp.id] as string) || "";
+
+          if (comp.props) {
+            Object.entries(comp.props).forEach(([key, value]) => {
+              if (value !== undefined && value !== null && key !== "type") {
+                input.setAttribute(key, String(value));
+              }
+            });
+          }
+
+          // Add change listener to update formData
+          input.addEventListener("change", (e) => {
+            const target = e.target as HTMLInputElement;
+            item[comp.id] = target.value;
+            // Validate on change
+            if (comp.validation) {
+              this.validateField(input, comp.validation, true);
+            }
+          });
+
+          // Add blur listener for validation
+          input.addEventListener("blur", (e) => {
+            const target = e.target as HTMLInputElement;
+            if (comp.validation) {
+              this.validateField(target, comp.validation, true);
+            }
+          });
+
+          field = input;
+        } else {
+          // Handle other field types if needed
+          field = document.createElement("div");
+          field.textContent = `Unsupported field type: ${comp.type}`;
         }
+
+        fieldContainer.appendChild(field);
 
         // Add error message container
         const errorContainer = document.createElement("div");
@@ -733,13 +764,16 @@ export class FormGenerator {
                 this.validationErrors[itemId] = "This field is required";
               }
 
-              // Pattern validation
+              // Pattern validation for email and other patterns
               if (comp.validation?.pattern && value) {
                 try {
                   const regex = new RegExp(comp.validation.pattern);
                   if (!regex.test(String(value))) {
                     isValid = false;
-                    this.validationErrors[itemId] = "Invalid format";
+                    this.validationErrors[itemId] =
+                      comp.props?.type === "email"
+                        ? "Please enter a valid email address"
+                        : "Invalid format";
                   }
                 } catch {
                   console.error("Invalid pattern:", comp.validation.pattern);
@@ -819,6 +853,8 @@ export class FormGenerator {
       }
     });
 
+    // Update UI to show validation errors
+    this.updateValidationErrors();
     return isValid;
   }
 
