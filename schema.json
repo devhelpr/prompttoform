@@ -71,7 +71,8 @@
             "button",
             "table",
             "form",
-            "section"
+            "section",
+            "array"
           ]
         },
         "id": {
@@ -118,6 +119,12 @@
             },
             "pattern": {
               "type": "string"
+            },
+            "minItems": {
+              "type": "integer"
+            },
+            "maxItems": {
+              "type": "integer"
             }
           }
         },
@@ -140,9 +147,30 @@
         },
         "eventHandlers": {
           "$ref": "#/$defs/eventHandlers"
+        },
+        "arrayItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/arrayItem"
+          }
         }
       },
       "required": ["type", "id"]
+    },
+    "arrayItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        }
+      },
+      "required": ["id", "components"]
     },
     "eventHandlers": {
       "type": "object",
