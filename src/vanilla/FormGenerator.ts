@@ -423,7 +423,7 @@ export class FormGenerator {
         label.className = "block text-sm font-medium text-gray-700 mb-1";
         label.htmlFor = `${comp.id}-${index}`;
         label.textContent = comp.label || "";
-        if (comp.props?.required) {
+        if (comp.validation?.required) {
           const requiredSpan = document.createElement("span");
           requiredSpan.className = "text-red-500 ml-1";
           requiredSpan.textContent = "*";
@@ -436,7 +436,7 @@ export class FormGenerator {
           id: `${comp.id}-${index}`,
           props: {
             ...comp.props,
-            required: comp.props?.required,
+            required: comp.validation?.required,
             value: item[comp.id],
           },
         });
@@ -444,11 +444,17 @@ export class FormGenerator {
           fieldContainer.appendChild(field);
         }
 
+        // Add error message container
+        const errorContainer = document.createElement("div");
+        errorContainer.className = "validation-error-container";
+        fieldContainer.appendChild(errorContainer);
+
+        // Show existing error if any
         if (hasError) {
           const errorMessage = document.createElement("p");
-          errorMessage.className = "mt-1 text-sm text-red-500";
+          errorMessage.className = "validation-error text-red-500 text-sm mt-1";
           errorMessage.textContent = this.validationErrors[itemId];
-          fieldContainer.appendChild(errorMessage);
+          errorContainer.appendChild(errorMessage);
         }
 
         itemContent.appendChild(fieldContainer);
@@ -465,6 +471,8 @@ export class FormGenerator {
       const items = this.formData[component.id] as Record<string, unknown>[];
       items.splice(index, 1);
       this.updateArrayField(component);
+      // Revalidate after removal
+      this.validateForm();
     };
     itemContainer.appendChild(removeButton);
 
@@ -719,9 +727,47 @@ export class FormGenerator {
               const itemId = `${component.id}[${index}].${comp.id}`;
               const value = item[comp.id];
 
+              // Required validation
               if (comp.validation?.required && !value) {
                 isValid = false;
                 this.validationErrors[itemId] = "This field is required";
+              }
+
+              // Pattern validation
+              if (comp.validation?.pattern && value) {
+                try {
+                  const regex = new RegExp(comp.validation.pattern);
+                  if (!regex.test(String(value))) {
+                    isValid = false;
+                    this.validationErrors[itemId] = "Invalid format";
+                  }
+                } catch {
+                  console.error("Invalid pattern:", comp.validation.pattern);
+                }
+              }
+
+              // MinLength validation
+              if (
+                comp.validation?.minLength &&
+                value &&
+                String(value).length < comp.validation.minLength
+              ) {
+                isValid = false;
+                this.validationErrors[
+                  itemId
+                ] = `Minimum length is ${comp.validation.minLength}`;
+              }
+
+              // MaxLength validation
+              if (
+                comp.validation?.maxLength &&
+                value &&
+                String(value).length > comp.validation.maxLength
+              ) {
+                isValid = false;
+                this.validationErrors[
+                  itemId
+                ] = `Maximum length is ${comp.validation.maxLength}`;
               }
             });
           });
@@ -733,11 +779,46 @@ export class FormGenerator {
           isValid = false;
           this.validationErrors[component.id] = "This field is required";
         }
+
+        // Pattern validation for regular fields
+        if (component.validation?.pattern && value) {
+          try {
+            const regex = new RegExp(component.validation.pattern);
+            if (!regex.test(String(value))) {
+              isValid = false;
+              this.validationErrors[component.id] = "Invalid format";
+            }
+          } catch {
+            console.error("Invalid pattern:", component.validation.pattern);
+          }
+        }
+
+        // MinLength validation for regular fields
+        if (
+          component.validation?.minLength &&
+          value &&
+          String(value).length < component.validation.minLength
+        ) {
+          isValid = false;
+          this.validationErrors[
+            component.id
+          ] = `Minimum length is ${component.validation.minLength}`;
+        }
+
+        // MaxLength validation for regular fields
+        if (
+          component.validation?.maxLength &&
+          value &&
+          String(value).length > component.validation.maxLength
+        ) {
+          isValid = false;
+          this.validationErrors[
+            component.id
+          ] = `Maximum length is ${component.validation.maxLength}`;
+        }
       }
     });
 
-    // Update UI to show validation errors
-    this.updateValidationErrors();
     return isValid;
   }
 
@@ -752,10 +833,24 @@ export class FormGenerator {
       const escapedFieldId = fieldId.replace(/[[\].]/g, "\\$&");
       const field = this.container.querySelector(`#${escapedFieldId}`);
       if (field) {
+        // Add invalid class to the field
+        field.classList.add("invalid");
+
+        // Find or create error container
+        let errorContainer = field.parentElement?.querySelector(
+          ".validation-error-container"
+        );
+        if (!errorContainer) {
+          errorContainer = document.createElement("div");
+          errorContainer.className = "validation-error-container";
+          field.parentElement?.appendChild(errorContainer);
+        }
+
+        // Add error message
         const errorMessage = document.createElement("p");
         errorMessage.className = "validation-error text-red-500 text-sm mt-1";
         errorMessage.textContent = message;
-        field.parentElement?.appendChild(errorMessage);
+        errorContainer.appendChild(errorMessage);
       }
     });
   }
@@ -797,16 +892,42 @@ export class FormGenerator {
     switch (action.type) {
       case "navigate":
         if (action.targetPage) {
+          // Clear previous errors
+          this.clearValidationErrors();
+
           // Validate before navigation
           const isValid = this.validateForm();
-          if (isValid) {
-            this.navigateToPage(action.targetPage);
+          if (!isValid) {
+            // Show validation errors
+            this.updateValidationErrors();
+            // Scroll to first error
+            const firstError =
+              this.container.querySelector(".validation-error");
+            if (firstError) {
+              firstError.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
+            }
+            return;
           }
+          this.navigateToPage(action.targetPage);
         }
         break;
       case "submit":
+        // Clear previous errors
+        this.clearValidationErrors();
+
         if (this.validateForm()) {
           this.handleSubmit(action);
+        } else {
+          // Show validation errors
+          this.updateValidationErrors();
+          // Scroll to first error
+          const firstError = this.container.querySelector(".validation-error");
+          if (firstError) {
+            firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
         }
         break;
       case "apiRequest":
@@ -894,14 +1015,15 @@ export class FormGenerator {
   }
 
   private clearValidationErrors(): void {
-    this.touchedFields.clear();
-    const errors = this.container.querySelectorAll(".validation-error");
-    errors.forEach((error) => error.remove());
-    const invalidElements = this.container.querySelectorAll(".invalid");
-    invalidElements.forEach((element) => {
-      if (element instanceof HTMLElement) {
-        element.classList.remove("invalid");
-      }
-    });
+    // Clear validation errors object
+    this.validationErrors = {};
+
+    // Clear all error messages from the DOM
+    const errorMessages = this.container.querySelectorAll(".validation-error");
+    errorMessages.forEach((msg) => msg.remove());
+
+    // Clear invalid class from all fields
+    const invalidFields = this.container.querySelectorAll(".invalid");
+    invalidFields.forEach((field) => field.classList.remove("invalid"));
   }
 }
