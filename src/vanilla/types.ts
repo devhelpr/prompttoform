@@ -27,7 +27,8 @@ export interface Component {
     | "button"
     | "table"
     | "form"
-    | "section";
+    | "section"
+    | "array";
   id: string;
   label?: string;
   props?: Record<string, any>;
@@ -42,9 +43,12 @@ export interface Component {
     minLength?: number;
     maxLength?: number;
     pattern?: string;
+    minItems?: number;
+    maxItems?: number;
   };
   visibilityConditions?: VisibilityCondition[];
   eventHandlers?: EventHandlers;
+  arrayItems?: ArrayItem[];
 }
 
 export interface VisibilityCondition {
@@ -85,4 +89,9 @@ export interface Branch {
     value: string;
   };
   nextPage: string;
+}
+
+export interface ArrayItem {
+  id: string;
+  components: Component[];
 }

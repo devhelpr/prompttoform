@@ -164,6 +164,9 @@ export class FormGenerator {
       case "checkbox":
         element = this.createCheckbox(component);
         break;
+      case "array":
+        element = this.createArrayField(component);
+        break;
       default:
         element = document.createElement("div");
         element.textContent = `Unsupported component type: ${component.type}`;
@@ -345,6 +348,129 @@ export class FormGenerator {
     wrapper.appendChild(input);
     wrapper.appendChild(label);
     return wrapper;
+  }
+
+  private createArrayField(component: Component): HTMLDivElement {
+    const container = document.createElement("div");
+    container.className = "array-field";
+    container.id = component.id;
+
+    // Initialize array data if not exists
+    if (!this.formData[component.id]) {
+      this.formData[component.id] = [];
+    }
+
+    const items = this.formData[component.id] as Record<string, unknown>[];
+    const arrayItems = component.arrayItems || [];
+
+    // Render existing items
+    items.forEach((item, index) => {
+      const itemContainer = this.renderArrayItem(component, item, index);
+      container.appendChild(itemContainer);
+    });
+
+    // Add "Add Item" button
+    const addButton = document.createElement("button");
+    addButton.textContent = "Add Item";
+    addButton.className = "add-item-button";
+    addButton.addEventListener("click", () => {
+      const newItem: Record<string, unknown> = {};
+      arrayItems.forEach((arrayItem) => {
+        arrayItem.components.forEach((comp) => {
+          newItem[comp.id] = "";
+        });
+      });
+      items.push(newItem);
+      this.formData[component.id] = items;
+      this.updateArrayField(component);
+    });
+
+    container.appendChild(addButton);
+    return container;
+  }
+
+  private renderArrayItem(
+    component: Component,
+    item: Record<string, unknown>,
+    index: number
+  ): HTMLDivElement {
+    const itemContainer = document.createElement("div");
+    itemContainer.className = "array-item";
+    itemContainer.dataset.index = index.toString();
+
+    const arrayItems = component.arrayItems || [];
+    arrayItems.forEach((arrayItem) => {
+      arrayItem.components.forEach((comp) => {
+        const compWrapper = document.createElement("div");
+        compWrapper.className = "array-item-component";
+
+        if (comp.label) {
+          const label = document.createElement("label");
+          label.htmlFor = `${comp.id}-${index}`;
+          label.textContent = comp.label;
+          compWrapper.appendChild(label);
+        }
+
+        const element = this.renderComponent({
+          ...comp,
+          id: `${comp.id}-${index}`,
+          bindings: {
+            ...comp.bindings,
+            onChange: `updateArrayItem(${index}, ${comp.id})`,
+          },
+        });
+
+        if (element) {
+          compWrapper.appendChild(element);
+        }
+        itemContainer.appendChild(compWrapper);
+      });
+    });
+
+    // Add remove button
+    const removeButton = document.createElement("button");
+    removeButton.textContent = "Remove";
+    removeButton.className = "remove-item-button";
+    removeButton.addEventListener("click", () => {
+      const items = this.formData[component.id] as Record<string, unknown>[];
+      items.splice(index, 1);
+      this.formData[component.id] = items;
+      this.updateArrayField(component);
+    });
+
+    itemContainer.appendChild(removeButton);
+    return itemContainer;
+  }
+
+  private updateArrayField(component: Component): void {
+    const container = document.getElementById(component.id);
+    if (!container) return;
+
+    container.innerHTML = "";
+    const items = this.formData[component.id] as Record<string, unknown>[];
+
+    items.forEach((item, index) => {
+      const itemContainer = this.renderArrayItem(component, item, index);
+      container.appendChild(itemContainer);
+    });
+
+    // Add "Add Item" button
+    const addButton = document.createElement("button");
+    addButton.textContent = "Add Item";
+    addButton.className = "add-item-button";
+    addButton.addEventListener("click", () => {
+      const newItem: Record<string, unknown> = {};
+      component.arrayItems?.forEach((arrayItem) => {
+        arrayItem.components.forEach((comp) => {
+          newItem[comp.id] = "";
+        });
+      });
+      items.push(newItem);
+      this.formData[component.id] = items;
+      this.updateArrayField(component);
+    });
+
+    container.appendChild(addButton);
   }
 
   private updateVisibility(): void {
