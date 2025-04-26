@@ -489,8 +489,149 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         return;
       }
 
-      // Only validate input components
-      if (["input", "textarea", "select", "radio", "checkbox"].includes(type)) {
+      // Handle array validation
+      if (type === "array") {
+        const items = arrayItems[id] || [];
+        const itemCount = items.length;
+
+        // Validate minItems
+        if (typeof props.minItems === "number" && itemCount < props.minItems) {
+          newValidationErrors[id] = `Minimum ${props.minItems} items required`;
+          isValid = false;
+          return;
+        }
+
+        // Validate maxItems
+        if (typeof props.maxItems === "number" && itemCount > props.maxItems) {
+          newValidationErrors[id] = `Maximum ${props.maxItems} items allowed`;
+          isValid = false;
+          return;
+        }
+
+        // Validate each array item's components
+        items.forEach((item, index) => {
+          component.arrayItems?.[0]?.components.forEach((itemComponent) => {
+            const value = item[itemComponent.id];
+            const itemId = `${id}[${index}].${itemComponent.id}`;
+
+            // Required field validation
+            if (itemComponent.props?.required) {
+              if (value === undefined || value === null || value === "") {
+                newValidationErrors[itemId] = `This field is required`;
+                isValid = false;
+                return;
+              }
+            }
+
+            // Additional validation for non-empty values
+            if (value !== undefined && value !== null && value !== "") {
+              const stringValue = String(value);
+
+              // Email validation
+              if (itemComponent.props?.inputType === "email") {
+                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailPattern.test(stringValue)) {
+                  newValidationErrors[
+                    itemId
+                  ] = `Please enter a valid email address`;
+                  isValid = false;
+                  return;
+                }
+              }
+
+              // URL validation
+              if (itemComponent.props?.inputType === "url") {
+                try {
+                  new URL(stringValue);
+                } catch {
+                  newValidationErrors[itemId] = `Please enter a valid URL`;
+                  isValid = false;
+                  return;
+                }
+              }
+
+              // Min length validation
+              if (typeof itemComponent.props?.minLength === "number") {
+                if (stringValue.length < itemComponent.props.minLength) {
+                  newValidationErrors[
+                    itemId
+                  ] = `Minimum length is ${itemComponent.props.minLength} characters`;
+                  isValid = false;
+                  return;
+                }
+              }
+
+              // Max length validation
+              if (typeof itemComponent.props?.maxLength === "number") {
+                if (stringValue.length > itemComponent.props.maxLength) {
+                  newValidationErrors[
+                    itemId
+                  ] = `Maximum length is ${itemComponent.props.maxLength} characters`;
+                  isValid = false;
+                  return;
+                }
+              }
+
+              // Pattern validation
+              if (typeof itemComponent.props?.pattern === "string") {
+                try {
+                  const regex = new RegExp(itemComponent.props.pattern);
+                  if (!regex.test(stringValue)) {
+                    newValidationErrors[itemId] =
+                      typeof itemComponent.props.patternError === "string"
+                        ? itemComponent.props.patternError
+                        : `Invalid format`;
+                    isValid = false;
+                    return;
+                  }
+                } catch {
+                  console.error(
+                    `Invalid regex pattern for field ${itemId}:`,
+                    itemComponent.props.pattern
+                  );
+                }
+              }
+
+              // Number validation
+              if (itemComponent.props?.inputType === "number") {
+                const numValue = Number(value);
+
+                if (isNaN(numValue)) {
+                  newValidationErrors[itemId] = `Please enter a valid number`;
+                  isValid = false;
+                  return;
+                }
+
+                // Min value validation
+                if (typeof itemComponent.props?.min === "number") {
+                  if (numValue < itemComponent.props.min) {
+                    newValidationErrors[
+                      itemId
+                    ] = `Minimum value is ${itemComponent.props.min}`;
+                    isValid = false;
+                    return;
+                  }
+                }
+
+                // Max value validation
+                if (typeof itemComponent.props?.max === "number") {
+                  if (numValue > itemComponent.props.max) {
+                    newValidationErrors[
+                      itemId
+                    ] = `Maximum value is ${itemComponent.props.max}`;
+                    isValid = false;
+                    return;
+                  }
+                }
+              }
+            }
+          });
+        });
+      }
+      // Handle regular component validation
+      else if (
+        ["input", "textarea", "select", "radio", "checkbox"].includes(type)
+      ) {
         const value = formValues[id];
 
         // Required field validation
@@ -542,7 +683,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           }
 
           // Min length validation
-          if (props.minLength && typeof props.minLength === "number") {
+          if (typeof props.minLength === "number") {
             if (stringValue.length < props.minLength) {
               newValidationErrors[
                 id
@@ -553,7 +694,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           }
 
           // Max length validation
-          if (props.maxLength && typeof props.maxLength === "number") {
+          if (typeof props.maxLength === "number") {
             if (stringValue.length > props.maxLength) {
               newValidationErrors[
                 id
@@ -564,12 +705,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           }
 
           // Pattern validation
-          if (props.pattern && typeof props.pattern === "string") {
+          if (typeof props.pattern === "string") {
             try {
               const regex = new RegExp(props.pattern);
               if (!regex.test(stringValue)) {
                 newValidationErrors[id] =
-                  (props.patternError as string) || `Invalid format`;
+                  typeof props.patternError === "string"
+                    ? props.patternError
+                    : `Invalid format`;
                 isValid = false;
                 return;
               }
@@ -580,35 +723,33 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               );
             }
           }
-        }
 
-        // Number validation
-        if (type === "input" && props.inputType === "number") {
-          const numValue = Number(value);
+          // Number validation
+          if (type === "input" && props.inputType === "number") {
+            const numValue = Number(value);
 
-          if (isNaN(numValue)) {
-            newValidationErrors[id] = `Please enter a valid number`;
-            isValid = false;
-            return;
-          }
-
-          // Min value validation
-          if (props.min !== undefined && props.min !== null) {
-            const minValue = Number(props.min);
-            if (numValue < minValue) {
-              newValidationErrors[id] = `Minimum value is ${minValue}`;
+            if (isNaN(numValue)) {
+              newValidationErrors[id] = `Please enter a valid number`;
               isValid = false;
               return;
             }
-          }
 
-          // Max value validation
-          if (props.max !== undefined && props.max !== null) {
-            const maxValue = Number(props.max);
-            if (numValue > maxValue) {
-              newValidationErrors[id] = `Maximum value is ${maxValue}`;
-              isValid = false;
-              return;
+            // Min value validation
+            if (typeof props.min === "number") {
+              if (numValue < props.min) {
+                newValidationErrors[id] = `Minimum value is ${props.min}`;
+                isValid = false;
+                return;
+              }
+            }
+
+            // Max value validation
+            if (typeof props.max === "number") {
+              if (numValue > props.max) {
+                newValidationErrors[id] = `Maximum value is ${props.max}`;
+                isValid = false;
+                return;
+              }
             }
           }
         }

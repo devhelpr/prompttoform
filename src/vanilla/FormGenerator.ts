@@ -663,13 +663,70 @@ export class FormGenerator {
 
     // Check all form elements
     this.currentPage?.components.forEach((component) => {
-      const element = form.querySelector(`#${component.id}`) as
-        | HTMLInputElement
-        | HTMLTextAreaElement
-        | HTMLSelectElement;
-      if (element && !this.validateField(element, component.validation, true)) {
-        isValid = false;
-        invalidFields.push(element.name);
+      // Handle array validation
+      if (component.type === "array") {
+        const arrayContainer = form.querySelector(`#${component.id}`);
+        if (!arrayContainer) return;
+
+        const items = arrayContainer.querySelectorAll(".array-item");
+        const itemCount = items.length;
+
+        // Validate minItems
+        if (
+          component.validation?.minItems &&
+          itemCount < component.validation.minItems
+        ) {
+          isValid = false;
+          invalidFields.push(component.id);
+          this.showValidationError(
+            arrayContainer as HTMLElement,
+            `Minimum ${component.validation.minItems} items required`
+          );
+        }
+
+        // Validate maxItems
+        if (
+          component.validation?.maxItems &&
+          itemCount > component.validation.maxItems
+        ) {
+          isValid = false;
+          invalidFields.push(component.id);
+          this.showValidationError(
+            arrayContainer as HTMLElement,
+            `Maximum ${component.validation.maxItems} items allowed`
+          );
+        }
+
+        // Validate each array item's components
+        items.forEach((item, index) => {
+          component.arrayItems?.[0]?.components.forEach((itemComponent) => {
+            const element = item.querySelector(
+              `#${itemComponent.id}-${index}`
+            ) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+            if (
+              element &&
+              !this.validateField(element, itemComponent.validation, true)
+            ) {
+              isValid = false;
+              invalidFields.push(
+                `${component.id}[${index}].${itemComponent.id}`
+              );
+            }
+          });
+        });
+      } else {
+        // Handle regular component validation
+        const element = form.querySelector(`#${component.id}`) as
+          | HTMLInputElement
+          | HTMLTextAreaElement
+          | HTMLSelectElement;
+        if (
+          element &&
+          !this.validateField(element, component.validation, true)
+        ) {
+          isValid = false;
+          invalidFields.push(element.name);
+        }
       }
     });
 

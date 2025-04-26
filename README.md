@@ -48,6 +48,13 @@ imagine a simple health-check wizard asking questions and branching based on use
 
 ```
 
+Here's an example of a form with an array field:
+
+```
+create a simple form with an array field-type for maintaining a list of contacts
+
+```
+
 
 ## Features
 
