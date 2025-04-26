@@ -163,6 +163,39 @@
                   },
                 },
                 {
+                  type: "array",
+                  id: "contacts",
+                  label: "Contacts",
+                  validation: {
+                    minItems: 1,
+                    maxItems: 5,
+                  },
+                  arrayItems: [
+                    {
+                      id: "contact",
+                      components: [
+                        {
+                          type: "input",
+                          id: "name",
+                          label: "Name",
+                          validation: {
+                            required: true,
+                          },
+                        },
+                        {
+                          type: "input",
+                          id: "email",
+                          label: "Email",
+                          validation: {
+                            required: true,
+                            pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
                   type: "button",
                   id: "next",
                   label: "Next",
@@ -232,39 +265,7 @@
                     },
                   ],
                 },
-                {
-                  type: "array",
-                  id: "contacts",
-                  label: "Contacts",
-                  validation: {
-                    minItems: 1,
-                    maxItems: 5,
-                  },
-                  arrayItems: [
-                    {
-                      id: "contact",
-                      components: [
-                        {
-                          type: "input",
-                          id: "name",
-                          label: "Name",
-                          validation: {
-                            required: true,
-                          },
-                        },
-                        {
-                          type: "input",
-                          id: "email",
-                          label: "Email",
-                          validation: {
-                            required: true,
-                            pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
-                          },
-                        },
-                      ],
-                    },
-                  ],
-                },
+
                 {
                   type: "button",
                   id: "back",

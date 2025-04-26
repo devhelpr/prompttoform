@@ -7,6 +7,7 @@ export class FormGenerator {
   private formData: Record<string, unknown> = {};
   private pageHistory: string[] = [];
   private touchedFields: Set<string> = new Set();
+  private validationErrors: Record<string, string> = {};
 
   constructor(schema: FormSchema, containerId: string) {
     this.schema = schema;
@@ -199,7 +200,9 @@ export class FormGenerator {
 
     if (component.props) {
       Object.entries(component.props).forEach(([key, value]) => {
-        input.setAttribute(key, value.toString());
+        if (value !== undefined && value !== null) {
+          input.setAttribute(key, String(value));
+        }
       });
     }
 
@@ -393,52 +396,70 @@ export class FormGenerator {
     component: Component,
     item: Record<string, unknown>,
     index: number
-  ): HTMLDivElement {
+  ): HTMLElement {
     const itemContainer = document.createElement("div");
     itemContainer.className = "array-item";
-    itemContainer.dataset.index = index.toString();
 
-    const arrayItems = component.arrayItems || [];
-    arrayItems.forEach((arrayItem) => {
+    component.arrayItems?.forEach((arrayItem) => {
+      const itemContent = document.createElement("div");
+      itemContent.className = "array-item-content";
+
       arrayItem.components.forEach((comp) => {
-        const compWrapper = document.createElement("div");
-        compWrapper.className = "array-item-component";
+        const itemId = `${component.id}[${index}].${comp.id}`;
+        const hasError = !!this.validationErrors[itemId];
 
-        if (comp.label) {
-          const label = document.createElement("label");
-          label.htmlFor = `${comp.id}-${index}`;
-          label.textContent = comp.label;
-          compWrapper.appendChild(label);
+        const fieldContainer = document.createElement("div");
+        fieldContainer.className = "array-item-component";
+
+        const label = document.createElement("label");
+        label.className = "block text-sm font-medium text-gray-700 mb-1";
+        label.htmlFor = `${comp.id}-${index}`;
+        label.textContent = comp.label || "";
+        if (comp.props?.required) {
+          const requiredSpan = document.createElement("span");
+          requiredSpan.className = "text-red-500 ml-1";
+          requiredSpan.textContent = "*";
+          label.appendChild(requiredSpan);
         }
+        fieldContainer.appendChild(label);
 
-        const element = this.renderComponent({
+        const field = this.renderComponent({
           ...comp,
           id: `${comp.id}-${index}`,
-          bindings: {
-            ...comp.bindings,
-            onChange: `updateArrayItem(${index}, ${comp.id})`,
+          props: {
+            ...comp.props,
+            required: comp.props?.required,
+            value: item[comp.id],
           },
         });
-
-        if (element) {
-          compWrapper.appendChild(element);
+        if (field) {
+          fieldContainer.appendChild(field);
         }
-        itemContainer.appendChild(compWrapper);
+
+        if (hasError) {
+          const errorMessage = document.createElement("p");
+          errorMessage.className = "mt-1 text-sm text-red-500";
+          errorMessage.textContent = this.validationErrors[itemId];
+          fieldContainer.appendChild(errorMessage);
+        }
+
+        itemContent.appendChild(fieldContainer);
       });
+
+      itemContainer.appendChild(itemContent);
     });
 
-    // Add remove button
     const removeButton = document.createElement("button");
-    removeButton.textContent = "Remove";
+    removeButton.type = "button";
     removeButton.className = "remove-item-button";
-    removeButton.addEventListener("click", () => {
+    removeButton.textContent = "Remove";
+    removeButton.onclick = () => {
       const items = this.formData[component.id] as Record<string, unknown>[];
       items.splice(index, 1);
-      this.formData[component.id] = items;
       this.updateArrayField(component);
-    });
-
+    };
     itemContainer.appendChild(removeButton);
+
     return itemContainer;
   }
 

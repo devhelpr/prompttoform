@@ -1351,33 +1351,45 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           <div key={index} className="array-item">
             {component.arrayItems?.map((arrayItem) => (
               <div key={arrayItem.id} className="array-item-content">
-                {arrayItem.components.map((comp) => (
-                  <div key={comp.id} className="array-item-component">
-                    {renderComponent({
-                      ...comp,
-                      id: `${comp.id}-${index}`,
-                      defaultValue: item[comp.id],
-                      eventHandlers: {
-                        ...comp.eventHandlers,
-                        onChange: {
-                          type: "custom",
-                          params: { value: item[comp.id] },
+                {arrayItem.components.map((comp) => {
+                  const itemId = `${component.id}[${index}].${comp.id}`;
+                  const hasError = !!validationErrors[itemId];
+
+                  return (
+                    <div key={comp.id} className="array-item-component">
+                      <label
+                        htmlFor={`${comp.id}-${index}`}
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        {comp.label}
+                        {comp.props?.required && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </label>
+                      {renderComponent({
+                        ...comp,
+                        id: `${comp.id}-${index}`,
+                        defaultValue: item[comp.id],
+                        props: {
+                          ...comp.props,
+                          required: comp.props?.required,
                         },
-                      },
-                    })}
-                    <input
-                      type="hidden"
-                      value={JSON.stringify(item[comp.id])}
-                      onChange={(e) =>
-                        handleItemChange(
-                          index,
-                          comp.id,
-                          JSON.parse(e.target.value)
-                        )
-                      }
-                    />
-                  </div>
-                ))}
+                        eventHandlers: {
+                          ...comp.eventHandlers,
+                          onChange: {
+                            type: "custom",
+                            params: { value: item[comp.id] },
+                          },
+                        },
+                      })}
+                      {hasError && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {validationErrors[itemId]}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ))}
             <button
