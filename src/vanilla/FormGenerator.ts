@@ -603,10 +603,15 @@ export class FormGenerator {
       }
 
       if (validation?.pattern) {
-        const regex = new RegExp(validation.pattern);
-        if (!regex.test(element.value)) {
-          isValid = false;
-          this.showValidationError(element, "Invalid format");
+        try {
+          const regex = new RegExp(validation.pattern);
+          if (!regex.test(element.value)) {
+            isValid = false;
+            this.showValidationError(element, "Invalid format");
+          }
+        } catch {
+          console.error("Invalid pattern:", validation.pattern);
+          // Skip pattern validation if pattern is invalid
         }
       }
 
@@ -743,7 +748,9 @@ export class FormGenerator {
 
     // Add new error messages
     Object.entries(this.validationErrors).forEach(([fieldId, message]) => {
-      const field = this.container.querySelector(`#${fieldId}`);
+      // Handle array field IDs by escaping special characters
+      const escapedFieldId = fieldId.replace(/[[\].]/g, "\\$&");
+      const field = this.container.querySelector(`#${escapedFieldId}`);
       if (field) {
         const errorMessage = document.createElement("p");
         errorMessage.className = "validation-error text-red-500 text-sm mt-1";
