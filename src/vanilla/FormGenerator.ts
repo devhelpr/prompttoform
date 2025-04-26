@@ -35,6 +35,14 @@ export class FormGenerator {
       throw new Error(`Page with id "${pageId}" not found`);
     }
 
+    // Validate current page before navigation
+    if (this.currentPage) {
+      const isValid = this.validateForm();
+      if (!isValid) {
+        return; // Don't navigate if validation fails
+      }
+    }
+
     this.currentPage = page;
     this.pageHistory.push(pageId);
     this.container.innerHTML = "";
@@ -667,127 +675,82 @@ export class FormGenerator {
   }
 
   private validateForm(): boolean {
-    const form = this.container.querySelector("form");
-    if (!form) return true;
-    console.log("validating form");
+    if (!this.currentPage) return true;
+
     let isValid = true;
-    const invalidFields: string[] = [];
+    this.validationErrors = {}; // Clear previous errors
 
-    // Mark all fields as touched when validating the form
-    form.querySelectorAll("input, select, textarea").forEach((element) => {
-      const input = element as
-        | HTMLInputElement
-        | HTMLSelectElement
-        | HTMLTextAreaElement;
-      this.touchedFields.add(input.name);
-    });
-
-    // Check all form elements
-    this.currentPage?.components.forEach((component) => {
-      // Handle array validation
+    // Validate all components on the current page
+    this.currentPage.components.forEach((component) => {
       if (component.type === "array") {
-        const arrayContainer = form.querySelector(`#${component.id}`);
-        if (!arrayContainer) return;
+        // Validate array field
+        const items =
+          (this.formData[component.id] as Record<string, unknown>[]) || [];
 
-        const items = arrayContainer.querySelectorAll(".array-item");
-        const itemCount = items.length;
-
-        // Validate minItems
+        // Validate minItems and maxItems
         if (
           component.validation?.minItems &&
-          itemCount < component.validation.minItems
+          items.length < component.validation.minItems
         ) {
           isValid = false;
-          invalidFields.push(component.id);
-          this.showValidationError(
-            arrayContainer as HTMLElement,
-            `Minimum ${component.validation.minItems} items required`
-          );
+          this.validationErrors[
+            component.id
+          ] = `Minimum ${component.validation.minItems} items required`;
         }
-
-        // Validate maxItems
         if (
           component.validation?.maxItems &&
-          itemCount > component.validation.maxItems
+          items.length > component.validation.maxItems
         ) {
           isValid = false;
-          invalidFields.push(component.id);
-          this.showValidationError(
-            arrayContainer as HTMLElement,
-            `Maximum ${component.validation.maxItems} items allowed`
-          );
+          this.validationErrors[
+            component.id
+          ] = `Maximum ${component.validation.maxItems} items allowed`;
         }
 
         // Validate each array item's components
         items.forEach((item, index) => {
-          component.arrayItems?.[0]?.components.forEach((itemComponent) => {
-            const element = item.querySelector(
-              `#${itemComponent.id}-${index}`
-            ) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-            if (
-              element &&
-              !this.validateField(element, itemComponent.validation, true)
-            ) {
-              isValid = false;
-              invalidFields.push(
-                `${component.id}[${index}].${itemComponent.id}`
-              );
-            }
+          component.arrayItems?.forEach((arrayItem) => {
+            arrayItem.components.forEach((comp) => {
+              const itemId = `${component.id}[${index}].${comp.id}`;
+              const value = item[comp.id];
+
+              if (comp.validation?.required && !value) {
+                isValid = false;
+                this.validationErrors[itemId] = "This field is required";
+              }
+            });
           });
         });
       } else {
-        // Handle regular component validation
-        const element = form.querySelector(`#${component.id}`) as
-          | HTMLInputElement
-          | HTMLTextAreaElement
-          | HTMLSelectElement;
-        if (
-          element &&
-          !this.validateField(element, component.validation, true)
-        ) {
+        // Validate regular fields
+        const value = this.formData[component.id];
+        if (component.validation?.required && !value) {
           isValid = false;
-          invalidFields.push(element.name);
+          this.validationErrors[component.id] = "This field is required";
         }
       }
     });
 
-    // Check radio groups
-    form.querySelectorAll(".radio-group").forEach((group) => {
-      const radioInputs = group.querySelectorAll('input[type="radio"]');
-      if (radioInputs.length === 0) return;
-
-      const name = (radioInputs[0] as HTMLInputElement).name;
-      const component = this.currentPage?.components.find((c) => c.id === name);
-      const isRequired = component?.validation?.required ?? false;
-      const hasChecked = Array.from(radioInputs).some(
-        (input) => (input as HTMLInputElement).checked
-      );
-
-      if (isRequired && !hasChecked) {
-        isValid = false;
-        invalidFields.push(name);
-        this.showValidationError(
-          group as HTMLElement,
-          "Please select an option"
-        );
-      } else {
-        this.clearValidationError(group as HTMLElement);
-      }
-    });
-
-    // Check checkboxes
-    form.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
-      const input = checkbox as HTMLInputElement;
-      const component = this.currentPage?.components.find(
-        (c) => c.id === input.name
-      );
-      if (!this.validateField(input, component?.validation, true)) {
-        isValid = false;
-        invalidFields.push(input.name);
-      }
-    });
-
+    // Update UI to show validation errors
+    this.updateValidationErrors();
     return isValid;
+  }
+
+  private updateValidationErrors(): void {
+    // Clear all existing error messages
+    const errorMessages = this.container.querySelectorAll(".validation-error");
+    errorMessages.forEach((msg) => msg.remove());
+
+    // Add new error messages
+    Object.entries(this.validationErrors).forEach(([fieldId, message]) => {
+      const field = this.container.querySelector(`#${fieldId}`);
+      if (field) {
+        const errorMessage = document.createElement("p");
+        errorMessage.className = "validation-error text-red-500 text-sm mt-1";
+        errorMessage.textContent = message;
+        field.parentElement?.appendChild(errorMessage);
+      }
+    });
   }
 
   private showValidationError(element: HTMLElement, message: string): void {
@@ -827,8 +790,11 @@ export class FormGenerator {
     switch (action.type) {
       case "navigate":
         if (action.targetPage) {
-          // Don't validate on navigation, just navigate
-          this.navigateToPage(action.targetPage);
+          // Validate before navigation
+          const isValid = this.validateForm();
+          if (isValid) {
+            this.navigateToPage(action.targetPage);
+          }
         }
         break;
       case "submit":
