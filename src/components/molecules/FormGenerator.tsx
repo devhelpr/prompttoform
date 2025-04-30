@@ -136,8 +136,11 @@ export function FormGenerator() {
                         "id": "name",
                         "label": "Full Name",
                         "props": {
-                          "placeholder": "John Doe",
-                          "required": true
+                          "placeholder": "John Doe"
+                        },
+                        "validation": {
+                          "required": true,
+                          "minLength": 2
                         }
                       },
                       {
@@ -147,8 +150,11 @@ export function FormGenerator() {
                         "props": {
                           "inputType": "email",
                           "placeholder": "john.doe@example.com",
-                          "required": true,
                           "helperText": "We'll never share your email with anyone else."
+                        },
+                        "validation": {
+                          "required": true,
+                          "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
                         }
                       }
                     ]
@@ -163,7 +169,6 @@ export function FormGenerator() {
                         "id": "service-type",
                         "label": "Which service are you providing feedback for?",
                         "props": {
-                          "required": true,
                           "options": [
                             { "label": "Customer Support", "value": "support" },
                             { "label": "Product Quality", "value": "product" },
@@ -171,6 +176,9 @@ export function FormGenerator() {
                             { "label": "Billing & Payments", "value": "billing" },
                             { "label": "Other", "value": "other" }
                           ]
+                        },
+                        "validation": {
+                          "required": true
                         }
                       },
                       {
@@ -178,7 +186,6 @@ export function FormGenerator() {
                         "id": "satisfaction",
                         "label": "How satisfied are you with our service?",
                         "props": {
-                          "required": true,
                           "options": [
                             { "label": "Very Satisfied", "value": "5" },
                             { "label": "Satisfied", "value": "4" },
@@ -186,6 +193,9 @@ export function FormGenerator() {
                             { "label": "Dissatisfied", "value": "2" },
                             { "label": "Very Dissatisfied", "value": "1" }
                           ]
+                        },
+                        "validation": {
+                          "required": true
                         }
                       },
                       {
@@ -195,12 +205,19 @@ export function FormGenerator() {
                         "props": {
                           "placeholder": "Share your thoughts here...",
                           "rows": 4
+                        },
+                        "validation": {
+                          "minLength": 10,
+                          "maxLength": 500
                         }
                       },
                       {
                         "type": "checkbox",
                         "id": "contact-permission",
-                        "label": "You may contact me about my feedback"
+                        "label": "You may contact me about my feedback",
+                        "validation": {
+                          "required": true
+                        }
                       }
                     ]
                   }
@@ -247,8 +264,11 @@ export function FormGenerator() {
                     "id": "fullName",
                     "label": "Full Name",
                     "props": {
-                      "required": true,
                       "placeholder": "John Doe"
+                    },
+                    "validation": {
+                      "required": true,
+                      "minLength": 2
                     }
                   },
                   {
@@ -257,9 +277,12 @@ export function FormGenerator() {
                     "label": "Email Address",
                     "props": {
                       "inputType": "email",
-                      "required": true,
                       "placeholder": "john@example.com",
                       "helperText": "We'll send your order confirmation to this email"
+                    },
+                    "validation": {
+                      "required": true,
+                      "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
                     }
                   },
                   {
@@ -269,6 +292,9 @@ export function FormGenerator() {
                     "props": {
                       "inputType": "tel",
                       "placeholder": "(555) 555-5555"
+                    },
+                    "validation": {
+                      "pattern": "^\\+?[1-9]\\d{1,14}$"
                     }
                   },
                   {
@@ -276,11 +302,13 @@ export function FormGenerator() {
                     "id": "customerType",
                     "label": "Customer Type",
                     "props": {
-                      "required": true,
                       "options": [
                         { "label": "Individual", "value": "individual" },
                         { "label": "Business", "value": "business" }
                       ]
+                    },
+                    "validation": {
+                      "required": true
                     }
                   },
                   {
@@ -296,7 +324,11 @@ export function FormGenerator() {
                         "operator": "==",
                         "value": "business"
                       }
-                    ]
+                    ],
+                    "validation": {
+                      "required": true,
+                      "minLength": 2
+                    }
                   },
                   {
                     "type": "input",
@@ -311,7 +343,11 @@ export function FormGenerator() {
                         "operator": "==",
                         "value": "business"
                       }
-                    ]
+                    ],
+                    "validation": {
+                      "required": true,
+                      "pattern": "^[A-Z0-9]{8,12}$"
+                    }
                   }
                 ]
               }
@@ -340,12 +376,14 @@ export function FormGenerator() {
                     "id": "productCategory",
                     "label": "Product Category",
                     "props": {
-                      "required": true,
                       "options": [
                         { "label": "Electronics", "value": "electronics" },
                         { "label": "Furniture", "value": "furniture" },
                         { "label": "Clothing", "value": "clothing" }
                       ]
+                    },
+                    "validation": {
+                      "required": true
                     }
                   },
                   {
@@ -353,7 +391,6 @@ export function FormGenerator() {
                     "id": "electronicsProduct",
                     "label": "Select Electronics",
                     "props": {
-                      "required": true,
                       "options": [
                         { "label": "Smartphone", "value": "smartphone" },
                         { "label": "Laptop", "value": "laptop" },
@@ -367,14 +404,16 @@ export function FormGenerator() {
                         "operator": "==",
                         "value": "electronics"
                       }
-                    ]
+                    ],
+                    "validation": {
+                      "required": true
+                    }
                   },
                   {
                     "type": "select",
                     "id": "furnitureProduct",
                     "label": "Select Furniture",
                     "props": {
-                      "required": true,
                       "options": [
                         { "label": "Sofa", "value": "sofa" },
                         { "label": "Dining Table", "value": "dining_table" },
@@ -388,14 +427,16 @@ export function FormGenerator() {
                         "operator": "==",
                         "value": "furniture"
                       }
-                    ]
+                    ],
+                    "validation": {
+                      "required": true
+                    }
                   },
                   {
                     "type": "select",
                     "id": "clothingProduct",
                     "label": "Select Clothing",
                     "props": {
-                      "required": true,
                       "options": [
                         { "label": "T-Shirt", "value": "tshirt" },
                         { "label": "Jeans", "value": "jeans" },
@@ -409,7 +450,10 @@ export function FormGenerator() {
                         "operator": "==",
                         "value": "clothing"
                       }
-                    ]
+                    ],
+                    "validation": {
+                      "required": true
+                    }
                   },
                   {
                     "type": "input",
@@ -417,85 +461,13 @@ export function FormGenerator() {
                     "label": "Quantity",
                     "props": {
                       "inputType": "number",
-                      "required": true,
                       "placeholder": "1"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "delivery-info",
-            "title": "Delivery Information",
-            "route": "/order/delivery",
-            "layout": "vertical",
-            "components": [
-              {
-                "type": "text",
-                "id": "step3-intro",
-                "props": {
-                  "content": "Please provide your delivery details."
-                }
-              },
-              {
-                "type": "form",
-                "id": "delivery-form",
-                "label": "Delivery Details",
-                "children": [
-                  {
-                    "type": "radio",
-                    "id": "deliveryMethod",
-                    "label": "Delivery Method",
-                    "props": {
+                    },
+                    "validation": {
                       "required": true,
-                      "options": [
-                        { "label": "Standard Shipping (3-5 days)", "value": "standard" },
-                        { "label": "Express Shipping (1-2 days)", "value": "express" },
-                        { "label": "Same Day Delivery", "value": "same_day" }
-                      ]
+                      "min": 1,
+                      "max": 100
                     }
-                  },
-                  {
-                    "type": "input",
-                    "id": "address",
-                    "label": "Street Address",
-                    "props": {
-                      "required": true,
-                      "placeholder": "123 Main St"
-                    }
-                  },
-                  {
-                    "type": "input",
-                    "id": "city",
-                    "label": "City",
-                    "props": {
-                      "required": true,
-                      "placeholder": "New York"
-                    }
-                  },
-                  {
-                    "type": "input",
-                    "id": "state",
-                    "label": "State/Province",
-                    "props": {
-                      "required": true,
-                      "placeholder": "NY"
-                    }
-                  },
-                  {
-                    "type": "input",
-                    "id": "zipCode",
-                    "label": "ZIP / Postal Code",
-                    "props": {
-                      "required": true,
-                      "placeholder": "10001"
-                    }
-                  },
-                  {
-                    "type": "checkbox",
-                    "id": "sameAsBilling",
-                    "label": "Billing address same as delivery address"
                   }
                 ]
               }
@@ -509,7 +481,7 @@ export function FormGenerator() {
             "components": [
               {
                 "type": "text",
-                "id": "step4-intro",
+                "id": "step3-intro",
                 "props": {
                   "content": "Please provide your payment details to complete your order."
                 }
@@ -524,12 +496,14 @@ export function FormGenerator() {
                     "id": "paymentMethod",
                     "label": "Payment Method",
                     "props": {
-                      "required": true,
                       "options": [
                         { "label": "Credit Card", "value": "credit_card" },
                         { "label": "PayPal", "value": "paypal" },
                         { "label": "Bank Transfer", "value": "bank_transfer" }
                       ]
+                    },
+                    "validation": {
+                      "required": true
                     }
                   },
                   {
@@ -549,8 +523,11 @@ export function FormGenerator() {
                         "id": "cardNumber",
                         "label": "Card Number",
                         "props": {
-                          "required": true,
                           "placeholder": "XXXX XXXX XXXX XXXX"
+                        },
+                        "validation": {
+                          "required": true,
+                          "pattern": "^[0-9]{16}$"
                         }
                       },
                       {
@@ -558,8 +535,11 @@ export function FormGenerator() {
                         "id": "cardName",
                         "label": "Name on Card",
                         "props": {
-                          "required": true,
                           "placeholder": "John Doe"
+                        },
+                        "validation": {
+                          "required": true,
+                          "minLength": 2
                         }
                       },
                       {
@@ -567,8 +547,11 @@ export function FormGenerator() {
                         "id": "cardExpiry",
                         "label": "Expiration Date",
                         "props": {
-                          "required": true,
                           "placeholder": "MM/YY"
+                        },
+                        "validation": {
+                          "required": true,
+                          "pattern": "^(0[1-9]|1[0-2])\\/([0-9]{2})$"
                         }
                       },
                       {
@@ -576,8 +559,11 @@ export function FormGenerator() {
                         "id": "cardCVV",
                         "label": "CVV",
                         "props": {
-                          "required": true,
                           "placeholder": "123"
+                        },
+                        "validation": {
+                          "required": true,
+                          "pattern": "^[0-9]{3,4}$"
                         }
                       }
                     ]
@@ -600,8 +586,11 @@ export function FormGenerator() {
                         "label": "PayPal Email",
                         "props": {
                           "inputType": "email",
-                          "required": true,
                           "placeholder": "your-email@example.com"
+                        },
+                        "validation": {
+                          "required": true,
+                          "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
                         }
                       }
                     ]
@@ -623,8 +612,11 @@ export function FormGenerator() {
                         "id": "accountName",
                         "label": "Account Holder Name",
                         "props": {
-                          "required": true,
                           "placeholder": "John Doe"
+                        },
+                        "validation": {
+                          "required": true,
+                          "minLength": 2
                         }
                       },
                       {
@@ -632,8 +624,11 @@ export function FormGenerator() {
                         "id": "accountNumber",
                         "label": "Account Number",
                         "props": {
-                          "required": true,
                           "placeholder": "XXXXXXXX"
+                        },
+                        "validation": {
+                          "required": true,
+                          "pattern": "^[A-Z0-9]{8,12}$"
                         }
                       },
                       {
@@ -641,8 +636,11 @@ export function FormGenerator() {
                         "id": "bankName",
                         "label": "Bank Name",
                         "props": {
-                          "required": true,
                           "placeholder": "Bank of Example"
+                        },
+                        "validation": {
+                          "required": true,
+                          "minLength": 2
                         }
                       }
                     ]
@@ -651,7 +649,7 @@ export function FormGenerator() {
                     "type": "checkbox",
                     "id": "termsAgreed",
                     "label": "I agree to the terms and conditions",
-                    "props": {
+                    "validation": {
                       "required": true
                     }
                   }
