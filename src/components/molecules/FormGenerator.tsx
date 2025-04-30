@@ -6,6 +6,8 @@ import { Settings } from './Settings';
 import { evaluateAndRerunIfNeeded } from '../../services/prompt-eval';
 import { getCurrentAPIConfig } from '../../services/llm-api';
 import FormRenderer from './FormRenderer';
+import { getSystemPrompt } from '../../prompt-library/system-prompt';
+import schemaJson from '../../../schema.json';
 
 // Define the evaluation result type
 interface EvaluationResult {
@@ -20,20 +22,60 @@ interface EvaluationResult {
 // Define view modes
 type ViewMode = 'json' | 'form';
 
-// Import the schema
-import schemaJson from '../../../schema.json';
-import { getSystemPrompt } from '../../prompt-library/system-prompt';
-const uiSchema = schemaJson as UISchema;
+// Cast schema to unknown first, then to UISchema
+const uiSchema = schemaJson as unknown as UISchema;
 
 // Skip validation for now to avoid schema issues
 const skipValidation = true;
+
+// Define interface for visibility conditions
+interface VisibilityCondition {
+  field: string;
+  operator: "==" | "!=" | ">" | "<" | ">=" | "<=" | "equals" | "notEquals" | "greaterThan" | "lessThan";
+  value: string | number | boolean;
+}
+
+// Define interface for component properties
+interface ComponentProps {
+  type: "array" | "text" | "input" | "textarea" | "checkbox" | "radio" | "select" | "button" | "table" | "form" | "section" | "date";
+  id: string;
+  label?: string;
+  props?: Record<string, unknown>;
+  children?: ComponentProps[];
+  validation?: {
+    required?: boolean;
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string;
+    minItems?: number;
+    maxItems?: number;
+    minDate?: string;
+    maxDate?: string;
+  };
+  visibilityConditions?: VisibilityCondition[];
+  eventHandlers?: Record<string, unknown>;
+  arrayItems?: Array<{
+    id: string;
+    components: ComponentProps[];
+  }>;
+}
 
 // Define interface for JSON types
 interface UIJson {
   app: {
     title: string;
-    pages: any[];
-    dataSources?: any[];
+    pages: Array<{
+      id: string;
+      title: string;
+      route: string;
+      layout?: string;
+      components: ComponentProps[];
+      isEndPage?: boolean;
+    }>;
+    dataSources?: Array<{
+      type: string;
+      [key: string]: unknown;
+    }>;
   };
 }
 
@@ -47,6 +89,7 @@ export function FormGenerator() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [jsonError, setJsonError] = useState<string | null>(null);
 
   const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPrompt(e.target.value);
@@ -771,6 +814,46 @@ export function FormGenerator() {
     }
   };
 
+  const handleJsonChange = (newJson: string) => {
+    setGeneratedJson(newJson);
+    setJsonError(null);
+    
+    try {
+      const parsed = JSON.parse(newJson) as UIJson;
+      setParsedJson(parsed);
+    } catch (error) {
+      setJsonError('Invalid JSON format');
+      console.error('JSON parsing error:', error);
+    }
+  };
+
+  const validateAndUpdatePreview = () => {
+    if (!skipValidation) {
+      try {
+        const ajv = new Ajv2020({
+          allErrors: true,
+          strict: false,
+          validateSchema: false
+        });
+        
+        const validate = ajv.compile(uiSchema);
+        const valid = validate(parsedJson);
+        
+        if (!valid && validate.errors) {
+          setError(`Validation failed: ${ajv.errorsText(validate.errors)}`);
+          return;
+        }
+      } catch (validationErr) {
+        console.error("Schema validation error:", validationErr);
+        setError("Schema validation error occurred");
+        return;
+      }
+    }
+    
+    setError(null);
+    setViewMode('form');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -937,13 +1020,32 @@ export function FormGenerator() {
           </div>
 
           {viewMode === 'json' ? (
-            <pre className="bg-zinc-50 p-4 rounded-lg overflow-auto max-h-96 text-sm">
-              {generatedJson}
-            </pre>
-          ) : (
-            <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
-              <FormRenderer formJson={parsedJson} />
+            <div className="space-y-4">
+              <textarea
+                value={generatedJson}
+                onChange={(e) => handleJsonChange(e.target.value)}
+                className="w-full h-96 p-4 font-mono text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                spellCheck={false}
+              />
+              {jsonError && (
+                <div className="text-red-500 text-sm">{jsonError}</div>
+              )}
+              <div className="flex justify-end">
+                <button
+                  onClick={validateAndUpdatePreview}
+                  disabled={!!jsonError}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Update Preview
+                </button>
+              </div>
             </div>
+          ) : (
+            viewMode === 'form' && parsedJson && parsedJson.app && (
+              <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
+                <FormRenderer formJson={parsedJson} />
+              </div>
+            )
           )}
         </div>
       )}
