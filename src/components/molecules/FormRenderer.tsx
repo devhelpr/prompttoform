@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { HTMLInputTypeAttribute } from "react";
 
 interface ComponentProps {
   type: "array" | "text" | "input" | "textarea" | "checkbox" | "radio" | "select" | "button" | "table" | "form" | "section" | "date" | "html" | "decisionTree";
@@ -64,7 +65,6 @@ interface FormValues {
   [key: string]: unknown;
 }
 
-// Add interface for validation errors
 interface ValidationErrors {
   [key: string]: string[];
 }
@@ -92,30 +92,13 @@ interface VisibilityCondition {
   value: string | number | boolean;
 }
 
-// Define action type interface
 interface ActionType {
   type: string;
   params?: Record<string, unknown>;
   dataSource?: string;
   targetPage?: string;
   message?: string;
-  branches?: Branch[];
 }
-
-// Interface for branch definition with nextPage
-interface Branch {
-  condition: VisibilityCondition;
-  nextPage: string;
-}
-
-// Interface for branch definition with advice
-interface AdviceBranch {
-  conditions: VisibilityCondition[];
-  advice: string;
-}
-
-// Union type for different branch types
-type BranchTypes = Branch | AdviceBranch;
 
 interface ArrayItem {
   id: string;
@@ -124,214 +107,120 @@ interface ArrayItem {
 
 const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
-  const [formSubmissions, setFormSubmissions] = useState<
-    Record<string, FormValues>
-  >({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
-    {}
-  );
-  const [arrayItems, setArrayItems] = useState<
-    Record<string, Record<string, unknown>[]>
-  >({});
+  const [formSubmissions, setFormSubmissions] = useState<Record<string, FormValues>>({});
+  const [arrayItems, setArrayItems] = useState<Record<string, Record<string, unknown>[]>>({});
 
-  if (!formJson || !formJson.app) {
-    return <div className="p-4 text-red-500">Invalid form data</div>;
-  }
+  const validateComponent = useMemo(() => (
+    component: ComponentProps,
+    formData: Record<string, unknown>
+  ): string[] => {
+    const errors: string[] = [];
+    const value = formData[component.id];
+
+    if (component.validation?.required && !value) {
+      errors.push("This field is required");
+    }
+
+    if (value) {
+      if (component.type === "date") {
+        const dateValue = new Date(value as string);
+        if (isNaN(dateValue.getTime())) {
+          errors.push("Invalid date format");
+        }
+      } else if (["input", "textarea"].includes(component.type)) {
+        const stringValue = String(value);
+        if (component.validation?.minLength && stringValue.length < component.validation.minLength) {
+          errors.push(`Minimum length is ${component.validation.minLength} characters`);
+        }
+        if (component.validation?.maxLength && stringValue.length > component.validation.maxLength) {
+          errors.push(`Maximum length is ${component.validation.maxLength} characters`);
+        }
+        if (component.validation?.pattern && !new RegExp(component.validation.pattern).test(stringValue)) {
+          errors.push("Invalid format");
+        }
+      }
+    }
+
+    return errors;
+  }, []);
+
+  const validateForm = useCallback(() => {
+    if (!formJson || !formJson.app) return true;
+    
+    const currentPage = formJson.app.pages[currentStepIndex];
+    if (!currentPage || !currentPage.components) return true;
+
+    const newValidationErrors: ValidationErrors = {};
+    let isValid = true;
+
+    const validateComponents = (components: ComponentProps[]) => {
+      components.forEach((component) => {
+        if (isComponentVisible(component.visibilityConditions, formValues)) {
+          const errors = validateComponent(component, formValues);
+          if (errors.length > 0) {
+            newValidationErrors[component.id] = errors;
+            isValid = false;
+          }
+        }
+      });
+    };
+
+    validateComponents(currentPage.components);
+    setValidationErrors(newValidationErrors);
+    return isValid;
+  }, [formJson, currentStepIndex, formValues, validateComponent]);
+
+  useEffect(() => {
+    validateForm();
+  }, [validateForm]);
 
   const handleInputChange = (id: string, value: unknown) => {
-    // Update form values
     setFormValues((prev) => ({
       ...prev,
       [id]: value,
     }));
+  };
 
-    // Clear validation error for this field if there is one and the new value passes validation
-    if (validationErrors[id]) {
-      // Clone the current errors
-      const newValidationErrors = { ...validationErrors };
+  const handleFormSubmit = (formId: string) => {
+    if (!validateForm()) {
+      return;
+    }
 
-      // Check if the field is now valid
-      let isNowValid = true;
+    setFormSubmissions((prev) => ({
+      ...prev,
+      [formId]: formValues,
+    }));
 
-      // Find component by id
-      const findAndValidateComponent = (
-        components: ComponentProps[]
-      ): boolean => {
-        for (const component of components) {
-          if (component.id === id) {
-            const { type, props = {} } = component;
+    // Reset form values and validation errors
+    setFormValues({});
+    setValidationErrors({});
+    setCurrentStepIndex(0);
+  };
 
-            // Check if required and empty
-            if (props.required) {
-              // Special case for checkboxes: if required, value must be true
-              if (type === "checkbox") {
-                isNowValid = !!value;
-              }
-              // For other field types, check if empty
-              else if (value === undefined || value === null || value === "") {
-                isNowValid = false;
-              }
-              if (!isNowValid) return true; // Found and validation failed
-            }
-
-            // Additional validation for non-empty values
-            if (value !== undefined && value !== null && value !== "") {
-              // String validation for input and textarea
-              if (type === "input" || type === "textarea") {
-                const stringValue = String(value);
-
-                // Email validation (input only)
-                if (type === "input" && props.inputType === "email") {
-                  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                  isNowValid = emailPattern.test(stringValue);
-                  if (!isNowValid) return true;
-                }
-
-                // URL validation (input only)
-                if (type === "input" && props.inputType === "url") {
-                  try {
-                    new URL(stringValue);
-                  } catch {
-                    isNowValid = false;
-                    return true;
-                  }
-                }
-
-                // Min length validation
-                if (props.minLength && typeof props.minLength === "number") {
-                  isNowValid = stringValue.length >= props.minLength;
-                  if (!isNowValid) return true;
-                }
-
-                // Max length validation
-                if (props.maxLength && typeof props.maxLength === "number") {
-                  isNowValid = stringValue.length <= props.maxLength;
-                  if (!isNowValid) return true;
-                }
-
-                // Pattern validation (primarily for input)
-                if (props.pattern && typeof props.pattern === "string") {
-                  try {
-                    const regex = new RegExp(props.pattern);
-                    isNowValid = regex.test(stringValue);
-                    if (!isNowValid) return true;
-                  } catch {
-                    // Invalid regex, skip this validation
-                  }
-                }
-
-                // Number validation (input only)
-                if (type === "input" && props.inputType === "number") {
-                  const numValue = Number(value);
-
-                  isNowValid = !isNaN(numValue);
-                  if (!isNowValid) return true;
-
-                  // Min value validation
-                  if (props.min !== undefined && props.min !== null) {
-                    isNowValid = numValue >= Number(props.min);
-                    if (!isNowValid) return true;
-                  }
-
-                  // Max value validation
-                  if (props.max !== undefined && props.max !== null) {
-                    isNowValid = numValue <= Number(props.max);
-                    if (!isNowValid) return true;
-                  }
-                }
-
-                // Date validation
-                if (type === "date") {
-                  const dateValue = new Date(value as string);
-                  isNowValid = !isNaN(dateValue.getTime());
-                  if (!isNowValid) return true;
-
-                  // Min date validation
-                  if (typeof props.minDate === 'string') {
-                    const minDate = new Date(props.minDate);
-                    isNowValid = dateValue >= minDate;
-                    if (!isNowValid) return true;
-                  }
-
-                  // Max date validation
-                  if (typeof props.maxDate === 'string') {
-                    const maxDate = new Date(props.maxDate);
-                    isNowValid = dateValue <= maxDate;
-                    if (!isNowValid) return true;
-                  }
-                }
-              }
-
-              // For select fields, just having a value is valid
-              else if (type === "select") {
-                // If we got here, the value is not empty, so it's valid
-                isNowValid = true;
-              }
-
-              // For radio fields, just having a value is valid
-              else if (type === "radio") {
-                // If we got here, the value is not empty, so it's valid
-                isNowValid = true;
-              }
-
-              // For checkbox fields, check if required and selected
-              else if (type === "checkbox") {
-                // For checkboxes, the value should be true if required
-                isNowValid = !props.required || !!value;
-              }
-            }
-
-            return true; // Found and validated
-          }
-
-          // Recursively check children components
-          if (
-            Array.isArray(component.children) &&
-            component.children.length > 0
-          ) {
-            const found = findAndValidateComponent(component.children);
-            if (found) return true;
-          }
-        }
-
-        return false; // Component not found
-      };
-
-      // Check all components on the current page
+  const handleNext = () => {
+    if (validateForm()) {
+      const totalSteps = formJson.app.pages?.length || 0;
       const currentPage = formJson.app.pages[currentStepIndex];
-      if (currentPage && currentPage.components) {
-        findAndValidateComponent(currentPage.components);
 
-        // If the field is now valid, remove the error
-        if (isNowValid) {
-          delete newValidationErrors[id];
-          setValidationErrors(newValidationErrors);
-        }
+      if (currentPage && currentPage.isEndPage === true) {
+        handleFormSubmit("multistep-form");
+        return;
+      }
+
+      if (currentStepIndex < totalSteps - 1) {
+        setCurrentStepIndex((prev) => prev + 1);
+      } else {
+        handleFormSubmit("multistep-form");
       }
     }
   };
 
-  const handleFormSubmit = (formId: string) => {
-    // Validate the current page before submission
-    if (!validateCurrentPage()) {
-      // If validation fails, stop here and don't submit
-      return;
+  const handlePrevious = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex((prev) => prev - 1);
     }
-
-    console.log(`Form ${formId} submitted:`, formValues);
-
-    // Store the submission
-    setFormSubmissions((prev) => ({
-      ...prev,
-      [formId]: { ...formValues },
-    }));
-
-    // Clear validation errors after successful submission
-    setValidationErrors({});
-
-    // Show an alert
-    alert(`Form "${formId}" submitted successfully!`);
   };
 
   const handleReset = () => {
@@ -352,8 +241,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   };
 
   const isComponentVisible = (
-    visibilityConditions?: VisibilityCondition[],
-    formData: Record<string, any>
+    visibilityConditions: VisibilityCondition[] | undefined,
+    formData: Record<string, unknown>
   ): boolean => {
     if (!visibilityConditions || visibilityConditions.length === 0) return true;
 
@@ -382,262 +271,6 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           return true;
       }
     });
-  };
-
-  // Find the index of a page by its ID
-  const findPageIndexById = (pageId: string): number => {
-    if (!formJson.app.pages) return -1;
-    return formJson.app.pages.findIndex((page) => page.id === pageId);
-  };
-
-  // Check current page for decision tree branching
-  const checkForBranching = (): number | null => {
-    try {
-      const currentPage = formJson.app.pages[currentStepIndex];
-      if (!currentPage || !currentPage.components) return null;
-
-      // Look for components with event handlers that have navigate actions with branches
-      for (const component of currentPage.components) {
-        if (component.eventHandlers) {
-          const handlers = component.eventHandlers;
-
-          // Check all possible event handlers
-          for (const handlerKey of [
-            "onClick",
-            "onSubmit",
-            "onChange",
-          ] as const) {
-            const handler = handlers[handlerKey];
-            if (handler && handler.type === "navigate") {
-              // Initialize with default targetPage if specified
-              let targetPageIndex: number | null = null;
-
-              if (handler.targetPage) {
-                targetPageIndex = findPageIndexById(handler.targetPage);
-              }
-
-              // If there are branches, try to find a matching condition
-              if (Array.isArray(handler.branches)) {
-                let branchMatched = false;
-
-                // Evaluate each branch
-                for (const branch of handler.branches) {
-                  try {
-                    if ("condition" in branch && "nextPage" in branch) {
-                      if (isComponentVisible([branch.condition], formValues)) {
-                        // We found a matching condition, return the target page index
-                        const branchTargetIndex = findPageIndexById(
-                          branch.nextPage
-                        );
-                        if (branchTargetIndex !== -1) {
-                          return branchTargetIndex;
-                        }
-                        branchMatched = true;
-                      }
-                    }
-                  } catch (branchError) {
-                    console.error(
-                      "Error evaluating branch:",
-                      branch,
-                      branchError
-                    );
-                  }
-                }
-
-                // No branches matched but we have a default targetPage
-                if (
-                  !branchMatched &&
-                  targetPageIndex !== null &&
-                  targetPageIndex !== -1
-                ) {
-                  return targetPageIndex;
-                }
-              } else if (targetPageIndex !== null && targetPageIndex !== -1) {
-                // No branches, but we have a targetPage
-                return targetPageIndex;
-              }
-            }
-          }
-        }
-
-        // For backward compatibility, also check if this component has branches property
-        if (component.props && Array.isArray(component.props.branches)) {
-          const branches = component.props.branches as BranchTypes[];
-
-          // Evaluate each branch
-          for (const branch of branches) {
-            try {
-              // Handle traditional branch with single condition and nextPage
-              if ("condition" in branch && "nextPage" in branch) {
-                if (isComponentVisible([branch.condition], formValues)) {
-                  // We found a matching condition, return the target page index
-                  const targetPageIndex = findPageIndexById(branch.nextPage);
-                  if (targetPageIndex !== -1) {
-                    return targetPageIndex;
-                  }
-                }
-              }
-              // Handle new branch format with multiple conditions and advice
-              else if ("conditions" in branch && "advice" in branch) {
-                // Check if all conditions are met
-                const allConditionsMet = branch.conditions.every(
-                  (condition: VisibilityCondition) => {
-                    if (!condition || typeof condition.field !== "string")
-                      return false;
-                    return isComponentVisible([condition], formValues);
-                  }
-                );
-
-                if (allConditionsMet && typeof branch.advice === "string") {
-                  // If all conditions are met, set the advice in form values
-                  handleInputChange("adviceText", branch.advice);
-                  // Don't navigate to another page, just stay on the current page
-                  return currentStepIndex;
-                }
-              }
-            } catch (branchError) {
-              console.error("Error evaluating branch:", branch, branchError);
-            }
-          }
-        }
-      }
-
-      return null; // No branching found or no conditions matched
-    } catch (error) {
-      console.error("Error in checkForBranching:", error);
-      return null;
-    }
-  };
-
-  // Validate current page's fields
-  const validateCurrentPage = (): boolean => {
-    const currentPage = formJson.app.pages[currentStepIndex];
-    if (!currentPage || !currentPage.components) return true;
-
-    const newValidationErrors: ValidationErrors = {};
-    let isValid = true;
-
-    // Recursively check all components and their children
-    const validateComponent = (
-      component: ComponentProps,
-      formData: Record<string, unknown>,
-      errors: ValidationErrors
-    ): boolean => {
-      const { id, type, props, validation, visibilityConditions } = component;
-
-      // Skip validation if component is not visible
-      if (visibilityConditions && !isComponentVisible(visibilityConditions, formData)) {
-        return true;
-      }
-
-      const value = formData[id];
-      const componentErrors: string[] = [];
-
-      if (validation) {
-        if (validation.required && !value) {
-          componentErrors.push("This field is required");
-        }
-
-        if (value) {
-          if (type === "array") {
-            if (validation.minItems && Array.isArray(value) && value.length < validation.minItems) {
-              componentErrors.push(`Minimum ${validation.minItems} items required`);
-            }
-            if (validation.maxItems && Array.isArray(value) && value.length > validation.maxItems) {
-              componentErrors.push(`Maximum ${validation.maxItems} items allowed`);
-            }
-          } else if (type === "date") {
-            const dateValue = new Date(value as string);
-            if (validation.min && dateValue < new Date(validation.min)) {
-              componentErrors.push(`Date must be after ${validation.min}`);
-            }
-            if (validation.max && dateValue > new Date(validation.max)) {
-              componentErrors.push(`Date must be before ${validation.max}`);
-            }
-          } else if (type === "input" && props?.type === "number") {
-            const numValue = Number(value);
-            if (validation.min !== undefined && numValue < validation.min) {
-              componentErrors.push(`Value must be at least ${validation.min}`);
-            }
-            if (validation.max !== undefined && numValue > validation.max) {
-              componentErrors.push(`Value must be at most ${validation.max}`);
-            }
-          } else if (type === "input" || type === "textarea") {
-            const stringValue = String(value);
-            if (validation.minLength && stringValue.length < validation.minLength) {
-              componentErrors.push(`Minimum ${validation.minLength} characters required`);
-            }
-            if (validation.maxLength && stringValue.length > validation.maxLength) {
-              componentErrors.push(`Maximum ${validation.maxLength} characters allowed`);
-            }
-            if (validation.pattern && !new RegExp(validation.pattern).test(stringValue)) {
-              componentErrors.push("Invalid format");
-            }
-          }
-        }
-      }
-
-      if (componentErrors.length > 0) {
-        errors[id] = componentErrors;
-        return false;
-      }
-
-      return true;
-    };
-
-    // Validate all components on the current page
-    currentPage.components.forEach((component) => {
-      isValid = validateComponent(component, formValues, newValidationErrors) && isValid;
-    });
-
-    // Update validation errors state
-    setValidationErrors(newValidationErrors);
-    return isValid;
-  };
-
-  const handleNext = () => {
-    const totalSteps = formJson.app.pages?.length || 0;
-    const currentPage = formJson.app.pages[currentStepIndex];
-
-    // Validate the current page before navigation
-    if (!validateCurrentPage()) {
-      // If validation fails, stop here and don't navigate
-      return;
-    }
-
-    // Clear validation errors when successfully navigating
-    setValidationErrors({});
-
-    // Check if current page is marked as an end page
-    if (currentPage && currentPage.isEndPage === true) {
-      // Handle final submission on end pages
-      const formId = "multistep-form";
-      handleFormSubmit(formId);
-      return;
-    }
-
-    // Check for branching logic first
-    const branchTargetIndex = checkForBranching();
-
-    if (branchTargetIndex !== null) {
-      // If we found a branch condition that matches, navigate to that page
-      setCurrentStepIndex(branchTargetIndex);
-    } else if (currentStepIndex < totalSteps - 1) {
-      // No branching or no conditions matched, just go to the next page
-      setCurrentStepIndex(currentStepIndex + 1);
-    } else {
-      // Handle final submission
-      const formId = "multistep-form";
-      handleFormSubmit(formId);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStepIndex > 0) {
-      // Clear validation errors when navigating to previous page
-      setValidationErrors({});
-      setCurrentStepIndex(currentStepIndex - 1);
-    }
   };
 
   const getCurrentStep = (): { currentStep: number; totalSteps: number } => {
@@ -761,7 +394,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             </label>
             <input
               id={id}
-              type={props?.type || "text"}
+              type={(props?.type as HTMLInputTypeAttribute) || "text"}
               className={`w-full p-2 border ${
                 hasError ? "border-red-500" : "border-gray-300"
               } rounded-md`}
@@ -1005,9 +638,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         );
 
       case "button":
-        // Skip buttons with default "Button" label
         if (typeof props?.label !== "string" || props.label === "Button") {
-          return null;
+          return <></>;
         }
 
         return (
@@ -1120,25 +752,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         );
 
       case "decisionTree":
-        // This case is kept for backward compatibility
-        // Check if we have advice generated from this decision tree
-        if (
-          typeof formValues.adviceText === "string" &&
-          formValues.adviceText.trim() !== ""
-        ) {
-          return (
-            <div className="mb-6 p-4 border border-gray-100 rounded-md bg-indigo-50">
-              <h3 className="text-lg font-medium mb-2 text-indigo-700">
-                Your Health Advice
-              </h3>
-              <p className="text-gray-700">{formValues.adviceText}</p>
-            </div>
-          );
-        }
         console.warn(
           "'decisionTree' component type is deprecated. Use actions with branches instead."
         );
-        return null;
+        return <></>;
 
       case "array":
         return renderArrayField(component);
@@ -1261,39 +878,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     );
   };
 
-  const validateComponent = (
-    component: ComponentProps,
-    formData: Record<string, unknown>
-  ): string[] => {
-    const errors: string[] = [];
-    const value = formData[component.id];
-
-    if (component.validation?.required && !value) {
-      errors.push("This field is required");
-    }
-
-    if (value) {
-      if (component.type === "date") {
-        const dateValue = new Date(value as string);
-        if (isNaN(dateValue.getTime())) {
-          errors.push("Invalid date format");
-        }
-      } else if (component.type === "input" || component.type === "textarea") {
-        const stringValue = String(value);
-        if (component.validation?.minLength && stringValue.length < component.validation.minLength) {
-          errors.push(`Minimum length is ${component.validation.minLength} characters`);
-        }
-        if (component.validation?.maxLength && stringValue.length > component.validation.maxLength) {
-          errors.push(`Maximum length is ${component.validation.maxLength} characters`);
-        }
-        if (component.validation?.pattern && !new RegExp(component.validation.pattern).test(stringValue)) {
-          errors.push("Invalid format");
-        }
-      }
-    }
-
-    return errors;
-  };
+  if (!formJson || !formJson.app) {
+    return <div className="p-4 text-red-500">Invalid form data</div>;
+  }
 
   return (
     <div className="w-full">
