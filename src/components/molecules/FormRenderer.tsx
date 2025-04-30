@@ -66,7 +66,7 @@ interface FormValues {
 
 // Add interface for validation errors
 interface ValidationErrors {
-  [key: string]: string;
+  [key: string]: string[];
 }
 
 type Option =
@@ -520,8 +520,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     // Recursively check all components and their children
     const validateComponent = (
       component: ComponentProps,
-      formData: Record<string, any>,
-      errors: Record<string, string[]>
+      formData: Record<string, unknown>,
+      errors: ValidationErrors
     ): boolean => {
       const { id, type, props, validation, visibilityConditions } = component;
 
@@ -540,14 +540,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
         if (value) {
           if (type === "array") {
-            if (validation.minItems && value.length < validation.minItems) {
+            if (validation.minItems && Array.isArray(value) && value.length < validation.minItems) {
               componentErrors.push(`Minimum ${validation.minItems} items required`);
             }
-            if (validation.maxItems && value.length > validation.maxItems) {
+            if (validation.maxItems && Array.isArray(value) && value.length > validation.maxItems) {
               componentErrors.push(`Maximum ${validation.maxItems} items allowed`);
             }
           } else if (type === "date") {
-            const dateValue = new Date(value);
+            const dateValue = new Date(value as string);
             if (validation.min && dateValue < new Date(validation.min)) {
               componentErrors.push(`Date must be after ${validation.min}`);
             }
@@ -563,13 +563,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               componentErrors.push(`Value must be at most ${validation.max}`);
             }
           } else if (type === "input" || type === "textarea") {
-            if (validation.minLength && value.length < validation.minLength) {
+            const stringValue = String(value);
+            if (validation.minLength && stringValue.length < validation.minLength) {
               componentErrors.push(`Minimum ${validation.minLength} characters required`);
             }
-            if (validation.maxLength && value.length > validation.maxLength) {
+            if (validation.maxLength && stringValue.length > validation.maxLength) {
               componentErrors.push(`Maximum ${validation.maxLength} characters allowed`);
             }
-            if (validation.pattern && !new RegExp(validation.pattern).test(value)) {
+            if (validation.pattern && !new RegExp(validation.pattern).test(stringValue)) {
               componentErrors.push("Invalid format");
             }
           }
@@ -743,43 +744,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   // Display form submissions if any exist
   const hasSubmissions = Object.keys(formSubmissions).length > 0;
 
-  const renderComponent = (
-    component: ComponentProps
-  ): React.ReactElement | null => {
-    if (!component) return null;
-
-    const { type, id, label, props = {}, validation, visibilityConditions } = component;
-
-    // Check visibility based on conditions
-    if (!isComponentVisible(visibilityConditions, formValues)) {
-      return null;
-    }
-
-    // Check if component has a validation error
-    const hasError = !!validationErrors[id];
+  const renderComponent = (component: ComponentProps): React.ReactElement => {
+    const { id, type, label, props, validation } = component;
+    const hasError = validationErrors[id]?.length > 0;
 
     switch (type) {
-      case "text":
-        return (
-          <div className="mb-4">
-            {typeof label === "string" && label !== "" && (
-              <h4 className="text-base font-medium text-gray-800 mb-1">
-                {label}
-              </h4>
-            )}
-            <p className="text-gray-700">
-              {/* If this is the advice text component and we have advice in formValues, use that */}
-              {id === "adviceText" && typeof formValues.adviceText === "string"
-                ? formValues.adviceText
-                : typeof props.text === "string"
-                ? props.text
-                : typeof props.content === "string"
-                ? props.content
-                : ""}
-            </p>
-          </div>
-        );
-
       case "input":
         return (
           <div className="mb-4">
@@ -792,27 +761,24 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             </label>
             <input
               id={id}
-              type={(props.inputType as React.HTMLInputTypeAttribute) || "text"}
+              type={props?.type || "text"}
               className={`w-full p-2 border ${
                 hasError ? "border-red-500" : "border-gray-300"
               } rounded-md`}
-              placeholder={
-                typeof props.placeholder === "string" ? props.placeholder : ""
-              }
-              value={
-                typeof formValues[id] === "string"
-                  ? (formValues[id] as string)
-                  : ""
-              }
+              value={typeof formValues[id] === "string" ? (formValues[id] as string) : ""}
               onChange={(e) => handleInputChange(id, e.target.value)}
               required={!!validation?.required}
+              min={props?.type === "number" ? props.min : undefined}
+              max={props?.type === "number" ? props.max : undefined}
             />
             {hasError && (
-              <p className="mt-1 text-sm text-red-500">
-                {validationErrors[id]}
-              </p>
+              <div className="mt-1 text-sm text-red-500">
+                {validationErrors[id].map((error, index) => (
+                  <p key={index}>{error}</p>
+                ))}
+              </div>
             )}
-            {typeof props.helperText === "string" && !hasError && (
+            {typeof props?.helperText === "string" && !hasError && (
               <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
             )}
           </div>
@@ -833,68 +799,33 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               className={`w-full p-2 border ${
                 hasError ? "border-red-500" : "border-gray-300"
               } rounded-md`}
-              placeholder={
-                typeof props.placeholder === "string" ? props.placeholder : ""
-              }
-              rows={Number(props.rows) || 3}
-              value={
-                typeof formValues[id] === "string"
-                  ? (formValues[id] as string)
-                  : ""
-              }
+              value={typeof formValues[id] === "string" ? (formValues[id] as string) : ""}
               onChange={(e) => handleInputChange(id, e.target.value)}
               required={!!validation?.required}
+              rows={props?.rows || 3}
             />
             {hasError && (
-              <p className="mt-1 text-sm text-red-500">
-                {validationErrors[id]}
-              </p>
+              <div className="mt-1 text-sm text-red-500">
+                {validationErrors[id].map((error, index) => (
+                  <p key={index}>{error}</p>
+                ))}
+              </div>
             )}
-          </div>
-        );
-
-      case "checkbox":
-        return (
-          <div className="mb-4 flex items-start">
-            <div className="flex items-center h-5">
-              <input
-                id={id}
-                type="checkbox"
-                className={`h-4 w-4 text-indigo-600 border-gray-300 rounded ${
-                  hasError ? "ring-2 ring-red-500" : ""
-                }`}
-                checked={!!formValues[id]}
-                onChange={(e) => handleInputChange(id, e.target.checked)}
-                required={!!validation?.required}
-              />
-            </div>
-            <div className="ml-3 text-sm">
-              <label htmlFor={id} className="font-medium text-gray-700">
-                {typeof label === "string" ? label : ""}
-                {!!validation?.required && (
-                  <span className="text-red-500 ml-1">*</span>
-                )}
-              </label>
-              {hasError && (
-                <p className="text-red-500">{validationErrors[id]}</p>
-              )}
-            </div>
+            {typeof props?.helperText === "string" && !hasError && (
+              <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
+            )}
           </div>
         );
 
       case "radio":
         return (
           <div className="mb-4">
-            <div className="text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               {typeof label === "string" ? label : ""}
               {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
-            </div>
-            <div
-              className={`space-y-2 ${
-                hasError ? "border border-red-500 p-2 rounded-md" : ""
-              }`}
-            >
-              {Array.isArray(props.options) &&
+            </label>
+            <div className="space-y-2">
+              {Array.isArray(props?.options) &&
                 props.options.map((option: Option, index: number) => {
                   const optionLabel =
                     typeof option === "string" ? option : option.label || "";
@@ -904,18 +835,18 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                   return (
                     <div key={index} className="flex items-center">
                       <input
-                        id={`${id}-${index}`}
                         type="radio"
+                        id={`${id}-${index}`}
                         name={id}
-                        className="mr-2 h-4 w-4 text-indigo-600 border-gray-300"
                         value={optionValue}
                         checked={formValues[id] === optionValue}
-                        onChange={() => handleInputChange(id, optionValue)}
+                        onChange={(e) => handleInputChange(id, e.target.value)}
+                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
                         required={!!validation?.required}
                       />
                       <label
                         htmlFor={`${id}-${index}`}
-                        className="text-sm text-gray-700"
+                        className="ml-2 text-sm text-gray-700"
                       >
                         {optionLabel}
                       </label>
@@ -924,9 +855,68 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                 })}
             </div>
             {hasError && (
-              <p className="mt-1 text-sm text-red-500">
-                {validationErrors[id]}
-              </p>
+              <div className="mt-1 text-sm text-red-500">
+                {validationErrors[id].map((error, index) => (
+                  <p key={index}>{error}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case "checkbox":
+        return (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {typeof label === "string" ? label : ""}
+              {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            <div className="space-y-2">
+              {Array.isArray(props?.options) &&
+                props.options.map((option: Option, index: number) => {
+                  const optionLabel =
+                    typeof option === "string" ? option : option.label || "";
+                  const optionValue =
+                    typeof option === "string" ? option : option.value || "";
+
+                  return (
+                    <div key={index} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`${id}-${index}`}
+                        name={id}
+                        value={optionValue}
+                        checked={Array.isArray(formValues[id])
+                          ? (formValues[id] as string[]).includes(optionValue)
+                          : false}
+                        onChange={(e) => {
+                          const currentValues = Array.isArray(formValues[id])
+                            ? (formValues[id] as string[])
+                            : [];
+                          const newValues = e.target.checked
+                            ? [...currentValues, optionValue]
+                            : currentValues.filter((v) => v !== optionValue);
+                          handleInputChange(id, newValues);
+                        }}
+                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                        required={!!validation?.required}
+                      />
+                      <label
+                        htmlFor={`${id}-${index}`}
+                        className="ml-2 text-sm text-gray-700"
+                      >
+                        {optionLabel}
+                      </label>
+                    </div>
+                  );
+                })}
+            </div>
+            {hasError && (
+              <div className="mt-1 text-sm text-red-500">
+                {validationErrors[id].map((error, index) => (
+                  <p key={index}>{error}</p>
+                ))}
+              </div>
             )}
           </div>
         );
@@ -946,16 +936,12 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               className={`w-full p-2 border ${
                 hasError ? "border-red-500" : "border-gray-300"
               } rounded-md bg-white`}
-              value={
-                typeof formValues[id] === "string"
-                  ? (formValues[id] as string)
-                  : ""
-              }
+              value={typeof formValues[id] === "string" ? (formValues[id] as string) : ""}
               onChange={(e) => handleInputChange(id, e.target.value)}
               required={!!validation?.required}
             >
               <option value="">Select an option</option>
-              {Array.isArray(props.options) &&
+              {Array.isArray(props?.options) &&
                 props.options.map((option: Option, index: number) => {
                   const optionLabel =
                     typeof option === "string" ? option : option.label || "";
@@ -970,9 +956,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                 })}
             </select>
             {hasError && (
-              <p className="mt-1 text-sm text-red-500">
-                {validationErrors[id]}
-              </p>
+              <div className="mt-1 text-sm text-red-500">
+                {validationErrors[id].map((error, index) => (
+                  <p key={index}>{error}</p>
+                ))}
+              </div>
             )}
           </div>
         );
@@ -998,17 +986,19 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                   ? (formValues[id] as string)
                   : ""
               }
-              min={props.minDate}
-              max={props.maxDate}
+              min={props?.minDate}
+              max={props?.maxDate}
               onChange={(e) => handleInputChange(id, e.target.value)}
               required={!!validation?.required}
             />
             {hasError && (
-              <p className="mt-1 text-sm text-red-500">
-                {validationErrors[id]}
-              </p>
+              <div className="mt-1 text-sm text-red-500">
+                {validationErrors[id].map((error, index) => (
+                  <p key={index}>{error}</p>
+                ))}
+              </div>
             )}
-            {typeof props.helperText === "string" && !hasError && (
+            {typeof props?.helperText === "string" && !hasError && (
               <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
             )}
           </div>
@@ -1016,19 +1006,19 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
       case "button":
         // Skip buttons with default "Button" label
-        if (typeof props.label !== "string" || props.label === "Button") {
+        if (typeof props?.label !== "string" || props.label === "Button") {
           return null;
         }
 
         return (
           <button
             type={
-              (props.buttonType as "button" | "submit" | "reset" | undefined) ||
+              (props?.buttonType as "button" | "submit" | "reset" | undefined) ||
               "button"
             }
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
             onClick={
-              props.onClick
+              props?.onClick
                 ? () => handleButtonClick(props.onClick as string)
                 : undefined
             }
@@ -1085,7 +1075,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             {label && <h3 className="text-lg font-medium mb-4">{label}</h3>}
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
-                {Array.isArray(props.headers) && props.headers.length > 0 && (
+                {Array.isArray(props?.headers) && props.headers.length > 0 && (
                   <tr>
                     {props.headers.map((header, index) => (
                       <th
@@ -1100,7 +1090,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                 )}
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {Array.isArray(props.rows) &&
+                {Array.isArray(props?.rows) &&
                   props.rows.map((row, rowIndex) => (
                     <tr key={rowIndex}>
                       {Array.isArray(row) &&
@@ -1124,12 +1114,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           <div
             className="mb-4"
             dangerouslySetInnerHTML={{
-              __html: typeof props.content === "string" ? props.content : "",
+              __html: typeof props?.content === "string" ? props.content : "",
             }}
           />
         );
 
-      // Don't render decision tree components visually, but add advice display if available
       case "decisionTree":
         // This case is kept for backward compatibility
         // Check if we have advice generated from this decision tree
@@ -1270,6 +1259,40 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         </div>
       </div>
     );
+  };
+
+  const validateComponent = (
+    component: ComponentProps,
+    formData: Record<string, unknown>
+  ): string[] => {
+    const errors: string[] = [];
+    const value = formData[component.id];
+
+    if (component.validation?.required && !value) {
+      errors.push("This field is required");
+    }
+
+    if (value) {
+      if (component.type === "date") {
+        const dateValue = new Date(value as string);
+        if (isNaN(dateValue.getTime())) {
+          errors.push("Invalid date format");
+        }
+      } else if (component.type === "input" || component.type === "textarea") {
+        const stringValue = String(value);
+        if (component.validation?.minLength && stringValue.length < component.validation.minLength) {
+          errors.push(`Minimum length is ${component.validation.minLength} characters`);
+        }
+        if (component.validation?.maxLength && stringValue.length > component.validation.maxLength) {
+          errors.push(`Maximum length is ${component.validation.maxLength} characters`);
+        }
+        if (component.validation?.pattern && !new RegExp(component.validation.pattern).test(stringValue)) {
+          errors.push("Invalid format");
+        }
+      }
+    }
+
+    return errors;
   };
 
   return (
