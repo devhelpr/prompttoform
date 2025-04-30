@@ -72,7 +72,8 @@
             "table",
             "form",
             "section",
-            "array"
+            "array",
+            "date"
           ]
         },
         "id": {
@@ -125,6 +126,14 @@
             },
             "maxItems": {
               "type": "integer"
+            },
+            "minDate": {
+              "type": "string",
+              "format": "date"
+            },
+            "maxDate": {
+              "type": "string",
+              "format": "date"
             }
           }
         },

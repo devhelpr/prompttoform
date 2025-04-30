@@ -1,13 +1,24 @@
 import React, { useState } from "react";
 
 interface ComponentProps {
-  type: string;
+  type: "text" | "input" | "textarea" | "checkbox" | "radio" | "select" | "button" | "table" | "form" | "section" | "array" | "date";
   id: string;
   label?: string;
   defaultValue?: unknown;
   options?: { label: string; value: string }[];
   required?: boolean;
-  props?: Record<string, unknown>;
+  props?: Record<string, unknown> & {
+    inputType?: string;
+    minDate?: string;
+    maxDate?: string;
+    min?: number;
+    max?: number;
+    placeholder?: string;
+    helperText?: string;
+    rows?: number;
+    buttonType?: string;
+    onClick?: string;
+  };
   children?: ComponentProps[];
   visibilityConditions?: VisibilityCondition[];
   eventHandlers?: {
@@ -23,6 +34,8 @@ interface ComponentProps {
     pattern?: string;
     minItems?: number;
     maxItems?: number;
+    minDate?: string;
+    maxDate?: string;
   };
 }
 
@@ -222,6 +235,27 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                   // Max value validation
                   if (props.max !== undefined && props.max !== null) {
                     isNowValid = numValue <= Number(props.max);
+                    if (!isNowValid) return true;
+                  }
+                }
+
+                // Date validation
+                if (type === "date") {
+                  const dateValue = new Date(value as string);
+                  isNowValid = !isNaN(dateValue.getTime());
+                  if (!isNowValid) return true;
+
+                  // Min date validation
+                  if (typeof props.minDate === 'string') {
+                    const minDate = new Date(props.minDate);
+                    isNowValid = dateValue >= minDate;
+                    if (!isNowValid) return true;
+                  }
+
+                  // Max date validation
+                  if (typeof props.maxDate === 'string') {
+                    const maxDate = new Date(props.maxDate);
+                    isNowValid = dateValue <= maxDate;
                     if (!isNowValid) return true;
                   }
                 }
@@ -1148,6 +1182,43 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               <p className="mt-1 text-sm text-red-500">
                 {validationErrors[id]}
               </p>
+            )}
+          </div>
+        );
+
+      case "date":
+        return (
+          <div className="mb-4">
+            <label
+              htmlFor={id}
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {typeof label === "string" ? label : ""}
+              {!!props.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            <input
+              id={id}
+              type="date"
+              className={`w-full p-2 border ${
+                hasError ? "border-red-500" : "border-gray-300"
+              } rounded-md`}
+              value={
+                typeof formValues[id] === "string"
+                  ? (formValues[id] as string)
+                  : ""
+              }
+              min={props.minDate}
+              max={props.maxDate}
+              onChange={(e) => handleInputChange(id, e.target.value)}
+              required={!!props.required}
+            />
+            {hasError && (
+              <p className="mt-1 text-sm text-red-500">
+                {validationErrors[id]}
+              </p>
+            )}
+            {typeof props.helperText === "string" && !hasError && (
+              <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
             )}
           </div>
         );
