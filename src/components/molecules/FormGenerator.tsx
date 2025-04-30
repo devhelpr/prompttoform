@@ -37,7 +37,7 @@ interface VisibilityCondition {
 
 // Define interface for component properties
 interface ComponentProps {
-  type: "array" | "text" | "input" | "textarea" | "checkbox" | "radio" | "select" | "button" | "table" | "form" | "section" | "date";
+  type: "array" | "text" | "input" | "textarea" | "checkbox" | "radio" | "select" | "button" | "table" | "form" | "section" | "date" | "html" | "decisionTree";
   id: string;
   label?: string;
   props?: Record<string, unknown>;
@@ -51,6 +51,8 @@ interface ComponentProps {
     maxItems?: number;
     minDate?: string;
     maxDate?: string;
+    min?: number;
+    max?: number;
   };
   visibilityConditions?: VisibilityCondition[];
   eventHandlers?: Record<string, unknown>;

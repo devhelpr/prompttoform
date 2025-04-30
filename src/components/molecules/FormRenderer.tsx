@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 interface ComponentProps {
-  type: "text" | "input" | "textarea" | "checkbox" | "radio" | "select" | "button" | "table" | "form" | "section" | "array" | "date";
+  type: "array" | "text" | "input" | "textarea" | "checkbox" | "radio" | "select" | "button" | "table" | "form" | "section" | "date" | "html" | "decisionTree";
   id: string;
   label?: string;
   defaultValue?: unknown;
@@ -36,6 +36,8 @@ interface ComponentProps {
     maxItems?: number;
     minDate?: string;
     maxDate?: string;
+    min?: number;
+    max?: number;
   };
 }
 
@@ -350,12 +352,13 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   };
 
   const isComponentVisible = (
-    visibilityConditions?: VisibilityCondition[]
+    visibilityConditions?: VisibilityCondition[],
+    formData: Record<string, any>
   ): boolean => {
     if (!visibilityConditions || visibilityConditions.length === 0) return true;
 
-    return visibilityConditions.some((condition) => {
-      const fieldValue = formValues[condition.field];
+    return visibilityConditions.every((condition) => {
+      const fieldValue = formData[condition.field];
       const conditionValue = condition.value;
 
       switch (condition.operator) {
@@ -421,7 +424,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                 for (const branch of handler.branches) {
                   try {
                     if ("condition" in branch && "nextPage" in branch) {
-                      if (isComponentVisible([branch.condition])) {
+                      if (isComponentVisible([branch.condition], formValues)) {
                         // We found a matching condition, return the target page index
                         const branchTargetIndex = findPageIndexById(
                           branch.nextPage
@@ -466,7 +469,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             try {
               // Handle traditional branch with single condition and nextPage
               if ("condition" in branch && "nextPage" in branch) {
-                if (isComponentVisible([branch.condition])) {
+                if (isComponentVisible([branch.condition], formValues)) {
                   // We found a matching condition, return the target page index
                   const targetPageIndex = findPageIndexById(branch.nextPage);
                   if (targetPageIndex !== -1) {
@@ -481,7 +484,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                   (condition: VisibilityCondition) => {
                     if (!condition || typeof condition.field !== "string")
                       return false;
-                    return isComponentVisible([condition]);
+                    return isComponentVisible([condition], formValues);
                   }
                 );
 
@@ -515,288 +518,76 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     let isValid = true;
 
     // Recursively check all components and their children
-    const validateComponent = (component: ComponentProps) => {
-      const { type, id, props = {} } = component;
+    const validateComponent = (
+      component: ComponentProps,
+      formData: Record<string, any>,
+      errors: Record<string, string[]>
+    ): boolean => {
+      const { id, type, props, validation, visibilityConditions } = component;
 
-      // Skip validation if component isn't visible based on conditions
-      if (!isComponentVisible(component.visibilityConditions)) {
-        return;
+      // Skip validation if component is not visible
+      if (visibilityConditions && !isComponentVisible(visibilityConditions, formData)) {
+        return true;
       }
 
-      // Handle array validation
-      if (type === "array") {
-        const items = arrayItems[id] || [];
-        const itemCount = items.length;
+      const value = formData[id];
+      const componentErrors: string[] = [];
 
-        // Validate minItems
-        if (typeof props.minItems === "number" && itemCount < props.minItems) {
-          newValidationErrors[id] = `Minimum ${props.minItems} items required`;
-          isValid = false;
-          return;
+      if (validation) {
+        if (validation.required && !value) {
+          componentErrors.push("This field is required");
         }
 
-        // Validate maxItems
-        if (typeof props.maxItems === "number" && itemCount > props.maxItems) {
-          newValidationErrors[id] = `Maximum ${props.maxItems} items allowed`;
-          isValid = false;
-          return;
-        }
-
-        // Validate each array item's components
-        items.forEach((item, index) => {
-          component.arrayItems?.[0]?.components.forEach((itemComponent) => {
-            const value = item[itemComponent.id];
-            const itemId = `${id}[${index}].${itemComponent.id}`;
-
-            // Required field validation
-            if (itemComponent.props?.required) {
-              if (value === undefined || value === null || value === "") {
-                newValidationErrors[itemId] = `This field is required`;
-                isValid = false;
-                return;
-              }
+        if (value) {
+          if (type === "array") {
+            if (validation.minItems && value.length < validation.minItems) {
+              componentErrors.push(`Minimum ${validation.minItems} items required`);
             }
-
-            // Additional validation for non-empty values
-            if (value !== undefined && value !== null && value !== "") {
-              const stringValue = String(value);
-
-              // Email validation
-              if (itemComponent.props?.inputType === "email") {
-                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailPattern.test(stringValue)) {
-                  newValidationErrors[
-                    itemId
-                  ] = `Please enter a valid email address`;
-                  isValid = false;
-                  return;
-                }
-              }
-
-              // URL validation
-              if (itemComponent.props?.inputType === "url") {
-                try {
-                  new URL(stringValue);
-                } catch {
-                  newValidationErrors[itemId] = `Please enter a valid URL`;
-                  isValid = false;
-                  return;
-                }
-              }
-
-              // Min length validation
-              if (typeof itemComponent.props?.minLength === "number") {
-                if (stringValue.length < itemComponent.props.minLength) {
-                  newValidationErrors[
-                    itemId
-                  ] = `Minimum length is ${itemComponent.props.minLength} characters`;
-                  isValid = false;
-                  return;
-                }
-              }
-
-              // Max length validation
-              if (typeof itemComponent.props?.maxLength === "number") {
-                if (stringValue.length > itemComponent.props.maxLength) {
-                  newValidationErrors[
-                    itemId
-                  ] = `Maximum length is ${itemComponent.props.maxLength} characters`;
-                  isValid = false;
-                  return;
-                }
-              }
-
-              // Pattern validation
-              if (typeof itemComponent.props?.pattern === "string") {
-                try {
-                  const regex = new RegExp(itemComponent.props.pattern);
-                  if (!regex.test(stringValue)) {
-                    newValidationErrors[itemId] =
-                      typeof itemComponent.props.patternError === "string"
-                        ? itemComponent.props.patternError
-                        : `Invalid format`;
-                    isValid = false;
-                    return;
-                  }
-                } catch {
-                  console.error(
-                    `Invalid regex pattern for field ${itemId}:`,
-                    itemComponent.props.pattern
-                  );
-                }
-              }
-
-              // Number validation
-              if (itemComponent.props?.inputType === "number") {
-                const numValue = Number(value);
-
-                if (isNaN(numValue)) {
-                  newValidationErrors[itemId] = `Please enter a valid number`;
-                  isValid = false;
-                  return;
-                }
-
-                // Min value validation
-                if (typeof itemComponent.props?.min === "number") {
-                  if (numValue < itemComponent.props.min) {
-                    newValidationErrors[
-                      itemId
-                    ] = `Minimum value is ${itemComponent.props.min}`;
-                    isValid = false;
-                    return;
-                  }
-                }
-
-                // Max value validation
-                if (typeof itemComponent.props?.max === "number") {
-                  if (numValue > itemComponent.props.max) {
-                    newValidationErrors[
-                      itemId
-                    ] = `Maximum value is ${itemComponent.props.max}`;
-                    isValid = false;
-                    return;
-                  }
-                }
-              }
+            if (validation.maxItems && value.length > validation.maxItems) {
+              componentErrors.push(`Maximum ${validation.maxItems} items allowed`);
             }
-          });
-        });
-      }
-      // Handle regular component validation
-      else if (
-        ["input", "textarea", "select", "radio", "checkbox"].includes(type)
-      ) {
-        const value = formValues[id];
-
-        // Required field validation
-        if (props.required) {
-          // Special case for checkboxes: if required, value must be true
-          if (type === "checkbox") {
-            if (!value) {
-              newValidationErrors[id] = `This field is required`;
-              isValid = false;
-              return;
+          } else if (type === "date") {
+            const dateValue = new Date(value);
+            if (validation.min && dateValue < new Date(validation.min)) {
+              componentErrors.push(`Date must be after ${validation.min}`);
             }
-          }
-          // For other field types, check if empty
-          else if (value === undefined || value === null || value === "") {
-            newValidationErrors[id] = `This field is required`;
-            isValid = false;
-            return;
-          }
-        }
-
-        // If value is empty and not required, skip other validations
-        if (value === undefined || value === null || value === "") {
-          return;
-        }
-
-        // Input-specific validations
-        if (type === "input" || type === "textarea") {
-          const stringValue = String(value);
-
-          // Email validation
-          if (type === "input" && props.inputType === "email") {
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailPattern.test(stringValue)) {
-              newValidationErrors[id] = `Please enter a valid email address`;
-              isValid = false;
-              return;
+            if (validation.max && dateValue > new Date(validation.max)) {
+              componentErrors.push(`Date must be before ${validation.max}`);
             }
-          }
-
-          // URL validation
-          if (type === "input" && props.inputType === "url") {
-            try {
-              new URL(stringValue);
-            } catch {
-              newValidationErrors[id] = `Please enter a valid URL`;
-              isValid = false;
-              return;
-            }
-          }
-
-          // Min length validation
-          if (typeof props.minLength === "number") {
-            if (stringValue.length < props.minLength) {
-              newValidationErrors[
-                id
-              ] = `Minimum length is ${props.minLength} characters`;
-              isValid = false;
-              return;
-            }
-          }
-
-          // Max length validation
-          if (typeof props.maxLength === "number") {
-            if (stringValue.length > props.maxLength) {
-              newValidationErrors[
-                id
-              ] = `Maximum length is ${props.maxLength} characters`;
-              isValid = false;
-              return;
-            }
-          }
-
-          // Pattern validation
-          if (typeof props.pattern === "string") {
-            try {
-              const regex = new RegExp(props.pattern);
-              if (!regex.test(stringValue)) {
-                newValidationErrors[id] =
-                  typeof props.patternError === "string"
-                    ? props.patternError
-                    : `Invalid format`;
-                isValid = false;
-                return;
-              }
-            } catch {
-              console.error(
-                `Invalid regex pattern for field ${id}:`,
-                props.pattern
-              );
-            }
-          }
-
-          // Number validation
-          if (type === "input" && props.inputType === "number") {
+          } else if (type === "input" && props?.type === "number") {
             const numValue = Number(value);
-
-            if (isNaN(numValue)) {
-              newValidationErrors[id] = `Please enter a valid number`;
-              isValid = false;
-              return;
+            if (validation.min !== undefined && numValue < validation.min) {
+              componentErrors.push(`Value must be at least ${validation.min}`);
             }
-
-            // Min value validation
-            if (typeof props.min === "number") {
-              if (numValue < props.min) {
-                newValidationErrors[id] = `Minimum value is ${props.min}`;
-                isValid = false;
-                return;
-              }
+            if (validation.max !== undefined && numValue > validation.max) {
+              componentErrors.push(`Value must be at most ${validation.max}`);
             }
-
-            // Max value validation
-            if (typeof props.max === "number") {
-              if (numValue > props.max) {
-                newValidationErrors[id] = `Maximum value is ${props.max}`;
-                isValid = false;
-                return;
-              }
+          } else if (type === "input" || type === "textarea") {
+            if (validation.minLength && value.length < validation.minLength) {
+              componentErrors.push(`Minimum ${validation.minLength} characters required`);
+            }
+            if (validation.maxLength && value.length > validation.maxLength) {
+              componentErrors.push(`Maximum ${validation.maxLength} characters allowed`);
+            }
+            if (validation.pattern && !new RegExp(validation.pattern).test(value)) {
+              componentErrors.push("Invalid format");
             }
           }
         }
       }
 
-      // Recursively validate children components if any
-      if (Array.isArray(component.children)) {
-        component.children.forEach(validateComponent);
+      if (componentErrors.length > 0) {
+        errors[id] = componentErrors;
+        return false;
       }
+
+      return true;
     };
 
     // Validate all components on the current page
-    currentPage.components.forEach(validateComponent);
+    currentPage.components.forEach((component) => {
+      isValid = validateComponent(component, formValues, newValidationErrors) && isValid;
+    });
 
     // Update validation errors state
     setValidationErrors(newValidationErrors);
@@ -957,10 +748,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   ): React.ReactElement | null => {
     if (!component) return null;
 
-    const { type, id, label, props = {}, visibilityConditions } = component;
+    const { type, id, label, props = {}, validation, visibilityConditions } = component;
 
     // Check visibility based on conditions
-    if (!isComponentVisible(visibilityConditions)) {
+    if (!isComponentVisible(visibilityConditions, formValues)) {
       return null;
     }
 
@@ -997,7 +788,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               {typeof label === "string" ? label : ""}
-              {!!props.required && <span className="text-red-500 ml-1">*</span>}
+              {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <input
               id={id}
@@ -1014,7 +805,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                   : ""
               }
               onChange={(e) => handleInputChange(id, e.target.value)}
-              required={!!props.required}
+              required={!!validation?.required}
             />
             {hasError && (
               <p className="mt-1 text-sm text-red-500">
@@ -1035,7 +826,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               {typeof label === "string" ? label : ""}
-              {!!props.required && <span className="text-red-500 ml-1">*</span>}
+              {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <textarea
               id={id}
@@ -1052,7 +843,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                   : ""
               }
               onChange={(e) => handleInputChange(id, e.target.value)}
-              required={!!props.required}
+              required={!!validation?.required}
             />
             {hasError && (
               <p className="mt-1 text-sm text-red-500">
@@ -1074,13 +865,13 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                 }`}
                 checked={!!formValues[id]}
                 onChange={(e) => handleInputChange(id, e.target.checked)}
-                required={!!props.required}
+                required={!!validation?.required}
               />
             </div>
             <div className="ml-3 text-sm">
               <label htmlFor={id} className="font-medium text-gray-700">
                 {typeof label === "string" ? label : ""}
-                {!!props.required && (
+                {!!validation?.required && (
                   <span className="text-red-500 ml-1">*</span>
                 )}
               </label>
@@ -1096,7 +887,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           <div className="mb-4">
             <div className="text-sm font-medium text-gray-700 mb-1">
               {typeof label === "string" ? label : ""}
-              {!!props.required && <span className="text-red-500 ml-1">*</span>}
+              {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
             </div>
             <div
               className={`space-y-2 ${
@@ -1120,7 +911,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                         value={optionValue}
                         checked={formValues[id] === optionValue}
                         onChange={() => handleInputChange(id, optionValue)}
-                        required={!!props.required}
+                        required={!!validation?.required}
                       />
                       <label
                         htmlFor={`${id}-${index}`}
@@ -1148,7 +939,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               {typeof label === "string" ? label : ""}
-              {!!props.required && <span className="text-red-500 ml-1">*</span>}
+              {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <select
               id={id}
@@ -1161,7 +952,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                   : ""
               }
               onChange={(e) => handleInputChange(id, e.target.value)}
-              required={!!props.required}
+              required={!!validation?.required}
             >
               <option value="">Select an option</option>
               {Array.isArray(props.options) &&
@@ -1194,7 +985,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               {typeof label === "string" ? label : ""}
-              {!!props.required && <span className="text-red-500 ml-1">*</span>}
+              {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <input
               id={id}
@@ -1210,7 +1001,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               min={props.minDate}
               max={props.maxDate}
               onChange={(e) => handleInputChange(id, e.target.value)}
-              required={!!props.required}
+              required={!!validation?.required}
             />
             {hasError && (
               <p className="mt-1 text-sm text-red-500">
@@ -1399,74 +1190,37 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       handleInputChange(component.id, newItems);
     };
 
-    const handleItemChange = (
-      index: number,
-      fieldId: string,
-      value: unknown
-    ) => {
-      const newItems = [...items];
-      newItems[index] = {
-        ...newItems[index],
-        [fieldId]: value,
-      };
-      setArrayItems((prev) => ({
-        ...prev,
-        [component.id]: newItems,
-      }));
-      handleInputChange(component.id, newItems);
-    };
-
     return (
-      <div className="array-field">
+      <div className="mb-4">
+        <label
+          htmlFor={component.id}
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          {typeof component.label === "string" ? component.label : ""}
+          {!!component.validation?.required && (
+            <span className="text-red-500 ml-1">*</span>
+          )}
+        </label>
         {items.map((item, index) => (
-          <div key={index} className="array-item">
-            {component.arrayItems?.map((arrayItem) => (
-              <div key={arrayItem.id} className="array-item-content">
-                {arrayItem.components.map((comp) => {
-                  const itemId = `${component.id}[${index}].${comp.id}`;
-                  const hasError = !!validationErrors[itemId];
-
-                  return (
-                    <div key={comp.id} className="array-item-component">
-                      <label
-                        htmlFor={`${comp.id}-${index}`}
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        {comp.label}
-                        {comp.props?.required && (
-                          <span className="text-red-500 ml-1">*</span>
-                        )}
-                      </label>
+          <div key={index} className="flex items-center mb-2">
+            <div className="flex-1">
+              {component.arrayItems?.map((arrayItem) => (
+                <div key={arrayItem.id} className="mb-2">
+                  {arrayItem.components.map((comp) => (
+                    <div key={comp.id} className="mb-2">
                       {renderComponent({
                         ...comp,
-                        id: `${comp.id}-${index}`,
-                        defaultValue: item[comp.id],
-                        props: {
-                          ...comp.props,
-                          required: comp.props?.required,
-                        },
-                        eventHandlers: {
-                          ...comp.eventHandlers,
-                          onChange: {
-                            type: "custom",
-                            params: { value: item[comp.id] },
-                          },
-                        },
+                        id: `${component.id}[${index}].${comp.id}`,
                       })}
-                      {hasError && (
-                        <p className="mt-1 text-sm text-red-500">
-                          {validationErrors[itemId]}
-                        </p>
-                      )}
                     </div>
-                  );
-                })}
-              </div>
-            ))}
+                  ))}
+                </div>
+              ))}
+            </div>
             <button
               type="button"
-              className="remove-item-button"
               onClick={() => handleRemoveItem(index)}
+              className="ml-2 text-red-600 hover:text-red-800"
             >
               Remove
             </button>
@@ -1474,8 +1228,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         ))}
         <button
           type="button"
-          className="add-item-button"
           onClick={handleAddItem}
+          className="mt-2 text-sm text-blue-600 hover:text-blue-800"
         >
           Add Item
         </button>
