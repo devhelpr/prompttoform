@@ -474,6 +474,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     const showError = shouldShowError(fieldId) && hasError;
 
     switch (type) {
+      case "text":
+        return (
+          <div className="mb-4">
+            {typeof props?.content === "string" && (
+              <p className="text-gray-700">{props.content}</p>
+            )}
+          </div>
+        );
+
       case "input":
         return (
           <div className="mb-4">
