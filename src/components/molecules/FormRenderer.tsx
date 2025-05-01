@@ -113,7 +113,7 @@ interface ValidationError {
 const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+  const [blurredFields, setBlurredFields] = useState<Record<string, boolean>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [formSubmissions, setFormSubmissions] = useState<Record<string, FormValues>>({});
@@ -252,7 +252,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       ...prev,
       [id]: value,
     }));
-    setTouchedFields((prev) => ({
+  };
+
+  const handleBlur = (id: string) => {
+    setBlurredFields((prev) => ({
       ...prev,
       [id]: true,
     }));
@@ -272,7 +275,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     // Reset form values and validation errors
     setFormValues({});
     setValidationErrors({});
-    setTouchedFields({});
+    setBlurredFields({});
     setIsSubmitted(false);
     setCurrentStepIndex(0);
   };
@@ -306,7 +309,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const handleReset = () => {
     setFormValues({});
     setValidationErrors({});
-    setTouchedFields({});
+    setBlurredFields({});
     setIsSubmitted(false);
   };
 
@@ -461,7 +464,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const hasSubmissions = Object.keys(formSubmissions).length > 0;
 
   const shouldShowError = (fieldId: string): boolean => {
-    return isSubmitted || touchedFields[fieldId] === true;
+    return isSubmitted || blurredFields[fieldId] === true;
   };
 
   const renderComponent = (component: ComponentProps, parentId?: string): React.ReactElement => {
@@ -489,6 +492,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               } rounded-md`}
               value={typeof formValues[id] === "string" ? (formValues[id] as string) : ""}
               onChange={(e) => handleInputChange(id, e.target.value)}
+              onBlur={() => handleBlur(id)}
               required={!!validation?.required}
               min={props?.type === "number" ? props.min : undefined}
               max={props?.type === "number" ? props.max : undefined}
@@ -523,6 +527,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               } rounded-md`}
               value={typeof formValues[id] === "string" ? (formValues[id] as string) : ""}
               onChange={(e) => handleInputChange(id, e.target.value)}
+              onBlur={() => handleBlur(id)}
               required={!!validation?.required}
               rows={props?.rows || 3}
             />
@@ -587,6 +592,40 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         );
 
       case "checkbox":
+        // Handle single checkbox without options
+        if (!props?.options) {
+          return (
+            <div className="mb-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={fieldId}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                  checked={formValues[id] === true}
+                  onChange={(e) => handleInputChange(id, e.target.checked)}
+                  onBlur={() => handleBlur(id)}
+                  required={!!validation?.required}
+                />
+                <label
+                  htmlFor={fieldId}
+                  className="ml-2 text-sm text-gray-700"
+                >
+                  {typeof label === "string" ? label : ""}
+                  {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
+                </label>
+              </div>
+              {showError && (
+                <div className="mt-1 text-sm text-red-500">
+                  {validationErrors[fieldId].map((error, index) => (
+                    <p key={index}>{error}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        // Handle multiple checkboxes with options
         return (
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -620,6 +659,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                             : currentValues.filter((v) => v !== optionValue);
                           handleInputChange(id, newValues);
                         }}
+                        onBlur={() => handleBlur(id)}
                         className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
                         required={!!validation?.required}
                       />
@@ -660,6 +700,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               } rounded-md bg-white`}
               value={typeof formValues[id] === "string" ? (formValues[id] as string) : ""}
               onChange={(e) => handleInputChange(id, e.target.value)}
+              onBlur={() => handleBlur(id)}
               required={!!validation?.required}
             >
               <option value="">Select an option</option>
@@ -711,6 +752,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               min={props?.minDate}
               max={props?.maxDate}
               onChange={(e) => handleInputChange(id, e.target.value)}
+              onBlur={() => handleBlur(id)}
               required={!!validation?.required}
             />
             {showError && (
