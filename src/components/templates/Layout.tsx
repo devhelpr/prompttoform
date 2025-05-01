@@ -10,10 +10,12 @@ export function Layout({ children }: LayoutProps) {
       <div className="container mx-auto max-w-4xl">
         <div className="bg-white rounded-3xl shadow-xl shadow-zinc-200/50 backdrop-blur-sm animate-fade-in">
           <div className="px-6 py-8 sm:px-8 sm:py-10">
-            <div className="text-center mb-12">
-              <h1 className="text-4xl sm:text-5xl font-bold text-black mb-4">
-                PromptToForm
-              </h1>
+            <div className="text-center mb-16">
+              <img
+                src="/logo.png"
+                alt="PromptToForm Logo"
+                className="mx-auto h-16 sm:h-20 mb-8 mt-8"
+              />
               <p className="text-zinc-600">
                 Generate/edit Form/UI JSON files for your projects using prompts
               </p>
