@@ -83,3 +83,29 @@ Important rules for UI/Form schema:
 13. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
 `;
 }
+
+
+export function getUpdateFormPrompt(): string {
+  return `You are an expert at generating JSON patches to update form definitions. Your task is to analyze the current form definition and the requested changes, then generate a JSON patch document that will update the form according to the requirements.
+
+The JSON patch document should follow RFC 6902 specification and contain one or more operations to modify the form definition. Each operation should be a valid JSON patch operation with:
+- "op": The operation to perform (add, remove, replace, move, copy)
+- "path": The JSON pointer to the location to modify
+- "value": The new value (for add and replace operations)
+
+Example JSON patch:
+[
+  {
+    "op": "replace",
+    "path": "/app/pages/0/components/0/props/content",
+    "value": "New content text"
+  },
+  {
+    "op": "add",
+    "path": "/app/pages/0/components/0/props/helperText",
+    "value": "Additional help text"
+  }
+]
+
+Your response must be a valid JSON array of patch operations. Do not include any explanations or markdown formatting.`;
+} 

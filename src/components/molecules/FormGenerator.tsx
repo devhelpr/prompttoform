@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Ajv2020 from "ajv/dist/2020"
 import { UISchema } from '../../types/ui-schema';
-import { generateUIFromPrompt } from '../../services/llm';
+import { generateUIFromPrompt, updateFormWithPatch } from '../../services/llm';
 import { Settings } from './Settings';
 import { evaluateAndRerunIfNeeded } from '../../services/prompt-eval';
 import { getCurrentAPIConfig } from '../../services/llm-api';
@@ -83,6 +83,9 @@ interface UIJson {
 
 export function FormGenerator() {
   const [prompt, setPrompt] = useState('');
+  const [updatePrompt, setUpdatePrompt] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
   const [generatedJson, setGeneratedJson] = useState('');
   const [parsedJson, setParsedJson] = useState<UIJson | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('json');
@@ -854,6 +857,64 @@ export function FormGenerator() {
     setViewMode('form');
   };
 
+  const handleUpdateForm = async () => {
+    if (!updatePrompt.trim() || !generatedJson) {
+      setUpdateError('Please enter an update prompt and make sure a form is generated');
+      return;
+    }
+
+    setIsUpdating(true);
+    setUpdateError(null);
+
+    try {
+      const patch = await updateFormWithPatch(generatedJson, updatePrompt);
+      const patchOperations = JSON.parse(patch);
+      
+      // Apply the patch operations to the current form
+      const updatedForm = JSON.parse(generatedJson);
+      for (const operation of patchOperations) {
+        const { op, path, value } = operation;
+        const pathParts = path.split('/').filter(Boolean);
+        let current = updatedForm;
+        
+        for (let i = 0; i < pathParts.length - 1; i++) {
+          const part = pathParts[i];
+          if (part.match(/^\d+$/)) {
+            current = current[parseInt(part)];
+          } else {
+            current = current[part];
+          }
+        }
+        
+        const lastPart = pathParts[pathParts.length - 1];
+        if (lastPart.match(/^\d+$/)) {
+          const index = parseInt(lastPart);
+          if (op === 'add') {
+            current.splice(index, 0, value);
+          } else if (op === 'remove') {
+            current.splice(index, 1);
+          } else if (op === 'replace') {
+            current[index] = value;
+          }
+        } else {
+          if (op === 'add' || op === 'replace') {
+            current[lastPart] = value;
+          } else if (op === 'remove') {
+            delete current[lastPart];
+          }
+        }
+      }
+      
+      setGeneratedJson(JSON.stringify(updatedForm, null, 2));
+      setParsedJson(updatedForm as UIJson);
+    } catch (error) {
+      console.error('Error updating form:', error);
+      setUpdateError(error instanceof Error ? error.message : 'Failed to update form');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -1047,6 +1108,29 @@ export function FormGenerator() {
               </div>
             )
           )}
+
+          <div className="mt-8 border-t pt-6">
+            <h3 className="text-lg font-medium text-zinc-900 mb-4">Update Form</h3>
+            <div className="space-y-4">
+              <textarea
+                value={updatePrompt}
+                onChange={(e) => setUpdatePrompt(e.target.value)}
+                className="w-full rounded-lg border border-zinc-200 shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 text-base"
+                placeholder="Describe the changes you want to make to the form..."
+                rows={4}
+              />
+              {updateError && (
+                <div className="text-red-500 text-sm">{updateError}</div>
+              )}
+              <button
+                onClick={handleUpdateForm}
+                disabled={isUpdating}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUpdating ? 'Updating...' : 'Update Form'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

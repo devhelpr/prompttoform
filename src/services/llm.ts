@@ -3,7 +3,7 @@ import { z , ZodTypeAny} from 'zod';
 
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { callLLMAPI, getCurrentAPIConfig } from './llm-api';
-import { getSystemPrompt } from '../prompt-library/system-prompt';
+import { getSystemPrompt, getUpdateFormPrompt } from '../prompt-library/system-prompt';
 
 
 interface GenerateStructuredOutputParams<T extends ZodTypeAny> {
@@ -56,6 +56,30 @@ export async function generateUIFromPrompt(
     return await callLLMAPI(prompt, systemMessage, apiConfig);
   } catch (error) {
     console.error('Error calling API:', error);
+    throw error;
+  }
+}
+
+export async function updateFormWithPatch(
+  currentForm: string,
+  updatePrompt: string
+): Promise<string> {
+  const apiConfig = getCurrentAPIConfig();
+  const systemMessage = getUpdateFormPrompt();
+  
+  const fullPrompt = `Current form definition:
+${currentForm}
+
+Requested changes:
+${updatePrompt}
+
+Generate a JSON patch document to update the form according to the requested changes.`;
+
+  try {
+    const response = await callLLMAPI(fullPrompt, systemMessage, apiConfig);
+    return response;
+  } catch (error) {
+    console.error('Error generating form update:', error);
     throw error;
   }
 } 
