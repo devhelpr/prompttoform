@@ -26,7 +26,7 @@ export function Layout({ children }: LayoutProps) {
           </div>
           <div className="mt-8 px-6 py-6 sm:px-8 border-t border-zinc-100">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-zinc-500">
-              <span>Form generator based PoC</span>
+              <span>Prompt based Form generator</span>
               <span>•</span>
               <a
                 href="/vanilla"
