@@ -113,6 +113,8 @@ interface ValidationError {
 const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [formSubmissions, setFormSubmissions] = useState<Record<string, FormValues>>({});
   const [arrayItems, setArrayItems] = useState<Record<string, Record<string, unknown>[]>>({});
@@ -250,9 +252,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       ...prev,
       [id]: value,
     }));
+    setTouchedFields((prev) => ({
+      ...prev,
+      [id]: true,
+    }));
   };
 
   const handleFormSubmit = (formId: string) => {
+    setIsSubmitted(true);
     if (!validateForm()) {
       return;
     }
@@ -265,10 +272,13 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     // Reset form values and validation errors
     setFormValues({});
     setValidationErrors({});
+    setTouchedFields({});
+    setIsSubmitted(false);
     setCurrentStepIndex(0);
   };
 
   const handleNext = () => {
+    setIsSubmitted(true);
     if (validateForm()) {
       const totalSteps = formJson.app.pages?.length || 0;
       const currentPage = formJson.app.pages[currentStepIndex];
@@ -280,6 +290,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
       if (currentStepIndex < totalSteps - 1) {
         setCurrentStepIndex((prev) => prev + 1);
+        setIsSubmitted(false);
       } else {
         handleFormSubmit("multistep-form");
       }
@@ -294,6 +305,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
   const handleReset = () => {
     setFormValues({});
+    setValidationErrors({});
+    setTouchedFields({});
+    setIsSubmitted(false);
   };
 
   const handleButtonClick = (action: string) => {
@@ -446,10 +460,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   // Display form submissions if any exist
   const hasSubmissions = Object.keys(formSubmissions).length > 0;
 
+  const shouldShowError = (fieldId: string): boolean => {
+    return isSubmitted || touchedFields[fieldId] === true;
+  };
+
   const renderComponent = (component: ComponentProps, parentId?: string): React.ReactElement => {
     const { id, type, label, props, validation } = component;
     const fieldId = parentId ? `${parentId}.${id}` : id;
     const hasError = validationErrors[fieldId]?.length > 0;
+    const showError = shouldShowError(fieldId) && hasError;
 
     switch (type) {
       case "input":
@@ -466,7 +485,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               id={fieldId}
               type={(props?.type as HTMLInputTypeAttribute) || "text"}
               className={`w-full p-2 border ${
-                hasError ? "border-red-500" : "border-gray-300"
+                showError ? "border-red-500" : "border-gray-300"
               } rounded-md`}
               value={typeof formValues[id] === "string" ? (formValues[id] as string) : ""}
               onChange={(e) => handleInputChange(id, e.target.value)}
@@ -474,14 +493,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               min={props?.type === "number" ? props.min : undefined}
               max={props?.type === "number" ? props.max : undefined}
             />
-            {hasError && (
+            {showError && (
               <div className="mt-1 text-sm text-red-500">
                 {validationErrors[fieldId].map((error, index) => (
                   <p key={index}>{error}</p>
                 ))}
               </div>
             )}
-            {typeof props?.helperText === "string" && !hasError && (
+            {typeof props?.helperText === "string" && !showError && (
               <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
             )}
           </div>
@@ -500,21 +519,21 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             <textarea
               id={fieldId}
               className={`w-full p-2 border ${
-                hasError ? "border-red-500" : "border-gray-300"
+                showError ? "border-red-500" : "border-gray-300"
               } rounded-md`}
               value={typeof formValues[id] === "string" ? (formValues[id] as string) : ""}
               onChange={(e) => handleInputChange(id, e.target.value)}
               required={!!validation?.required}
               rows={props?.rows || 3}
             />
-            {hasError && (
+            {showError && (
               <div className="mt-1 text-sm text-red-500">
                 {validationErrors[fieldId].map((error, index) => (
                   <p key={index}>{error}</p>
                 ))}
               </div>
             )}
-            {typeof props?.helperText === "string" && !hasError && (
+            {typeof props?.helperText === "string" && !showError && (
               <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
             )}
           </div>
@@ -557,7 +576,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                   );
                 })}
             </div>
-            {hasError && (
+            {showError && (
               <div className="mt-1 text-sm text-red-500">
                 {validationErrors[fieldId].map((error, index) => (
                   <p key={index}>{error}</p>
@@ -614,7 +633,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                   );
                 })}
             </div>
-            {hasError && (
+            {showError && (
               <div className="mt-1 text-sm text-red-500">
                 {validationErrors[fieldId].map((error, index) => (
                   <p key={index}>{error}</p>
@@ -637,7 +656,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             <select
               id={fieldId}
               className={`w-full p-2 border ${
-                hasError ? "border-red-500" : "border-gray-300"
+                showError ? "border-red-500" : "border-gray-300"
               } rounded-md bg-white`}
               value={typeof formValues[id] === "string" ? (formValues[id] as string) : ""}
               onChange={(e) => handleInputChange(id, e.target.value)}
@@ -658,7 +677,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                   );
                 })}
             </select>
-            {hasError && (
+            {showError && (
               <div className="mt-1 text-sm text-red-500">
                 {validationErrors[fieldId].map((error, index) => (
                   <p key={index}>{error}</p>
@@ -682,7 +701,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               id={fieldId}
               type="date"
               className={`w-full p-2 border ${
-                hasError ? "border-red-500" : "border-gray-300"
+                showError ? "border-red-500" : "border-gray-300"
               } rounded-md`}
               value={
                 typeof formValues[id] === "string"
@@ -694,14 +713,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               onChange={(e) => handleInputChange(id, e.target.value)}
               required={!!validation?.required}
             />
-            {hasError && (
+            {showError && (
               <div className="mt-1 text-sm text-red-500">
                 {validationErrors[fieldId].map((error, index) => (
                   <p key={index}>{error}</p>
                 ))}
               </div>
             )}
-            {typeof props?.helperText === "string" && !hasError && (
+            {typeof props?.helperText === "string" && !showError && (
               <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
             )}
           </div>
@@ -842,6 +861,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const renderArrayField = (component: ComponentProps, parentId: string): React.ReactElement => {
     const items = arrayItems[component.id] || [];
     const fieldId = parentId ? `${parentId}.${component.id}` : component.id;
+    const showError = shouldShowError(fieldId) && validationErrors[fieldId]?.length > 0;
 
     const handleAddItem = () => {
       const newItem: Record<string, unknown> = {};
@@ -878,6 +898,13 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             <span className="text-red-500 ml-1">*</span>
           )}
         </label>
+        {showError && (
+          <div className="mt-1 text-sm text-red-500">
+            {validationErrors[fieldId].map((error, index) => (
+              <p key={index}>{error}</p>
+            ))}
+          </div>
+        )}
         {items.map((item, index) => (
           <div key={index} className="flex items-center mb-2">
             <div className="flex-1">
