@@ -2,7 +2,21 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { HTMLInputTypeAttribute } from "react";
 
 interface ComponentProps {
-  type: "array" | "text" | "input" | "textarea" | "checkbox" | "radio" | "select" | "button" | "table" | "form" | "section" | "date" | "html" | "decisionTree";
+  type:
+    | "array"
+    | "text"
+    | "input"
+    | "textarea"
+    | "checkbox"
+    | "radio"
+    | "select"
+    | "button"
+    | "table"
+    | "form"
+    | "section"
+    | "date"
+    | "html"
+    | "decisionTree";
   id: string;
   label?: string;
   defaultValue?: unknown;
@@ -112,109 +126,167 @@ interface ValidationError {
 
 const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-  const [blurredFields, setBlurredFields] = useState<Record<string, boolean>>({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
+  const [blurredFields, setBlurredFields] = useState<Record<string, boolean>>(
+    {}
+  );
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [formSubmissions, setFormSubmissions] = useState<Record<string, FormValues>>({});
-  const [arrayItems, setArrayItems] = useState<Record<string, Record<string, unknown>[]>>({});
+  const [formSubmissions, setFormSubmissions] = useState<
+    Record<string, FormValues>
+  >({});
+  const [arrayItems, setArrayItems] = useState<
+    Record<string, Record<string, unknown>[]>
+  >({});
 
-  const validateComponent = useMemo(() => (
-    component: ComponentProps,
-    formData: Record<string, unknown>,
-    parentId?: string
-  ): ValidationError[] => {
-    const errors: ValidationError[] = [];
-    const value = formData[component.id];
-    const fieldId = parentId ? `${parentId}.${component.id}` : component.id;
+  const validateComponent = useMemo(
+    () =>
+      (
+        component: ComponentProps,
+        formData: Record<string, unknown>,
+        parentId?: string
+      ): ValidationError[] => {
+        const errors: ValidationError[] = [];
+        const value = formData[component.id];
+        const fieldId = parentId ? `${parentId}.${component.id}` : component.id;
 
-    // Handle form component validation recursively
-    if (component.type === "form" && component.children) {
-      // Validate all child components
-      component.children.forEach(child => {
-        if (isComponentVisible(child.visibilityConditions, formData)) {
-          const childErrors = validateComponent(child, formData, fieldId);
-          errors.push(...childErrors);
-        }
-      });
-      return errors;
-    }
-
-    // Handle array component validation
-    if (component.type === "array" && component.arrayItems) {
-      const arrayValue = value as Array<Record<string, unknown>>;
-      if (component.validation?.required && (!arrayValue || arrayValue.length === 0)) {
-        errors.push({ fieldId, message: "This field is required" });
-      }
-      if (arrayValue) {
-        if (component.validation?.minItems && arrayValue.length < component.validation.minItems) {
-          errors.push({ fieldId, message: `Minimum ${component.validation.minItems} items required` });
-        }
-        if (component.validation?.maxItems && arrayValue.length > component.validation.maxItems) {
-          errors.push({ fieldId, message: `Maximum ${component.validation.maxItems} items allowed` });
-        }
-        // Validate each array item
-        arrayValue.forEach((item, index) => {
-          component.arrayItems?.forEach(arrayItem => {
-            arrayItem.components.forEach(child => {
-              const childErrors = validateComponent(child, item, `${fieldId}[${index}]`);
+        // Handle form component validation recursively
+        if (component.type === "form" && component.children) {
+          // Validate all child components
+          component.children.forEach((child) => {
+            if (isComponentVisible(child.visibilityConditions, formData)) {
+              const childErrors = validateComponent(child, formData, fieldId);
               errors.push(...childErrors);
-            });
+            }
           });
-        });
-      }
-      return errors;
-    }
-
-    // Handle section component validation
-    if (component.type === "section" && component.children) {
-      component.children.forEach(child => {
-        if (isComponentVisible(child.visibilityConditions, formData)) {
-          const childErrors = validateComponent(child, formData, fieldId);
-          errors.push(...childErrors);
+          return errors;
         }
-      });
-      return errors;
-    }
 
-    // Handle basic validation for other component types
-    if (component.validation?.required && !value) {
-      errors.push({ fieldId, message: "This field is required" });
-    }
-
-    if (value) {
-      if (component.type === "date") {
-        const dateValue = new Date(value as string);
-        if (isNaN(dateValue.getTime())) {
-          errors.push({ fieldId, message: "Invalid date format" });
-        } else {
-          if (component.validation?.minDate && dateValue < new Date(component.validation.minDate)) {
-            errors.push({ fieldId, message: `Date must be after ${component.validation.minDate}` });
+        // Handle array component validation
+        if (component.type === "array" && component.arrayItems) {
+          const arrayValue = value as Array<Record<string, unknown>>;
+          if (
+            component.validation?.required &&
+            (!arrayValue || arrayValue.length === 0)
+          ) {
+            errors.push({ fieldId, message: "This field is required" });
           }
-          if (component.validation?.maxDate && dateValue > new Date(component.validation.maxDate)) {
-            errors.push({ fieldId, message: `Date must be before ${component.validation.maxDate}` });
+          if (arrayValue) {
+            if (
+              component.validation?.minItems &&
+              arrayValue.length < component.validation.minItems
+            ) {
+              errors.push({
+                fieldId,
+                message: `Minimum ${component.validation.minItems} items required`,
+              });
+            }
+            if (
+              component.validation?.maxItems &&
+              arrayValue.length > component.validation.maxItems
+            ) {
+              errors.push({
+                fieldId,
+                message: `Maximum ${component.validation.maxItems} items allowed`,
+              });
+            }
+            // Validate each array item
+            arrayValue.forEach((item, index) => {
+              component.arrayItems?.forEach((arrayItem) => {
+                arrayItem.components.forEach((child) => {
+                  const childErrors = validateComponent(
+                    child,
+                    item,
+                    `${fieldId}[${index}]`
+                  );
+                  errors.push(...childErrors);
+                });
+              });
+            });
+          }
+          return errors;
+        }
+
+        // Handle section component validation
+        if (component.type === "section" && component.children) {
+          component.children.forEach((child) => {
+            if (isComponentVisible(child.visibilityConditions, formData)) {
+              const childErrors = validateComponent(child, formData, fieldId);
+              errors.push(...childErrors);
+            }
+          });
+          return errors;
+        }
+
+        // Handle basic validation for other component types
+        if (component.validation?.required && !value) {
+          errors.push({ fieldId, message: "This field is required" });
+        }
+
+        if (value) {
+          if (component.type === "date") {
+            const dateValue = new Date(value as string);
+            if (isNaN(dateValue.getTime())) {
+              errors.push({ fieldId, message: "Invalid date format" });
+            } else {
+              if (
+                component.validation?.minDate &&
+                dateValue < new Date(component.validation.minDate)
+              ) {
+                errors.push({
+                  fieldId,
+                  message: `Date must be after ${component.validation.minDate}`,
+                });
+              }
+              if (
+                component.validation?.maxDate &&
+                dateValue > new Date(component.validation.maxDate)
+              ) {
+                errors.push({
+                  fieldId,
+                  message: `Date must be before ${component.validation.maxDate}`,
+                });
+              }
+            }
+          } else if (["input", "textarea"].includes(component.type)) {
+            const stringValue = String(value);
+            if (
+              component.validation?.minLength &&
+              stringValue.length < component.validation.minLength
+            ) {
+              errors.push({
+                fieldId,
+                message: `Minimum length is ${component.validation.minLength} characters`,
+              });
+            }
+            if (
+              component.validation?.maxLength &&
+              stringValue.length > component.validation.maxLength
+            ) {
+              errors.push({
+                fieldId,
+                message: `Maximum length is ${component.validation.maxLength} characters`,
+              });
+            }
+            if (
+              component.validation?.pattern &&
+              !new RegExp(component.validation.pattern).test(stringValue)
+            ) {
+              errors.push({ fieldId, message: "Invalid format" });
+            }
           }
         }
-      } else if (["input", "textarea"].includes(component.type)) {
-        const stringValue = String(value);
-        if (component.validation?.minLength && stringValue.length < component.validation.minLength) {
-          errors.push({ fieldId, message: `Minimum length is ${component.validation.minLength} characters` });
-        }
-        if (component.validation?.maxLength && stringValue.length > component.validation.maxLength) {
-          errors.push({ fieldId, message: `Maximum length is ${component.validation.maxLength} characters` });
-        }
-        if (component.validation?.pattern && !new RegExp(component.validation.pattern).test(stringValue)) {
-          errors.push({ fieldId, message: "Invalid format" });
-        }
-      }
-    }
 
-    return errors;
-  }, []);
+        return errors;
+      },
+    []
+  );
 
   const validateForm = useCallback(() => {
     if (!formJson || !formJson.app) return true;
-    
+
     const currentPage = formJson.app.pages[currentStepIndex];
     if (!currentPage || !currentPage.components) return true;
 
@@ -225,7 +297,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       components.forEach((component) => {
         if (isComponentVisible(component.visibilityConditions, formValues)) {
           const errors = validateComponent(component, formValues);
-          errors.forEach(error => {
+          errors.forEach((error) => {
             if (!newValidationErrors[error.fieldId]) {
               newValidationErrors[error.fieldId] = [];
             }
@@ -467,7 +539,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     return isSubmitted || blurredFields[fieldId] === true;
   };
 
-  const renderComponent = (component: ComponentProps, parentId?: string): React.ReactElement => {
+  const renderComponent = (
+    component: ComponentProps,
+    parentId?: string
+  ): React.ReactElement => {
     const { id, type, label, props, validation } = component;
     const fieldId = parentId ? `${parentId}.${id}` : id;
     const hasError = validationErrors[fieldId]?.length > 0;
@@ -491,7 +566,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               {typeof label === "string" ? label : ""}
-              {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
+              {!!validation?.required && (
+                <span className="text-red-500 ml-1">*</span>
+              )}
             </label>
             <input
               id={fieldId}
@@ -499,7 +576,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               className={`w-full p-2 border ${
                 showError ? "border-red-500" : "border-gray-300"
               } rounded-md`}
-              value={typeof formValues[id] === "string" ? (formValues[id] as string) : ""}
+              value={
+                typeof formValues[id] === "string"
+                  ? (formValues[id] as string)
+                  : ""
+              }
               onChange={(e) => handleInputChange(id, e.target.value)}
               onBlur={() => handleBlur(id)}
               required={!!validation?.required}
@@ -527,14 +608,20 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               {typeof label === "string" ? label : ""}
-              {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
+              {!!validation?.required && (
+                <span className="text-red-500 ml-1">*</span>
+              )}
             </label>
             <textarea
               id={fieldId}
               className={`w-full p-2 border ${
                 showError ? "border-red-500" : "border-gray-300"
               } rounded-md`}
-              value={typeof formValues[id] === "string" ? (formValues[id] as string) : ""}
+              value={
+                typeof formValues[id] === "string"
+                  ? (formValues[id] as string)
+                  : ""
+              }
               onChange={(e) => handleInputChange(id, e.target.value)}
               onBlur={() => handleBlur(id)}
               required={!!validation?.required}
@@ -558,7 +645,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {typeof label === "string" ? label : ""}
-              {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
+              {!!validation?.required && (
+                <span className="text-red-500 ml-1">*</span>
+              )}
             </label>
             <div className="space-y-2">
               {Array.isArray(props?.options) &&
@@ -615,12 +704,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                   onBlur={() => handleBlur(id)}
                   required={!!validation?.required}
                 />
-                <label
-                  htmlFor={fieldId}
-                  className="ml-2 text-sm text-gray-700"
-                >
+                <label htmlFor={fieldId} className="ml-2 text-sm text-gray-700">
                   {typeof label === "string" ? label : ""}
-                  {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
+                  {!!validation?.required && (
+                    <span className="text-red-500 ml-1">*</span>
+                  )}
                 </label>
               </div>
               {showError && (
@@ -639,7 +727,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {typeof label === "string" ? label : ""}
-              {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
+              {!!validation?.required && (
+                <span className="text-red-500 ml-1">*</span>
+              )}
             </label>
             <div className="space-y-2">
               {Array.isArray(props?.options) &&
@@ -656,9 +746,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                         id={`${fieldId}-${index}`}
                         name={fieldId}
                         value={optionValue}
-                        checked={Array.isArray(formValues[id])
-                          ? (formValues[id] as string[]).includes(optionValue)
-                          : false}
+                        checked={
+                          Array.isArray(formValues[id])
+                            ? (formValues[id] as string[]).includes(optionValue)
+                            : false
+                        }
                         onChange={(e) => {
                           const currentValues = Array.isArray(formValues[id])
                             ? (formValues[id] as string[])
@@ -700,14 +792,20 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               {typeof label === "string" ? label : ""}
-              {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
+              {!!validation?.required && (
+                <span className="text-red-500 ml-1">*</span>
+              )}
             </label>
             <select
               id={fieldId}
               className={`w-full p-2 border ${
                 showError ? "border-red-500" : "border-gray-300"
               } rounded-md bg-white`}
-              value={typeof formValues[id] === "string" ? (formValues[id] as string) : ""}
+              value={
+                typeof formValues[id] === "string"
+                  ? (formValues[id] as string)
+                  : ""
+              }
               onChange={(e) => handleInputChange(id, e.target.value)}
               onBlur={() => handleBlur(id)}
               required={!!validation?.required}
@@ -745,7 +843,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               {typeof label === "string" ? label : ""}
-              {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
+              {!!validation?.required && (
+                <span className="text-red-500 ml-1">*</span>
+              )}
             </label>
             <input
               id={fieldId}
@@ -785,8 +885,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         return (
           <button
             type={
-              (props?.buttonType as "button" | "submit" | "reset" | undefined) ||
-              "button"
+              (props?.buttonType as
+                | "button"
+                | "submit"
+                | "reset"
+                | undefined) || "button"
             }
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
             onClick={
@@ -909,10 +1012,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     }
   };
 
-  const renderArrayField = (component: ComponentProps, parentId: string): React.ReactElement => {
+  const renderArrayField = (
+    component: ComponentProps,
+    parentId: string
+  ): React.ReactElement => {
     const items = arrayItems[component.id] || [];
     const fieldId = parentId ? `${parentId}.${component.id}` : component.id;
-    const showError = shouldShowError(fieldId) && validationErrors[fieldId]?.length > 0;
+    const showError =
+      shouldShowError(fieldId) && validationErrors[fieldId]?.length > 0;
 
     const handleAddItem = () => {
       const newItem: Record<string, unknown> = {};
@@ -956,17 +1063,20 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             ))}
           </div>
         )}
-        {items.map((item, index) => (
+        {items.map((_, index) => (
           <div key={index} className="flex items-center mb-2">
             <div className="flex-1">
               {component.arrayItems?.map((arrayItem) => (
                 <div key={arrayItem.id} className="mb-2">
                   {arrayItem.components.map((comp) => (
                     <div key={comp.id} className="mb-2">
-                      {renderComponent({
-                        ...comp,
-                        id: `${component.id}[${index}].${comp.id}`,
-                      }, `${fieldId}[${index}]`)}
+                      {renderComponent(
+                        {
+                          ...comp,
+                          id: `${component.id}[${index}].${comp.id}`,
+                        },
+                        `${fieldId}[${index}]`
+                      )}
                     </div>
                   ))}
                 </div>
