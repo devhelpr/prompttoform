@@ -12,10 +12,10 @@ export function Layout({ children }: LayoutProps) {
           <div className="px-6 py-8 sm:px-8 sm:py-10">
             <div className="text-center mb-12">
               <h1 className="text-4xl sm:text-5xl font-bold text-black mb-4">
-                Form/UI Generator
+                PromptToForm
               </h1>
               <p className="text-zinc-600">
-                Generate Form/UI JSON files for your projects
+                Generate/edit Form/UI JSON files for your projects using prompts
               </p>
               <p className="text-sm text-zinc-500 mt-2">
                 Currently supporting Form specification v0.1
