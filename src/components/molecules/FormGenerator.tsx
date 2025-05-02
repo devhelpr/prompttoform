@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import Ajv2020 from "ajv/dist/2020"
-import { UISchema } from '../../types/ui-schema';
-import { generateUIFromPrompt, updateFormWithPatch } from '../../services/llm';
-import { Settings } from './Settings';
-import { evaluateAndRerunIfNeeded } from '../../services/prompt-eval';
-import { getCurrentAPIConfig } from '../../services/llm-api';
-import FormRenderer from './FormRenderer';
-import { getSystemPrompt } from '../../prompt-library/system-prompt';
-import schemaJson from '../../../schema.json';
+import { useState, useEffect } from "react";
+import Ajv2020 from "ajv/dist/2020";
+import { UISchema } from "../../types/ui-schema";
+import { generateUIFromPrompt, updateFormWithPatch } from "../../services/llm";
+import { Settings } from "./Settings";
+import { evaluateAndRerunIfNeeded } from "../../services/prompt-eval";
+import { getCurrentAPIConfig } from "../../services/llm-api";
+import FormRenderer from "./FormRenderer";
+import { getSystemPrompt } from "../../prompt-library/system-prompt";
+import schemaJson from "../../../schema.json";
 
 // Define the evaluation result type
 interface EvaluationResult {
@@ -20,7 +20,7 @@ interface EvaluationResult {
 }
 
 // Define view modes
-type ViewMode = 'json' | 'form';
+type ViewMode = "json" | "form";
 
 // Cast schema to unknown first, then to UISchema
 const uiSchema = schemaJson as unknown as UISchema;
@@ -31,13 +31,37 @@ const skipValidation = true;
 // Define interface for visibility conditions
 interface VisibilityCondition {
   field: string;
-  operator: "==" | "!=" | ">" | "<" | ">=" | "<=" | "equals" | "notEquals" | "greaterThan" | "lessThan";
+  operator:
+    | "=="
+    | "!="
+    | ">"
+    | "<"
+    | ">="
+    | "<="
+    | "equals"
+    | "notEquals"
+    | "greaterThan"
+    | "lessThan";
   value: string | number | boolean;
 }
 
 // Define interface for component properties
 interface ComponentProps {
-  type: "array" | "text" | "input" | "textarea" | "checkbox" | "radio" | "select" | "button" | "table" | "form" | "section" | "date" | "html" | "decisionTree";
+  type:
+    | "array"
+    | "text"
+    | "input"
+    | "textarea"
+    | "checkbox"
+    | "radio"
+    | "select"
+    | "button"
+    | "table"
+    | "form"
+    | "section"
+    | "date"
+    | "html"
+    | "decisionTree";
   id: string;
   label?: string;
   props?: Record<string, unknown>;
@@ -82,19 +106,28 @@ interface UIJson {
 }
 
 export function FormGenerator() {
-  const [prompt, setPrompt] = useState('');
-  const [updatePrompt, setUpdatePrompt] = useState('');
+  const [prompt, setPrompt] = useState("");
+  const [updatePrompt, setUpdatePrompt] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
-  const [generatedJson, setGeneratedJson] = useState('');
+  const [generatedJson, setGeneratedJson] = useState("");
   const [parsedJson, setParsedJson] = useState<UIJson | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('json');
+  const [viewMode, setViewMode] = useState<ViewMode>("json");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [jsonError, setJsonError] = useState<string | null>(null);
+  const [showApiKeyHint, setShowApiKeyHint] = useState(false);
+
+  useEffect(() => {
+    // Check for API key on mount
+    const apiConfig = getCurrentAPIConfig();
+    if (!apiConfig.apiKey) {
+      setShowApiKeyHint(true);
+    }
+  }, []);
 
   const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPrompt(e.target.value);
@@ -105,575 +138,583 @@ export function FormGenerator() {
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
   };
-    
+
   const loadExampleForm = () => {
     const exampleForm = {
-      "app": {
-        "title": "Customer Feedback Form",
-        "pages": [
+      app: {
+        title: "Customer Feedback Form",
+        pages: [
           {
-            "id": "feedback-page",
-            "title": "Share Your Experience",
-            "route": "/feedback",
-            "layout": "vertical",
-            "components": [
+            id: "feedback-page",
+            title: "Share Your Experience",
+            route: "/feedback",
+            layout: "vertical",
+            components: [
               {
-                "type": "text",
-                "id": "intro-text",
-                "props": {
-                  "content": "We value your feedback. Please take a moment to complete this form and help us improve our services."
-                }
+                type: "text",
+                id: "intro-text",
+                props: {
+                  content:
+                    "We value your feedback. Please take a moment to complete this form and help us improve our services.",
+                },
               },
               {
-                "type": "form",
-                "id": "feedback-form",
-                "label": "Feedback Form",
-                "children": [
+                type: "form",
+                id: "feedback-form",
+                label: "Feedback Form",
+                children: [
                   {
-                    "type": "section",
-                    "id": "personal-info",
-                    "label": "Personal Information",
-                    "children": [
+                    type: "section",
+                    id: "personal-info",
+                    label: "Personal Information",
+                    children: [
                       {
-                        "type": "input",
-                        "id": "name",
-                        "label": "Full Name",
-                        "props": {
-                          "placeholder": "John Doe"
+                        type: "input",
+                        id: "name",
+                        label: "Full Name",
+                        props: {
+                          placeholder: "John Doe",
                         },
-                        "validation": {
-                          "required": true,
-                          "minLength": 2
-                        }
+                        validation: {
+                          required: true,
+                          minLength: 2,
+                        },
                       },
                       {
-                        "type": "input",
-                        "id": "email",
-                        "label": "Email Address",
-                        "props": {
-                          "inputType": "email",
-                          "placeholder": "john.doe@example.com",
-                          "helperText": "We'll never share your email with anyone else."
+                        type: "input",
+                        id: "email",
+                        label: "Email Address",
+                        props: {
+                          inputType: "email",
+                          placeholder: "john.doe@example.com",
+                          helperText:
+                            "We'll never share your email with anyone else.",
                         },
-                        "validation": {
-                          "required": true,
-                          "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
-                        }
-                      }
-                    ]
+                        validation: {
+                          required: true,
+                          pattern:
+                            "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                        },
+                      },
+                    ],
                   },
                   {
-                    "type": "section",
-                    "id": "feedback-details",
-                    "label": "Your Feedback",
-                    "children": [
+                    type: "section",
+                    id: "feedback-details",
+                    label: "Your Feedback",
+                    children: [
                       {
-                        "type": "select",
-                        "id": "service-type",
-                        "label": "Which service are you providing feedback for?",
-                        "props": {
-                          "options": [
-                            { "label": "Customer Support", "value": "support" },
-                            { "label": "Product Quality", "value": "product" },
-                            { "label": "Website Experience", "value": "website" },
-                            { "label": "Billing & Payments", "value": "billing" },
-                            { "label": "Other", "value": "other" }
-                          ]
+                        type: "select",
+                        id: "service-type",
+                        label: "Which service are you providing feedback for?",
+                        props: {
+                          options: [
+                            { label: "Customer Support", value: "support" },
+                            { label: "Product Quality", value: "product" },
+                            { label: "Website Experience", value: "website" },
+                            { label: "Billing & Payments", value: "billing" },
+                            { label: "Other", value: "other" },
+                          ],
                         },
-                        "validation": {
-                          "required": true
-                        }
+                        validation: {
+                          required: true,
+                        },
                       },
                       {
-                        "type": "radio",
-                        "id": "satisfaction",
-                        "label": "How satisfied are you with our service?",
-                        "props": {
-                          "options": [
-                            { "label": "Very Satisfied", "value": "5" },
-                            { "label": "Satisfied", "value": "4" },
-                            { "label": "Neutral", "value": "3" },
-                            { "label": "Dissatisfied", "value": "2" },
-                            { "label": "Very Dissatisfied", "value": "1" }
-                          ]
+                        type: "radio",
+                        id: "satisfaction",
+                        label: "How satisfied are you with our service?",
+                        props: {
+                          options: [
+                            { label: "Very Satisfied", value: "5" },
+                            { label: "Satisfied", value: "4" },
+                            { label: "Neutral", value: "3" },
+                            { label: "Dissatisfied", value: "2" },
+                            { label: "Very Dissatisfied", value: "1" },
+                          ],
                         },
-                        "validation": {
-                          "required": true
-                        }
+                        validation: {
+                          required: true,
+                        },
                       },
                       {
-                        "type": "textarea",
-                        "id": "comments",
-                        "label": "Please share any additional comments",
-                        "props": {
-                          "placeholder": "Share your thoughts here...",
-                          "rows": 4
+                        type: "textarea",
+                        id: "comments",
+                        label: "Please share any additional comments",
+                        props: {
+                          placeholder: "Share your thoughts here...",
+                          rows: 4,
                         },
-                        "validation": {
-                          "minLength": 10,
-                          "maxLength": 500
-                        }
+                        validation: {
+                          minLength: 10,
+                          maxLength: 500,
+                        },
                       },
                       {
-                        "type": "checkbox",
-                        "id": "contact-permission",
-                        "label": "You may contact me about my feedback",
-                        "validation": {
-                          "required": true
-                        }
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+                        type: "checkbox",
+                        id: "contact-permission",
+                        label: "You may contact me about my feedback",
+                        validation: {
+                          required: true,
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
     };
-    
+
     setGeneratedJson(JSON.stringify(exampleForm, null, 2));
     setParsedJson(exampleForm as UIJson);
-    
+
     // If example form is loaded, switch to form view automatically
-    setViewMode('form');
+    setViewMode("form");
   };
 
   const loadMultiStepExample = () => {
     const multiStepForm = {
-      "app": {
-        "title": "Product Order Wizard",
-        "pages": [
+      app: {
+        title: "Product Order Wizard",
+        pages: [
           {
-            "id": "customer-info",
-            "title": "Customer Information",
-            "route": "/order/customer",
-            "layout": "vertical",
-            "components": [
+            id: "customer-info",
+            title: "Customer Information",
+            route: "/order/customer",
+            layout: "vertical",
+            components: [
               {
-                "type": "text",
-                "id": "step1-intro",
-                "props": {
-                  "content": "Please provide your contact information to get started with your order."
-                }
+                type: "text",
+                id: "step1-intro",
+                props: {
+                  content:
+                    "Please provide your contact information to get started with your order.",
+                },
               },
               {
-                "type": "form",
-                "id": "customer-form",
-                "label": "Contact Information",
-                "children": [
+                type: "form",
+                id: "customer-form",
+                label: "Contact Information",
+                children: [
                   {
-                    "type": "input",
-                    "id": "fullName",
-                    "label": "Full Name",
-                    "props": {
-                      "placeholder": "John Doe"
+                    type: "input",
+                    id: "fullName",
+                    label: "Full Name",
+                    props: {
+                      placeholder: "John Doe",
                     },
-                    "validation": {
-                      "required": true,
-                      "minLength": 2
-                    }
+                    validation: {
+                      required: true,
+                      minLength: 2,
+                    },
                   },
                   {
-                    "type": "input",
-                    "id": "email",
-                    "label": "Email Address",
-                    "props": {
-                      "inputType": "email",
-                      "placeholder": "john@example.com",
-                      "helperText": "We'll send your order confirmation to this email"
+                    type: "input",
+                    id: "email",
+                    label: "Email Address",
+                    props: {
+                      inputType: "email",
+                      placeholder: "john@example.com",
+                      helperText:
+                        "We'll send your order confirmation to this email",
                     },
-                    "validation": {
-                      "required": true,
-                      "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
-                    }
+                    validation: {
+                      required: true,
+                      pattern:
+                        "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                    },
                   },
                   {
-                    "type": "input",
-                    "id": "phone",
-                    "label": "Phone Number",
-                    "props": {
-                      "inputType": "tel",
-                      "placeholder": "(555) 555-5555"
+                    type: "input",
+                    id: "phone",
+                    label: "Phone Number",
+                    props: {
+                      inputType: "tel",
+                      placeholder: "(555) 555-5555",
                     },
-                    "validation": {
-                      "pattern": "^\\+?[1-9]\\d{1,14}$"
-                    }
+                    validation: {
+                      pattern: "^\\+?[1-9]\\d{1,14}$",
+                    },
                   },
                   {
-                    "type": "select",
-                    "id": "customerType",
-                    "label": "Customer Type",
-                    "props": {
-                      "options": [
-                        { "label": "Individual", "value": "individual" },
-                        { "label": "Business", "value": "business" }
-                      ]
+                    type: "select",
+                    id: "customerType",
+                    label: "Customer Type",
+                    props: {
+                      options: [
+                        { label: "Individual", value: "individual" },
+                        { label: "Business", value: "business" },
+                      ],
                     },
-                    "validation": {
-                      "required": true
-                    }
+                    validation: {
+                      required: true,
+                    },
                   },
                   {
-                    "type": "input",
-                    "id": "companyName",
-                    "label": "Company Name",
-                    "props": {
-                      "placeholder": "Acme Inc."
+                    type: "input",
+                    id: "companyName",
+                    label: "Company Name",
+                    props: {
+                      placeholder: "Acme Inc.",
                     },
-                    "visibilityConditions": [
+                    visibilityConditions: [
                       {
-                        "field": "customerType",
-                        "operator": "==",
-                        "value": "business"
-                      }
+                        field: "customerType",
+                        operator: "==",
+                        value: "business",
+                      },
                     ],
-                    "validation": {
-                      "required": true,
-                      "minLength": 2
-                    }
+                    validation: {
+                      required: true,
+                      minLength: 2,
+                    },
                   },
                   {
-                    "type": "input",
-                    "id": "taxId",
-                    "label": "Tax ID / VAT Number",
-                    "props": {
-                      "placeholder": "12345678"
+                    type: "input",
+                    id: "taxId",
+                    label: "Tax ID / VAT Number",
+                    props: {
+                      placeholder: "12345678",
                     },
-                    "visibilityConditions": [
+                    visibilityConditions: [
                       {
-                        "field": "customerType",
-                        "operator": "==",
-                        "value": "business"
-                      }
+                        field: "customerType",
+                        operator: "==",
+                        value: "business",
+                      },
                     ],
-                    "validation": {
-                      "required": true,
-                      "pattern": "^[A-Z0-9]{8,12}$"
-                    }
-                  }
-                ]
-              }
-            ]
+                    validation: {
+                      required: true,
+                      pattern: "^[A-Z0-9]{8,12}$",
+                    },
+                  },
+                ],
+              },
+            ],
           },
           {
-            "id": "product-selection",
-            "title": "Product Selection",
-            "route": "/order/products",
-            "layout": "vertical",
-            "components": [
+            id: "product-selection",
+            title: "Product Selection",
+            route: "/order/products",
+            layout: "vertical",
+            components: [
               {
-                "type": "text",
-                "id": "step2-intro",
-                "props": {
-                  "content": "Select the products you want to order."
-                }
+                type: "text",
+                id: "step2-intro",
+                props: {
+                  content: "Select the products you want to order.",
+                },
               },
               {
-                "type": "form",
-                "id": "product-form",
-                "label": "Products",
-                "children": [
+                type: "form",
+                id: "product-form",
+                label: "Products",
+                children: [
                   {
-                    "type": "select",
-                    "id": "productCategory",
-                    "label": "Product Category",
-                    "props": {
-                      "options": [
-                        { "label": "Electronics", "value": "electronics" },
-                        { "label": "Furniture", "value": "furniture" },
-                        { "label": "Clothing", "value": "clothing" }
-                      ]
+                    type: "select",
+                    id: "productCategory",
+                    label: "Product Category",
+                    props: {
+                      options: [
+                        { label: "Electronics", value: "electronics" },
+                        { label: "Furniture", value: "furniture" },
+                        { label: "Clothing", value: "clothing" },
+                      ],
                     },
-                    "validation": {
-                      "required": true
-                    }
+                    validation: {
+                      required: true,
+                    },
                   },
                   {
-                    "type": "select",
-                    "id": "electronicsProduct",
-                    "label": "Select Electronics",
-                    "props": {
-                      "options": [
-                        { "label": "Smartphone", "value": "smartphone" },
-                        { "label": "Laptop", "value": "laptop" },
-                        { "label": "Tablet", "value": "tablet" },
-                        { "label": "Smart Watch", "value": "smartwatch" }
-                      ]
+                    type: "select",
+                    id: "electronicsProduct",
+                    label: "Select Electronics",
+                    props: {
+                      options: [
+                        { label: "Smartphone", value: "smartphone" },
+                        { label: "Laptop", value: "laptop" },
+                        { label: "Tablet", value: "tablet" },
+                        { label: "Smart Watch", value: "smartwatch" },
+                      ],
                     },
-                    "visibilityConditions": [
+                    visibilityConditions: [
                       {
-                        "field": "productCategory",
-                        "operator": "==",
-                        "value": "electronics"
-                      }
+                        field: "productCategory",
+                        operator: "==",
+                        value: "electronics",
+                      },
                     ],
-                    "validation": {
-                      "required": true
-                    }
+                    validation: {
+                      required: true,
+                    },
                   },
                   {
-                    "type": "select",
-                    "id": "furnitureProduct",
-                    "label": "Select Furniture",
-                    "props": {
-                      "options": [
-                        { "label": "Sofa", "value": "sofa" },
-                        { "label": "Dining Table", "value": "dining_table" },
-                        { "label": "Bed Frame", "value": "bed_frame" },
-                        { "label": "Office Desk", "value": "office_desk" }
-                      ]
+                    type: "select",
+                    id: "furnitureProduct",
+                    label: "Select Furniture",
+                    props: {
+                      options: [
+                        { label: "Sofa", value: "sofa" },
+                        { label: "Dining Table", value: "dining_table" },
+                        { label: "Bed Frame", value: "bed_frame" },
+                        { label: "Office Desk", value: "office_desk" },
+                      ],
                     },
-                    "visibilityConditions": [
+                    visibilityConditions: [
                       {
-                        "field": "productCategory",
-                        "operator": "==",
-                        "value": "furniture"
-                      }
+                        field: "productCategory",
+                        operator: "==",
+                        value: "furniture",
+                      },
                     ],
-                    "validation": {
-                      "required": true
-                    }
+                    validation: {
+                      required: true,
+                    },
                   },
                   {
-                    "type": "select",
-                    "id": "clothingProduct",
-                    "label": "Select Clothing",
-                    "props": {
-                      "options": [
-                        { "label": "T-Shirt", "value": "tshirt" },
-                        { "label": "Jeans", "value": "jeans" },
-                        { "label": "Jacket", "value": "jacket" },
-                        { "label": "Dress", "value": "dress" }
-                      ]
+                    type: "select",
+                    id: "clothingProduct",
+                    label: "Select Clothing",
+                    props: {
+                      options: [
+                        { label: "T-Shirt", value: "tshirt" },
+                        { label: "Jeans", value: "jeans" },
+                        { label: "Jacket", value: "jacket" },
+                        { label: "Dress", value: "dress" },
+                      ],
                     },
-                    "visibilityConditions": [
+                    visibilityConditions: [
                       {
-                        "field": "productCategory",
-                        "operator": "==",
-                        "value": "clothing"
-                      }
+                        field: "productCategory",
+                        operator: "==",
+                        value: "clothing",
+                      },
                     ],
-                    "validation": {
-                      "required": true
-                    }
+                    validation: {
+                      required: true,
+                    },
                   },
                   {
-                    "type": "input",
-                    "id": "quantity",
-                    "label": "Quantity",
-                    "props": {
-                      "inputType": "number",
-                      "placeholder": "1"
+                    type: "input",
+                    id: "quantity",
+                    label: "Quantity",
+                    props: {
+                      inputType: "number",
+                      placeholder: "1",
                     },
-                    "validation": {
-                      "required": true,
-                      "min": 1,
-                      "max": 100
-                    }
-                  }
-                ]
-              }
-            ]
+                    validation: {
+                      required: true,
+                      min: 1,
+                      max: 100,
+                    },
+                  },
+                ],
+              },
+            ],
           },
           {
-            "id": "payment-info",
-            "title": "Payment Information",
-            "route": "/order/payment",
-            "layout": "vertical",
-            "components": [
+            id: "payment-info",
+            title: "Payment Information",
+            route: "/order/payment",
+            layout: "vertical",
+            components: [
               {
-                "type": "text",
-                "id": "step3-intro",
-                "props": {
-                  "content": "Please provide your payment details to complete your order."
-                }
+                type: "text",
+                id: "step3-intro",
+                props: {
+                  content:
+                    "Please provide your payment details to complete your order.",
+                },
               },
               {
-                "type": "form",
-                "id": "payment-form",
-                "label": "Payment Details",
-                "children": [
+                type: "form",
+                id: "payment-form",
+                label: "Payment Details",
+                children: [
                   {
-                    "type": "radio",
-                    "id": "paymentMethod",
-                    "label": "Payment Method",
-                    "props": {
-                      "options": [
-                        { "label": "Credit Card", "value": "credit_card" },
-                        { "label": "PayPal", "value": "paypal" },
-                        { "label": "Bank Transfer", "value": "bank_transfer" }
-                      ]
+                    type: "radio",
+                    id: "paymentMethod",
+                    label: "Payment Method",
+                    props: {
+                      options: [
+                        { label: "Credit Card", value: "credit_card" },
+                        { label: "PayPal", value: "paypal" },
+                        { label: "Bank Transfer", value: "bank_transfer" },
+                      ],
                     },
-                    "validation": {
-                      "required": true
-                    }
+                    validation: {
+                      required: true,
+                    },
                   },
                   {
-                    "type": "section",
-                    "id": "credit-card-details",
-                    "label": "Credit Card Details",
-                    "visibilityConditions": [
+                    type: "section",
+                    id: "credit-card-details",
+                    label: "Credit Card Details",
+                    visibilityConditions: [
                       {
-                        "field": "paymentMethod",
-                        "operator": "==",
-                        "value": "credit_card"
-                      }
+                        field: "paymentMethod",
+                        operator: "==",
+                        value: "credit_card",
+                      },
                     ],
-                    "children": [
+                    children: [
                       {
-                        "type": "input",
-                        "id": "cardNumber",
-                        "label": "Card Number",
-                        "props": {
-                          "placeholder": "XXXX XXXX XXXX XXXX"
+                        type: "input",
+                        id: "cardNumber",
+                        label: "Card Number",
+                        props: {
+                          placeholder: "XXXX XXXX XXXX XXXX",
                         },
-                        "validation": {
-                          "required": true,
-                          "pattern": "^[0-9]{16}$"
-                        }
+                        validation: {
+                          required: true,
+                          pattern: "^[0-9]{16}$",
+                        },
                       },
                       {
-                        "type": "input",
-                        "id": "cardName",
-                        "label": "Name on Card",
-                        "props": {
-                          "placeholder": "John Doe"
+                        type: "input",
+                        id: "cardName",
+                        label: "Name on Card",
+                        props: {
+                          placeholder: "John Doe",
                         },
-                        "validation": {
-                          "required": true,
-                          "minLength": 2
-                        }
+                        validation: {
+                          required: true,
+                          minLength: 2,
+                        },
                       },
                       {
-                        "type": "input",
-                        "id": "cardExpiry",
-                        "label": "Expiration Date",
-                        "props": {
-                          "placeholder": "MM/YY"
+                        type: "input",
+                        id: "cardExpiry",
+                        label: "Expiration Date",
+                        props: {
+                          placeholder: "MM/YY",
                         },
-                        "validation": {
-                          "required": true,
-                          "pattern": "^(0[1-9]|1[0-2])\\/([0-9]{2})$"
-                        }
+                        validation: {
+                          required: true,
+                          pattern: "^(0[1-9]|1[0-2])\\/([0-9]{2})$",
+                        },
                       },
                       {
-                        "type": "input",
-                        "id": "cardCVV",
-                        "label": "CVV",
-                        "props": {
-                          "placeholder": "123"
+                        type: "input",
+                        id: "cardCVV",
+                        label: "CVV",
+                        props: {
+                          placeholder: "123",
                         },
-                        "validation": {
-                          "required": true,
-                          "pattern": "^[0-9]{3,4}$"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "type": "section",
-                    "id": "paypal-details",
-                    "label": "PayPal Details",
-                    "visibilityConditions": [
-                      {
-                        "field": "paymentMethod",
-                        "operator": "==",
-                        "value": "paypal"
-                      }
+                        validation: {
+                          required: true,
+                          pattern: "^[0-9]{3,4}$",
+                        },
+                      },
                     ],
-                    "children": [
-                      {
-                        "type": "input",
-                        "id": "paypalEmail",
-                        "label": "PayPal Email",
-                        "props": {
-                          "inputType": "email",
-                          "placeholder": "your-email@example.com"
-                        },
-                        "validation": {
-                          "required": true,
-                          "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
-                        }
-                      }
-                    ]
                   },
                   {
-                    "type": "section",
-                    "id": "bank-details",
-                    "label": "Bank Details",
-                    "visibilityConditions": [
+                    type: "section",
+                    id: "paypal-details",
+                    label: "PayPal Details",
+                    visibilityConditions: [
                       {
-                        "field": "paymentMethod",
-                        "operator": "==",
-                        "value": "bank_transfer"
-                      }
+                        field: "paymentMethod",
+                        operator: "==",
+                        value: "paypal",
+                      },
                     ],
-                    "children": [
+                    children: [
                       {
-                        "type": "input",
-                        "id": "accountName",
-                        "label": "Account Holder Name",
-                        "props": {
-                          "placeholder": "John Doe"
+                        type: "input",
+                        id: "paypalEmail",
+                        label: "PayPal Email",
+                        props: {
+                          inputType: "email",
+                          placeholder: "your-email@example.com",
                         },
-                        "validation": {
-                          "required": true,
-                          "minLength": 2
-                        }
+                        validation: {
+                          required: true,
+                          pattern:
+                            "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                        },
                       },
-                      {
-                        "type": "input",
-                        "id": "accountNumber",
-                        "label": "Account Number",
-                        "props": {
-                          "placeholder": "XXXXXXXX"
-                        },
-                        "validation": {
-                          "required": true,
-                          "pattern": "^[A-Z0-9]{8,12}$"
-                        }
-                      },
-                      {
-                        "type": "input",
-                        "id": "bankName",
-                        "label": "Bank Name",
-                        "props": {
-                          "placeholder": "Bank of Example"
-                        },
-                        "validation": {
-                          "required": true,
-                          "minLength": 2
-                        }
-                      }
-                    ]
+                    ],
                   },
                   {
-                    "type": "checkbox",
-                    "id": "termsAgreed",
-                    "label": "I agree to the terms and conditions",
-                    "validation": {
-                      "required": true
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+                    type: "section",
+                    id: "bank-details",
+                    label: "Bank Details",
+                    visibilityConditions: [
+                      {
+                        field: "paymentMethod",
+                        operator: "==",
+                        value: "bank_transfer",
+                      },
+                    ],
+                    children: [
+                      {
+                        type: "input",
+                        id: "accountName",
+                        label: "Account Holder Name",
+                        props: {
+                          placeholder: "John Doe",
+                        },
+                        validation: {
+                          required: true,
+                          minLength: 2,
+                        },
+                      },
+                      {
+                        type: "input",
+                        id: "accountNumber",
+                        label: "Account Number",
+                        props: {
+                          placeholder: "XXXXXXXX",
+                        },
+                        validation: {
+                          required: true,
+                          pattern: "^[A-Z0-9]{8,12}$",
+                        },
+                      },
+                      {
+                        type: "input",
+                        id: "bankName",
+                        label: "Bank Name",
+                        props: {
+                          placeholder: "Bank of Example",
+                        },
+                        validation: {
+                          required: true,
+                          minLength: 2,
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    type: "checkbox",
+                    id: "termsAgreed",
+                    label: "I agree to the terms and conditions",
+                    validation: {
+                      required: true,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
     };
-    
+
     setGeneratedJson(JSON.stringify(multiStepForm, null, 2));
     setParsedJson(multiStepForm as UIJson);
-    
+
     // If example form is loaded, switch to form view automatically
-    setViewMode('form');
+    setViewMode("form");
   };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      setError('Please enter a prompt');
+      setError("Please enter a prompt");
       return;
     }
 
@@ -686,20 +727,22 @@ export function FormGenerator() {
       // Check if API key is set
       const apiConfig = getCurrentAPIConfig();
       if (!apiConfig.apiKey) {
-        setError(`No API key set for ${apiConfig.name}. Please configure it in the Settings.`);
+        setError(
+          `No API key set for ${apiConfig.name}. Please configure it in the Settings.`
+        );
         setIsLoading(false);
         return;
       }
 
       // Call the UI generation API
       const response = await generateUIFromPrompt(prompt, uiSchema);
-      
+
       // Try to parse the response as JSON
       let parsedResponse;
       try {
         parsedResponse = JSON.parse(response);
       } catch {
-        setError('Failed to parse the generated JSON. Please try again.');
+        setError("Failed to parse the generated JSON. Please try again.");
         setGeneratedJson(response);
         setIsLoading(false);
         return;
@@ -712,9 +755,9 @@ export function FormGenerator() {
           const ajv = new Ajv2020({
             allErrors: true,
             strict: false,
-            validateSchema: false
+            validateSchema: false,
           });
-          
+
           // Compile schema
           const validate = ajv.compile(uiSchema);
           const valid = validate(parsedResponse);
@@ -727,12 +770,12 @@ export function FormGenerator() {
           // Continue despite validation errors
         }
       }
-      
+
       // Store parsed response
       setParsedJson(parsedResponse);
 
       // Store string version
-      setGeneratedJson(JSON.stringify(parsedResponse, null, 2));      
+      setGeneratedJson(JSON.stringify(parsedResponse, null, 2));
     } catch (err) {
       setError(`An error occurred while generating the UI/Form.`);
       console.error(err);
@@ -743,7 +786,7 @@ export function FormGenerator() {
 
   const handleEvaluateAndRerun = async () => {
     if (!generatedJson) {
-      setError('Generate content first before evaluating');
+      setError("Generate content first before evaluating");
       return;
     }
 
@@ -755,14 +798,16 @@ export function FormGenerator() {
       const systemMessage = getSystemPrompt(uiSchema);
 
       const apiConfig = getCurrentAPIConfig();
-      
+
       // Check if API key is set
       if (!apiConfig.apiKey) {
-        setError(`No API key set for ${apiConfig.name}. Please configure it in the Settings.`);
+        setError(
+          `No API key set for ${apiConfig.name}. Please configure it in the Settings.`
+        );
         setIsEvaluating(false);
         return;
       }
-      
+
       // Evaluate the output and rerun if needed
       const result = await evaluateAndRerunIfNeeded(
         prompt,
@@ -770,22 +815,21 @@ export function FormGenerator() {
         generatedJson,
         apiConfig
       );
-      
+
       setEvaluation(result.evaluation);
-      
+
       // If the prompt was rerun and improved output was generated
       if (result.wasRerun && result.improvedOutput) {
         try {
           // Set the improved output
           setGeneratedJson(JSON.stringify(result.improvedOutput, null, 2));
-          
         } catch (parseError) {
-          console.error('Error parsing improved output:', parseError);
+          console.error("Error parsing improved output:", parseError);
           // Keep original output if parsing fails
         }
       }
     } catch (err) {
-      setError('An error occurred during evaluation.');
+      setError("An error occurred during evaluation.");
       console.error(err);
     } finally {
       setIsEvaluating(false);
@@ -793,21 +837,21 @@ export function FormGenerator() {
   };
 
   const handleCopyToClipboard = () => {
-    if (viewMode === 'json') {
+    if (viewMode === "json") {
       navigator.clipboard.writeText(generatedJson);
     }
   };
 
   const handleDownload = () => {
     let blob: Blob;
-    let filename = '';
-    
-    if (viewMode === 'json' && generatedJson) {
-      blob = new Blob([generatedJson], { type: 'application/json' });
-      filename = 'ui-schema.json';
-      
+    let filename = "";
+
+    if (viewMode === "json" && generatedJson) {
+      blob = new Blob([generatedJson], { type: "application/json" });
+      filename = "ui-schema.json";
+
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
@@ -820,13 +864,13 @@ export function FormGenerator() {
   const handleJsonChange = (newJson: string) => {
     setGeneratedJson(newJson);
     setJsonError(null);
-    
+
     try {
       const parsed = JSON.parse(newJson) as UIJson;
       setParsedJson(parsed);
     } catch (error) {
-      setJsonError('Invalid JSON format');
-      console.error('JSON parsing error:', error);
+      setJsonError("Invalid JSON format");
+      console.error("JSON parsing error:", error);
     }
   };
 
@@ -836,12 +880,12 @@ export function FormGenerator() {
         const ajv = new Ajv2020({
           allErrors: true,
           strict: false,
-          validateSchema: false
+          validateSchema: false,
         });
-        
+
         const validate = ajv.compile(uiSchema);
         const valid = validate(parsedJson);
-        
+
         if (!valid && validate.errors) {
           setError(`Validation failed: ${ajv.errorsText(validate.errors)}`);
           return;
@@ -852,14 +896,16 @@ export function FormGenerator() {
         return;
       }
     }
-    
+
     setError(null);
-    setViewMode('form');
+    setViewMode("form");
   };
 
   const handleUpdateForm = async () => {
     if (!updatePrompt.trim() || !generatedJson) {
-      setUpdateError('Please enter an update prompt and make sure a form is generated');
+      setUpdateError(
+        "Please enter an update prompt and make sure a form is generated"
+      );
       return;
     }
 
@@ -869,14 +915,14 @@ export function FormGenerator() {
     try {
       const patch = await updateFormWithPatch(generatedJson, updatePrompt);
       const patchOperations = JSON.parse(patch);
-      
+
       // Apply the patch operations to the current form
       const updatedForm = JSON.parse(generatedJson);
       for (const operation of patchOperations) {
         const { op, path, value } = operation;
-        const pathParts = path.split('/').filter(Boolean);
+        const pathParts = path.split("/").filter(Boolean);
         let current = updatedForm;
-        
+
         for (let i = 0; i < pathParts.length - 1; i++) {
           const part = pathParts[i];
           if (part.match(/^\d+$/)) {
@@ -885,31 +931,33 @@ export function FormGenerator() {
             current = current[part];
           }
         }
-        
+
         const lastPart = pathParts[pathParts.length - 1];
         if (lastPart.match(/^\d+$/)) {
           const index = parseInt(lastPart);
-          if (op === 'add') {
+          if (op === "add") {
             current.splice(index, 0, value);
-          } else if (op === 'remove') {
+          } else if (op === "remove") {
             current.splice(index, 1);
-          } else if (op === 'replace') {
+          } else if (op === "replace") {
             current[index] = value;
           }
         } else {
-          if (op === 'add' || op === 'replace') {
+          if (op === "add" || op === "replace") {
             current[lastPart] = value;
-          } else if (op === 'remove') {
+          } else if (op === "remove") {
             delete current[lastPart];
           }
         }
       }
-      
+
       setGeneratedJson(JSON.stringify(updatedForm, null, 2));
       setParsedJson(updatedForm as UIJson);
     } catch (error) {
-      console.error('Error updating form:', error);
-      setUpdateError(error instanceof Error ? error.message : 'Failed to update form');
+      console.error("Error updating form:", error);
+      setUpdateError(
+        error instanceof Error ? error.message : "Failed to update form"
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -918,7 +966,9 @@ export function FormGenerator() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-zinc-900">Generate Form/UI</h2>
+        <h2 className="text-xl font-semibold text-zinc-900">
+          Generate Form/UI
+        </h2>
         <button
           onClick={() => setIsSettingsOpen(true)}
           className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -927,8 +977,37 @@ export function FormGenerator() {
         </button>
       </div>
 
+      {showApiKeyHint && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-yellow-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                No API key configured. Please go to Settings to configure your
+                preferred LLM API key to start generating forms.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
-        <label htmlFor="prompt" className="block text-sm font-medium text-zinc-700 mb-2">
+        <label
+          htmlFor="prompt"
+          className="block text-sm font-medium text-zinc-700 mb-2"
+        >
           Enter your prompt
         </label>
         <p className="text-sm text-zinc-500 mb-4">
@@ -963,9 +1042,9 @@ export function FormGenerator() {
             disabled={isLoading}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
           >
-            {isLoading ? 'Generating...' : 'Generate UI/Form'}
+            {isLoading ? "Generating..." : "Generate UI/Form"}
           </button>
-          
+
           {generatedJson && (
             <button
               type="button"
@@ -973,7 +1052,7 @@ export function FormGenerator() {
               disabled={isEvaluating}
               className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
-              {isEvaluating ? 'Evaluating...' : 'Evaluate & Improve'}
+              {isEvaluating ? "Evaluating..." : "Evaluate & Improve"}
             </button>
           )}
         </div>
@@ -996,15 +1075,17 @@ export function FormGenerator() {
         <div className="rounded-md bg-blue-50 p-4">
           <div className="flex">
             <div className="ml-3 w-full">
-              <h3 className="text-sm font-medium text-blue-800">Evaluation Results</h3>
+              <h3 className="text-sm font-medium text-blue-800">
+                Evaluation Results
+              </h3>
               <div className="mt-2 text-sm text-blue-700 space-y-2">
                 <div className="flex justify-between">
                   <span>Matches Prompt:</span>
-                  <span>{evaluation.matchesPrompt ? '✓' : '✗'}</span>
+                  <span>{evaluation.matchesPrompt ? "✓" : "✗"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Matches System Prompt:</span>
-                  <span>{evaluation.matchesSystemPrompt ? '✓' : '✗'}</span>
+                  <span>{evaluation.matchesSystemPrompt ? "✓" : "✗"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Score:</span>
@@ -1014,9 +1095,11 @@ export function FormGenerator() {
                   <div>
                     <span className="font-medium">Missing Elements:</span>
                     <ul className="list-disc pl-4 mt-1">
-                      {evaluation.missingElements.map((element: string, index: number) => (
-                        <li key={index}>{element}</li>
-                      ))}
+                      {evaluation.missingElements.map(
+                        (element: string, index: number) => (
+                          <li key={index}>{element}</li>
+                        )
+                      )}
                     </ul>
                   </div>
                 )}
@@ -1031,8 +1114,8 @@ export function FormGenerator() {
           </div>
         </div>
       )}
-      
-      {(generatedJson) && (
+
+      {generatedJson && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -1042,22 +1125,22 @@ export function FormGenerator() {
               <div className="inline-flex rounded-md shadow-sm" role="group">
                 <button
                   type="button"
-                  onClick={() => handleViewModeChange('json')}
+                  onClick={() => handleViewModeChange("json")}
                   className={`px-4 py-2 text-sm font-medium rounded-l-md ${
-                    viewMode === 'json' 
-                      ? 'bg-indigo-600 text-white' 
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                    viewMode === "json"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
                   } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
                 >
                   JSON
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleViewModeChange('form')}
+                  onClick={() => handleViewModeChange("form")}
                   className={`px-4 py-2 text-sm font-medium rounded-r-md ${
-                    viewMode === 'form' 
-                      ? 'bg-indigo-600 text-white' 
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                    viewMode === "form"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
                   } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
                 >
                   Preview
@@ -1080,7 +1163,7 @@ export function FormGenerator() {
             </div>
           </div>
 
-          {viewMode === 'json' ? (
+          {viewMode === "json" ? (
             <div className="space-y-4">
               <textarea
                 value={generatedJson}
@@ -1102,7 +1185,9 @@ export function FormGenerator() {
               </div>
             </div>
           ) : (
-            viewMode === 'form' && parsedJson && parsedJson.app && (
+            viewMode === "form" &&
+            parsedJson &&
+            parsedJson.app && (
               <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
                 <FormRenderer formJson={parsedJson} />
               </div>
@@ -1110,7 +1195,9 @@ export function FormGenerator() {
           )}
 
           <div className="mt-8 border-t pt-6">
-            <h3 className="text-lg font-medium text-zinc-900 mb-4">Update Form</h3>
+            <h3 className="text-lg font-medium text-zinc-900 mb-4">
+              Update Form
+            </h3>
             <div className="space-y-4">
               <textarea
                 value={updatePrompt}
@@ -1127,16 +1214,17 @@ export function FormGenerator() {
                 disabled={isUpdating}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isUpdating ? 'Updating...' : 'Update Form'}
+                {isUpdating ? "Updating..." : "Update Form"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <Settings isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <Settings
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   );
-} 
-
-
+}
