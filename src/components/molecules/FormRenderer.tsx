@@ -543,6 +543,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     component: ComponentProps,
     parentId?: string
   ): React.ReactElement => {
+    // Check visibility first
+    if (!isComponentVisible(component.visibilityConditions, formValues)) {
+      return <></>;
+    }
+
     const { id, type, label, props, validation } = component;
     const fieldId = parentId ? `${parentId}.${id}` : id;
     const hasError = validationErrors[fieldId]?.length > 0;
