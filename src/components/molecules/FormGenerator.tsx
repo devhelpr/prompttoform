@@ -129,6 +129,14 @@ export function FormGenerator() {
     }
   }, []);
 
+  // Check for API key when settings dialog closes
+  useEffect(() => {
+    if (!isSettingsOpen) {
+      const apiConfig = getCurrentAPIConfig();
+      setShowApiKeyHint(!apiConfig.apiKey);
+    }
+  }, [isSettingsOpen]);
+
   const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPrompt(e.target.value);
     setError(null);
