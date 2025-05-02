@@ -51,7 +51,7 @@ PRs are welcome! Issues, discussions, and feedback are even more welcome.
 
 ## Hire Me (Sweden-based Developers, Read This!)
 
-Hey! I'm currently working as a freelance full-stack developer in the Netherlands, and I'm relocating to **Sweden** within the next few months. I'm actively looking for a **permanent full-stack developer role** — React, TypeScript, Node.js, and anything AI-powered is my sweet spot.
+Hey! I'm currently working as a freelance full-stack developer in the Netherlands, and I'm relocating to **Sweden** within the next half year (november 2025 and onwards). I'm actively looking for a **permanent full-stack developer role** — React, TypeScript, Node.js, .Net C#, Python and anything AI-powered or infinite-canvas related is my sweet spot.
 
 If you're a Swedish company working on interesting tools, platforms, or creative developer experiences, **I'd love to chat**. PromptToForm.ai is one of my open projects to showcase my thinking, problem-solving, and product-building ability.
 
