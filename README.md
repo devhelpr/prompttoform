@@ -1,6 +1,70 @@
-# OCIF Generator
+# PromptToForm.ai
 
-A simple tool to generate Form/ui JSON files using various LLM APIs that are compatible with the OpenAI API specification.
+**PromptToForm.ai** is an open-source prompt-to-form generator that transforms plain language instructions into structured JSON-based multi-step forms — with live previews. Built for analysts, product teams, and developers who want to rapidly design, test, and hand off dynamic forms.
+
+---
+
+## Features
+
+* Prompt-to-JSON form generation
+* Multi-step form rendering
+* Core input types (text, email, select, etc.)
+* Conditional logic via prompt
+* Live preview as you prompt
+* Exportable JSON schema
+
+## Coming Soon (Pro features)
+
+* React form component export
+* Analytics tracking hooks
+* Integration templates (Slack, Sheets, Airtable)
+* Enterprise self-host installer
+
+## Why?
+
+Forms are painful to spec, slow to build, and hard to get right — especially when technical and non-technical teams need to collaborate. PromptToForm bridges that gap with AI-driven simplicity.
+
+---
+
+## Getting Started
+
+```bash
+git clone https://github.com/devhelpr/prompttoform
+cd prompttoform
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## License
+
+This project is licensed under the MIT License. Feel free to use it, fork it, and contribute.
+
+## Contributing
+
+PRs are welcome! Issues, discussions, and feedback are even more welcome.
+
+---
+
+## Hire Me (Sweden-based Developers, Read This!)
+
+Hey! I'm currently working as a freelance full-stack developer in the Netherlands, and I'm relocating to **Sweden** within the next few months. I'm actively looking for a **permanent full-stack developer role** — React, TypeScript, Node.js, and anything AI-powered is my sweet spot.
+
+If you're a Swedish company working on interesting tools, platforms, or creative developer experiences, **I'd love to chat**. PromptToForm.ai is one of my open projects to showcase my thinking, problem-solving, and product-building ability.
+
+Reach out:
+
+* Email: [maikel@devhelpr.com](mailto:maikel@devhelpr.com)
+* LinkedIn: [linkedin.com/in/devhelpr](https://linkedin.com/in/devhelpr)
+
+---
+
+## Made with love, TypeScript, and curiosity.
+
+
 
 ## Supported LLM APIs
 
@@ -9,27 +73,6 @@ The tool supports the following LLM APIs:
 - Anthropic (Claude 3 Opus)
 - Mistral (Mistral Large)
 - Google Gemini (Gemini Pro)
-
-## Installation
-
-1. Clone the repository
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Configure your API keys in the settings panel of the application, or add them to your `.env` file:
-```
-VITE_OPENAI_API_KEY=your_openai_api_key
-VITE_ANTHROPIC_API_KEY=your_anthropic_api_key
-VITE_MISTRAL_API_KEY=your_mistral_api_key
-VITE_GEMINI_API_KEY=your_gemini_api_key
-```
-
-4. Start the development server:
-```bash
-npm run dev
-```
 
 ## Usage
 
@@ -54,14 +97,4 @@ Here's an example of a form with an array field:
 create a simple form with an array field-type for maintaining a list of contacts
 
 ```
-
-
-## Features
-
-- Support for multiple LLM APIs (OpenAI, Anthropic, Mistral, Google Gemini)
-- Automatic layout generation using d3-force
-- Schema validation
-- Copy to clipboard and download functionality
-- Settings panel for API configuration
-- Beautiful and modern UI with Tailwind CSS
 

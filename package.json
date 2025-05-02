@@ -1,6 +1,11 @@
 {
-  "name": "form-generator-poc",
-  "private": true,
+  "name": "prompttoform",
+  "private": false,
+  "author": "Maikel van de Lisdonk",
+  "license": "MIT",
+  "description": "PromptToForm is an open-source prompt-to-form generator that transforms plain language instructions into structured JSON-based multi-step forms — with live previews.",
+  "homepage": "https://app.prompttoform.ai",
+  "email": "maikel@devhelpr.com",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
