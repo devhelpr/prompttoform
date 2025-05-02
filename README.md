@@ -62,7 +62,7 @@ Reach out:
 
 ---
 
-## Made with love, TypeScript, and curiosity.
+## Made with love, TypeScript, curiosity...and a bit of Vibe coding ... just to see how far it can get
 
 
 
@@ -90,6 +90,13 @@ Here's an example prompt to test the generator:
 imagine a simple health-check wizard asking questions and branching based on user answers.. make sure that if no doctor visit is needed that this is shown with a disclaimer
 
 ```
+
+and another example:
+
+```
+3-step job app form
+```
+
 
 Here's an example of a form with an array field:
 
