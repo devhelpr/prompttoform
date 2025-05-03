@@ -748,7 +748,7 @@ export function FormGenerator() {
       // Try to parse the response as JSON
       let parsedResponse;
       try {
-        parsedResponse = JSON.parse(response);
+        parsedResponse = JSON.parse(response) as UIJson;
       } catch {
         setError("Failed to parse the generated JSON. Please try again.");
         setGeneratedJson(response);
@@ -782,8 +782,11 @@ export function FormGenerator() {
       // Store parsed response
       setParsedJson(parsedResponse);
 
-      // Store string version
-      setGeneratedJson(JSON.stringify(parsedResponse, null, 2));
+      // Format and store string version with proper newlines
+      const formattedJson = JSON.stringify(parsedResponse, null, 2)
+        .replace(/\\n/g, "\n")
+        .replace(/\\\\/g, "\\");
+      setGeneratedJson(formattedJson);
     } catch (err) {
       setError(`An error occurred while generating the UI/Form.`);
       console.error(err);
@@ -829,8 +832,16 @@ export function FormGenerator() {
       // If the prompt was rerun and improved output was generated
       if (result.wasRerun && result.improvedOutput) {
         try {
-          // Set the improved output
-          setGeneratedJson(JSON.stringify(result.improvedOutput, null, 2));
+          // Parse the improved output string into a proper UIJson object
+          const parsedOutput = JSON.parse(result.improvedOutput) as UIJson;
+
+          // Format the improved output with proper newlines
+          const formattedJson = JSON.stringify(parsedOutput, null, 2)
+            .replace(/\\n/g, "\n")
+            .replace(/\\\\/g, "\\");
+
+          setGeneratedJson(formattedJson);
+          setParsedJson(parsedOutput);
         } catch (parseError) {
           console.error("Error parsing improved output:", parseError);
           // Keep original output if parsing fails
@@ -870,14 +881,21 @@ export function FormGenerator() {
   };
 
   const handleJsonChange = (newJson: string) => {
-    setGeneratedJson(newJson);
-    setJsonError(null);
-
     try {
+      // First try to parse the JSON to validate it
       const parsed = JSON.parse(newJson) as UIJson;
+
+      // If parsing succeeds, format it nicely with actual newlines
+      const formattedJson = JSON.stringify(parsed, null, 2)
+        .replace(/\\n/g, "\n") // Replace escaped newlines with actual newlines
+        .replace(/\\\\/g, "\\"); // Replace double backslashes with single backslashes
+
+      setGeneratedJson(formattedJson);
       setParsedJson(parsed);
+      setJsonError(null);
     } catch (error) {
       setJsonError("Invalid JSON format");
+      setGeneratedJson(newJson); // Keep the invalid JSON in the textarea
       console.error("JSON parsing error:", error);
     }
   };

@@ -83,6 +83,7 @@ Important rules for UI/Form schema:
     - For multi-step wizards, branch navigation provides intuitive user flow
 
 13. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
+14. DONT EMBED The schema itself in the response! BUT it should be valid JSON which follows the schema.
 `;
 }
 

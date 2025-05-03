@@ -131,11 +131,34 @@ export function removeMarkdownCodeBlocks(content: string): string {
   return content;
 }
 
+/**
+ * Cleans and formats JSON content from LLM responses
+ * @param content The raw content from the LLM
+ * @returns Properly formatted JSON string
+ */
+function cleanAndFormatJson(content: string): string {
+  try {
+    // First remove any markdown code blocks
+    let cleaned = removeMarkdownCodeBlocks(content);
+
+    // Replace literal \n with actual newlines
+    cleaned = cleaned.replace(/\\n/g, "\n");
+
+    // Try to parse and re-stringify to ensure valid JSON and proper formatting
+    const parsed = JSON.parse(cleaned);
+    return JSON.stringify(parsed, null, 2);
+  } catch (error) {
+    console.error("Error cleaning JSON:", error);
+    // If we can't parse it as JSON, return the original content with just newline replacement
+    return content.replace(/\\n/g, "\n");
+  }
+}
+
 export async function callLLMAPI(
   prompt: string,
   systemMessage: string,
   apiConfig: APIConfig,
-  jsonSchema?: Record<string, unknown>
+  jsonSchema?: any
 ): Promise<string> {
   if (!apiConfig.apiKey) {
     throw new Error(
@@ -180,30 +203,7 @@ export async function callLLMAPI(
         throw new Error("No content returned from Gemini API");
       }
 
-      try {
-        // Check if the content is wrapped in markdown code blocks and remove them
-        const cleanedContent = removeMarkdownCodeBlocks(content);
-
-        // Try to parse as JSON to validate
-        JSON.parse(cleanedContent);
-        return cleanedContent;
-      } catch (parseError: unknown) {
-        // If we're running evaluation with JSON output format, this is an error
-        if (
-          jsonSchema &&
-          (jsonSchema.type === "json_object" || jsonSchema.type === "object")
-        ) {
-          throw new Error(
-            `Failed to parse Gemini response as JSON: ${
-              parseError instanceof Error
-                ? parseError.message
-                : String(parseError)
-            }`
-          );
-        }
-        // Otherwise just return the raw content
-        return content;
-      }
+      return cleanAndFormatJson(content);
     } catch (error) {
       console.error("Error with Gemini API call:", error);
       throw error;
@@ -265,9 +265,7 @@ export async function callLLMAPI(
     }
 
     try {
-      // Check if the content is wrapped in markdown code blocks and remove them
-      const cleanedContent = removeMarkdownCodeBlocks(content);
-
+      const cleanedContent = cleanAndFormatJson(content);
       return cleanedContent;
     } catch {
       // Not all responses need to be JSON
