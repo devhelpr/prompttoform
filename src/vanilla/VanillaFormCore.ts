@@ -10,7 +10,7 @@ interface Page {
   branches?: Array<{
     condition: {
       field: string;
-      operator: string;
+      operator: "==" | "!=" | ">" | "<" | ">=" | "<=";
       value: string;
     };
     nextPage: string;
@@ -1033,8 +1033,7 @@ export class VanillaFormCore {
 
     // Check for conditional branches first
     if (this.currentPage.branches) {
-      for (let i = 0; i < this.currentPage.branches.length; i++) {
-        const branch = this.currentPage.branches[i];
+      for (const branch of this.currentPage.branches) {
         const fieldValue = this.formData[branch.condition.field];
         const conditionValue = branch.condition.value;
         let conditionMet = false;
@@ -1068,6 +1067,32 @@ export class VanillaFormCore {
 
     // If no branch conditions are met, use the nextPage field
     return this.currentPage.nextPage || null;
+  }
+
+  public handleNext(): void {
+    if (!this.currentPage) return;
+
+    // Validate current page before navigation
+    if (!this.validateForm()) {
+      return;
+    }
+
+    const nextPageId = this.getNextPage();
+    if (nextPageId) {
+      this.navigateToPage(nextPageId);
+    } else if (this.currentPage.isEndPage) {
+      this.handleFormSubmit();
+    }
+  }
+
+  public handlePrevious(): void {
+    if (this.pageHistory.length > 1) {
+      this.pageHistory.pop(); // Remove current page
+      const previousPageId = this.pageHistory.pop(); // Get previous page
+      if (previousPageId) {
+        this.navigateToPage(previousPageId);
+      }
+    }
   }
 
   public handleFormSubmit(): void {

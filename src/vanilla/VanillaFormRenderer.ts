@@ -99,28 +99,16 @@ export class VanillaFormRenderer {
   private handlePrevious(): void {
     if (this.currentStep > 0) {
       this.currentStep--;
-      this.formCore.navigateToPage(
-        this.formCore.schema.app.pages[this.currentStep].id
-      );
+      this.formCore.handlePrevious();
       this.updateNavigationControls();
     }
   }
 
   private handleNext(): void {
-    if (this.currentStep === this.totalSteps - 1) {
-      // Handle form submission
-      if (this.formCore.validateForm()) {
-        this.formCore.handleFormSubmit();
-      }
-    } else {
-      // Navigate to next page
-      if (this.formCore.validateForm()) {
-        this.currentStep++;
-        this.formCore.navigateToPage(
-          this.formCore.schema.app.pages[this.currentStep].id
-        );
-        this.updateNavigationControls();
-      }
+    if (this.currentStep < this.totalSteps - 1) {
+      this.currentStep++;
+      this.formCore.handleNext();
+      this.updateNavigationControls();
     }
   }
 
