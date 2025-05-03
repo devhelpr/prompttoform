@@ -23,7 +23,7 @@ export interface ExtendedFormSchema extends FormSchema {
 }
 
 export class FormGenerator {
-  private schema: ExtendedFormSchema;
+  private _schema: ExtendedFormSchema;
   private container: HTMLElement;
   private currentPage: Page | null = null;
   private formData: Record<string, unknown> = {};
@@ -34,7 +34,7 @@ export class FormGenerator {
   private validationErrors: Record<string, string> = {};
 
   constructor(schema: ExtendedFormSchema, containerId: string) {
-    this.schema = schema;
+    this._schema = schema;
     const container = document.getElementById(containerId);
     if (!container) {
       throw new Error(`Container with id "${containerId}" not found`);
@@ -44,20 +44,20 @@ export class FormGenerator {
 
   public init(): void {
     this.renderTitle();
-    this.navigateToPage(this.schema.app.pages[0].id);
+    this.navigateToPage(this._schema.app.pages[0].id);
   }
 
   private renderTitle(): void {
     const title = document.createElement("h1");
-    title.textContent = this.schema.app.title;
+    title.textContent = this._schema.app.title;
     this.container.appendChild(title);
   }
 
-  private navigateToPage(
+  public navigateToPage(
     pageId: string,
     branchIndex: number | null = null
   ): void {
-    const page = this.schema.app.pages.find((p) => p.id === pageId);
+    const page = this._schema.app.pages.find((p) => p.id === pageId);
     if (!page) {
       throw new Error(`Page with id "${pageId}" not found`);
     }
@@ -159,7 +159,7 @@ export class FormGenerator {
     });
   }
 
-  private renderComponent(component: Component): HTMLElement | null {
+  public renderComponent(component: Component): HTMLElement | null {
     const wrapper = document.createElement("div");
     wrapper.className = `component ${component.type}`;
     wrapper.id = `component-${component.id}`;
@@ -192,9 +192,6 @@ export class FormGenerator {
         break;
       case "select":
         element = this.createSelect(component);
-        break;
-      case "button":
-        element = this.createButton(component);
         break;
       case "radio":
         element = this.createRadioGroup(component);
@@ -305,6 +302,20 @@ export class FormGenerator {
     button.id = component.id;
     button.textContent = component.label || "";
     button.type = component.props?.type || "button";
+
+    // Add click handler for navigation and form submission
+    button.addEventListener("click", () => {
+      if (component.props?.type === "submit") {
+        if (this.validateForm()) {
+          this.handleFormSubmit();
+        }
+      } else if (component.props?.type === "next") {
+        const nextPageId = this.getNextPage();
+        if (nextPageId) {
+          this.navigateToPage(nextPageId);
+        }
+      }
+    });
 
     return button;
   }
@@ -747,7 +758,7 @@ export class FormGenerator {
     return isValid;
   }
 
-  private validateForm(): boolean {
+  public validateForm(): boolean {
     if (!this.currentPage) return true;
 
     let isValid = true;
@@ -1052,7 +1063,7 @@ export class FormGenerator {
   private async handleApiRequest(action: Action): Promise<void> {
     if (!action.dataSource) return;
 
-    const dataSource = this.schema.app.dataSources?.find(
+    const dataSource = this._schema.app.dataSources?.find(
       (ds) => ds.id === action.dataSource
     );
     if (!dataSource) return;
@@ -1134,7 +1145,37 @@ export class FormGenerator {
     return this.currentPage.nextPage || null;
   }
 
-  private handleFormSubmit(): void {
-    // Implementation of handleFormSubmit method
+  public handleFormSubmit(): void {
+    // Get the form element
+    const form = this.container.querySelector("form");
+    if (!form) return;
+
+    // Create a FormData object
+    const formData = new FormData(form as HTMLFormElement);
+    const formDataObj: Record<string, unknown> = {};
+
+    // Convert FormData to a plain object
+    for (const [key, value] of formData.entries()) {
+      formDataObj[key] = value;
+    }
+
+    // Emit a custom event with the form data
+    const submitEvent = new CustomEvent("formSubmit", {
+      detail: formDataObj,
+      bubbles: true,
+    });
+    this.container.dispatchEvent(submitEvent);
+
+    // If this is the last page, clear the form
+    if (this.currentPage?.isEndPage) {
+      form.reset();
+      this.formData = {};
+      this.validationErrors = {};
+      this.touchedFields.clear();
+    }
+  }
+
+  public get schema(): ExtendedFormSchema {
+    return this._schema;
   }
 }

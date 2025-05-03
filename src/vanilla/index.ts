@@ -1,11 +1,11 @@
-import { FormGenerator } from "./FormGenerator";
+import { FormRenderer } from "./FormRenderer";
 import { ExtendedFormSchema } from "./FormGenerator";
 
 export function initFormGenerator(
   schema: ExtendedFormSchema,
   containerId: string
-): FormGenerator {
-  const formGenerator = new FormGenerator(schema, containerId);
-  formGenerator.init();
-  return formGenerator;
+): FormRenderer {
+  const formRenderer = new FormRenderer(schema, containerId);
+  formRenderer.init();
+  return formRenderer;
 }
