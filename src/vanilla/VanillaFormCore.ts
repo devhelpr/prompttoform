@@ -506,27 +506,6 @@ export class VanillaFormCore {
     container.appendChild(addButton);
   }
 
-  private updateVisibility(): void {
-    const page = this.currentPage;
-    if (!page) return;
-
-    const form = this.container.querySelector("form");
-    if (!form) return;
-
-    // Remove all components
-    while (form.firstChild) {
-      form.removeChild(form.firstChild);
-    }
-
-    // Re-render components with updated visibility
-    page.components.forEach((component) => {
-      const componentElement = this.renderComponent(component);
-      if (this.isComponentVisible(component) && componentElement) {
-        form.appendChild(componentElement);
-      }
-    });
-  }
-
   private setupValidation(component: Component, element: HTMLElement): void {
     if (!component.validation) return;
 
