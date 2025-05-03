@@ -18,6 +18,8 @@ Important rules for UI/Form schema:
    - Choose an appropriate layout (grid, flex, vertical, or horizontal)
    - Include relevant components based on the page's purpose
    - Set isEndPage to true for final pages where form submission should occur
+   - Define branches for conditional navigation based on user input
+   - Specify nextPage for linear navigation flow
 
 6. For components:
    - Each component must have a unique ID and appropriate type
@@ -60,22 +62,22 @@ Important rules for UI/Form schema:
     - Reference existing fields and components
 
 12. For branching logic:
-    - Use navigate action type with branches to handle conditional navigation flows
-    - Inside an event handler (onClick, onSubmit, onChange), set the action type to "navigate"
-    - Add branches array to define conditional navigation logic:
-      "onClick": {
-        "type": "navigate",
-        "branches": [
-          {
-            "condition": {
-              "field": "questionFieldId", 
-              "operator": "==", 
-              "value": "yes"
-            },
-            "nextPage": "targetPageId"
-          }
-        ]
-      }
+    - Use branches array to define conditional navigation based on user input
+    - Each branch should have:
+      - A condition object with field, operator, and value
+      - A nextPage field specifying the target page ID
+    - Example branch structure:
+      "branches": [
+        {
+          "condition": {
+            "field": "questionFieldId",
+            "operator": "==",
+            "value": "yes"
+          },
+          "nextPage": "targetPageId"
+        }
+      ]
+    - For linear navigation, use nextPage field directly
     - Ensure that field IDs in conditions match existing input field IDs
     - For navigation branches, ensure that nextPage values match existing page IDs
     - For multi-step wizards, branch navigation provides intuitive user flow
@@ -83,7 +85,6 @@ Important rules for UI/Form schema:
 13. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
 `;
 }
-
 
 export function getUpdateFormPrompt(): string {
   return `You are an expert at generating JSON patches to update form definitions. Your task is to analyze the current form definition and the requested changes, then generate a JSON patch document that will update the form according to the requirements.
@@ -108,4 +109,4 @@ Example JSON patch:
 ]
 
 Your response must be a valid JSON array of patch operations. Do not include any explanations or markdown formatting.`;
-} 
+}

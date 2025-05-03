@@ -13,12 +13,12 @@
 * Live preview as you prompt
 * Exportable JSON schema
 
-## Coming Soon (Pro features)
+## TODO
 
-* React form component export
-* Analytics tracking hooks
-* Integration templates (Slack, Sheets, Airtable)
-* Enterprise self-host installer
+- [] fix branching logic for steps
+- [] split up FormRenderer into multiple components
+- [] split up FormGenerator into multiple components
+- [] Make vitest component tests for FormRenderer using testing-library
 
 ## Why?
 
@@ -103,3 +103,6 @@ create a simple form with an array field-type for maintaining a list of contacts
 
 ```
 
+```
+show age field and if age < 18 show a parent consent 
+```

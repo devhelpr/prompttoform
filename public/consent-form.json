@@ -9,7 +9,8 @@
       "type": "object",
       "properties": {
         "title": {
-          "type": "string"
+          "type": "string",
+          "default": "Age Verification App"
         },
         "pages": {
           "type": "array",
@@ -52,15 +53,6 @@
         },
         "isEndPage": {
           "type": "boolean"
-        },
-        "branches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/branch"
-          }
-        },
-        "nextPage": {
-          "type": "string"
         }
       },
       "required": ["id", "title", "route", "components"]
@@ -163,6 +155,9 @@
             "required": ["field", "operator", "value"]
           }
         },
+        "eventHandlers": {
+          "$ref": "#/$defs/eventHandlers"
+        },
         "arrayItems": {
           "type": "array",
           "items": {
@@ -186,6 +181,49 @@
         }
       },
       "required": ["id", "components"]
+    },
+    "eventHandlers": {
+      "type": "object",
+      "properties": {
+        "onClick": {
+          "$ref": "#/$defs/action"
+        },
+        "onSubmit": {
+          "$ref": "#/$defs/action"
+        },
+        "onChange": {
+          "$ref": "#/$defs/action"
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["navigate", "submit", "apiRequest", "showMessage"]
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "dataSource": {
+          "type": "string"
+        },
+        "targetPage": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/branch"
+          }
+        }
+      },
+      "required": ["type"]
     },
     "dataSource": {
       "type": "object",
@@ -242,5 +280,125 @@
       },
       "required": ["condition", "nextPage"]
     }
+  },
+  "app": {
+    "title": "Age Verification App",
+    "pages": [
+      {
+        "id": "agePage",
+        "title": "Enter Your Age",
+        "route": "/age",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "input",
+            "id": "ageInput",
+            "label": "Age",
+            "props": {
+              "type": "number",
+              "placeholder": "Enter your age"
+            },
+            "validation": {
+              "required": true,
+              "min": 0,
+              "max": 120
+            }
+          }
+        ],
+        "eventHandlers": {
+          "onClick": {
+            "type": "navigate",
+            "branches": [
+              {
+                "condition": {
+                  "field": "ageInput",
+                  "operator": "<",
+                  "value": "18"
+                },
+                "nextPage": "consentPage"
+              },
+              {
+                "condition": {
+                  "field": "ageInput",
+                  "operator": ">=",
+                  "value": "18"
+                },
+                "nextPage": "confirmationPage"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "consentPage",
+        "title": "Parental Consent",
+        "route": "/consent",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "consentText",
+            "label": "Consent Required",
+            "props": {
+              "text": "Parental consent is required for users under 18."
+            }
+          },
+          {
+            "type": "input",
+            "id": "parentName",
+            "label": "Parent's Name",
+            "props": {
+              "type": "text",
+              "placeholder": "Enter parent's name"
+            },
+            "validation": {
+              "required": true
+            }
+          },
+          {
+            "type": "input",
+            "id": "parentEmail",
+            "label": "Parent's Email",
+            "props": {
+              "type": "email",
+              "placeholder": "Enter parent's email"
+            },
+            "validation": {
+              "required": true,
+              "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+            }
+          },
+          {
+            "type": "button",
+            "id": "submitConsent",
+            "label": "Submit Consent",
+            "eventHandlers": {
+              "onClick": {
+                "type": "navigate",
+                "targetPage": "confirmationPage"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "confirmationPage",
+        "title": "Confirmation",
+        "route": "/confirmation",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "confirmationText",
+            "label": "Confirmation Message",
+            "props": {
+              "text": "Thank you for verifying your age!"
+            }
+          }
+        ],
+        "isEndPage": true
+      }
+    ],
+    "dataSources": []
   }
 }

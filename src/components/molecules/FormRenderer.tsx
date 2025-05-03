@@ -63,6 +63,15 @@ interface PageProps {
   layout?: string;
   components: ComponentProps[];
   isEndPage?: boolean;
+  branches?: Array<{
+    condition: {
+      field: string;
+      operator: string;
+      value: string;
+    };
+    nextPage: string;
+  }>;
+  nextPage?: string;
 }
 
 interface FormRendererProps {
@@ -352,10 +361,51 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     setCurrentStepIndex(0);
   };
 
-  const handleNext = () => {
+  const getNextPage = useCallback((): string | null => {
+    const currentPage = formJson.app.pages[currentStepIndex];
+    if (!currentPage) return null;
+
+    // Check for conditional branches first
+    if (currentPage.branches) {
+      for (const branch of currentPage.branches) {
+        const fieldValue = formValues[branch.condition.field];
+        const conditionValue = branch.condition.value;
+        let conditionMet = false;
+
+        switch (branch.condition.operator) {
+          case "==":
+            conditionMet = String(fieldValue) === String(conditionValue);
+            break;
+          case "!=":
+            conditionMet = String(fieldValue) !== String(conditionValue);
+            break;
+          case ">":
+            conditionMet = Number(fieldValue) > Number(conditionValue);
+            break;
+          case "<":
+            conditionMet = Number(fieldValue) < Number(conditionValue);
+            break;
+          case ">=":
+            conditionMet = Number(fieldValue) >= Number(conditionValue);
+            break;
+          case "<=":
+            conditionMet = Number(fieldValue) <= Number(conditionValue);
+            break;
+        }
+
+        if (conditionMet) {
+          return branch.nextPage;
+        }
+      }
+    }
+
+    // If no branch conditions are met, use the nextPage field
+    return currentPage.nextPage || null;
+  }, [formJson, currentStepIndex, formValues]);
+
+  const handleNext = useCallback(() => {
     setIsSubmitted(true);
     if (validateForm()) {
-      const totalSteps = formJson.app.pages?.length || 0;
       const currentPage = formJson.app.pages[currentStepIndex];
 
       if (currentPage && currentPage.isEndPage === true) {
@@ -363,6 +413,20 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         return;
       }
 
+      const nextPageId = getNextPage();
+      if (nextPageId) {
+        const nextPageIndex = formJson.app.pages.findIndex(
+          (page) => page.id === nextPageId
+        );
+        if (nextPageIndex !== -1) {
+          setCurrentStepIndex(nextPageIndex);
+          setIsSubmitted(false);
+          return;
+        }
+      }
+
+      // If no specific next page is defined, move to the next page in sequence
+      const totalSteps = formJson.app.pages?.length || 0;
       if (currentStepIndex < totalSteps - 1) {
         setCurrentStepIndex((prev) => prev + 1);
         setIsSubmitted(false);
@@ -370,7 +434,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         handleFormSubmit("multistep-form");
       }
     }
-  };
+  }, [formJson, currentStepIndex, validateForm, getNextPage, handleFormSubmit]);
 
   const handlePrevious = () => {
     if (currentStepIndex > 0) {

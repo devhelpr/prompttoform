@@ -1,7 +1,29 @@
-import { FormSchema, Page, Component, Action } from "./types";
+import { FormSchema, Component, Action } from "./types";
+
+interface Page {
+  id: string;
+  title: string;
+  route: string;
+  layout?: string;
+  components: Component[];
+  isEndPage?: boolean;
+  branches?: Array<{
+    condition: {
+      field: string;
+      operator: string;
+      value: string;
+    };
+    nextPage: string;
+  }>;
+  nextPage?: string;
+}
+
+interface ExtendedFormSchema extends FormSchema {
+  pages: Page[];
+}
 
 export class FormGenerator {
-  private schema: FormSchema;
+  private schema: ExtendedFormSchema;
   private container: HTMLElement;
   private currentPage: Page | null = null;
   private formData: Record<string, unknown> = {};
@@ -9,7 +31,7 @@ export class FormGenerator {
   private touchedFields: Set<string> = new Set();
   private validationErrors: Record<string, string> = {};
 
-  constructor(schema: FormSchema, containerId: string) {
+  constructor(schema: ExtendedFormSchema, containerId: string) {
     this.schema = schema;
     const container = document.getElementById(containerId);
     if (!container) {
@@ -1061,5 +1083,80 @@ export class FormGenerator {
     // Clear invalid class from all fields
     const invalidFields = this.container.querySelectorAll(".invalid");
     invalidFields.forEach((field) => field.classList.remove("invalid"));
+  }
+
+  private getNextPage(): string | null {
+    if (!this.currentPage) return null;
+
+    // Check for conditional branches first
+    if (this.currentPage.branches) {
+      for (const branch of this.currentPage.branches) {
+        const fieldValue = this.formData[branch.condition.field];
+        const conditionValue = branch.condition.value;
+        let conditionMet = false;
+
+        switch (branch.condition.operator) {
+          case "==":
+            conditionMet = String(fieldValue) === String(conditionValue);
+            break;
+          case "!=":
+            conditionMet = String(fieldValue) !== String(conditionValue);
+            break;
+          case ">":
+            conditionMet = Number(fieldValue) > Number(conditionValue);
+            break;
+          case "<":
+            conditionMet = Number(fieldValue) < Number(conditionValue);
+            break;
+          case ">=":
+            conditionMet = Number(fieldValue) >= Number(conditionValue);
+            break;
+          case "<=":
+            conditionMet = Number(fieldValue) <= Number(conditionValue);
+            break;
+        }
+
+        if (conditionMet) {
+          return branch.nextPage;
+        }
+      }
+    }
+
+    // If no branch conditions are met, use the nextPage field
+    return this.currentPage.nextPage || null;
+  }
+
+  private handleNext(): void {
+    if (!this.validateForm()) {
+      return;
+    }
+
+    if (this.currentPage && this.currentPage.isEndPage === true) {
+      this.handleFormSubmit();
+      return;
+    }
+
+    const nextPageId = this.getNextPage();
+    if (nextPageId) {
+      const nextPage = this.schema.pages.find((page) => page.id === nextPageId);
+      if (nextPage) {
+        this.renderPage(nextPage);
+        return;
+      }
+    }
+
+    // If no specific next page is defined, move to the next page in sequence
+    const currentIndex = this.schema.pages.findIndex(
+      (page) => page.id === this.currentPage?.id
+    );
+    if (currentIndex < this.schema.pages.length - 1) {
+      this.renderPage(this.schema.pages[currentIndex + 1]);
+    } else {
+      this.handleFormSubmit();
+    }
+  }
+
+  private handleFormSubmit(): void {
+    // Implementation of handleFormSubmit method
   }
 }
