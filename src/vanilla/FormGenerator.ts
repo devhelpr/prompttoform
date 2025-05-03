@@ -18,7 +18,7 @@ interface Page {
   nextPage?: string;
 }
 
-interface ExtendedFormSchema extends FormSchema {
+export interface ExtendedFormSchema extends FormSchema {
   pages: Page[];
 }
 
@@ -1132,36 +1132,6 @@ export class FormGenerator {
 
     // If no branch conditions are met, use the nextPage field
     return this.currentPage.nextPage || null;
-  }
-
-  private handleNext(): void {
-    if (!this.validateForm()) {
-      return;
-    }
-
-    if (this.currentPage && this.currentPage.isEndPage === true) {
-      this.handleFormSubmit();
-      return;
-    }
-
-    const nextPageId = this.getNextPage();
-    if (nextPageId) {
-      const nextPage = this.schema.pages.find((page) => page.id === nextPageId);
-      if (nextPage) {
-        this.navigateToPage(nextPageId);
-        return;
-      }
-    }
-
-    // If no specific next page is defined, move to the next page in sequence
-    const currentIndex = this.schema.pages.findIndex(
-      (page) => page.id === this.currentPage?.id
-    );
-    if (currentIndex < this.schema.pages.length - 1) {
-      this.navigateToPage(this.schema.pages[currentIndex + 1].id);
-    } else {
-      this.handleFormSubmit();
-    }
   }
 
   private handleFormSubmit(): void {

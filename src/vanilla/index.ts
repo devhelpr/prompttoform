@@ -1,8 +1,8 @@
 import { FormGenerator } from "./FormGenerator";
-import { FormSchema } from "./types";
+import { ExtendedFormSchema } from "./FormGenerator";
 
 export function initFormGenerator(
-  schema: FormSchema,
+  schema: ExtendedFormSchema,
   containerId: string
 ): FormGenerator {
   const formGenerator = new FormGenerator(schema, containerId);
