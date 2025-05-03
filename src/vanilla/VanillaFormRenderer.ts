@@ -1,14 +1,14 @@
-import { FormGenerator } from "./FormGenerator";
-import { ExtendedFormSchema } from "./FormGenerator";
+import { VanillaFormCore } from "./VanillaFormCore";
+import { ExtendedFormSchema } from "./VanillaFormCore";
 
-export class FormRenderer {
-  private formGenerator: FormGenerator;
+export class VanillaFormRenderer {
+  private formCore: VanillaFormCore;
   private container: HTMLElement;
   private currentStep: number = 0;
   private totalSteps: number;
 
   constructor(schema: ExtendedFormSchema, containerId: string) {
-    this.formGenerator = new FormGenerator(schema, containerId);
+    this.formCore = new VanillaFormCore(schema, containerId);
     const container = document.getElementById(containerId);
     if (!container) {
       throw new Error(`Container with id "${containerId}" not found`);
@@ -18,7 +18,7 @@ export class FormRenderer {
   }
 
   public init(): void {
-    this.formGenerator.init();
+    this.formCore.init();
     this.renderStepIndicator();
     this.renderNavigationControls();
     this.setupEventListeners();
@@ -70,8 +70,8 @@ export class FormRenderer {
   private handlePrevious(): void {
     if (this.currentStep > 0) {
       this.currentStep--;
-      this.formGenerator.navigateToPage(
-        this.formGenerator.schema.app.pages[this.currentStep].id
+      this.formCore.navigateToPage(
+        this.formCore.schema.app.pages[this.currentStep].id
       );
       this.updateNavigationControls();
     }
@@ -80,15 +80,15 @@ export class FormRenderer {
   private handleNext(): void {
     if (this.currentStep === this.totalSteps - 1) {
       // Handle form submission
-      if (this.formGenerator.validateForm()) {
-        this.formGenerator.handleFormSubmit();
+      if (this.formCore.validateForm()) {
+        this.formCore.handleFormSubmit();
       }
     } else {
       // Navigate to next page
-      if (this.formGenerator.validateForm()) {
+      if (this.formCore.validateForm()) {
         this.currentStep++;
-        this.formGenerator.navigateToPage(
-          this.formGenerator.schema.app.pages[this.currentStep].id
+        this.formCore.navigateToPage(
+          this.formCore.schema.app.pages[this.currentStep].id
         );
         this.updateNavigationControls();
       }

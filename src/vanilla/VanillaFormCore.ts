@@ -22,7 +22,7 @@ export interface ExtendedFormSchema extends FormSchema {
   pages: Page[];
 }
 
-export class FormGenerator {
+export class VanillaFormCore {
   private _schema: ExtendedFormSchema;
   private container: HTMLElement;
   private currentPage: Page | null = null;
@@ -78,41 +78,9 @@ export class FormGenerator {
     this.renderPage(page);
   }
 
-  private goBack(): void {
-    if (this.pageHistory.length > 1) {
-      this.pageHistory.pop(); // Remove current page
-      this.branchHistory.pop(); // Remove current branch info
-      const previousPageId = this.pageHistory[this.pageHistory.length - 1];
-      if (previousPageId) {
-        this.navigateToPage(previousPageId);
-      }
-    }
-  }
-
   private renderPage(page: Page): void {
-    this.container.innerHTML = "";
-    this.clearValidationErrors();
-    this.touchedFields.clear(); // Clear touched fields when rendering a new page
-
-    const pageContainer = document.createElement("div");
-    pageContainer.className = `page ${page.layout || "vertical"}`;
-
-    const pageTitle = document.createElement("h2");
-    pageTitle.textContent = page.title;
-    pageContainer.appendChild(pageTitle);
-
-    // Add back button if not on first page
-    if (this.pageHistory.length > 1) {
-      const backButton = document.createElement("button");
-      backButton.textContent = "Back";
-      backButton.className = "back-button";
-      backButton.addEventListener("click", () => this.goBack());
-      pageContainer.appendChild(backButton);
-    }
-
     const form = document.createElement("form");
     form.className = "form";
-    form.addEventListener("submit", (e) => e.preventDefault());
 
     page.components.forEach((component) => {
       if (this.isComponentVisible(component)) {
@@ -123,18 +91,11 @@ export class FormGenerator {
       }
     });
 
-    pageContainer.appendChild(form);
-    this.container.appendChild(pageContainer);
-    this.currentPage = page;
+    this.container.appendChild(form);
   }
 
   private isComponentVisible(component: Component): boolean {
-    if (
-      !component.visibilityConditions ||
-      component.visibilityConditions.length === 0
-    ) {
-      return true;
-    }
+    if (!component.visibilityConditions) return true;
 
     return component.visibilityConditions.every((condition) => {
       const fieldValue = this.formData[condition.field];
@@ -142,9 +103,9 @@ export class FormGenerator {
 
       switch (condition.operator) {
         case "==":
-          return fieldValue === condition.value;
+          return String(fieldValue) === String(condition.value);
         case "!=":
-          return fieldValue !== condition.value;
+          return String(fieldValue) !== String(condition.value);
         case ">":
           return Number(fieldValue) > Number(condition.value);
         case "<":
@@ -240,13 +201,6 @@ export class FormGenerator {
       });
     }
 
-    // Add change listener to update formData
-    input.addEventListener("change", (e) => {
-      const target = e.target as HTMLInputElement;
-      this.formData[component.id] = target.value;
-      this.updateVisibility();
-    });
-
     return input;
   }
 
@@ -260,13 +214,6 @@ export class FormGenerator {
         textarea.setAttribute(key, value.toString());
       });
     }
-
-    // Add change listener to update formData
-    textarea.addEventListener("change", (e) => {
-      const target = e.target as HTMLTextAreaElement;
-      this.formData[component.id] = target.value;
-      this.updateVisibility();
-    });
 
     return textarea;
   }
@@ -287,37 +234,7 @@ export class FormGenerator {
       );
     }
 
-    // Add change listener to update formData
-    select.addEventListener("change", (e) => {
-      const target = e.target as HTMLSelectElement;
-      this.formData[component.id] = target.value;
-      this.updateVisibility();
-    });
-
     return select;
-  }
-
-  private createButton(component: Component): HTMLButtonElement {
-    const button = document.createElement("button");
-    button.id = component.id;
-    button.textContent = component.label || "";
-    button.type = component.props?.type || "button";
-
-    // Add click handler for navigation and form submission
-    button.addEventListener("click", () => {
-      if (component.props?.type === "submit") {
-        if (this.validateForm()) {
-          this.handleFormSubmit();
-        }
-      } else if (component.props?.type === "next") {
-        const nextPageId = this.getNextPage();
-        if (nextPageId) {
-          this.navigateToPage(nextPageId);
-        }
-      }
-    });
-
-    return button;
   }
 
   private createText(component: Component): HTMLElement {
@@ -352,15 +269,6 @@ export class FormGenerator {
           label.htmlFor = input.id;
           label.textContent = option.label;
 
-          // Add change listener to update formData
-          input.addEventListener("change", (e) => {
-            const target = e.target as HTMLInputElement;
-            if (target.checked) {
-              this.formData[component.id] = target.value;
-              this.updateVisibility();
-            }
-          });
-
           wrapper.appendChild(input);
           wrapper.appendChild(label);
           container.appendChild(wrapper);
@@ -388,13 +296,6 @@ export class FormGenerator {
     const label = document.createElement("label");
     label.htmlFor = component.id;
     label.textContent = component.label || "";
-
-    // Add change listener to update formData
-    input.addEventListener("change", (e) => {
-      const target = e.target as HTMLInputElement;
-      this.formData[component.id] = target.checked;
-      this.updateVisibility();
-    });
 
     wrapper.appendChild(input);
     wrapper.appendChild(label);

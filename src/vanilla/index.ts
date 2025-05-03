@@ -1,11 +1,10 @@
-import { FormRenderer } from "./FormRenderer";
-import { ExtendedFormSchema } from "./FormGenerator";
+import { ExtendedFormSchema } from "./VanillaFormCore";
+import { VanillaFormRenderer } from "./VanillaFormRenderer";
 
 export function initFormGenerator(
   schema: ExtendedFormSchema,
   containerId: string
-): FormRenderer {
-  const formRenderer = new FormRenderer(schema, containerId);
+): void {
+  const formRenderer = new VanillaFormRenderer(schema, containerId);
   formRenderer.init();
-  return formRenderer;
 }
