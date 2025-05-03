@@ -49,6 +49,7 @@ export class VanillaFormCore {
 
   private renderTitle(): void {
     const title = document.createElement("h1");
+    title.className = "text-2xl font-semibold text-gray-900 mb-6";
     title.textContent = this._schema.app.title;
     this.container.appendChild(title);
   }
@@ -80,7 +81,7 @@ export class VanillaFormCore {
 
   private renderPage(page: Page): void {
     const form = document.createElement("form");
-    form.className = "form";
+    form.className = "space-y-6 max-w-md mx-auto";
 
     page.components.forEach((component) => {
       if (this.isComponentVisible(component)) {
@@ -122,18 +123,18 @@ export class VanillaFormCore {
 
   public renderComponent(component: Component): HTMLElement | null {
     const wrapper = document.createElement("div");
-    wrapper.className = `component ${component.type}`;
+    wrapper.className = "space-y-2";
     wrapper.id = `component-${component.id}`;
 
     if (component.label) {
       const label = document.createElement("label");
       label.htmlFor = component.id;
+      label.className = "block text-sm font-medium text-gray-700";
       label.textContent = component.label;
       if (component.validation?.required) {
         const requiredMarker = document.createElement("span");
         requiredMarker.textContent = " *";
-        requiredMarker.className = "required-marker";
-        requiredMarker.style.color = "red";
+        requiredMarker.className = "text-red-500";
         label.appendChild(requiredMarker);
       }
       wrapper.appendChild(label);
@@ -192,6 +193,9 @@ export class VanillaFormCore {
     input.type = component.props?.type || "text";
     input.id = component.id;
     input.name = component.id;
+    input.className = `mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+      this.validationErrors[component.id] ? "border-red-500" : ""
+    }`;
 
     if (component.props) {
       Object.entries(component.props).forEach(([key, value]) => {
@@ -208,6 +212,9 @@ export class VanillaFormCore {
     const textarea = document.createElement("textarea");
     textarea.id = component.id;
     textarea.name = component.id;
+    textarea.className = `mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+      this.validationErrors[component.id] ? "border-red-500" : ""
+    }`;
 
     if (component.props) {
       Object.entries(component.props).forEach(([key, value]) => {
@@ -222,6 +229,9 @@ export class VanillaFormCore {
     const select = document.createElement("select");
     select.id = component.id;
     select.name = component.id;
+    select.className = `mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+      this.validationErrors[component.id] ? "border-red-500" : ""
+    }`;
 
     if (component.props?.options) {
       component.props.options.forEach(
@@ -240,25 +250,28 @@ export class VanillaFormCore {
   private createText(component: Component): HTMLElement {
     const text = document.createElement("p");
     text.id = component.id;
+    text.className = "text-gray-600";
     text.textContent = component.props?.text || "";
     return text;
   }
 
   private createRadioGroup(component: Component): HTMLDivElement {
     const container = document.createElement("div");
-    container.className = "radio-group";
+    container.className = "space-y-2";
 
     if (component.props?.options) {
       component.props.options.forEach(
         (option: { value: string; label: string }) => {
           const wrapper = document.createElement("div");
-          wrapper.className = "radio-option";
+          wrapper.className = "flex items-center";
 
           const input = document.createElement("input");
           input.type = "radio";
           input.id = `${component.id}-${option.value}`;
           input.name = component.id;
           input.value = option.value;
+          input.className =
+            "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300";
 
           // Set initial value if it exists in formData
           if (this.formData[component.id] === option.value) {
@@ -267,6 +280,7 @@ export class VanillaFormCore {
 
           const label = document.createElement("label");
           label.htmlFor = input.id;
+          label.className = "ml-3 block text-sm font-medium text-gray-700";
           label.textContent = option.label;
 
           wrapper.appendChild(input);
@@ -281,12 +295,14 @@ export class VanillaFormCore {
 
   private createCheckbox(component: Component): HTMLDivElement {
     const wrapper = document.createElement("div");
-    wrapper.className = "checkbox-wrapper";
+    wrapper.className = "flex items-center";
 
     const input = document.createElement("input");
     input.type = "checkbox";
     input.id = component.id;
     input.name = component.id;
+    input.className =
+      "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded";
 
     // Set initial value if it exists in formData
     if (this.formData[component.id] !== undefined) {
@@ -295,6 +311,7 @@ export class VanillaFormCore {
 
     const label = document.createElement("label");
     label.htmlFor = component.id;
+    label.className = "ml-3 block text-sm font-medium text-gray-700";
     label.textContent = component.label || "";
 
     wrapper.appendChild(input);
@@ -304,7 +321,7 @@ export class VanillaFormCore {
 
   private createArrayField(component: Component): HTMLDivElement {
     const container = document.createElement("div");
-    container.className = "array-field";
+    container.className = "space-y-4";
     container.id = component.id;
 
     // Initialize array data if not exists
@@ -323,8 +340,10 @@ export class VanillaFormCore {
 
     // Add "Add Item" button
     const addButton = document.createElement("button");
+    addButton.type = "button";
     addButton.textContent = "Add Item";
-    addButton.className = "add-item-button";
+    addButton.className =
+      "mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
     addButton.addEventListener("click", () => {
       const newItem: Record<string, unknown> = {};
       arrayItems.forEach((arrayItem) => {
@@ -347,21 +366,21 @@ export class VanillaFormCore {
     index: number
   ): HTMLElement {
     const itemContainer = document.createElement("div");
-    itemContainer.className = "array-item";
+    itemContainer.className = "p-4 border border-gray-200 rounded-lg space-y-4";
 
     component.arrayItems?.forEach((arrayItem) => {
       const itemContent = document.createElement("div");
-      itemContent.className = "array-item-content";
+      itemContent.className = "space-y-4";
 
       arrayItem.components.forEach((comp) => {
         const itemId = `${component.id}[${index}].${comp.id}`;
         const hasError = !!this.validationErrors[itemId];
 
         const fieldContainer = document.createElement("div");
-        fieldContainer.className = "array-item-component";
+        fieldContainer.className = "space-y-2";
 
         const label = document.createElement("label");
-        label.className = "block text-sm font-medium text-gray-700 mb-1";
+        label.className = "block text-sm font-medium text-gray-700";
         label.htmlFor = itemId;
         label.textContent = comp.label || "";
         if (comp.validation?.required) {
@@ -380,6 +399,9 @@ export class VanillaFormCore {
           input.id = itemId;
           input.name = itemId;
           input.value = (item[comp.id] as string) || "";
+          input.className = `mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+            hasError ? "border-red-500" : ""
+          }`;
 
           if (comp.props) {
             Object.entries(comp.props).forEach(([key, value]) => {
@@ -424,7 +446,7 @@ export class VanillaFormCore {
         // Show existing error if any
         if (hasError) {
           const errorMessage = document.createElement("p");
-          errorMessage.className = "validation-error text-red-500 text-sm mt-1";
+          errorMessage.className = "mt-1 text-sm text-red-600";
           errorMessage.textContent = this.validationErrors[itemId];
           errorContainer.appendChild(errorMessage);
         }
@@ -437,7 +459,8 @@ export class VanillaFormCore {
 
     const removeButton = document.createElement("button");
     removeButton.type = "button";
-    removeButton.className = "remove-item-button";
+    removeButton.className =
+      "mt-2 inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500";
     removeButton.textContent = "Remove";
     removeButton.onclick = () => {
       const items = this.formData[component.id] as Record<string, unknown>[];
@@ -466,7 +489,8 @@ export class VanillaFormCore {
     // Add "Add Item" button
     const addButton = document.createElement("button");
     addButton.textContent = "Add Item";
-    addButton.className = "add-item-button";
+    addButton.className =
+      "mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
     addButton.addEventListener("click", () => {
       const newItem: Record<string, unknown> = {};
       component.arrayItems?.forEach((arrayItem) => {
