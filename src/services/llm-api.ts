@@ -1,7 +1,5 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { z, ZodTypeAny } from "zod";
-// OCIFSchemaDefinition no longer needed since we're using direct fetch for Gemini
-// import { OCIFSchemaDefinition } from '../schemas/schema';
 
 interface LLMResponse {
   choices: Array<{
@@ -267,14 +265,6 @@ export async function callLLMAPI(
       // Check if the content is wrapped in markdown code blocks and remove them
       const cleanedContent = removeMarkdownCodeBlocks(content);
 
-      const parsedJson = JSON.parse(cleanedContent);
-      if (
-        !parsedJson.ocif ||
-        parsedJson.ocif !== "https://canvasprotocol.org/ocif/0.4"
-      ) {
-        parsedJson.ocif = "https://canvasprotocol.org/ocif/0.4";
-        return JSON.stringify(parsedJson, null, 2);
-      }
       return cleanedContent;
     } catch {
       // Not all responses need to be JSON

@@ -15,10 +15,11 @@
 
 ## TODO
 
-- [] fix branching logic for steps
-- [] split up FormRenderer into multiple components
-- [] split up FormGenerator into multiple components
-- [] Make vitest component tests for FormRenderer using testing-library
+- [x] fix branching logic for steps
+- [x] remove "ocif" references and names...
+- [ ] split up FormRenderer into multiple components
+- [ ] split up FormGenerator into multiple components
+- [ ] Make vitest component tests for FormRenderer using testing-library
 
 ## Why?
 
@@ -72,13 +73,6 @@ The tool supports the following LLM APIs:
 - Mistral (Mistral Large)
 - Google Gemini (Gemini Pro)
 
-## Usage
-
-1. Open the application in your browser
-2. Click the "Settings" button to configure your preferred LLM API and API key
-3. Enter your prompt describing the Form/ui you want to generate
-4. Click "Generate OCIF" to create the diagram
-5. Use the "Copy to Clipboard" or "Download" buttons to save your generated JSON file
 
 ## Example Prompt
 
