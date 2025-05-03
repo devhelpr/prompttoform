@@ -28,6 +28,8 @@ export class FormGenerator {
   private currentPage: Page | null = null;
   private formData: Record<string, unknown> = {};
   private pageHistory: string[] = [];
+  private branchHistory: Array<{ pageId: string; branchIndex: number | null }> =
+    [];
   private touchedFields: Set<string> = new Set();
   private validationErrors: Record<string, string> = {};
 
@@ -51,7 +53,10 @@ export class FormGenerator {
     this.container.appendChild(title);
   }
 
-  private navigateToPage(pageId: string): void {
+  private navigateToPage(
+    pageId: string,
+    branchIndex: number | null = null
+  ): void {
     const page = this.schema.app.pages.find((p) => p.id === pageId);
     if (!page) {
       throw new Error(`Page with id "${pageId}" not found`);
@@ -67,6 +72,7 @@ export class FormGenerator {
 
     this.currentPage = page;
     this.pageHistory.push(pageId);
+    this.branchHistory.push({ pageId, branchIndex });
     this.container.innerHTML = "";
     this.renderTitle();
     this.renderPage(page);
@@ -75,7 +81,8 @@ export class FormGenerator {
   private goBack(): void {
     if (this.pageHistory.length > 1) {
       this.pageHistory.pop(); // Remove current page
-      const previousPageId = this.pageHistory.pop(); // Get previous page
+      this.branchHistory.pop(); // Remove current branch info
+      const previousPageId = this.pageHistory[this.pageHistory.length - 1];
       if (previousPageId) {
         this.navigateToPage(previousPageId);
       }
@@ -1090,7 +1097,8 @@ export class FormGenerator {
 
     // Check for conditional branches first
     if (this.currentPage.branches) {
-      for (const branch of this.currentPage.branches) {
+      for (let i = 0; i < this.currentPage.branches.length; i++) {
+        const branch = this.currentPage.branches[i];
         const fieldValue = this.formData[branch.condition.field];
         const conditionValue = branch.condition.value;
         let conditionMet = false;
@@ -1140,7 +1148,7 @@ export class FormGenerator {
     if (nextPageId) {
       const nextPage = this.schema.pages.find((page) => page.id === nextPageId);
       if (nextPage) {
-        this.renderPage(nextPage);
+        this.navigateToPage(nextPageId);
         return;
       }
     }
@@ -1150,7 +1158,7 @@ export class FormGenerator {
       (page) => page.id === this.currentPage?.id
     );
     if (currentIndex < this.schema.pages.length - 1) {
-      this.renderPage(this.schema.pages[currentIndex + 1]);
+      this.navigateToPage(this.schema.pages[currentIndex + 1].id);
     } else {
       this.handleFormSubmit();
     }

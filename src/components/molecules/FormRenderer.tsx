@@ -143,6 +143,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   );
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [stepHistory, setStepHistory] = useState<number[]>([0]);
   const [formSubmissions, setFormSubmissions] = useState<
     Record<string, FormValues>
   >({});
@@ -359,6 +360,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     setBlurredFields({});
     setIsSubmitted(false);
     setCurrentStepIndex(0);
+    setStepHistory([0]);
   };
 
   const getNextPage = useCallback((): string | null => {
@@ -419,6 +421,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           (page) => page.id === nextPageId
         );
         if (nextPageIndex !== -1) {
+          setStepHistory((prev) => [...prev, nextPageIndex]);
           setCurrentStepIndex(nextPageIndex);
           setIsSubmitted(false);
           return;
@@ -428,6 +431,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       // If no specific next page is defined, move to the next page in sequence
       const totalSteps = formJson.app.pages?.length || 0;
       if (currentStepIndex < totalSteps - 1) {
+        setStepHistory((prev) => [...prev, currentStepIndex + 1]);
         setCurrentStepIndex((prev) => prev + 1);
         setIsSubmitted(false);
       } else {
@@ -437,8 +441,13 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   }, [formJson, currentStepIndex, validateForm, getNextPage, handleFormSubmit]);
 
   const handlePrevious = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex((prev) => prev - 1);
+    if (stepHistory.length > 1) {
+      setStepHistory((prev) => {
+        const newHistory = [...prev];
+        newHistory.pop(); // Remove current step
+        return newHistory;
+      });
+      setCurrentStepIndex(stepHistory[stepHistory.length - 2]);
     }
   };
 
@@ -447,6 +456,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     setValidationErrors({});
     setBlurredFields({});
     setIsSubmitted(false);
+    setCurrentStepIndex(0);
+    setStepHistory([0]);
   };
 
   const handleButtonClick = (action: string) => {
@@ -621,8 +632,16 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       case "text":
         return (
           <div className="mb-4">
+            {label && (
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {label}
+              </label>
+            )}
             {typeof props?.content === "string" && (
               <p className="text-gray-700">{props.content}</p>
+            )}
+            {typeof props?.text === "string" && (
+              <p className="text-gray-700">{props.text}</p>
             )}
           </div>
         );
