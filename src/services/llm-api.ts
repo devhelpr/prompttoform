@@ -236,7 +236,7 @@ export async function callLLMAPI(
             : apiConfig.name === "Anthropic"
             ? "claude-3-7-sonnet-20250219"
             : apiConfig.name === "Mistral"
-            ? "mistral-large"
+            ? "mistral-large-latest"
             : "gpt-4.1",
         messages: [
           { role: "system", content: systemMessage },
