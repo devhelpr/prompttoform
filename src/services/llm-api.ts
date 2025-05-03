@@ -212,7 +212,10 @@ export async function callLLMAPI(
     // Format the response_format appropriately based on the API provider
     let responseFormat = undefined;
 
-    if (jsonSchema && apiConfig.name === "OpenAI") {
+    if (
+      jsonSchema &&
+      (apiConfig.name === "OpenAI" || apiConfig.name === "Mistral")
+    ) {
       // OpenAI requires specific response_format values
       responseFormat =
         jsonSchema.type === "json_object" ? { type: "json_object" } : undefined;
