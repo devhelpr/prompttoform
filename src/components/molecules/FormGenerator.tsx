@@ -939,11 +939,20 @@ export function FormGenerator() {
     setUpdateError(null);
 
     try {
-      const patch = await updateFormWithPatch(generatedJson, updatePrompt);
-      const patchOperations = JSON.parse(patch);
+      // Before sending to updateFormWithPatch, convert newlines back to escaped form
+      const jsonForUpdate = generatedJson.replace(/\n/g, "\\n");
+      const patch = await updateFormWithPatch(jsonForUpdate, updatePrompt);
+
+      // First parse the patch operations
+      let patchOperations = JSON.parse(patch);
+      if (!Array.isArray(patchOperations)) {
+        patchOperations = [patchOperations];
+      }
+
+      // Parse the current form, ensuring we're working with a clean object
+      const updatedForm = JSON.parse(generatedJson);
 
       // Apply the patch operations to the current form
-      const updatedForm = JSON.parse(generatedJson);
       for (const operation of patchOperations) {
         const { op, path, value } = operation;
         const pathParts = path.split("/").filter(Boolean);
@@ -977,7 +986,12 @@ export function FormGenerator() {
         }
       }
 
-      setGeneratedJson(JSON.stringify(updatedForm, null, 2));
+      // Format the updated form with proper newlines
+      const formattedJson = JSON.stringify(updatedForm, null, 2)
+        .replace(/\\n/g, "\n")
+        .replace(/\\\\/g, "\\");
+
+      setGeneratedJson(formattedJson);
       setParsedJson(updatedForm as UIJson);
     } catch (error) {
       console.error("Error updating form:", error);
