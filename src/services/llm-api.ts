@@ -212,14 +212,11 @@ export async function callLLMAPI(
     // Format the response_format appropriately based on the API provider
     let responseFormat = undefined;
 
-    if (
-      jsonSchema &&
-      (apiConfig.name === "OpenAI" || apiConfig.name === "Mistral")
-    ) {
+    if (jsonSchema && apiConfig.name !== "Gemini") {
       // OpenAI requires specific response_format values
       responseFormat =
         jsonSchema.type === "json_object" ? { type: "json_object" } : undefined;
-    } else if (jsonSchema && apiConfig.name !== "OpenAI") {
+    } else if (jsonSchema) {
       // Other providers might use the schema directly
       responseFormat = jsonSchema;
     }
@@ -229,6 +226,7 @@ export async function callLLMAPI(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiConfig.apiKey}`,
+        "anthropic-dangerous-direct-browser-access": "true",
       },
       body: JSON.stringify({
         model:
