@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.com/ui-schema",
+  "$id": "https://prompttoform.ai/schema/v1/schema.json",
   "title": "UI Schema",
   "description": "Schema for describing complex UIs, including websites, forms, decision trees, and CRUD operations.",
   "type": "object",
