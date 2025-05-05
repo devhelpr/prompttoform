@@ -228,7 +228,7 @@ export async function callLLMAPI(
       responseFormat = jsonSchema;
     }
 
-    if (apiConfig.name !== "Mistral") {
+    if (apiConfig.name === "Mistral") {
       responseFormat = undefined;
     }
 
