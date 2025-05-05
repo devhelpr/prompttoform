@@ -228,10 +228,6 @@ export async function callLLMAPI(
       responseFormat = jsonSchema;
     }
 
-    if (apiConfig.name === "Mistral") {
-      responseFormat = undefined;
-    }
-
     const response = await fetch(`${apiConfig.baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
