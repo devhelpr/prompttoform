@@ -213,9 +213,16 @@ export async function callLLMAPI(
     let responseFormat = undefined;
 
     if (jsonSchema && apiConfig.name !== "Gemini") {
-      // OpenAI requires specific response_format values
-      responseFormat =
-        jsonSchema.type === "json_object" ? { type: "json_object" } : undefined;
+      // OpenAI abd compatible LLM api's requires specific response_format values
+      responseFormat = {
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "Form_schema",
+            schema: jsonSchema,
+          },
+        },
+      };
     } else if (jsonSchema) {
       // Other providers might use the schema directly
       responseFormat = jsonSchema;
@@ -242,7 +249,7 @@ export async function callLLMAPI(
           { role: "user", content: prompt },
         ],
         temperature: 0.2,
-        ...(responseFormat && { response_format: responseFormat }),
+        ...(responseFormat && { ...responseFormat }),
       }),
     });
 
