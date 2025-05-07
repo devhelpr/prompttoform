@@ -17,6 +17,7 @@
 
 - [x] fix branching logic for steps
 - [x] remove "ocif" references and names...
+- [x] use cloudflare worker as proxy to prevent CORS issues
 - [ ] split up FormRenderer into multiple components
 - [ ] split up FormGenerator into multiple components
 - [ ] Make vitest component tests for FormRenderer using testing-library
@@ -35,6 +36,8 @@ cd prompttoform
 npm install
 npm run dev
 ```
+
+Run the worker locally via separate repo: https://github.com/devhelpr/form-generator-worker
 
 ---
 

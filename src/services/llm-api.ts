@@ -228,12 +228,18 @@ export async function callLLMAPI(
       responseFormat = jsonSchema;
     }
 
-    const response = await fetch(`${apiConfig.baseUrl}/chat/completions`, {
+    const apiUrl = import.meta.env.PROD
+      ? "https://form-generator-worker.maikel-f16.workers.dev"
+      : "http://localhost:8787/";
+
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiConfig.apiKey}`,
-        "anthropic-dangerous-direct-browser-access": "true",
+        //"anthropic-dangerous-direct-browser-access": "true",
+        "api-url": apiConfig.baseUrl,
+        "api-path": "/chat/completions",
       },
       body: JSON.stringify({
         model:
@@ -251,6 +257,7 @@ export async function callLLMAPI(
         temperature: 0.2,
         ...(responseFormat && { ...responseFormat }),
       }),
+      mode: "cors",
     });
 
     if (!response.ok) {
