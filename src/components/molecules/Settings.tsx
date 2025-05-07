@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Alert } from "./Alert";
 
 interface SettingsProps {
   isOpen: boolean;
@@ -164,13 +165,20 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className="w-full rounded-lg border-zinc-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2.5"
+              className="w-full rounded-lg border-zinc-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2.5 mb-8"
               placeholder="Enter your API key"
             />
-            <p className="mt-2 text-sm text-zinc-500">
+            <Alert>
               Your API keys are stored securely in your browser's localStorage.
-              We never store or transmit your API keys to our servers.
-            </p>
+              We never store your API keys on our servers.
+              <br />
+              We do use a zero-logging, open-source proxy via cloudflare
+              workers. No tracking, no data stored, just your request forwarded.{" "}
+              <a href="https://github.com/devhelpr/prompttoform-worker">
+                Full code on GitHub
+              </a>
+              .
+            </Alert>
           </div>
         </div>
 
