@@ -929,7 +929,7 @@ export function FormGenerator() {
   };
 
   const handleUpdateForm = async () => {
-    if (!updatePrompt.trim() || !generatedJson) {
+    if (!updatePrompt.trim() || !generatedJson || !parsedJson) {
       setUpdateError(
         "Please enter an update prompt and make sure a form is generated"
       );
@@ -951,7 +951,9 @@ export function FormGenerator() {
       }
 
       // Parse the current form, ensuring we're working with a clean object
-      const updatedForm = JSON.parse(generatedJson);
+
+      // TODO : check if this is the correct way to do this
+      const updatedForm = parsedJson as unknown as any; //JSON.parse(generatedJson);
 
       // Apply the patch operations to the current form
       for (const operation of patchOperations) {
