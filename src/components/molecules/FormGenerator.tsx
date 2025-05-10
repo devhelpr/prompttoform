@@ -9,6 +9,7 @@ import FormRenderer from "./FormRenderer";
 import { getSystemPrompt } from "../../prompt-library/system-prompt";
 import schemaJson from "../../../schema.json";
 import { Alert } from "./Alert";
+import FormFlow from "./FormFlow";
 
 // Define the evaluation result type
 interface EvaluationResult {
@@ -21,7 +22,7 @@ interface EvaluationResult {
 }
 
 // Define view modes
-type ViewMode = "json" | "form";
+type ViewMode = "json" | "form" | "flow";
 
 // Cast schema to unknown first, then to UISchema
 const uiSchema = schemaJson as unknown as UISchema;
@@ -951,22 +952,24 @@ export function FormGenerator() {
       }
 
       // Parse the current form, ensuring we're working with a clean object
-
-      // TODO : check if this is the correct way to do this
-      const updatedForm = parsedJson as unknown as any; //JSON.parse(generatedJson);
+      const updatedForm = { ...parsedJson } as UIJson;
 
       // Apply the patch operations to the current form
       for (const operation of patchOperations) {
         const { op, path, value } = operation;
         const pathParts = path.split("/").filter(Boolean);
-        let current = updatedForm;
+        let current: unknown = updatedForm;
 
         for (let i = 0; i < pathParts.length - 1; i++) {
           const part = pathParts[i];
           if (part.match(/^\d+$/)) {
-            current = current[parseInt(part)];
+            if (Array.isArray(current)) {
+              current = current[parseInt(part)];
+            }
           } else {
-            current = current[part];
+            if (typeof current === "object" && current !== null) {
+              current = (current as Record<string, unknown>)[part];
+            }
           }
         }
 
@@ -974,17 +977,27 @@ export function FormGenerator() {
         if (lastPart.match(/^\d+$/)) {
           const index = parseInt(lastPart);
           if (op === "add") {
-            current.splice(index, 0, value);
+            if (Array.isArray(current)) {
+              current.splice(index, 0, value);
+            }
           } else if (op === "remove") {
-            current.splice(index, 1);
+            if (Array.isArray(current)) {
+              current.splice(index, 1);
+            }
           } else if (op === "replace") {
-            current[index] = value;
+            if (Array.isArray(current)) {
+              current[index] = value;
+            }
           }
         } else {
           if (op === "add" || op === "replace") {
-            current[lastPart] = value;
+            if (typeof current === "object" && current !== null) {
+              (current as Record<string, unknown>)[lastPart] = value;
+            }
           } else if (op === "remove") {
-            delete current[lastPart];
+            if (typeof current === "object" && current !== null) {
+              delete (current as Record<string, unknown>)[lastPart];
+            }
           }
         }
       }
@@ -1161,13 +1174,24 @@ export function FormGenerator() {
                 <button
                   type="button"
                   onClick={() => handleViewModeChange("form")}
-                  className={`px-4 py-2 text-sm font-medium rounded-r-md ${
+                  className={`px-4 py-2 text-sm font-medium ${
                     viewMode === "form"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  } border-t border-b border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
+                >
+                  Preview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange("flow")}
+                  className={`px-4 py-2 text-sm font-medium rounded-r-md ${
+                    viewMode === "flow"
                       ? "bg-indigo-600 text-white"
                       : "bg-white text-gray-700 hover:bg-gray-50"
                   } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
                 >
-                  Preview
+                  Flow
                 </button>
               </div>
             </div>
@@ -1194,12 +1218,18 @@ export function FormGenerator() {
                 </button>
               </div>
             </div>
-          ) : (
-            viewMode === "form" &&
+          ) : viewMode === "form" ? (
             parsedJson &&
             parsedJson.app && (
               <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
                 <FormRenderer formJson={parsedJson} />
+              </div>
+            )
+          ) : (
+            parsedJson &&
+            parsedJson.app && (
+              <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
+                <FormFlow formJson={parsedJson} />
               </div>
             )
           )}
