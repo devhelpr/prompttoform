@@ -18,6 +18,7 @@
 - [x] fix branching logic for steps
 - [x] remove "ocif" references and names...
 - [x] use cloudflare worker as proxy to prevent CORS issues
+- [ ] add a visual schema of the generated form steps
 - [ ] split up FormRenderer into multiple components
 - [ ] split up FormGenerator into multiple components
 - [ ] Make vitest component tests for FormRenderer using testing-library
@@ -71,10 +72,11 @@ Reach out:
 ## Supported LLM APIs
 
 The tool supports the following LLM APIs:
-- OpenAI (GPT-4)
-- Anthropic (Claude 3 Opus)
+
+- OpenAI (GPT-4.1)
+- Anthropic (Claude 3.7 Sonnet)
 - Mistral (Mistral Large)
-- Google Gemini (Gemini Pro)
+- Google Gemini (Gemini Pro experimental)
 
 
 ## Example Prompt
