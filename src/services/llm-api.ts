@@ -39,8 +39,14 @@ export function getCurrentAPIConfig(): APIConfig {
     const selectedConfig = apis.find(
       (api: APIConfig) => api.name === selectedAPI
     );
-    if (selectedConfig) {
-      return selectedConfig;
+    const llmApi = llmAPIs.find((api) => api.name === selectedAPI);
+    if (selectedConfig && llmApi) {
+      return {
+        ...selectedConfig,
+        systemKey: llmApi.systemKey,
+        model: llmApi.model,
+        baseUrl: llmApi.baseUrl,
+      };
     }
   }
 

@@ -36,6 +36,8 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
                 ...savedApi,
                 description: defaultApi.description,
                 systemKey: defaultApi.systemKey,
+                model: defaultApi.model,
+                baseUrl: defaultApi.baseUrl,
               }
             : defaultApi;
         });

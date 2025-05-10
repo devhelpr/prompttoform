@@ -32,9 +32,9 @@ export const llmAPIs: APIConfig[] = [
     name: "Anthropic",
     baseUrl: "https://api.anthropic.com/v1",
     apiKey: "",
-    model: "claude-3-7-sonnet-202502190",
+    model: "claude-3-7-sonnet-20250219",
     description:
-      "Anthropic's claude-3-7-sonnet-202502190 model (provide your own API key)",
+      "Anthropic's claude-3-7-sonnet-20250219 model (provide your own API key)",
     isChatCompletionCompatible: true,
   },
   {
