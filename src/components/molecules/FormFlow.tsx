@@ -11,6 +11,7 @@ import ReactFlow, {
   Position,
   MarkerType,
 } from "reactflow";
+import dagre from "dagre";
 import "reactflow/dist/style.css";
 
 interface BranchCondition {
@@ -52,14 +53,41 @@ interface FlowData {
   edges: Edge[];
 }
 
-const BRANCH_X_OFFSET = 250;
+const nodeWidth = 250;
+const nodeHeight = 80;
+
+function getLayoutedElements(nodes: Node[], edges: Edge[], direction = "TB") {
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
+  dagreGraph.setGraph({ rankdir: direction, nodesep: 800, ranksep: 100 });
+
+  nodes.forEach((node) => {
+    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
+  });
+
+  edges.forEach((edge) => {
+    dagreGraph.setEdge(edge.source, edge.target);
+  });
+
+  dagre.layout(dagreGraph);
+
+  nodes.forEach((node) => {
+    const nodeWithPosition = dagreGraph.node(node.id);
+    node.position = {
+      x: nodeWithPosition.x + (node.width ?? nodeWidth),
+      y: nodeWithPosition.y + (node.height ?? nodeHeight) / 2,
+    };
+    node.targetPosition = Position.Top;
+    node.sourcePosition = Position.Bottom;
+  });
+
+  return { nodes, edges };
+}
 
 const FormFlow: React.FC<FormFlowProps> = ({ formJson }) => {
   const { nodes: initialNodes, edges: initialEdges }: FlowData = useMemo(() => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
-    let yOffset = 0;
-    const pageMap = new Map<string, { y: number; x: number }>();
     const branchTargetIds = new Set<string>();
     const defaultNextIds = new Set<string>();
 
@@ -75,16 +103,11 @@ const FormFlow: React.FC<FormFlowProps> = ({ formJson }) => {
       }
     });
 
-    // Now, create nodes with x offset for branch-only targets
+    // Now, create nodes (no manual x/y, dagre will handle it)
     formJson.app.pages.forEach((page) => {
-      // If this page is a branch target but not a default nextPage, offset it
-      const isBranchOnlyTarget =
-        branchTargetIds.has(page.id) && !defaultNextIds.has(page.id);
-      const x = isBranchOnlyTarget ? BRANCH_X_OFFSET : 0;
       nodes.push({
         id: page.id,
         type: "default",
-        position: { x, y: yOffset },
         data: {
           label: page.title,
           type: "page",
@@ -94,15 +117,12 @@ const FormFlow: React.FC<FormFlowProps> = ({ formJson }) => {
           border: "1px solid #e2e8f0",
           borderRadius: "8px",
           padding: "16px",
-          width: 250,
+          width: nodeWidth,
           fontSize: "14px",
           fontWeight: "500",
         },
-        sourcePosition: Position.Bottom,
-        targetPosition: Position.Top,
+        position: { x: 0, y: 0 }, // will be set by dagre
       });
-      pageMap.set(page.id, { y: yOffset, x });
-      yOffset += 200;
     });
 
     // Draw edges for each page
@@ -111,31 +131,29 @@ const FormFlow: React.FC<FormFlowProps> = ({ formJson }) => {
       // Branches: draw step (elbow) edges for each branch
       if (hasBranches) {
         page.branches!.forEach((branch, idx) => {
-          if (branch.nextPage && pageMap.has(branch.nextPage)) {
-            edges.push({
-              id: `${page.id}-branch-${idx}`,
-              source: page.id,
-              target: branch.nextPage,
-              type: "step",
-              animated: true,
-              style: { stroke: "#f59e0b", strokeWidth: 2 },
-              label: `${branch.condition.field} ${branch.condition.operator} ${branch.condition.value}`,
-              labelStyle: { fill: "#f59e0b", fontWeight: 500 },
-              markerEnd: {
-                type: MarkerType.ArrowClosed,
-                color: "#f59e0b",
-              },
-            });
-          }
+          edges.push({
+            id: `${page.id}-branch-${idx}`,
+            source: page.id,
+            target: branch.nextPage,
+            type: "step",
+            animated: true,
+            style: { stroke: "#f59e0b", strokeWidth: 2 },
+            label: `${branch.condition.field} ${branch.condition.operator} ${branch.condition.value}`,
+            labelStyle: { fill: "#f59e0b", fontWeight: 500 },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: "#f59e0b",
+            },
+          });
         });
       }
       // Default nextPage: use step if branches exist, otherwise straight
-      if (page.nextPage && pageMap.has(page.nextPage)) {
+      if (page.nextPage) {
         edges.push({
           id: `${page.id}-next`,
           source: page.id,
           target: page.nextPage,
-          type: hasBranches ? "step" : "straight",
+          type: "step",
           animated: true,
           style: { stroke: "#3b82f6", strokeWidth: 2 },
           label: "Next",
@@ -148,7 +166,8 @@ const FormFlow: React.FC<FormFlowProps> = ({ formJson }) => {
       }
     });
 
-    return { nodes, edges };
+    // Use dagre to layout nodes
+    return getLayoutedElements(nodes, edges);
   }, [formJson]);
 
   const [nodes, , onNodesChange] = useNodesState(initialNodes);

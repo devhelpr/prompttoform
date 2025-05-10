@@ -295,6 +295,7 @@ export function FormGenerator() {
             title: "Customer Information",
             route: "/order/customer",
             layout: "vertical",
+            nextPage: "product-selection",
             components: [
               {
                 type: "text",
@@ -410,6 +411,7 @@ export function FormGenerator() {
             title: "Product Selection",
             route: "/order/products",
             layout: "vertical",
+            nextPage: "payment-info",
             components: [
               {
                 type: "text",
