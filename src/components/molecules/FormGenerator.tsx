@@ -125,7 +125,7 @@ export function FormGenerator() {
   useEffect(() => {
     // Check for API key on mount
     const apiConfig = getCurrentAPIConfig();
-    if (!apiConfig.apiKey) {
+    if (!apiConfig.apiKey && !apiConfig.systemKey) {
       setShowApiKeyHint(true);
     }
   }, []);
@@ -134,7 +134,7 @@ export function FormGenerator() {
   useEffect(() => {
     if (!isSettingsOpen) {
       const apiConfig = getCurrentAPIConfig();
-      setShowApiKeyHint(!apiConfig.apiKey);
+      setShowApiKeyHint(!apiConfig.apiKey && !apiConfig.systemKey);
     }
   }, [isSettingsOpen]);
 
@@ -735,7 +735,7 @@ export function FormGenerator() {
     try {
       // Check if API key is set
       const apiConfig = getCurrentAPIConfig();
-      if (!apiConfig.apiKey) {
+      if (!apiConfig.apiKey && !apiConfig.systemKey) {
         setError(
           `No API key set for ${apiConfig.name}. Please configure it in the Settings.`
         );
@@ -812,7 +812,7 @@ export function FormGenerator() {
       const apiConfig = getCurrentAPIConfig();
 
       // Check if API key is set
-      if (!apiConfig.apiKey) {
+      if (!apiConfig.apiKey && !apiConfig.systemKey) {
         setError(
           `No API key set for ${apiConfig.name}. Please configure it in the Settings.`
         );

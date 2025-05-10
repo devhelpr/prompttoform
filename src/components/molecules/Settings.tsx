@@ -1,47 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import { Alert } from "./Alert";
+import { APIConfig } from "../../interfaces/api-config";
+import { llmAPIs } from "../../config/llms";
 
 interface SettingsProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-interface APIConfig {
-  name: string;
-  baseUrl: string;
-  apiKey: string;
-}
-
-const defaultAPIs: APIConfig[] = [
-  {
-    name: "OpenAI",
-    baseUrl: "https://api.openai.com/v1",
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY || "",
-  },
-  {
-    name: "Anthropic",
-    baseUrl: "https://api.anthropic.com/v1",
-    apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY || "",
-  },
-  {
-    name: "Mistral",
-    baseUrl: "https://api.mistral.ai/v1",
-    apiKey: import.meta.env.VITE_MISTRAL_API_KEY || "",
-  },
-  {
-    name: "Gemini",
-    baseUrl:
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=",
-    apiKey: import.meta.env.VITE_GEMINI_API_KEY || "",
-  },
-];
-
 export function Settings({ isOpen, onClose }: SettingsProps) {
-  const [selectedAPI, setSelectedAPI] = useState<string>(defaultAPIs[0].name);
-  const [apiKey, setApiKey] = useState<string>(defaultAPIs[0].apiKey);
-  const [apis, setApis] = useState<APIConfig[]>(defaultAPIs);
+  const [selectedAPI, setSelectedAPI] = useState<string>(llmAPIs[0].name);
+  const [apiKey, setApiKey] = useState<string>(llmAPIs[0].apiKey);
+  const [apis, setApis] = useState<APIConfig[]>(llmAPIs);
   const dialogRef = useRef<HTMLDialogElement>(null);
-
+  const [systemKey, setSystemKey] = useState<string>(
+    llmAPIs[0].systemKey ?? ""
+  );
   useEffect(() => {
     // Load saved settings from localStorage
     const savedSettings = localStorage.getItem("llmSettings");
@@ -51,11 +25,19 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
         console.log("Loading saved settings:", parsed);
 
         // Ensure we have all default APIs included (in case new ones were added in an update)
-        const mergedApis = defaultAPIs.map((defaultApi) => {
+        const mergedApis = llmAPIs.map((defaultApi) => {
           const savedApi = parsed.apis.find(
             (api: APIConfig) => api.name === defaultApi.name
           );
-          return savedApi || defaultApi;
+
+          return savedApi
+            ? {
+                ...defaultApi,
+                ...savedApi,
+                description: defaultApi.description,
+                systemKey: defaultApi.systemKey,
+              }
+            : defaultApi;
         });
 
         setApis(mergedApis);
@@ -70,9 +52,11 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
             (api) => api.name === parsed.selectedAPI
           );
           setApiKey(selectedApiConfig?.apiKey || "");
+          setSystemKey(selectedApiConfig?.systemKey || "");
         } else {
           setSelectedAPI(mergedApis[0].name);
           setApiKey(mergedApis[0].apiKey || "");
+          setSystemKey(mergedApis[0].systemKey || "");
         }
       } catch (error) {
         console.error("Error parsing saved settings:", error);
@@ -142,44 +126,48 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
                   (api) => api.name === e.target.value
                 );
                 setApiKey(selectedApiConfig?.apiKey || "");
+                setSystemKey(selectedApiConfig?.systemKey || "");
               }}
               className="w-full rounded-lg border-zinc-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2.5"
             >
               {apis.map((api) => (
                 <option key={api.name} value={api.name}>
-                  {api.name}
+                  {api.description}
                 </option>
               ))}
             </select>
           </div>
 
-          <div>
-            <label
-              htmlFor="api-key"
-              className="block text-sm font-medium text-zinc-700 mb-2"
-            >
-              API Key
-            </label>
-            <input
-              id="api-key"
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="w-full rounded-lg border-zinc-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2.5 mb-8"
-              placeholder="Enter your API key"
-            />
-            <Alert>
-              Your API keys are stored securely in your browser's localStorage.
-              We never store your API keys on our servers.
-              <br />
-              We do use a zero-logging, open-source proxy via cloudflare
-              workers. No tracking, no data stored, just your request forwarded.{" "}
-              <a href="https://github.com/devhelpr/prompttoform-worker">
-                Full code on GitHub
-              </a>
-              .
-            </Alert>
-          </div>
+          {!systemKey ? (
+            <div>
+              <label
+                htmlFor="api-key"
+                className="block text-sm font-medium text-zinc-700 mb-2"
+              >
+                API Key
+              </label>
+              <input
+                id="api-key"
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="w-full rounded-lg border-zinc-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2.5 mb-8"
+                placeholder="Enter your API key"
+              />
+              <Alert>
+                Your API keys are stored securely in your browser's
+                localStorage. We never store your API keys on our servers.
+                <br />
+                We do use a zero-logging, open-source proxy via cloudflare
+                workers. No tracking, no data stored, just your request
+                forwarded.{" "}
+                <a href="https://github.com/devhelpr/prompttoform-worker">
+                  Full code on GitHub
+                </a>
+                .
+              </Alert>
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-8 flex justify-end space-x-4">

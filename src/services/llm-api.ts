@@ -1,5 +1,7 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { z, ZodTypeAny } from "zod";
+import { APIConfig } from "../interfaces/api-config";
+import { llmAPIs } from "../config/llms";
 
 interface LLMResponse {
   choices: Array<{
@@ -24,12 +26,6 @@ interface GeminiResponse {
   }>;
 }
 
-interface APIConfig {
-  name: string;
-  baseUrl: string;
-  apiKey: string;
-}
-
 interface GenerateStructuredOutputParams<T extends ZodTypeAny> {
   schema: T;
   request: string;
@@ -49,11 +45,7 @@ export function getCurrentAPIConfig(): APIConfig {
   }
 
   // Fallback to default OpenAI config
-  return {
-    name: "OpenAI",
-    baseUrl: "https://api.openai.com/v1",
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY || "",
-  };
+  return llmAPIs[0];
 }
 
 export async function generateStructuredOutput<T extends ZodTypeAny>(
@@ -160,21 +152,27 @@ export async function callLLMAPI(
   apiConfig: APIConfig,
   jsonSchema?: any
 ): Promise<string> {
-  if (!apiConfig.apiKey) {
+  if (!apiConfig.apiKey && !apiConfig.systemKey) {
     throw new Error(
       `No API key configured for ${apiConfig.name}. Please go to Settings to configure your API key. Your API keys are stored securely in your browser's localStorage and never transmitted to our servers.`
     );
   }
 
-  if (apiConfig.name === "Gemini") {
+  if (!apiConfig.isChatCompletionCompatible) {
     try {
+      const apiUrl = import.meta.env.PROD
+        ? "https://form-generator-worker.maikel-f16.workers.dev"
+        : "http://localhost:8787/";
       // For Gemini, we'll use a direct API call rather than the structured output
-      const url =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
-      const response = await fetch(`${url}?key=${apiConfig.apiKey}`, {
+      // const url =
+      //   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+      const response = await fetch(`${apiUrl}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "api-url": `${apiConfig.baseUrl}${apiConfig.apiKey}`,
+          "api-path": "-",
+          "system-key": apiConfig.systemKey ?? "",
         },
         body: JSON.stringify({
           contents: [
@@ -212,7 +210,7 @@ export async function callLLMAPI(
     // Format the response_format appropriately based on the API provider
     let responseFormat = undefined;
 
-    if (jsonSchema && apiConfig.name !== "Gemini") {
+    if (jsonSchema && apiConfig.isChatCompletionCompatible) {
       // OpenAI abd compatible LLM api's requires specific response_format values
       responseFormat = {
         response_format: {
@@ -223,10 +221,11 @@ export async function callLLMAPI(
           },
         },
       };
-    } else if (jsonSchema) {
-      // Other providers might use the schema directly
-      responseFormat = jsonSchema;
     }
+    // } else if (jsonSchema) {
+    //   // Other providers might use the schema directly
+    //   responseFormat = jsonSchema;
+    // }
 
     const apiUrl = import.meta.env.PROD
       ? "https://form-generator-worker.maikel-f16.workers.dev"
@@ -240,16 +239,10 @@ export async function callLLMAPI(
         //"anthropic-dangerous-direct-browser-access": "true",
         "api-url": apiConfig.baseUrl,
         "api-path": "/chat/completions",
+        "system-key": apiConfig.systemKey ?? "",
       },
       body: JSON.stringify({
-        model:
-          apiConfig.name === "OpenAI"
-            ? "gpt-4.1"
-            : apiConfig.name === "Anthropic"
-            ? "claude-3-7-sonnet-20250219"
-            : apiConfig.name === "Mistral"
-            ? "mistral-large-latest"
-            : "gpt-4.1",
+        model: apiConfig.model,
         messages: [
           { role: "system", content: systemMessage },
           { role: "user", content: prompt },
