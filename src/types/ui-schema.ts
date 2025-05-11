@@ -42,13 +42,19 @@ export interface UISchema {
           };
         };
         isEndPage: { type: string };
+        branches?: {
+          type: string;
+          items: {
+            $ref: "#/$defs/branch";
+          };
+        };
+        nextPage?: { type: string };
       };
       required: string[];
     };
-    component: {
+    componentBase: {
       type: string;
       properties: {
-        type: { type: string; enum: string[] };
         id: { type: string };
         label?: { type: string };
         props?: { type: string; additionalProperties: boolean };
@@ -73,6 +79,10 @@ export interface UISchema {
             minLength?: { type: string };
             maxLength?: { type: string };
             pattern?: { type: string };
+            minItems?: { type: string };
+            maxItems?: { type: string };
+            minDate?: { type: string };
+            maxDate?: { type: string };
           };
         };
         visibilityConditions?: {
@@ -87,11 +97,116 @@ export interface UISchema {
             required: string[];
           };
         };
-        eventHandlers?: {
-          $ref: string;
+        arrayItems?: {
+          type: string;
+          items: {
+            $ref: string;
+          };
         };
       };
       required: string[];
+    };
+    inputComponent: {
+      allOf: [
+        { $ref: string },
+        { properties: { type: { const: string } }; required: string[] }
+      ];
+    };
+    selectComponent: {
+      allOf: [
+        { $ref: string },
+        { properties: { type: { const: string } }; required: string[] }
+      ];
+    };
+    checkboxComponent: {
+      allOf: [
+        { $ref: string },
+        { properties: { type: { const: string } }; required: string[] }
+      ];
+    };
+    radioComponent: {
+      allOf: [
+        { $ref: string },
+        { properties: { type: { const: string } }; required: string[] }
+      ];
+    };
+    textareaComponent: {
+      allOf: [
+        { $ref: string },
+        { properties: { type: { const: string } }; required: string[] }
+      ];
+    };
+    buttonComponent: {
+      allOf: [
+        { $ref: string },
+        { properties: { type: { const: string } }; required: string[] }
+      ];
+    };
+    tableComponent: {
+      allOf: [
+        { $ref: string },
+        { properties: { type: { const: string } }; required: string[] }
+      ];
+    };
+    formComponent: {
+      allOf: [
+        { $ref: string },
+        { properties: { type: { const: string } }; required: string[] }
+      ];
+    };
+    sectionComponent: {
+      allOf: [
+        { $ref: string },
+        { properties: { type: { const: string } }; required: string[] }
+      ];
+    };
+    arrayComponent: {
+      allOf: [
+        { $ref: string },
+        { properties: { type: { const: string } }; required: string[] }
+      ];
+    };
+    dateComponent: {
+      allOf: [
+        { $ref: string },
+        { properties: { type: { const: string } }; required: string[] }
+      ];
+    };
+    textComponent: {
+      allOf: [
+        { $ref: string },
+        { properties: { type: { const: string } }; required: string[] }
+      ];
+    };
+    arrayItem: {
+      type: string;
+      properties: {
+        id: { type: string };
+        components: {
+          type: string;
+          items: {
+            $ref: string;
+          };
+        };
+      };
+      required: string[];
+    };
+    component: {
+      type: string;
+      oneOf: [
+        { $ref: string },
+        { $ref: string },
+        { $ref: string },
+        { $ref: string },
+        { $ref: string },
+        { $ref: string },
+        { $ref: string },
+        { $ref: string },
+        { $ref: string },
+        { $ref: string },
+        { $ref: string },
+        { $ref: string }
+      ];
     };
     eventHandlers: {
       type: string;
@@ -144,5 +259,21 @@ export interface UISchema {
       };
       required: string[];
     };
+    branch: {
+      type: string;
+      properties: {
+        condition: {
+          type: string;
+          properties: {
+            field: { type: string };
+            operator: { type: string; enum: string[] };
+            value: { type: string };
+          };
+          required: string[];
+        };
+        nextPage: { type: string };
+      };
+      required: string[];
+    };
   };
-} 
+}

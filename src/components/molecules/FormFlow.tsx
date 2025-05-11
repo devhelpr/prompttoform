@@ -59,7 +59,7 @@ const nodeHeight = 80;
 function getLayoutedElements(nodes: Node[], edges: Edge[], direction = "TB") {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({ rankdir: direction, nodesep: 800, ranksep: 100 });
+  dagreGraph.setGraph({ rankdir: direction, nodesep: 600, ranksep: 100 });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
@@ -74,8 +74,8 @@ function getLayoutedElements(nodes: Node[], edges: Edge[], direction = "TB") {
   nodes.forEach((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
     node.position = {
-      x: nodeWithPosition.x + (node.width ?? nodeWidth),
-      y: nodeWithPosition.y + (node.height ?? nodeHeight) / 2,
+      x: nodeWithPosition.x - (node.width ?? nodeWidth) / 2,
+      y: nodeWithPosition.y - (node.height ?? nodeHeight) / 2,
     };
     node.targetPosition = Position.Top;
     node.sourcePosition = Position.Bottom;

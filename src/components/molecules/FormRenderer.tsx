@@ -1,27 +1,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { HTMLInputTypeAttribute } from "react";
+import { FieldType } from "../../types/field-types";
 
 interface ComponentProps {
-  type:
-    | "array"
-    | "text"
-    | "input"
-    | "textarea"
-    | "checkbox"
-    | "radio"
-    | "select"
-    | "button"
-    | "table"
-    | "form"
-    | "section"
-    | "date"
-    | "html"
-    | "decisionTree";
+  type: FieldType;
   id: string;
   label?: string;
   defaultValue?: unknown;
   options?: { label: string; value: string }[];
-  required?: boolean;
   props?: Record<string, unknown> & {
     inputType?: string;
     minDate?: string;

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://prompttoform.ai/schema/v1/schema.json",
+  "$id": "https://prompttoform.ai/schema/v0.2/schema.json",
   "title": "UI Schema",
   "description": "Schema for describing complex UIs, including websites, forms, decision trees, and CRUD operations.",
   "type": "object",
@@ -67,110 +67,20 @@
     },
     "component": {
       "type": "object",
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "text",
-            "input",
-            "textarea",
-            "checkbox",
-            "radio",
-            "select",
-            "button",
-            "table",
-            "form",
-            "section",
-            "array",
-            "date"
-          ]
-        },
-        "id": {
-          "type": "string"
-        },
-        "label": {
-          "type": "string"
-        },
-        "props": {
-          "type": "object",
-          "additionalProperties": true
-        },
-        "children": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/component"
-          }
-        },
-        "bindings": {
-          "type": "object",
-          "properties": {
-            "dataSource": {
-              "type": "string"
-            },
-            "field": {
-              "type": "string"
-            },
-            "onChange": {
-              "type": "string"
-            }
-          }
-        },
-        "validation": {
-          "type": "object",
-          "properties": {
-            "required": {
-              "type": "boolean"
-            },
-            "minLength": {
-              "type": "integer"
-            },
-            "maxLength": {
-              "type": "integer"
-            },
-            "pattern": {
-              "type": "string"
-            },
-            "minItems": {
-              "type": "integer"
-            },
-            "maxItems": {
-              "type": "integer"
-            },
-            "minDate": {
-              "type": "string",
-              "format": "date"
-            },
-            "maxDate": {
-              "type": "string",
-              "format": "date"
-            }
-          }
-        },
-        "visibilityConditions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "field": {
-                "type": "string"
-              },
-              "operator": {
-                "type": "string",
-                "enum": ["==", "!=", ">", "<", ">=", "<="]
-              },
-              "value": {}
-            },
-            "required": ["field", "operator", "value"]
-          }
-        },
-        "arrayItems": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/arrayItem"
-          }
-        }
-      },
-      "required": ["type", "id"]
+      "oneOf": [
+        { "$ref": "#/$defs/inputComponent" },
+        { "$ref": "#/$defs/selectComponent" },
+        { "$ref": "#/$defs/checkboxComponent" },
+        { "$ref": "#/$defs/radioComponent" },
+        { "$ref": "#/$defs/textareaComponent" },
+        { "$ref": "#/$defs/buttonComponent" },
+        { "$ref": "#/$defs/tableComponent" },
+        { "$ref": "#/$defs/formComponent" },
+        { "$ref": "#/$defs/sectionComponent" },
+        { "$ref": "#/$defs/arrayComponent" },
+        { "$ref": "#/$defs/dateComponent" },
+        { "$ref": "#/$defs/textComponent" }
+      ]
     },
     "arrayItem": {
       "type": "object",
@@ -241,6 +151,146 @@
         }
       },
       "required": ["condition", "nextPage"]
+    },
+    "componentBase": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "props": { "type": "object", "additionalProperties": true },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" }
+        },
+        "bindings": {
+          "type": "object",
+          "properties": {
+            "dataSource": { "type": "string" },
+            "field": { "type": "string" },
+            "onChange": { "type": "string" }
+          }
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean" },
+            "minLength": { "type": "integer" },
+            "maxLength": { "type": "integer" },
+            "pattern": { "type": "string" },
+            "minItems": { "type": "integer" },
+            "maxItems": { "type": "integer" },
+            "minDate": { "type": "string", "format": "date" },
+            "maxDate": { "type": "string", "format": "date" }
+          }
+        },
+        "visibilityConditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": { "type": "string" },
+              "operator": {
+                "type": "string",
+                "enum": ["==", "!=", ">", "<", ">=", "<="]
+              },
+              "value": {}
+            },
+            "required": ["field", "operator", "value"]
+          }
+        },
+        "arrayItems": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/arrayItem" }
+        }
+      },
+      "required": ["id"]
+    },
+    "inputComponent": {
+      "allOf": [
+        { "$ref": "#/$defs/componentBase" },
+        { "properties": { "type": { "const": "input" } }, "required": ["type"] }
+      ]
+    },
+    "selectComponent": {
+      "allOf": [
+        { "$ref": "#/$defs/componentBase" },
+        {
+          "properties": { "type": { "const": "select" } },
+          "required": ["type"]
+        }
+      ]
+    },
+    "checkboxComponent": {
+      "allOf": [
+        { "$ref": "#/$defs/componentBase" },
+        {
+          "properties": { "type": { "const": "checkbox" } },
+          "required": ["type"]
+        }
+      ]
+    },
+    "radioComponent": {
+      "allOf": [
+        { "$ref": "#/$defs/componentBase" },
+        { "properties": { "type": { "const": "radio" } }, "required": ["type"] }
+      ]
+    },
+    "textareaComponent": {
+      "allOf": [
+        { "$ref": "#/$defs/componentBase" },
+        {
+          "properties": { "type": { "const": "textarea" } },
+          "required": ["type"]
+        }
+      ]
+    },
+    "buttonComponent": {
+      "allOf": [
+        { "$ref": "#/$defs/componentBase" },
+        {
+          "properties": { "type": { "const": "button" } },
+          "required": ["type"]
+        }
+      ]
+    },
+    "tableComponent": {
+      "allOf": [
+        { "$ref": "#/$defs/componentBase" },
+        { "properties": { "type": { "const": "table" } }, "required": ["type"] }
+      ]
+    },
+    "formComponent": {
+      "allOf": [
+        { "$ref": "#/$defs/componentBase" },
+        { "properties": { "type": { "const": "form" } }, "required": ["type"] }
+      ]
+    },
+    "sectionComponent": {
+      "allOf": [
+        { "$ref": "#/$defs/componentBase" },
+        {
+          "properties": { "type": { "const": "section" } },
+          "required": ["type"]
+        }
+      ]
+    },
+    "arrayComponent": {
+      "allOf": [
+        { "$ref": "#/$defs/componentBase" },
+        { "properties": { "type": { "const": "array" } }, "required": ["type"] }
+      ]
+    },
+    "dateComponent": {
+      "allOf": [
+        { "$ref": "#/$defs/componentBase" },
+        { "properties": { "type": { "const": "date" } }, "required": ["type"] }
+      ]
+    },
+    "textComponent": {
+      "allOf": [
+        { "$ref": "#/$defs/componentBase" },
+        { "properties": { "type": { "const": "text" } }, "required": ["type"] }
+      ]
     }
   }
 }

@@ -10,6 +10,7 @@ import { getSystemPrompt } from "../../prompt-library/system-prompt";
 import schemaJson from "../../../schema.json";
 import { Alert } from "./Alert";
 import FormFlow from "./FormFlow";
+import { FieldType } from "../../types/field-types";
 
 // Define the evaluation result type
 interface EvaluationResult {
@@ -49,21 +50,7 @@ interface VisibilityCondition {
 
 // Define interface for component properties
 interface ComponentProps {
-  type:
-    | "array"
-    | "text"
-    | "input"
-    | "textarea"
-    | "checkbox"
-    | "radio"
-    | "select"
-    | "button"
-    | "table"
-    | "form"
-    | "section"
-    | "date"
-    | "html"
-    | "decisionTree";
+  type: FieldType;
   id: string;
   label?: string;
   props?: Record<string, unknown>;
