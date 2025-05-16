@@ -13,10 +13,10 @@ export const llmAPIs: APIConfig[] = [
   {
     name: "Gemini-2.5-experimental-system",
     baseUrl:
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent?key=",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=",
     apiKey: "",
-    model: "gemini-2.5-pro-exp-03-25",
-    description: "Google's gemini-2.5-experimental model via prompttoform.ai",
+    model: "ggemini-2.0-flash",
+    description: "Google's gemini-2.0-flash model via prompttoform.ai",
     isChatCompletionCompatible: false,
     systemKey: "gemini",
   },
@@ -55,14 +55,14 @@ export const llmAPIs: APIConfig[] = [
     description: "Google's gemini-2.0-flash model (provide your own API key)",
     isChatCompletionCompatible: false,
   },
-  {
-    name: "Gemini-2.5-experimental",
-    baseUrl:
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent?key=",
-    apiKey: "",
-    model: "gemini-2.5-pro-exp-03-25",
-    description:
-      "Google's gemini-2.5-experimental model (provide your own API key)",
-    isChatCompletionCompatible: false,
-  },
+  // {
+  //   name: "Gemini-2.5-experimental",
+  //   baseUrl:
+  //     "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent?key=",
+  //   apiKey: "",
+  //   model: "gemini-2.5-pro-exp-03-25",
+  //   description:
+  //     "Google's gemini-2.5-experimental model (provide your own API key)",
+  //   isChatCompletionCompatible: false,
+  // },
 ];
