@@ -68,18 +68,42 @@
     "component": {
       "type": "object",
       "oneOf": [
-        { "$ref": "#/$defs/inputComponent" },
-        { "$ref": "#/$defs/selectComponent" },
-        { "$ref": "#/$defs/checkboxComponent" },
-        { "$ref": "#/$defs/radioComponent" },
-        { "$ref": "#/$defs/textareaComponent" },
-        { "$ref": "#/$defs/buttonComponent" },
-        { "$ref": "#/$defs/tableComponent" },
-        { "$ref": "#/$defs/formComponent" },
-        { "$ref": "#/$defs/sectionComponent" },
-        { "$ref": "#/$defs/arrayComponent" },
-        { "$ref": "#/$defs/dateComponent" },
-        { "$ref": "#/$defs/textComponent" }
+        {
+          "$ref": "#/$defs/inputComponent"
+        },
+        {
+          "$ref": "#/$defs/selectComponent"
+        },
+        {
+          "$ref": "#/$defs/checkboxComponent"
+        },
+        {
+          "$ref": "#/$defs/radioComponent"
+        },
+        {
+          "$ref": "#/$defs/textareaComponent"
+        },
+        {
+          "$ref": "#/$defs/buttonComponent"
+        },
+        {
+          "$ref": "#/$defs/tableComponent"
+        },
+        {
+          "$ref": "#/$defs/formComponent"
+        },
+        {
+          "$ref": "#/$defs/sectionComponent"
+        },
+        {
+          "$ref": "#/$defs/arrayComponent"
+        },
+        {
+          "$ref": "#/$defs/dateComponent"
+        },
+        {
+          "$ref": "#/$defs/textComponent"
+        }
       ]
     },
     "arrayItem": {
@@ -155,32 +179,64 @@
     "componentBase": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "label": { "type": "string" },
-        "props": { "type": "object", "additionalProperties": true },
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "props": {
+          "$ref": "#/$defs/baseProps"
+        },
         "children": {
           "type": "array",
-          "items": { "$ref": "#/$defs/component" }
+          "items": {
+            "$ref": "#/$defs/component"
+          }
         },
         "bindings": {
           "type": "object",
           "properties": {
-            "dataSource": { "type": "string" },
-            "field": { "type": "string" },
-            "onChange": { "type": "string" }
+            "dataSource": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            },
+            "onChange": {
+              "type": "string"
+            }
           }
         },
         "validation": {
           "type": "object",
           "properties": {
-            "required": { "type": "boolean" },
-            "minLength": { "type": "integer" },
-            "maxLength": { "type": "integer" },
-            "pattern": { "type": "string" },
-            "minItems": { "type": "integer" },
-            "maxItems": { "type": "integer" },
-            "minDate": { "type": "string", "format": "date" },
-            "maxDate": { "type": "string", "format": "date" }
+            "required": {
+              "type": "boolean"
+            },
+            "minLength": {
+              "type": "integer"
+            },
+            "maxLength": {
+              "type": "integer"
+            },
+            "pattern": {
+              "type": "string"
+            },
+            "minItems": {
+              "type": "integer"
+            },
+            "maxItems": {
+              "type": "integer"
+            },
+            "minDate": {
+              "type": "string",
+              "format": "date"
+            },
+            "maxDate": {
+              "type": "string",
+              "format": "date"
+            }
           }
         },
         "visibilityConditions": {
@@ -188,7 +244,9 @@
           "items": {
             "type": "object",
             "properties": {
-              "field": { "type": "string" },
+              "field": {
+                "type": "string"
+              },
               "operator": {
                 "type": "string",
                 "enum": ["==", "!=", ">", "<", ">=", "<="]
@@ -200,97 +258,299 @@
         },
         "arrayItems": {
           "type": "array",
-          "items": { "$ref": "#/$defs/arrayItem" }
+          "items": {
+            "$ref": "#/$defs/arrayItem"
+          }
         }
       },
       "required": ["id"]
     },
     "inputComponent": {
       "allOf": [
-        { "$ref": "#/$defs/componentBase" },
-        { "properties": { "type": { "const": "input" } }, "required": ["type"] }
+        {
+          "$ref": "#/$defs/componentBase"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "input"
+            },
+            "props": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/baseProps"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "inputType": {
+                      "type": "string",
+                      "enum": ["text", "email", "number", "password"]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["type"]
+        }
       ]
     },
     "selectComponent": {
       "allOf": [
-        { "$ref": "#/$defs/componentBase" },
         {
-          "properties": { "type": { "const": "select" } },
+          "$ref": "#/$defs/componentBase"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "select"
+            },
+            "props": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/baseProps"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string"
+                          },
+                          "value": {}
+                        },
+                        "required": ["label", "value"]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
           "required": ["type"]
         }
       ]
     },
     "checkboxComponent": {
       "allOf": [
-        { "$ref": "#/$defs/componentBase" },
         {
-          "properties": { "type": { "const": "checkbox" } },
+          "$ref": "#/$defs/componentBase"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "checkbox"
+            }
+          },
           "required": ["type"]
         }
       ]
     },
     "radioComponent": {
       "allOf": [
-        { "$ref": "#/$defs/componentBase" },
-        { "properties": { "type": { "const": "radio" } }, "required": ["type"] }
+        {
+          "$ref": "#/$defs/componentBase"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "radio"
+            },
+            "props": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/baseProps"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string"
+                          },
+                          "value": {}
+                        },
+                        "required": ["label", "value"]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["type"]
+        }
       ]
     },
     "textareaComponent": {
       "allOf": [
-        { "$ref": "#/$defs/componentBase" },
         {
-          "properties": { "type": { "const": "textarea" } },
+          "$ref": "#/$defs/componentBase"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "textarea"
+            },
+            "props": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/baseProps"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "rows": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  }
+                }
+              ]
+            }
+          },
           "required": ["type"]
         }
       ]
     },
     "buttonComponent": {
       "allOf": [
-        { "$ref": "#/$defs/componentBase" },
         {
-          "properties": { "type": { "const": "button" } },
+          "$ref": "#/$defs/componentBase"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "button"
+            }
+          },
           "required": ["type"]
         }
       ]
     },
     "tableComponent": {
       "allOf": [
-        { "$ref": "#/$defs/componentBase" },
-        { "properties": { "type": { "const": "table" } }, "required": ["type"] }
+        {
+          "$ref": "#/$defs/componentBase"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "table"
+            }
+          },
+          "required": ["type"]
+        }
       ]
     },
     "formComponent": {
       "allOf": [
-        { "$ref": "#/$defs/componentBase" },
-        { "properties": { "type": { "const": "form" } }, "required": ["type"] }
+        {
+          "$ref": "#/$defs/componentBase"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "form"
+            }
+          },
+          "required": ["type"]
+        }
       ]
     },
     "sectionComponent": {
       "allOf": [
-        { "$ref": "#/$defs/componentBase" },
         {
-          "properties": { "type": { "const": "section" } },
+          "$ref": "#/$defs/componentBase"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "section"
+            }
+          },
           "required": ["type"]
         }
       ]
     },
     "arrayComponent": {
       "allOf": [
-        { "$ref": "#/$defs/componentBase" },
-        { "properties": { "type": { "const": "array" } }, "required": ["type"] }
+        {
+          "$ref": "#/$defs/componentBase"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "array"
+            }
+          },
+          "required": ["type"]
+        }
       ]
     },
     "dateComponent": {
       "allOf": [
-        { "$ref": "#/$defs/componentBase" },
-        { "properties": { "type": { "const": "date" } }, "required": ["type"] }
+        {
+          "$ref": "#/$defs/componentBase"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "date"
+            }
+          },
+          "required": ["type"]
+        }
       ]
     },
     "textComponent": {
       "allOf": [
-        { "$ref": "#/$defs/componentBase" },
-        { "properties": { "type": { "const": "text" } }, "required": ["type"] }
+        {
+          "$ref": "#/$defs/componentBase"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "text"
+            }
+          },
+          "required": ["type"]
+        }
       ]
+    },
+    "baseProps": {
+      "type": "object",
+      "properties": {
+        "placeholder": {
+          "type": "string"
+        },
+        "helperText": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
     }
   }
 }
