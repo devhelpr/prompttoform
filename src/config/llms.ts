@@ -38,6 +38,15 @@ export const llmAPIs: APIConfig[] = [
     isChatCompletionCompatible: true,
   },
   {
+    name: "Anthropic claude 4",
+    baseUrl: "https://api.anthropic.com/v1",
+    apiKey: "",
+    model: "claude-sonnet-4-20250514",
+    description:
+      "Anthropic's claude-sonnet-4-20250514 model (provide your own API key)",
+    isChatCompletionCompatible: true,
+  },
+  {
     name: "Mistral",
     baseUrl: "https://api.mistral.ai/v1",
     apiKey: "",
