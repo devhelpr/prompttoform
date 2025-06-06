@@ -585,8 +585,12 @@ export function FormGenerator() {
         </div>
       )}
 
-      {generatedJson && !isLoading && !isEvaluating && (
-        <div className="space-y-4">
+      {generatedJson && !isLoading && (
+        <div
+          className={`space-y-4 ${
+            isEvaluating ? "opacity-50 pointer-events-none" : ""
+          }`}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <h3 className="text-lg font-medium text-zinc-900">
