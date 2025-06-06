@@ -629,6 +629,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
             {typeof props?.text === "string" && (
               <p className="text-gray-700">{props.text}</p>
             )}
+            {typeof props?.helperText === "string" && (
+              <p className="text-gray-700">{props.helperText}</p>
+            )}
           </div>
         );
 
