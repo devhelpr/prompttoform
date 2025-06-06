@@ -10,6 +10,7 @@ import { getSystemPrompt } from "../../prompt-library/system-prompt";
 import schemaJson from "../../../schema.json";
 import { Alert } from "./Alert";
 import FormFlow from "./FormFlow";
+import FormFlowMermaid from "./FormFlowMermaid";
 import { FieldType } from "../../types/field-types";
 
 // Define the evaluation result type
@@ -23,7 +24,7 @@ interface EvaluationResult {
 }
 
 // Define view modes
-type ViewMode = "json" | "form" | "flow";
+type ViewMode = "json" | "form" | "flow" | "mermaid-flow";
 
 // Cast schema to unknown first, then to UISchema
 const uiSchema = schemaJson as unknown as UISchema;
@@ -1097,7 +1098,7 @@ export function FormGenerator() {
         </div>
       )}
 
-      {evaluation && (
+      {evaluation && !isEvaluating && (
         <div className="rounded-md bg-blue-50 p-4">
           <div className="flex">
             <div className="ml-3 w-full">
@@ -1141,7 +1142,7 @@ export function FormGenerator() {
         </div>
       )}
 
-      {generatedJson && (
+      {generatedJson && !isLoading && !isEvaluating && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -1174,13 +1175,24 @@ export function FormGenerator() {
                 <button
                   type="button"
                   onClick={() => handleViewModeChange("flow")}
-                  className={`px-4 py-2 text-sm font-medium rounded-r-md ${
+                  className={`px-4 py-2 text-sm font-medium ${
                     viewMode === "flow"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  } border-t border-b border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
+                >
+                  Flow
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange("mermaid-flow")}
+                  className={`px-4 py-2 text-sm font-medium rounded-r-md ${
+                    viewMode === "mermaid-flow"
                       ? "bg-indigo-600 text-white"
                       : "bg-white text-gray-700 hover:bg-gray-50"
                   } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
                 >
-                  Flow
+                  Mermaid Flow
                 </button>
               </div>
             </div>
@@ -1214,11 +1226,18 @@ export function FormGenerator() {
                 <FormRenderer formJson={parsedJson} />
               </div>
             )
-          ) : (
+          ) : viewMode === "flow" ? (
             parsedJson &&
             parsedJson.app && (
               <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
                 <FormFlow formJson={parsedJson} />
+              </div>
+            )
+          ) : (
+            parsedJson &&
+            parsedJson.app && (
+              <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
+                <FormFlowMermaid formJson={parsedJson} />
               </div>
             )
           )}
