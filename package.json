@@ -17,6 +17,7 @@
   "dependencies": {
     "@langchain/core": "^0.3.43",
     "@langchain/google-genai": "^0.2.2",
+    "compromise": "^14.14.4",
     "d3-force": "^3.0.0",
     "dagre": "^0.8.5",
     "json5": "^2.2.3",

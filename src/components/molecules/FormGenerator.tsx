@@ -14,6 +14,7 @@ import FormFlowMermaid from "./FormFlowMermaid";
 import { FieldType } from "../../types/field-types";
 import { exampleForm } from "./example-form-definitions/example-form";
 import { multiStepForm } from "./example-form-definitions/multi-step-form";
+import { detectPIIWithBSN } from "../../utils/pii-detect";
 
 // Define the evaluation result type
 interface EvaluationResult {
@@ -112,6 +113,10 @@ export function FormGenerator() {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [showApiKeyHint, setShowApiKeyHint] = useState(false);
+  const [piiErrors, setPiiErrors] = useState<{
+    prompt?: string;
+    updatePrompt?: string;
+  }>({});
 
   useEffect(() => {
     // Check for API key on mount
@@ -129,10 +134,25 @@ export function FormGenerator() {
     }
   }, [isSettingsOpen]);
 
+  const validatePII = (text: string, field: "prompt" | "updatePrompt") => {
+    const piiEntities = detectPIIWithBSN(text);
+    if (piiEntities.length > 0) {
+      const errorMessage = `Privacy sensitive data detected: ${piiEntities
+        .map((entity) => `${entity.type} (${entity.match})`)
+        .join(", ")}`;
+      setPiiErrors((prev) => ({ ...prev, [field]: errorMessage }));
+      return false;
+    }
+    setPiiErrors((prev) => ({ ...prev, [field]: undefined }));
+    return true;
+  };
+
   const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setPrompt(e.target.value);
+    const newValue = e.target.value;
+    setPrompt(newValue);
     setError(null);
     setEvaluation(null);
+    validatePII(newValue, "prompt");
   };
 
   const handleViewModeChange = (mode: ViewMode) => {
@@ -160,6 +180,11 @@ export function FormGenerator() {
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       setError("Please enter a prompt");
+      return;
+    }
+
+    if (piiErrors.prompt) {
+      setError("Please remove privacy sensitive data before generating");
       return;
     }
 
@@ -372,6 +397,11 @@ export function FormGenerator() {
       return;
     }
 
+    if (piiErrors.updatePrompt) {
+      setUpdateError("Please remove privacy sensitive data before updating");
+      return;
+    }
+
     setIsUpdating(true);
     setUpdateError(null);
 
@@ -454,6 +484,16 @@ export function FormGenerator() {
     }
   };
 
+  const handleUpdatePromptChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    const newValue = e.target.value;
+    setUpdatePrompt(newValue);
+    setError(null);
+    setEvaluation(null);
+    validatePII(newValue, "updatePrompt");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -488,11 +528,16 @@ export function FormGenerator() {
         <textarea
           id="prompt"
           rows={5}
-          className="w-full rounded-lg border border-zinc-200 shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 mt-2 text-base"
+          className={`w-full rounded-lg border ${
+            piiErrors.prompt ? "border-red-300" : "border-zinc-200"
+          } shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 mt-2 text-base`}
           placeholder=""
           value={prompt}
           onChange={handlePromptChange}
         />
+        {piiErrors.prompt && (
+          <p className="mt-2 text-sm text-red-600">{piiErrors.prompt}</p>
+        )}
         <div className="mt-4 flex justify-end md:space-x-2 flex-col md:flex-row gap-2 md:gap-0 ">
           <button
             type="button"
@@ -761,11 +806,18 @@ export function FormGenerator() {
             <div className="space-y-4">
               <textarea
                 value={updatePrompt}
-                onChange={(e) => setUpdatePrompt(e.target.value)}
-                className="w-full rounded-lg border border-zinc-200 shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 text-base"
+                onChange={handleUpdatePromptChange}
+                className={`w-full rounded-lg border ${
+                  piiErrors.updatePrompt ? "border-red-300" : "border-zinc-200"
+                } shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 text-base`}
                 placeholder="Describe the changes you want to make to the form..."
                 rows={4}
               />
+              {piiErrors.updatePrompt && (
+                <p className="mt-2 text-sm text-red-600">
+                  {piiErrors.updatePrompt}
+                </p>
+              )}
               {updateError && (
                 <div className="text-red-500 text-sm">{updateError}</div>
               )}
