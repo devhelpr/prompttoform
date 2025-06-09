@@ -104,7 +104,7 @@ export function FormGenerator() {
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [generatedJson, setGeneratedJson] = useState("");
   const [parsedJson, setParsedJson] = useState<UIJson | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("json");
+  const [viewMode, setViewMode] = useState<ViewMode>("form");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -495,6 +495,7 @@ export function FormGenerator() {
           <button
             type="button"
             onClick={loadExampleForm}
+            disabled={isLoading || isEvaluating}
             className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-center md:text-left"
           >
             Load Example Form
@@ -502,6 +503,7 @@ export function FormGenerator() {
           <button
             type="button"
             onClick={loadMultiStepExample}
+            disabled={isLoading || isEvaluating}
             className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-center md:text-left"
           >
             Load Multi-Step Form
@@ -509,7 +511,7 @@ export function FormGenerator() {
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={isLoading}
+            disabled={isLoading || isEvaluating}
             className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center md:text-left"
           >
             {isLoading ? "Generating..." : "Generate UI/Form"}
@@ -599,27 +601,16 @@ export function FormGenerator() {
               <div className="inline-flex rounded-md shadow-sm" role="group">
                 <button
                   type="button"
-                  onClick={() => handleViewModeChange("json")}
+                  onClick={() => handleViewModeChange("form")}
                   className={`px-4 py-2 text-sm font-medium rounded-l-md ${
-                    viewMode === "json"
+                    viewMode === "form"
                       ? "bg-indigo-600 text-white"
                       : "bg-white text-gray-700 hover:bg-gray-50"
                   } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
                 >
-                  JSON
+                  Form Preview
                 </button>
-                <button
-                  type="button"
-                  onClick={() => handleViewModeChange("form")}
-                  className={`px-4 py-2 text-sm font-medium ${
-                    viewMode === "form"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-50"
-                  } border-t border-b border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
-                >
-                  Preview
-                </button>
-                <button
+                {/* <button
                   type="button"
                   onClick={() => handleViewModeChange("flow")}
                   className={`px-4 py-2 text-sm font-medium ${
@@ -629,17 +620,28 @@ export function FormGenerator() {
                   } border-t border-b border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
                 >
                   Flow
-                </button>
+                </button> */}
                 <button
                   type="button"
                   onClick={() => handleViewModeChange("mermaid-flow")}
-                  className={`px-4 py-2 text-sm font-medium rounded-r-md ${
+                  className={`px-4 py-2 text-sm font-medium  ${
                     viewMode === "mermaid-flow"
                       ? "bg-indigo-600 text-white"
                       : "bg-white text-gray-700 hover:bg-gray-50"
                   } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
                 >
-                  Mermaid Flow
+                  Visual Flow
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange("json")}
+                  className={`px-4 py-2 text-sm font-medium rounded-r-md  ${
+                    viewMode === "json"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
+                >
+                  JSON
                 </button>
               </div>
             </div>

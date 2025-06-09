@@ -20,7 +20,7 @@
 - [x] fix branching logic for steps
 - [x] remove "ocif" references and names...
 - [x] use cloudflare worker as proxy to prevent CORS issues
-- [ ] add a visual schema of the generated form steps
+- [x] add a visual schema of the generated form steps
 - [ ] split up FormRenderer into multiple components
 - [ ] split up FormGenerator into multiple components
 - [ ] Make vitest component tests for FormRenderer using testing-library
