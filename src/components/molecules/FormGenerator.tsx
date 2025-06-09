@@ -145,6 +145,7 @@ export function FormGenerator() {
 
     // If example form is loaded, switch to form view automatically
     setViewMode("form");
+    setEvaluation(null);
   };
 
   const loadMultiStepExample = () => {
@@ -153,6 +154,7 @@ export function FormGenerator() {
 
     // If example form is loaded, switch to form view automatically
     setViewMode("form");
+    setEvaluation(null);
   };
 
   const handleGenerate = async () => {
