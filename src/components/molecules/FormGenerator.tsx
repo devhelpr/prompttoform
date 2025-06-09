@@ -137,11 +137,11 @@ export function FormGenerator() {
   const validatePII = (text: string, field: "prompt" | "updatePrompt") => {
     const piiEntities = detectPIIWithBSN(text);
     if (piiEntities.length > 0) {
-      const errorMessage = `Privacy sensitive data detected: ${piiEntities
+      const warningMessage = `Warning: Privacy sensitive data detected: ${piiEntities
         .map((entity) => `${entity.type} (${entity.match})`)
         .join(", ")}`;
-      setPiiErrors((prev) => ({ ...prev, [field]: errorMessage }));
-      return false;
+      setPiiErrors((prev) => ({ ...prev, [field]: warningMessage }));
+      return true; // Always return true since we're not blocking
     }
     setPiiErrors((prev) => ({ ...prev, [field]: undefined }));
     return true;
@@ -183,11 +183,7 @@ export function FormGenerator() {
       return;
     }
 
-    if (piiErrors.prompt) {
-      setError("Please remove privacy sensitive data before generating");
-      return;
-    }
-
+    // Remove PII validation blocking
     setIsLoading(true);
     setError(null);
     setEvaluation(null);
@@ -397,11 +393,7 @@ export function FormGenerator() {
       return;
     }
 
-    if (piiErrors.updatePrompt) {
-      setUpdateError("Please remove privacy sensitive data before updating");
-      return;
-    }
-
+    // Remove PII validation blocking
     setIsUpdating(true);
     setUpdateError(null);
 
@@ -529,14 +521,14 @@ export function FormGenerator() {
           id="prompt"
           rows={5}
           className={`w-full rounded-lg border ${
-            piiErrors.prompt ? "border-red-300" : "border-zinc-200"
+            piiErrors.prompt ? "border-amber-300" : "border-zinc-200"
           } shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 mt-2 text-base`}
           placeholder=""
           value={prompt}
           onChange={handlePromptChange}
         />
         {piiErrors.prompt && (
-          <p className="mt-2 text-sm text-red-600">{piiErrors.prompt}</p>
+          <p className="mt-2 text-sm text-amber-600">{piiErrors.prompt}</p>
         )}
         <div className="mt-4 flex justify-end md:space-x-2 flex-col md:flex-row gap-2 md:gap-0 ">
           <button
@@ -808,13 +800,15 @@ export function FormGenerator() {
                 value={updatePrompt}
                 onChange={handleUpdatePromptChange}
                 className={`w-full rounded-lg border ${
-                  piiErrors.updatePrompt ? "border-red-300" : "border-zinc-200"
+                  piiErrors.updatePrompt
+                    ? "border-amber-300"
+                    : "border-zinc-200"
                 } shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 text-base`}
                 placeholder="Describe the changes you want to make to the form..."
                 rows={4}
               />
               {piiErrors.updatePrompt && (
-                <p className="mt-2 text-sm text-red-600">
+                <p className="mt-2 text-sm text-amber-600">
                   {piiErrors.updatePrompt}
                 </p>
               )}

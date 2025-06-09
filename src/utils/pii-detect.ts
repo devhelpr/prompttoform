@@ -9,6 +9,7 @@ export interface PiiEntity {
 
 export function detectPIIWithBSN(text: string): PiiEntity[] {
   const doc = nlp(text);
+
   const pii: PiiEntity[] = [];
 
   const addMatches = (matches: string[], type: string) => {
