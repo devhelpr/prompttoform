@@ -61,13 +61,10 @@
 
 @keyframes gradient {
   0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
+    background-position: 200% center;
   }
   100% {
-    background-position: 0% 50%;
+    background-position: 0% center;
   }
 }
 
@@ -77,7 +74,7 @@
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: gradient 1.5s ease infinite;
+  animation: gradient 3s linear infinite;
 }
 
 .loading-gradient-text-light {
@@ -86,5 +83,5 @@
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: gradient 1.5s ease infinite;
+  animation: gradient 3s linear infinite;
 }
