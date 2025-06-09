@@ -512,19 +512,31 @@ export function FormGenerator() {
             type="button"
             onClick={handleGenerate}
             disabled={isLoading || isEvaluating}
-            className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center md:text-left"
+            className={`inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center md:text-left relative overflow-hidden`}
           >
-            {isLoading ? "Generating..." : "Generate UI/Form"}
+            <span
+              className={`relative z-10 ${
+                isLoading ? "loading-gradient-text-dark" : ""
+              }`}
+            >
+              {isLoading ? "Generating..." : "Generate UI/Form"}
+            </span>
           </button>
 
           {generatedJson && (
             <button
               type="button"
               onClick={handleEvaluateAndRerun}
-              disabled={isEvaluating}
-              className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center md:text-left"
+              disabled={isEvaluating || isLoading}
+              className={`inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center md:text-left relative overflow-hidden`}
             >
-              {isEvaluating ? "Evaluating..." : "Evaluate & Improve"}
+              <span
+                className={`relative z-10 ${
+                  isEvaluating ? "loading-gradient-text-light" : ""
+                }`}
+              >
+                {isEvaluating ? "Evaluating..." : "Evaluate & Improve"}
+              </span>
             </button>
           )}
         </div>
@@ -774,3 +786,49 @@ export function FormGenerator() {
     </div>
   );
 }
+
+const styles = `
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .loading-gradient-text-dark {
+    background: linear-gradient(
+      90deg,
+      #ffffff 0%,
+      #7e19a6 50%,
+      #ffffff 100%
+    );
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient 1.5s ease infinite;
+  }
+
+  .loading-gradient-text-light {
+    background: linear-gradient(
+      90deg,
+      #1e40af 0%,
+      #c0d7fc 50%,
+      #1e40af 100%
+    );
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient 1.5s ease infinite;
+  }
+`;
+
+const styleSheet = document.createElement("style");
+styleSheet.textContent = styles;
+document.head.appendChild(styleSheet);
