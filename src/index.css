@@ -58,3 +58,33 @@
 .remove-item-button:hover {
   background-color: #dc2626;
 }
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.loading-gradient-text-dark {
+  background: linear-gradient(90deg, #ffffff 0%, #7e19a6 50%, #ffffff 100%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient 1.5s ease infinite;
+}
+
+.loading-gradient-text-light {
+  background: linear-gradient(90deg, #1e40af 0%, #c0d7fc 50%, #1e40af 100%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient 1.5s ease infinite;
+}
