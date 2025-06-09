@@ -105,28 +105,33 @@ export function removeMarkdownCodeBlocks(content: string): string {
     /^\s*```(?:json|javascript|js)?\s*\n?([\s\S]*?)\n?\s*```\s*$/;
   const strictMatch = content.match(strictCodeBlockPattern);
 
+  let extractedContent = content;
   if (strictMatch && strictMatch[1]) {
-    return strictMatch[1].trim();
-  }
-
-  // If not, try to find and extract JSON objects wrapped in {}
-  // This is a fallback for partial code blocks or non-standard formatting
-  if (content.includes("{") && content.includes("}")) {
+    extractedContent = strictMatch[1].trim();
+  } else if (content.includes("{") && content.includes("}")) {
+    // If not, try to find and extract JSON objects wrapped in {}
     const jsonObjectPattern = /({[\s\S]*})/;
     const jsonMatch = content.match(jsonObjectPattern);
 
     if (jsonMatch && jsonMatch[1]) {
       try {
         // Verify it's valid JSON
-        JSON.parse(jsonMatch[1]);
-        return jsonMatch[1].trim();
+        JSON.parse(
+          jsonMatch[1]
+            .replace(/(?<!\\)\\n/g, "\\\\n") // Replace \n with \\n if not already escaped
+            .replace(/(?<!\\)\\r/g, "\\\\r") // Replace \r with \\r if not already escaped
+            .replace(/(?<!\\)\\t/g, "\\\\t") // Replace \t with \\t if not already escaped
+            .replace(/(?<!\\)\\f/g, "\\\\f") // Replace \f with \\f if not already escaped
+            .replace(/(?<!\\)\\v/g, "\\\\v") // Replace \v with \\v if not already escaped);
+        );
+        extractedContent = jsonMatch[1].trim();
       } catch {
         // If it's not valid JSON, continue with the original content
       }
     }
   }
 
-  return content;
+  return extractedContent;
 }
 
 /**
@@ -137,16 +142,13 @@ export function removeMarkdownCodeBlocks(content: string): string {
 function cleanAndFormatJson(content: string): string {
   try {
     // First remove any markdown code blocks
-    let cleaned = removeMarkdownCodeBlocks(content);
-
-    // Replace literal \n with actual newlines
-    cleaned = cleaned.replace(/\\n/g, "\n");
+    const cleaned = removeMarkdownCodeBlocks(content);
 
     // Try to parse and re-stringify to ensure valid JSON and proper formatting
     const parsed = JSON.parse(cleaned);
     return JSON.stringify(parsed, null, 2);
   } catch (error) {
-    console.error("Error cleaning JSON:", error);
+    console.error("Error cleaning JSON:", error, content);
     // If we can't parse it as JSON, return the original content with just newline replacement
     return content.replace(/\\n/g, "\n");
   }
