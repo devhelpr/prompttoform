@@ -2,6 +2,8 @@
 
 **PromptToForm.ai** is an open-source prompt-to-form generator that transforms plain language instructions into structured JSON-based multi-step forms — with live previews. Built for analysts, product teams, and developers who want to rapidly design, test, and hand off dynamic forms.
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/devhelpr/prompttoform)
+
 ---
 
 ## Features
