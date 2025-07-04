@@ -1,3 +1,4 @@
 export { TextFormField } from "./text-form-field";
+export { FormInputField } from "./form-input-field";
 export { IconButton } from "./IconButton";
 export { ValidationIcon } from "./ValidationIcon";
