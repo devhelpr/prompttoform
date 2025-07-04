@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { HTMLInputTypeAttribute } from "react";
 import { FieldType } from "../../types/field-types";
+import { TextAtom } from "../atoms";
 
 interface ComponentProps {
   type: FieldType;
@@ -616,24 +617,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
     switch (type) {
       case "text":
-        return (
-          <div className="mb-4">
-            {label && (
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {label}
-              </label>
-            )}
-            {typeof props?.content === "string" && (
-              <p className="text-gray-700">{props.content}</p>
-            )}
-            {typeof props?.text === "string" && (
-              <p className="text-gray-700">{props.text}</p>
-            )}
-            {typeof props?.helperText === "string" && (
-              <p className="text-gray-700">{props.helperText}</p>
-            )}
-          </div>
-        );
+        return <TextAtom label={label} props={props} />;
 
       case "input":
         return (
