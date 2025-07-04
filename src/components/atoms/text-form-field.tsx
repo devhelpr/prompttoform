@@ -1,6 +1,6 @@
 import React from "react";
 
-interface TextAtomProps {
+interface TextFormFieldProps {
   label?: string;
   props?: {
     content?: string;
@@ -9,7 +9,10 @@ interface TextAtomProps {
   };
 }
 
-export const TextAtom: React.FC<TextAtomProps> = ({ label, props }) => {
+export const TextFormField: React.FC<TextFormFieldProps> = ({
+  label,
+  props,
+}) => {
   return (
     <div className="mb-4">
       {label && (

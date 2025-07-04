@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { HTMLInputTypeAttribute } from "react";
 import { FieldType } from "../../types/field-types";
-import { TextAtom } from "../atoms";
+import { TextFormField } from "../atoms";
 
 interface ComponentProps {
   type: FieldType;
@@ -617,7 +617,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
     switch (type) {
       case "text":
-        return <TextAtom label={label} props={props} />;
+        return <TextFormField label={label} props={props} />;
 
       case "input":
         return (
