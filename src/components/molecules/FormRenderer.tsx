@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { FieldType } from "../../types/field-types";
-import { TextFormField, FormInputField } from "../atoms";
+import { TextFormField, FormInputField, FormTextareaField } from "../atoms";
 
 interface ComponentProps {
   type: FieldType;
@@ -639,42 +639,21 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
       case "textarea":
         return (
-          <div className="mb-4">
-            <label
-              htmlFor={fieldId}
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {typeof label === "string" ? label : ""}
-              {!!validation?.required && (
-                <span className="text-red-500 ml-1">*</span>
-              )}
-            </label>
-            <textarea
-              id={fieldId}
-              className={`w-full p-2 border ${
-                showError ? "border-red-500" : "border-gray-300"
-              } rounded-md`}
-              value={
-                typeof formValues[id] === "string"
-                  ? (formValues[id] as string)
-                  : ""
-              }
-              onChange={(e) => handleInputChange(id, e.target.value)}
-              onBlur={() => handleBlur(id)}
-              required={!!validation?.required}
-              rows={props?.rows || 3}
-            />
-            {showError && (
-              <div className="mt-1 text-sm text-red-500">
-                {validationErrors[fieldId].map((error, index) => (
-                  <p key={index}>{error}</p>
-                ))}
-              </div>
-            )}
-            {typeof props?.helperText === "string" && !showError && (
-              <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
-            )}
-          </div>
+          <FormTextareaField
+            fieldId={fieldId}
+            label={label}
+            value={
+              typeof formValues[id] === "string"
+                ? (formValues[id] as string)
+                : ""
+            }
+            onChange={(value) => handleInputChange(id, value)}
+            onBlur={() => handleBlur(id)}
+            validation={validation}
+            props={props}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+          />
         );
 
       case "radio":
