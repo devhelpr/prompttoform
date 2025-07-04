@@ -5,6 +5,7 @@ import {
   FormInputField,
   FormTextareaField,
   FormRadioField,
+  FormCheckboxField,
 } from "../atoms";
 
 interface ComponentProps {
@@ -680,98 +681,18 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         );
 
       case "checkbox":
-        // Handle single checkbox without options
-        if (!props?.options) {
-          return (
-            <div className="mb-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id={fieldId}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                  checked={formValues[id] === true}
-                  onChange={(e) => handleInputChange(id, e.target.checked)}
-                  onBlur={() => handleBlur(id)}
-                  required={!!validation?.required}
-                />
-                <label htmlFor={fieldId} className="ml-2 text-sm text-gray-700">
-                  {typeof label === "string" ? label : ""}
-                  {!!validation?.required && (
-                    <span className="text-red-500 ml-1">*</span>
-                  )}
-                </label>
-              </div>
-              {showError && (
-                <div className="mt-1 text-sm text-red-500">
-                  {validationErrors[fieldId].map((error, index) => (
-                    <p key={index}>{error}</p>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        }
-
-        // Handle multiple checkboxes with options
         return (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {typeof label === "string" ? label : ""}
-              {!!validation?.required && (
-                <span className="text-red-500 ml-1">*</span>
-              )}
-            </label>
-            <div className="space-y-2">
-              {Array.isArray(props?.options) &&
-                props.options.map((option: Option, index: number) => {
-                  const optionLabel =
-                    typeof option === "string" ? option : option.label || "";
-                  const optionValue =
-                    typeof option === "string" ? option : option.value || "";
-
-                  return (
-                    <div key={index} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`${fieldId}-${index}`}
-                        name={fieldId}
-                        value={optionValue}
-                        checked={
-                          Array.isArray(formValues[id])
-                            ? (formValues[id] as string[]).includes(optionValue)
-                            : false
-                        }
-                        onChange={(e) => {
-                          const currentValues = Array.isArray(formValues[id])
-                            ? (formValues[id] as string[])
-                            : [];
-                          const newValues = e.target.checked
-                            ? [...currentValues, optionValue]
-                            : currentValues.filter((v) => v !== optionValue);
-                          handleInputChange(id, newValues);
-                        }}
-                        onBlur={() => handleBlur(id)}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                        required={!!validation?.required}
-                      />
-                      <label
-                        htmlFor={`${fieldId}-${index}`}
-                        className="ml-2 text-sm text-gray-700"
-                      >
-                        {optionLabel}
-                      </label>
-                    </div>
-                  );
-                })}
-            </div>
-            {showError && (
-              <div className="mt-1 text-sm text-red-500">
-                {validationErrors[fieldId].map((error, index) => (
-                  <p key={index}>{error}</p>
-                ))}
-              </div>
-            )}
-          </div>
+          <FormCheckboxField
+            fieldId={fieldId}
+            label={label}
+            value={formValues[id] as boolean | string[]}
+            onChange={(value) => handleInputChange(id, value)}
+            onBlur={() => handleBlur(id)}
+            validation={validation}
+            props={props}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+          />
         );
 
       case "select":
