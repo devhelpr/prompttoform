@@ -98,316 +98,6 @@ interface UIJson {
   };
 }
 
-// Main content component moved outside to prevent re-rendering
-interface MainContentProps {
-  viewMode: ViewMode;
-  generatedJson: string;
-  parsedJson: UIJson | null;
-  jsonError: string | null;
-  onViewModeChange: (mode: ViewMode) => void;
-  onJsonChange: (json: string) => void;
-  onCopyToClipboard: () => void;
-  onDownload: () => void;
-  onValidateAndUpdatePreview: () => void;
-}
-
-const MainContent = ({
-  viewMode,
-  generatedJson,
-  parsedJson,
-  jsonError,
-  onViewModeChange,
-  onJsonChange,
-  onCopyToClipboard,
-  onDownload,
-  onValidateAndUpdatePreview,
-}: MainContentProps) => (
-  <div className="h-full flex flex-col">
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center space-x-4">
-        <h3 className="text-lg font-medium text-zinc-900">Generated UI/Form</h3>
-        <div className="inline-flex rounded-md shadow-sm" role="group">
-          <button
-            type="button"
-            onClick={() => onViewModeChange("form")}
-            className={`px-4 py-2 text-sm font-medium rounded-l-md ${
-              viewMode === "form"
-                ? "bg-indigo-600 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
-          >
-            Form Preview
-          </button>
-          <button
-            type="button"
-            onClick={() => onViewModeChange("mermaid-flow")}
-            className={`px-4 py-2 text-sm font-medium  ${
-              viewMode === "mermaid-flow"
-                ? "bg-indigo-600 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
-          >
-            Visual Flow
-          </button>
-          <button
-            type="button"
-            onClick={() => onViewModeChange("json")}
-            className={`px-4 py-2 text-sm font-medium rounded-r-md  ${
-              viewMode === "json"
-                ? "bg-indigo-600 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
-          >
-            JSON
-          </button>
-        </div>
-      </div>
-      <div className="flex space-x-2">
-        <button
-          onClick={onCopyToClipboard}
-          className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 group relative"
-          title="Copy to Clipboard"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-5 h-5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
-            />
-          </svg>
-          <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            Copy to Clipboard
-          </span>
-        </button>
-        <button
-          onClick={onDownload}
-          className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 group relative"
-          title="Download"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-5 h-5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
-            />
-          </svg>
-          <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            Download
-          </span>
-        </button>
-      </div>
-    </div>
-
-    <div className="flex-1 bg-white rounded-lg border border-zinc-300 overflow-hidden">
-      {viewMode === "json" ? (
-        <div className="h-full flex flex-col">
-          <textarea
-            value={generatedJson}
-            onChange={(e) => onJsonChange(e.target.value)}
-            className="flex-1 p-4 font-mono text-sm border-0 focus:ring-0 focus:border-0 resize-none"
-            spellCheck={false}
-          />
-          {jsonError && (
-            <div className="p-4 border-t text-red-500 text-sm">{jsonError}</div>
-          )}
-          <div className="p-4 border-t">
-            <button
-              onClick={onValidateAndUpdatePreview}
-              disabled={!!jsonError}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Update Preview
-            </button>
-          </div>
-        </div>
-      ) : viewMode === "form" ? (
-        parsedJson &&
-        parsedJson.app && (
-          <div className="h-full overflow-auto">
-            <FormRenderer formJson={parsedJson} />
-          </div>
-        )
-      ) : viewMode === "flow" ? (
-        parsedJson &&
-        parsedJson.app && (
-          <div className="h-full overflow-auto">
-            <FormFlow formJson={parsedJson} />
-          </div>
-        )
-      ) : (
-        parsedJson &&
-        parsedJson.app && (
-          <div className="h-full overflow-auto">
-            <FormFlowMermaid formJson={parsedJson} />
-          </div>
-        )
-      )}
-    </div>
-  </div>
-);
-
-// Sidebar content component moved outside to prevent re-rendering
-interface SidebarContentProps {
-  prompt: string;
-  updatePrompt: string;
-  piiErrors: {
-    prompt?: string;
-    updatePrompt?: string;
-  };
-  hasGeneratedContent: boolean;
-  isLoading: boolean;
-  isEvaluating: boolean;
-  isUpdating: boolean;
-  updateError: string | null;
-  onPromptChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  onUpdatePromptChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  onLoadExampleForm: () => void;
-  onLoadMultiStepExample: () => void;
-  onGenerate: () => void;
-  onEvaluateAndRerun: () => void;
-  onUpdateForm: () => void;
-}
-
-const SidebarContent = ({
-  prompt,
-  updatePrompt,
-  piiErrors,
-  hasGeneratedContent,
-  isLoading,
-  isEvaluating,
-  isUpdating,
-  updateError,
-  onPromptChange,
-  onUpdatePromptChange,
-  onLoadExampleForm,
-  onLoadMultiStepExample,
-  onGenerate,
-  onEvaluateAndRerun,
-  onUpdateForm,
-}: SidebarContentProps) => (
-  <div className="space-y-6 h-full flex flex-col">
-    <div>
-      <label
-        htmlFor="prompt"
-        className="block text-sm font-medium text-zinc-700 mb-2"
-      >
-        Enter your prompt
-      </label>
-      <p className="text-sm text-zinc-500 mb-4">
-        Describe a UI / Form / Layout / etc.
-      </p>
-      <textarea
-        id="prompt"
-        rows={5}
-        className={`w-full rounded-lg border ${
-          piiErrors.prompt ? "border-amber-300" : "border-zinc-200"
-        } shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 mt-2 text-base`}
-        placeholder=""
-        value={prompt}
-        onChange={onPromptChange}
-      />
-      {piiErrors.prompt && (
-        <p className="mt-2 text-sm text-amber-600">{piiErrors.prompt}</p>
-      )}
-      <div className="mt-4 flex flex-col gap-2">
-        <button
-          type="button"
-          onClick={onLoadExampleForm}
-          disabled={isLoading || isEvaluating}
-          className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center"
-        >
-          Load Example Form
-        </button>
-        <button
-          type="button"
-          onClick={onLoadMultiStepExample}
-          disabled={isLoading || isEvaluating}
-          className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center"
-        >
-          Load Multi-Step Form
-        </button>
-        <button
-          type="button"
-          onClick={onGenerate}
-          disabled={isLoading || isEvaluating}
-          className={`inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center relative overflow-hidden`}
-        >
-          <span
-            className={`relative z-10 ${
-              isLoading ? "loading-gradient-text-dark" : ""
-            }`}
-          >
-            {isLoading ? "Generating..." : "Generate UI/Form"}
-          </span>
-        </button>
-
-        {hasGeneratedContent && (
-          <button
-            type="button"
-            onClick={onEvaluateAndRerun}
-            disabled={isEvaluating || isLoading}
-            className={`inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center relative overflow-hidden`}
-          >
-            <span
-              className={`relative z-10 ${
-                isEvaluating ? "loading-gradient-text-light" : ""
-              }`}
-            >
-              {isEvaluating ? "Evaluating..." : "Evaluate & Improve"}
-            </span>
-          </button>
-        )}
-      </div>
-    </div>
-
-    {hasGeneratedContent && (
-      <div className="flex-1">
-        <h3 className="text-lg font-medium text-zinc-900 mb-4">Update Form</h3>
-        <div className="space-y-4">
-          <textarea
-            value={updatePrompt}
-            onChange={onUpdatePromptChange}
-            className={`w-full rounded-lg border ${
-              piiErrors.updatePrompt ? "border-amber-300" : "border-zinc-200"
-            } shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 text-base`}
-            placeholder="Describe the changes you want to make to the form..."
-            rows={4}
-          />
-          {piiErrors.updatePrompt && (
-            <p className="mt-2 text-sm text-amber-600">
-              {piiErrors.updatePrompt}
-            </p>
-          )}
-          {updateError && (
-            <div className="text-red-500 text-sm">{updateError}</div>
-          )}
-          <button
-            onClick={onUpdateForm}
-            disabled={isUpdating}
-            className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isUpdating ? "Updating..." : "Update Form"}
-          </button>
-        </div>
-      </div>
-    )}
-  </div>
-);
-
 export function FormGenerator() {
   const [prompt, setPrompt] = useState("");
   const [updatePrompt, setUpdatePrompt] = useState("");
@@ -427,17 +117,6 @@ export function FormGenerator() {
     prompt?: string;
     updatePrompt?: string;
   }>({});
-  const [pendingLayoutTransition, setPendingLayoutTransition] = useState(false);
-
-  // Check if we have generated content to determine layout
-  const hasGeneratedContent = !!generatedJson && !!parsedJson;
-  // Use pendingLayoutTransition to trigger layout change immediately
-  const shouldShowTwoColumn = hasGeneratedContent || pendingLayoutTransition;
-
-  // Check for view transition support
-  const supportsViewTransitions =
-    "startViewTransition" in document &&
-    typeof document.startViewTransition === "function";
 
   useEffect(() => {
     // Check for API key on mount
@@ -481,35 +160,21 @@ export function FormGenerator() {
   };
 
   const loadExampleForm = () => {
-    if (supportsViewTransitions && !hasGeneratedContent) {
-      document.startViewTransition!(() => {
-        setGeneratedJson(JSON.stringify(exampleForm, null, 2));
-        setParsedJson(exampleForm as UIJson);
-        setViewMode("form");
-        setEvaluation(null);
-      });
-    } else {
-      setGeneratedJson(JSON.stringify(exampleForm, null, 2));
-      setParsedJson(exampleForm as UIJson);
-      setViewMode("form");
-      setEvaluation(null);
-    }
+    setGeneratedJson(JSON.stringify(exampleForm, null, 2));
+    setParsedJson(exampleForm as UIJson);
+
+    // If example form is loaded, switch to form view automatically
+    setViewMode("form");
+    setEvaluation(null);
   };
 
   const loadMultiStepExample = () => {
-    if (supportsViewTransitions && !hasGeneratedContent) {
-      document.startViewTransition!(() => {
-        setGeneratedJson(JSON.stringify(multiStepForm, null, 2));
-        setParsedJson(multiStepForm as UIJson);
-        setViewMode("form");
-        setEvaluation(null);
-      });
-    } else {
-      setGeneratedJson(JSON.stringify(multiStepForm, null, 2));
-      setParsedJson(multiStepForm as UIJson);
-      setViewMode("form");
-      setEvaluation(null);
-    }
+    setGeneratedJson(JSON.stringify(multiStepForm, null, 2));
+    setParsedJson(multiStepForm as UIJson);
+
+    // If example form is loaded, switch to form view automatically
+    setViewMode("form");
+    setEvaluation(null);
   };
 
   const handleGenerate = async () => {
@@ -519,19 +184,10 @@ export function FormGenerator() {
     }
 
     // Remove PII validation blocking
+    setIsLoading(true);
     setError(null);
     setEvaluation(null);
     setParsedJson(null);
-
-    if (supportsViewTransitions && !shouldShowTwoColumn) {
-      document.startViewTransition!(() => {
-        setPendingLayoutTransition(true);
-      });
-    } else {
-      setPendingLayoutTransition(true);
-    }
-
-    setIsLoading(true);
 
     try {
       // Check if API key is set
@@ -541,7 +197,6 @@ export function FormGenerator() {
           `No API key set for ${apiConfig.name}. Please configure it in the Settings.`
         );
         setIsLoading(false);
-        setPendingLayoutTransition(false);
         return;
       }
 
@@ -556,7 +211,6 @@ export function FormGenerator() {
         setError("Failed to parse the generated JSON. Please try again.");
         setGeneratedJson(response);
         setIsLoading(false);
-        setPendingLayoutTransition(false);
         return;
       }
 
@@ -585,16 +239,17 @@ export function FormGenerator() {
 
       // Store parsed response
       setParsedJson(parsedResponse);
+
+      // Format and store string version with proper newlines
       const formattedJson = JSON.stringify(parsedResponse, null, 2)
-        .replace(/\n/g, "\n")
-        .replace(/\\/g, "\\");
+        .replace(/\\n/g, "\n")
+        .replace(/\\\\/g, "\\");
       setGeneratedJson(formattedJson);
     } catch (err) {
       setError(`An error occurred while generating the UI/Form.`);
       console.error(err);
     } finally {
       setIsLoading(false);
-      setPendingLayoutTransition(false);
     }
   };
 
@@ -832,13 +487,8 @@ export function FormGenerator() {
   };
 
   return (
-    <div
-      className={`h-screen flex flex-col ${
-        shouldShowTwoColumn ? "view-transition-layout" : ""
-      }`}
-    >
-      {/* Header */}
-      <div className="flex justify-between items-center p-6 border-b border-zinc-200 bg-white">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-zinc-900">
           Generate Form/UI
         </h2>
@@ -850,19 +500,89 @@ export function FormGenerator() {
         </button>
       </div>
 
-      {/* API Key Hint */}
       {showApiKeyHint && (
-        <div className="p-6 border-b border-zinc-200 bg-amber-50">
-          <Alert>
-            No API key configured. Please go to Settings to configure your
-            preferred LLM API key to start generating forms.
-          </Alert>
-        </div>
+        <Alert>
+          No API key configured. Please go to Settings to configure your
+          preferred LLM API key to start generating forms.
+        </Alert>
       )}
 
-      {/* Error Display */}
+      <div>
+        <label
+          htmlFor="prompt"
+          className="block text-sm font-medium text-zinc-700 mb-2"
+        >
+          Enter your prompt
+        </label>
+        <p className="text-sm text-zinc-500 mb-4">
+          Describe a UI / Form / Layout / etc.
+        </p>
+        <textarea
+          id="prompt"
+          rows={5}
+          className={`w-full rounded-lg border ${
+            piiErrors.prompt ? "border-amber-300" : "border-zinc-200"
+          } shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 mt-2 text-base`}
+          placeholder=""
+          value={prompt}
+          onChange={handlePromptChange}
+        />
+        {piiErrors.prompt && (
+          <p className="mt-2 text-sm text-amber-600">{piiErrors.prompt}</p>
+        )}
+        <div className="mt-4 flex justify-end md:space-x-2 flex-col md:flex-row gap-2 md:gap-0 ">
+          <button
+            type="button"
+            onClick={loadExampleForm}
+            disabled={isLoading || isEvaluating}
+            className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center md:text-left"
+          >
+            Load Example Form
+          </button>
+          <button
+            type="button"
+            onClick={loadMultiStepExample}
+            disabled={isLoading || isEvaluating}
+            className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center md:text-left"
+          >
+            Load Multi-Step Form
+          </button>
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={isLoading || isEvaluating}
+            className={`inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center md:text-left relative overflow-hidden`}
+          >
+            <span
+              className={`relative z-10 ${
+                isLoading ? "loading-gradient-text-dark" : ""
+              }`}
+            >
+              {isLoading ? "Generating..." : "Generate UI/Form"}
+            </span>
+          </button>
+
+          {generatedJson && (
+            <button
+              type="button"
+              onClick={handleEvaluateAndRerun}
+              disabled={isEvaluating || isLoading}
+              className={`inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center md:text-left relative overflow-hidden`}
+            >
+              <span
+                className={`relative z-10 ${
+                  isEvaluating ? "loading-gradient-text-light" : ""
+                }`}
+              >
+                {isEvaluating ? "Evaluating..." : "Evaluate & Improve"}
+              </span>
+            </button>
+          )}
+        </div>
+      </div>
+
       {error && (
-        <div className="p-6 border-b border-zinc-200 bg-red-50">
+        <div className="rounded-md bg-red-50 p-4">
           <div className="flex">
             <div className="ml-3">
               <h3 className="text-sm font-medium text-red-800">Error</h3>
@@ -874,9 +594,8 @@ export function FormGenerator() {
         </div>
       )}
 
-      {/* Evaluation Results */}
       {evaluation && !isEvaluating && (
-        <div className="p-6 border-b border-zinc-200 bg-blue-50">
+        <div className="rounded-md bg-blue-50 p-4">
           <div className="flex">
             <div className="ml-3 w-full">
               <h3 className="text-sm font-medium text-blue-800">
@@ -919,86 +638,194 @@ export function FormGenerator() {
         </div>
       )}
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col lg:flex-row">
-        {shouldShowTwoColumn ? (
-          <>
-            {/* Sidebar */}
-            <div
-              className="w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-zinc-200 bg-zinc-50 p-6 overflow-y-auto sidebar"
-              style={{ viewTransitionName: "sidebar-transition" }}
-            >
-              <SidebarContent
-                prompt={prompt}
-                updatePrompt={updatePrompt}
-                piiErrors={piiErrors}
-                hasGeneratedContent={hasGeneratedContent}
-                isLoading={isLoading}
-                isEvaluating={isEvaluating}
-                isUpdating={isUpdating}
-                updateError={updateError}
-                onPromptChange={handlePromptChange}
-                onUpdatePromptChange={handleUpdatePromptChange}
-                onLoadExampleForm={loadExampleForm}
-                onLoadMultiStepExample={loadMultiStepExample}
-                onGenerate={handleGenerate}
-                onEvaluateAndRerun={handleEvaluateAndRerun}
-                onUpdateForm={handleUpdateForm}
-              />
+      {generatedJson && !isLoading && (
+        <div
+          className={`space-y-4 ${
+            isEvaluating ? "opacity-50 pointer-events-none" : ""
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h3 className="text-lg font-medium text-zinc-900">
+                Generated UI/Form
+              </h3>
+              <div className="inline-flex rounded-md shadow-sm" role="group">
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange("form")}
+                  className={`px-4 py-2 text-sm font-medium rounded-l-md ${
+                    viewMode === "form"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
+                >
+                  Form Preview
+                </button>
+                {/* <button
+                  type="button"
+                  onClick={() => handleViewModeChange("flow")}
+                  className={`px-4 py-2 text-sm font-medium ${
+                    viewMode === "flow"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  } border-t border-b border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
+                >
+                  Flow
+                </button> */}
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange("mermaid-flow")}
+                  className={`px-4 py-2 text-sm font-medium  ${
+                    viewMode === "mermaid-flow"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
+                >
+                  Visual Flow
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange("json")}
+                  className={`px-4 py-2 text-sm font-medium rounded-r-md  ${
+                    viewMode === "json"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
+                >
+                  JSON
+                </button>
+              </div>
             </div>
-
-            {/* Main Content */}
-            <div
-              className="flex-1 p-6 overflow-hidden main-content"
-              style={{ viewTransitionName: "main-content-transition" }}
-            >
-              {hasGeneratedContent ? (
-                <MainContent
-                  viewMode={viewMode}
-                  generatedJson={generatedJson}
-                  parsedJson={parsedJson}
-                  jsonError={jsonError}
-                  onViewModeChange={handleViewModeChange}
-                  onJsonChange={handleJsonChange}
-                  onCopyToClipboard={handleCopyToClipboard}
-                  onDownload={handleDownload}
-                  onValidateAndUpdatePreview={validateAndUpdatePreview}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <span className="text-zinc-400 text-lg">
-                    Generating form...
-                  </span>
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          /* Single Column Layout */
-          <div
-            className="w-full p-6 overflow-y-auto single-column"
-            style={{ viewTransitionName: "single-column-transition" }}
-          >
-            <SidebarContent
-              prompt={prompt}
-              updatePrompt={updatePrompt}
-              piiErrors={piiErrors}
-              hasGeneratedContent={hasGeneratedContent}
-              isLoading={isLoading}
-              isEvaluating={isEvaluating}
-              isUpdating={isUpdating}
-              updateError={updateError}
-              onPromptChange={handlePromptChange}
-              onUpdatePromptChange={handleUpdatePromptChange}
-              onLoadExampleForm={loadExampleForm}
-              onLoadMultiStepExample={loadMultiStepExample}
-              onGenerate={handleGenerate}
-              onEvaluateAndRerun={handleEvaluateAndRerun}
-              onUpdateForm={handleUpdateForm}
-            />
           </div>
-        )}
-      </div>
+
+          {viewMode === "json" ? (
+            <div className="space-y-4">
+              <textarea
+                value={generatedJson}
+                onChange={(e) => handleJsonChange(e.target.value)}
+                className="w-full h-96 p-4 font-mono text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                spellCheck={false}
+              />
+              {jsonError && (
+                <div className="text-red-500 text-sm">{jsonError}</div>
+              )}
+              <div className="flex justify-end">
+                <button
+                  onClick={validateAndUpdatePreview}
+                  disabled={!!jsonError}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Update Preview
+                </button>
+              </div>
+            </div>
+          ) : viewMode === "form" ? (
+            parsedJson &&
+            parsedJson.app && (
+              <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
+                <FormRenderer formJson={parsedJson} />
+              </div>
+            )
+          ) : viewMode === "flow" ? (
+            parsedJson &&
+            parsedJson.app && (
+              <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
+                <FormFlow formJson={parsedJson} />
+              </div>
+            )
+          ) : (
+            parsedJson &&
+            parsedJson.app && (
+              <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
+                <FormFlowMermaid formJson={parsedJson} />
+              </div>
+            )
+          )}
+
+          <div className="flex space-x-2">
+            <button
+              onClick={handleCopyToClipboard}
+              className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 group relative"
+              title="Copy to Clipboard"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
+                />
+              </svg>
+              <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Copy to Clipboard
+              </span>
+            </button>
+            <button
+              onClick={handleDownload}
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 group relative"
+              title="Download"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                />
+              </svg>
+              <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Download
+              </span>
+            </button>
+          </div>
+
+          <div className="mt-8 border-t pt-6">
+            <h3 className="text-lg font-medium text-zinc-900 mb-4">
+              Update Form
+            </h3>
+            <div className="space-y-4">
+              <textarea
+                value={updatePrompt}
+                onChange={handleUpdatePromptChange}
+                className={`w-full rounded-lg border ${
+                  piiErrors.updatePrompt
+                    ? "border-amber-300"
+                    : "border-zinc-200"
+                } shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 text-base`}
+                placeholder="Describe the changes you want to make to the form..."
+                rows={4}
+              />
+              {piiErrors.updatePrompt && (
+                <p className="mt-2 text-sm text-amber-600">
+                  {piiErrors.updatePrompt}
+                </p>
+              )}
+              {updateError && (
+                <div className="text-red-500 text-sm">{updateError}</div>
+              )}
+              <button
+                onClick={handleUpdateForm}
+                disabled={isUpdating}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUpdating ? "Updating..." : "Update Form"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Settings
         isOpen={isSettingsOpen}

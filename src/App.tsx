@@ -1,12 +1,14 @@
-import { Layout } from "./components/templates/Layout";
-import { FormGenerator } from "./components/molecules/FormGenerator";
+import { Layout } from './components/templates/Layout'
+import { FormGenerator } from './components/molecules/FormGenerator'
 
 function App() {
   return (
     <Layout>
-      <FormGenerator />
+      <div className="space-y-8">
+        <FormGenerator />
+      </div>
     </Layout>
-  );
+  )
 }
 
-export default App;
+export default App
