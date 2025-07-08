@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { FieldType } from "../../types/field-types";
 import {
   TextFormField,
   FormInputField,
@@ -8,117 +7,17 @@ import {
   FormCheckboxField,
   FormSelectField,
   FormDateField,
+  FormSectionField,
 } from "../atoms";
-
-interface ComponentProps {
-  type: FieldType;
-  id: string;
-  label?: string;
-  defaultValue?: unknown;
-  options?: { label: string; value: string }[];
-  props?: Record<string, unknown> & {
-    inputType?: string;
-    minDate?: string;
-    maxDate?: string;
-    min?: number;
-    max?: number;
-    placeholder?: string;
-    helperText?: string;
-    rows?: number;
-    buttonType?: string;
-    onClick?: string;
-  };
-  children?: ComponentProps[];
-  visibilityConditions?: VisibilityCondition[];
-  eventHandlers?: {
-    onClick?: ActionType;
-    onSubmit?: ActionType;
-    onChange?: ActionType;
-  };
-  arrayItems?: ArrayItem[];
-  validation?: {
-    required?: boolean;
-    minLength?: number;
-    maxLength?: number;
-    pattern?: string;
-    minItems?: number;
-    maxItems?: number;
-    minDate?: string;
-    maxDate?: string;
-    min?: number;
-    max?: number;
-  };
-}
-
-interface PageProps {
-  id: string;
-  title: string;
-  route: string;
-  layout?: string;
-  components: ComponentProps[];
-  isEndPage?: boolean;
-  branches?: Array<{
-    condition: {
-      field: string;
-      operator: string;
-      value: string;
-    };
-    nextPage: string;
-  }>;
-  nextPage?: string;
-}
-
-interface FormRendererProps {
-  formJson: {
-    app: {
-      title: string;
-      pages: PageProps[];
-      dataSources?: Record<string, unknown>[];
-    };
-  };
-}
-
-interface FormValues {
-  [key: string]: unknown;
-}
-
-interface ValidationErrors {
-  [key: string]: string[];
-}
-
-interface VisibilityCondition {
-  field: string;
-  operator:
-    | "equals"
-    | "notEquals"
-    | "greaterThan"
-    | "lessThan"
-    | "=="
-    | "!="
-    | ">"
-    | "<"
-    | ">="
-    | "<=";
-  value: string | number | boolean;
-}
-
-interface ActionType {
-  type: string;
-  params?: Record<string, unknown>;
-  dataSource?: string;
-  targetPage?: string;
-  message?: string;
-}
-
-interface ArrayItem {
-  id: string;
-  components: ComponentProps[];
-}
-
-interface ValidationError {
-  fieldId: string;
-  message: string;
-}
+import {
+  FormRendererProps,
+  FormValues,
+  ValidationErrors,
+  PageProps,
+  FormComponentFieldProps,
+  ValidationError,
+  VisibilityCondition,
+} from "../../interfaces/form-interfaces";
 
 const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
@@ -141,7 +40,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const validateComponent = useMemo(
     () =>
       (
-        component: ComponentProps,
+        component: FormComponentFieldProps,
         formData: Record<string, unknown>,
         parentId?: string
       ): ValidationError[] => {
@@ -290,7 +189,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     const newValidationErrors: ValidationErrors = {};
     let isValid = true;
 
-    const validateComponents = (components: ComponentProps[]) => {
+    const validateComponents = (components: FormComponentFieldProps[]) => {
       components.forEach((component) => {
         if (isComponentVisible(component.visibilityConditions, formValues)) {
           const errors = validateComponent(component, formValues);
@@ -602,7 +501,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   };
 
   const renderComponent = (
-    component: ComponentProps,
+    component: FormComponentFieldProps,
     parentId?: string
   ): React.ReactElement => {
     // Check visibility first
@@ -755,25 +654,12 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
       case "section":
         return (
-          <div className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
-            {label && (
-              <h3 className="text-lg font-medium mb-4 text-indigo-700">
-                {label}
-              </h3>
-            )}
-            <div className="space-y-3">
-              {Array.isArray(component.children) &&
-              component.children.length > 0 ? (
-                component.children.map((child, index) => (
-                  <div key={index}>{renderComponent(child, fieldId)}</div>
-                ))
-              ) : (
-                <div className="text-sm text-gray-500">
-                  No content in this section
-                </div>
-              )}
-            </div>
-          </div>
+          <FormSectionField
+            fieldId={fieldId}
+            label={label}
+            children={component.children}
+            renderComponent={renderComponent}
+          />
         );
 
       case "form":
@@ -864,7 +750,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   };
 
   const renderArrayField = (
-    component: ComponentProps,
+    component: FormComponentFieldProps,
     parentId: string
   ): React.ReactElement => {
     const items = arrayItems[component.id] || [];

@@ -5,5 +5,6 @@ export { FormRadioField } from "./form-radio-field";
 export { FormCheckboxField } from "./form-checkbox-field";
 export { FormSelectField } from "./form-select-field";
 export { FormDateField } from "./form-date-field";
+export { FormSectionField } from "./form-section-field";
 export { IconButton } from "./IconButton";
 export { ValidationIcon } from "./ValidationIcon";
