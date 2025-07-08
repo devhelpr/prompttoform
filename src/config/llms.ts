@@ -65,6 +65,14 @@ export const llmAPIs: APIConfig[] = [
     isChatCompletionCompatible: false,
   },
   // {
+  //   name: "Ollama",
+  //   baseUrl: "http://localhost:11434/v1",
+  //   apiKey: "",
+  //   model: "llama3.2:latest",
+  //   description: "llama3.2:latest",
+  //   isChatCompletionCompatible: true,
+  // },
+  // {
   //   name: "Gemini-2.5-experimental",
   //   baseUrl:
   //     "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent?key=",

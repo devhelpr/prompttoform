@@ -6,6 +6,8 @@ import {
   FormTextareaField,
   FormRadioField,
   FormCheckboxField,
+  FormSelectField,
+  FormDateField,
 } from "../atoms";
 
 interface ComponentProps {
@@ -83,13 +85,6 @@ interface FormValues {
 interface ValidationErrors {
   [key: string]: string[];
 }
-
-type Option =
-  | {
-      label?: string;
-      value?: string;
-    }
-  | string;
 
 interface VisibilityCondition {
   field: string;
@@ -697,95 +692,40 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
       case "select":
         return (
-          <div className="mb-4">
-            <label
-              htmlFor={fieldId}
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {typeof label === "string" ? label : ""}
-              {!!validation?.required && (
-                <span className="text-red-500 ml-1">*</span>
-              )}
-            </label>
-            <select
-              id={fieldId}
-              className={`w-full p-2 border ${
-                showError ? "border-red-500" : "border-gray-300"
-              } rounded-md bg-white`}
-              value={
-                typeof formValues[id] === "string"
-                  ? (formValues[id] as string)
-                  : ""
-              }
-              onChange={(e) => handleInputChange(id, e.target.value)}
-              onBlur={() => handleBlur(id)}
-              required={!!validation?.required}
-            >
-              <option value="">Select an option</option>
-              {Array.isArray(props?.options) &&
-                props.options.map((option: Option, index: number) => {
-                  const optionLabel =
-                    typeof option === "string" ? option : option.label || "";
-                  const optionValue =
-                    typeof option === "string" ? option : option.value || "";
-
-                  return (
-                    <option key={index} value={optionValue}>
-                      {optionLabel}
-                    </option>
-                  );
-                })}
-            </select>
-            {showError && (
-              <div className="mt-1 text-sm text-red-500">
-                {validationErrors[fieldId].map((error, index) => (
-                  <p key={index}>{error}</p>
-                ))}
-              </div>
-            )}
-          </div>
+          <FormSelectField
+            fieldId={fieldId}
+            label={label}
+            value={
+              typeof formValues[id] === "string"
+                ? (formValues[id] as string)
+                : ""
+            }
+            onChange={(value) => handleInputChange(id, value)}
+            onBlur={() => handleBlur(id)}
+            validation={validation}
+            props={props}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+          />
         );
 
       case "date":
         return (
-          <div className="mb-4">
-            <label
-              htmlFor={fieldId}
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {typeof label === "string" ? label : ""}
-              {!!validation?.required && (
-                <span className="text-red-500 ml-1">*</span>
-              )}
-            </label>
-            <input
-              id={fieldId}
-              type="date"
-              className={`w-full p-2 border ${
-                showError ? "border-red-500" : "border-gray-300"
-              } rounded-md`}
-              value={
-                typeof formValues[id] === "string"
-                  ? (formValues[id] as string)
-                  : ""
-              }
-              min={props?.minDate}
-              max={props?.maxDate}
-              onChange={(e) => handleInputChange(id, e.target.value)}
-              onBlur={() => handleBlur(id)}
-              required={!!validation?.required}
-            />
-            {showError && (
-              <div className="mt-1 text-sm text-red-500">
-                {validationErrors[fieldId].map((error, index) => (
-                  <p key={index}>{error}</p>
-                ))}
-              </div>
-            )}
-            {typeof props?.helperText === "string" && !showError && (
-              <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
-            )}
-          </div>
+          <FormDateField
+            fieldId={fieldId}
+            label={label}
+            value={
+              typeof formValues[id] === "string"
+                ? (formValues[id] as string)
+                : ""
+            }
+            onChange={(value) => handleInputChange(id, value)}
+            onBlur={() => handleBlur(id)}
+            validation={validation}
+            props={props}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+          />
         );
 
       case "button":
