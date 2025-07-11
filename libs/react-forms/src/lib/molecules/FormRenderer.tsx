@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   TextFormField,
   FormInputField,
@@ -8,7 +8,7 @@ import {
   FormSelectField,
   FormDateField,
   FormSectionField,
-} from "../atoms";
+} from '../atoms';
 import {
   FormRendererProps,
   FormValues,
@@ -17,9 +17,9 @@ import {
   FormComponentFieldProps,
   ValidationError,
   VisibilityCondition,
-} from "../../interfaces/form-interfaces";
+} from '../interfaces/form-interfaces';
 
-const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
+export const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
@@ -49,7 +49,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         const fieldId = parentId ? `${parentId}.${component.id}` : component.id;
 
         // Handle form component validation recursively
-        if (component.type === "form" && component.children) {
+        if (component.type === 'form' && component.children) {
           // Validate all child components
           component.children.forEach((child) => {
             if (isComponentVisible(child.visibilityConditions, formData)) {
@@ -61,13 +61,13 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         }
 
         // Handle array component validation
-        if (component.type === "array" && component.arrayItems) {
+        if (component.type === 'array' && component.arrayItems) {
           const arrayValue = value as Array<Record<string, unknown>>;
           if (
             component.validation?.required &&
             (!arrayValue || arrayValue.length === 0)
           ) {
-            errors.push({ fieldId, message: "This field is required" });
+            errors.push({ fieldId, message: 'This field is required' });
           }
           if (arrayValue) {
             if (
@@ -106,7 +106,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         }
 
         // Handle section component validation
-        if (component.type === "section" && component.children) {
+        if (component.type === 'section' && component.children) {
           component.children.forEach((child) => {
             if (isComponentVisible(child.visibilityConditions, formData)) {
               const childErrors = validateComponent(child, formData, fieldId);
@@ -118,14 +118,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
         // Handle basic validation for other component types
         if (component.validation?.required && !value) {
-          errors.push({ fieldId, message: "This field is required" });
+          errors.push({ fieldId, message: 'This field is required' });
         }
 
         if (value) {
-          if (component.type === "date") {
+          if (component.type === 'date') {
             const dateValue = new Date(value as string);
             if (isNaN(dateValue.getTime())) {
-              errors.push({ fieldId, message: "Invalid date format" });
+              errors.push({ fieldId, message: 'Invalid date format' });
             } else {
               if (
                 component.validation?.minDate &&
@@ -146,7 +146,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
                 });
               }
             }
-          } else if (["input", "textarea"].includes(component.type)) {
+          } else if (['input', 'textarea'].includes(component.type)) {
             const stringValue = String(value);
             if (
               component.validation?.minLength &&
@@ -170,7 +170,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
               component.validation?.pattern &&
               !new RegExp(component.validation.pattern).test(stringValue)
             ) {
-              errors.push({ fieldId, message: "Invalid format" });
+              errors.push({ fieldId, message: 'Invalid format' });
             }
           }
         }
@@ -261,22 +261,22 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         let conditionMet = false;
 
         switch (branch.condition.operator) {
-          case "==":
+          case '==':
             conditionMet = String(fieldValue) === String(conditionValue);
             break;
-          case "!=":
+          case '!=':
             conditionMet = String(fieldValue) !== String(conditionValue);
             break;
-          case ">":
+          case '>':
             conditionMet = Number(fieldValue) > Number(conditionValue);
             break;
-          case "<":
+          case '<':
             conditionMet = Number(fieldValue) < Number(conditionValue);
             break;
-          case ">=":
+          case '>=':
             conditionMet = Number(fieldValue) >= Number(conditionValue);
             break;
-          case "<=":
+          case '<=':
             conditionMet = Number(fieldValue) <= Number(conditionValue);
             break;
         }
@@ -297,7 +297,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       const currentPage = formJson.app.pages[currentStepIndex];
 
       if (currentPage && currentPage.isEndPage === true) {
-        handleFormSubmit("multistep-form");
+        handleFormSubmit('multistep-form');
         return;
       }
 
@@ -321,7 +321,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
         setCurrentStepIndex((prev) => prev + 1);
         setIsSubmitted(false);
       } else {
-        handleFormSubmit("multistep-form");
+        handleFormSubmit('multistep-form');
       }
     }
   }, [formJson, currentStepIndex, validateForm, getNextPage, handleFormSubmit]);
@@ -347,15 +347,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   };
 
   const handleButtonClick = (action: string) => {
-    console.log("Button action:", action);
+    console.log('Button action:', action);
     // Handle button actions based on the action name
     switch (action) {
-      case "reset":
+      case 'reset':
         handleReset();
         break;
       // Add other custom actions as needed
       default:
-        console.log("Unknown button action:", action);
+        console.log('Unknown button action:', action);
     }
   };
 
@@ -370,21 +370,21 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       const conditionValue = condition.value;
 
       switch (condition.operator) {
-        case "equals":
-        case "==":
+        case 'equals':
+        case '==':
           return String(fieldValue) === String(conditionValue);
-        case "notEquals":
-        case "!=":
+        case 'notEquals':
+        case '!=':
           return String(fieldValue) !== String(conditionValue);
-        case "greaterThan":
-        case ">":
+        case 'greaterThan':
+        case '>':
           return Number(fieldValue) > Number(conditionValue);
-        case "lessThan":
-        case "<":
+        case 'lessThan':
+        case '<':
           return Number(fieldValue) < Number(conditionValue);
-        case ">=":
+        case '>=':
           return Number(fieldValue) >= Number(conditionValue);
-        case "<=":
+        case '<=':
           return Number(fieldValue) <= Number(conditionValue);
         default:
           return true;
@@ -432,8 +432,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           type="button"
           className={`px-4 py-2 border border-indigo-300 text-indigo-700 rounded-md ${
             currentStep === 1
-              ? "opacity-50 cursor-not-allowed"
-              : "hover:bg-indigo-50"
+              ? 'opacity-50 cursor-not-allowed'
+              : 'hover:bg-indigo-50'
           }`}
           disabled={currentStep === 1}
           onClick={handlePrevious}
@@ -445,7 +445,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           onClick={handleNext}
         >
-          {isEndPage || currentStep === totalSteps ? "Submit" : "Next"}
+          {isEndPage || currentStep === totalSteps ? 'Submit' : 'Next'}
         </button>
       </div>
     );
@@ -515,18 +515,18 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     const showError = shouldShowError(fieldId) && hasError;
 
     switch (type) {
-      case "text":
+      case 'text':
         return <TextFormField label={label} props={props} />;
 
-      case "input":
+      case 'input':
         return (
           <FormInputField
             fieldId={fieldId}
             label={label}
             value={
-              typeof formValues[id] === "string"
+              typeof formValues[id] === 'string'
                 ? (formValues[id] as string)
-                : ""
+                : ''
             }
             onChange={(value) => handleInputChange(id, value)}
             onBlur={() => handleBlur(id)}
@@ -537,15 +537,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           />
         );
 
-      case "textarea":
+      case 'textarea':
         return (
           <FormTextareaField
             fieldId={fieldId}
             label={label}
             value={
-              typeof formValues[id] === "string"
+              typeof formValues[id] === 'string'
                 ? (formValues[id] as string)
-                : ""
+                : ''
             }
             onChange={(value) => handleInputChange(id, value)}
             onBlur={() => handleBlur(id)}
@@ -556,15 +556,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           />
         );
 
-      case "radio":
+      case 'radio':
         return (
           <FormRadioField
             fieldId={fieldId}
             label={label}
             value={
-              typeof formValues[id] === "string"
+              typeof formValues[id] === 'string'
                 ? (formValues[id] as string)
-                : ""
+                : ''
             }
             onChange={(value) => handleInputChange(id, value)}
             validation={validation}
@@ -574,7 +574,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           />
         );
 
-      case "checkbox":
+      case 'checkbox':
         return (
           <FormCheckboxField
             fieldId={fieldId}
@@ -589,15 +589,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           />
         );
 
-      case "select":
+      case 'select':
         return (
           <FormSelectField
             fieldId={fieldId}
             label={label}
             value={
-              typeof formValues[id] === "string"
+              typeof formValues[id] === 'string'
                 ? (formValues[id] as string)
-                : ""
+                : ''
             }
             onChange={(value) => handleInputChange(id, value)}
             onBlur={() => handleBlur(id)}
@@ -608,15 +608,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           />
         );
 
-      case "date":
+      case 'date':
         return (
           <FormDateField
             fieldId={fieldId}
             label={label}
             value={
-              typeof formValues[id] === "string"
+              typeof formValues[id] === 'string'
                 ? (formValues[id] as string)
-                : ""
+                : ''
             }
             onChange={(value) => handleInputChange(id, value)}
             onBlur={() => handleBlur(id)}
@@ -627,8 +627,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           />
         );
 
-      case "button":
-        if (typeof props?.label !== "string" || props.label === "Button") {
+      case 'button':
+        if (typeof props?.label !== 'string' || props.label === 'Button') {
           return <></>;
         }
 
@@ -636,10 +636,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           <button
             type={
               (props?.buttonType as
-                | "button"
-                | "submit"
-                | "reset"
-                | undefined) || "button"
+                | 'button'
+                | 'submit'
+                | 'reset'
+                | undefined) || 'button'
             }
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
             onClick={
@@ -652,7 +652,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           </button>
         );
 
-      case "section":
+      case 'section':
         return (
           <FormSectionField
             fieldId={fieldId}
@@ -662,7 +662,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           />
         );
 
-      case "form":
+      case 'form':
         return (
           <div className="mb-6">
             {label && <h3 className="text-lg font-medium mb-4">{label}</h3>}
@@ -681,7 +681,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           </div>
         );
 
-      case "table":
+      case 'table':
         return (
           <div className="mb-6 overflow-x-auto">
             {label && <h3 className="text-lg font-medium mb-4">{label}</h3>}
@@ -721,23 +721,23 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           </div>
         );
 
-      case "html":
+      case 'html':
         return (
           <div
             className="mb-4"
             dangerouslySetInnerHTML={{
-              __html: typeof props?.content === "string" ? props.content : "",
+              __html: typeof props?.content === 'string' ? props.content : '',
             }}
           />
         );
 
-      case "decisionTree":
+      case 'decisionTree':
         console.warn(
           "'decisionTree' component type is deprecated. Use actions with branches instead."
         );
         return <></>;
 
-      case "array":
+      case 'array':
         return renderArrayField(component, fieldId);
 
       default:
@@ -762,7 +762,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       const newItem: Record<string, unknown> = {};
       component.arrayItems?.forEach((arrayItem) => {
         arrayItem.components.forEach((comp) => {
-          newItem[comp.id] = "";
+          newItem[comp.id] = '';
         });
       });
       const newItems = [...items, newItem];
@@ -788,7 +788,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
           htmlFor={component.id}
           className="block text-sm font-medium text-gray-700 mb-1"
         >
-          {typeof component.label === "string" ? component.label : ""}
+          {typeof component.label === 'string' ? component.label : ''}
           {!!component.validation?.required && (
             <span className="text-red-500 ml-1">*</span>
           )}
@@ -843,28 +843,28 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     if (!page || !page.components) return null;
 
     // Determine the layout class based on page.layout
-    let layoutClass = "";
+    let layoutClass = '';
     switch (page.layout) {
-      case "grid":
-        layoutClass = "grid-cols-1 md:grid-cols-2 gap-4";
+      case 'grid':
+        layoutClass = 'grid-cols-1 md:grid-cols-2 gap-4';
         break;
-      case "flex":
-        layoutClass = "flex flex-wrap";
+      case 'flex':
+        layoutClass = 'flex flex-wrap';
         break;
-      case "vertical":
-        layoutClass = "flex flex-col";
+      case 'vertical':
+        layoutClass = 'flex flex-col';
         break;
-      case "horizontal":
-        layoutClass = "flex flex-row flex-wrap";
+      case 'horizontal':
+        layoutClass = 'flex flex-row flex-wrap';
         break;
       default:
-        layoutClass = "";
+        layoutClass = '';
     }
 
     return (
       <div key={page.id} className="bg-white rounded-md shadow-sm p-6">
         <h2 className="text-xl font-bold mb-6">{page.title}</h2>
-        <div className={`${page.layout ? `grid ${layoutClass}` : ""}`}>
+        <div className={`${page.layout ? `grid ${layoutClass}` : ''}`}>
           {Array.isArray(page.components) &&
             page.components.map((component, index) => (
               <div key={index}>{renderComponent(component)}</div>
@@ -904,5 +904,3 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     </div>
   );
 };
-
-export default FormRenderer;

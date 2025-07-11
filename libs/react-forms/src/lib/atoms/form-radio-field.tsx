@@ -1,6 +1,6 @@
-import React from "react";
+import React from 'react';
 
-import { Option } from "../../interfaces/form-interfaces";
+import { Option } from '../interfaces/form-interfaces';
 
 interface FormRadioFieldProps {
   fieldId: string;
@@ -30,16 +30,16 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
   return (
     <div className="mb-4">
       <label className="block text-sm font-medium text-gray-700 mb-1">
-        {typeof label === "string" ? label : ""}
+        {typeof label === 'string' ? label : ''}
         {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
       </label>
       <div className="space-y-2">
         {Array.isArray(props?.options) &&
           props.options.map((option: Option, index: number) => {
             const optionLabel =
-              typeof option === "string" ? option : option.label || "";
+              typeof option === 'string' ? option : option.label || '';
             const optionValue =
-              typeof option === "string" ? option : option.value || "";
+              typeof option === 'string' ? option : option.value || '';
 
             return (
               <div key={index} className="flex items-center">

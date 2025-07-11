@@ -1,6 +1,6 @@
-import React from "react";
+import React from 'react';
 
-import { Option } from "../../interfaces/form-interfaces";
+import { Option } from '../interfaces/form-interfaces';
 
 interface FormCheckboxFieldProps {
   fieldId: string;
@@ -42,7 +42,7 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
             required={!!validation?.required}
           />
           <label htmlFor={fieldId} className="ml-2 text-sm text-gray-700">
-            {typeof label === "string" ? label : ""}
+            {typeof label === 'string' ? label : ''}
             {!!validation?.required && (
               <span className="text-red-500 ml-1">*</span>
             )}
@@ -65,16 +65,16 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
   return (
     <div className="mb-4">
       <label className="block text-sm font-medium text-gray-700 mb-1">
-        {typeof label === "string" ? label : ""}
+        {typeof label === 'string' ? label : ''}
         {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
       </label>
       <div className="space-y-2">
         {Array.isArray(options) &&
           options.map((option: Option, index: number) => {
             const optionLabel =
-              typeof option === "string" ? option : option.label || "";
+              typeof option === 'string' ? option : option.label || '';
             const optionValue =
-              typeof option === "string" ? option : option.value || "";
+              typeof option === 'string' ? option : option.value || '';
 
             const isChecked = Array.isArray(value)
               ? value.includes(optionValue)

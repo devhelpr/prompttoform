@@ -5,7 +5,6 @@ import { generateUIFromPrompt, updateFormWithPatch } from '../../services/llm';
 import { Settings } from './Settings';
 import { evaluateAndRerunIfNeeded } from '../../services/prompt-eval';
 import { getCurrentAPIConfig } from '../../services/llm-api';
-import FormRenderer from './FormRenderer';
 import { getSystemPrompt } from '../../prompt-library/system-prompt';
 import schemaJson from '../../../schema.json';
 import { Alert } from './Alert';
@@ -14,8 +13,8 @@ import FormFlowMermaid from './FormFlowMermaid';
 import { exampleForm } from './example-form-definitions/example-form';
 import { multiStepForm } from './example-form-definitions/multi-step-form';
 import { detectPIIWithBSN } from '../../utils/pii-detect';
-import { FormComponentFieldProps } from '../../interfaces/form-interfaces';
-import { ReactForms } from '@devhelpr/react-forms';
+import { FormComponentFieldProps } from '@devhelpr/react-forms';
+import { FormRenderer } from '@devhelpr/react-forms';
 
 // Define the evaluation result type
 interface EvaluationResult {
@@ -788,7 +787,6 @@ export function FormGenerator() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
       />
-      <ReactForms />
     </div>
   );
 }

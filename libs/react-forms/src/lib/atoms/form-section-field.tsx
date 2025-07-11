@@ -1,5 +1,5 @@
-import React from "react";
-import { FormComponentFieldProps } from "../../interfaces/form-interfaces";
+import React from 'react';
+import { FormComponentFieldProps } from '../interfaces/form-interfaces';
 
 interface FormSectionFieldProps {
   fieldId: string;
