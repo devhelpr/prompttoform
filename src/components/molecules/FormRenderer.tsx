@@ -1,123 +1,23 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { HTMLInputTypeAttribute } from "react";
-import { FieldType } from "../../types/field-types";
-
-interface ComponentProps {
-  type: FieldType;
-  id: string;
-  label?: string;
-  defaultValue?: unknown;
-  options?: { label: string; value: string }[];
-  props?: Record<string, unknown> & {
-    inputType?: string;
-    minDate?: string;
-    maxDate?: string;
-    min?: number;
-    max?: number;
-    placeholder?: string;
-    helperText?: string;
-    rows?: number;
-    buttonType?: string;
-    onClick?: string;
-  };
-  children?: ComponentProps[];
-  visibilityConditions?: VisibilityCondition[];
-  eventHandlers?: {
-    onClick?: ActionType;
-    onSubmit?: ActionType;
-    onChange?: ActionType;
-  };
-  arrayItems?: ArrayItem[];
-  validation?: {
-    required?: boolean;
-    minLength?: number;
-    maxLength?: number;
-    pattern?: string;
-    minItems?: number;
-    maxItems?: number;
-    minDate?: string;
-    maxDate?: string;
-    min?: number;
-    max?: number;
-  };
-}
-
-interface PageProps {
-  id: string;
-  title: string;
-  route: string;
-  layout?: string;
-  components: ComponentProps[];
-  isEndPage?: boolean;
-  branches?: Array<{
-    condition: {
-      field: string;
-      operator: string;
-      value: string;
-    };
-    nextPage: string;
-  }>;
-  nextPage?: string;
-}
-
-interface FormRendererProps {
-  formJson: {
-    app: {
-      title: string;
-      pages: PageProps[];
-      dataSources?: Record<string, unknown>[];
-    };
-  };
-}
-
-interface FormValues {
-  [key: string]: unknown;
-}
-
-interface ValidationErrors {
-  [key: string]: string[];
-}
-
-type Option =
-  | {
-      label?: string;
-      value?: string;
-    }
-  | string;
-
-interface VisibilityCondition {
-  field: string;
-  operator:
-    | "equals"
-    | "notEquals"
-    | "greaterThan"
-    | "lessThan"
-    | "=="
-    | "!="
-    | ">"
-    | "<"
-    | ">="
-    | "<=";
-  value: string | number | boolean;
-}
-
-interface ActionType {
-  type: string;
-  params?: Record<string, unknown>;
-  dataSource?: string;
-  targetPage?: string;
-  message?: string;
-}
-
-interface ArrayItem {
-  id: string;
-  components: ComponentProps[];
-}
-
-interface ValidationError {
-  fieldId: string;
-  message: string;
-}
+import {
+  TextFormField,
+  FormInputField,
+  FormTextareaField,
+  FormRadioField,
+  FormCheckboxField,
+  FormSelectField,
+  FormDateField,
+  FormSectionField,
+} from "../atoms";
+import {
+  FormRendererProps,
+  FormValues,
+  ValidationErrors,
+  PageProps,
+  FormComponentFieldProps,
+  ValidationError,
+  VisibilityCondition,
+} from "../../interfaces/form-interfaces";
 
 const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
@@ -140,7 +40,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   const validateComponent = useMemo(
     () =>
       (
-        component: ComponentProps,
+        component: FormComponentFieldProps,
         formData: Record<string, unknown>,
         parentId?: string
       ): ValidationError[] => {
@@ -289,7 +189,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
     const newValidationErrors: ValidationErrors = {};
     let isValid = true;
 
-    const validateComponents = (components: ComponentProps[]) => {
+    const validateComponents = (components: FormComponentFieldProps[]) => {
       components.forEach((component) => {
         if (isComponentVisible(component.visibilityConditions, formValues)) {
           const errors = validateComponent(component, formValues);
@@ -601,7 +501,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   };
 
   const renderComponent = (
-    component: ComponentProps,
+    component: FormComponentFieldProps,
     parentId?: string
   ): React.ReactElement => {
     // Check visibility first
@@ -616,342 +516,115 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
     switch (type) {
       case "text":
-        return (
-          <div className="mb-4">
-            {label && (
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {label}
-              </label>
-            )}
-            {typeof props?.content === "string" && (
-              <p className="text-gray-700">{props.content}</p>
-            )}
-            {typeof props?.text === "string" && (
-              <p className="text-gray-700">{props.text}</p>
-            )}
-            {typeof props?.helperText === "string" && (
-              <p className="text-gray-700">{props.helperText}</p>
-            )}
-          </div>
-        );
+        return <TextFormField label={label} props={props} />;
 
       case "input":
         return (
-          <div className="mb-4">
-            <label
-              htmlFor={fieldId}
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {typeof label === "string" ? label : ""}
-              {!!validation?.required && (
-                <span className="text-red-500 ml-1">*</span>
-              )}
-            </label>
-            <input
-              id={fieldId}
-              type={(props?.type as HTMLInputTypeAttribute) || "text"}
-              className={`w-full p-2 border ${
-                showError ? "border-red-500" : "border-gray-300"
-              } rounded-md`}
-              value={
-                typeof formValues[id] === "string"
-                  ? (formValues[id] as string)
-                  : ""
-              }
-              onChange={(e) => handleInputChange(id, e.target.value)}
-              onBlur={() => handleBlur(id)}
-              required={!!validation?.required}
-              min={props?.type === "number" ? props.min : undefined}
-              max={props?.type === "number" ? props.max : undefined}
-            />
-            {showError && (
-              <div className="mt-1 text-sm text-red-500">
-                {validationErrors[fieldId].map((error, index) => (
-                  <p key={index}>{error}</p>
-                ))}
-              </div>
-            )}
-            {typeof props?.helperText === "string" && !showError && (
-              <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
-            )}
-          </div>
+          <FormInputField
+            fieldId={fieldId}
+            label={label}
+            value={
+              typeof formValues[id] === "string"
+                ? (formValues[id] as string)
+                : ""
+            }
+            onChange={(value) => handleInputChange(id, value)}
+            onBlur={() => handleBlur(id)}
+            validation={validation}
+            props={props}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+          />
         );
 
       case "textarea":
         return (
-          <div className="mb-4">
-            <label
-              htmlFor={fieldId}
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {typeof label === "string" ? label : ""}
-              {!!validation?.required && (
-                <span className="text-red-500 ml-1">*</span>
-              )}
-            </label>
-            <textarea
-              id={fieldId}
-              className={`w-full p-2 border ${
-                showError ? "border-red-500" : "border-gray-300"
-              } rounded-md`}
-              value={
-                typeof formValues[id] === "string"
-                  ? (formValues[id] as string)
-                  : ""
-              }
-              onChange={(e) => handleInputChange(id, e.target.value)}
-              onBlur={() => handleBlur(id)}
-              required={!!validation?.required}
-              rows={props?.rows || 3}
-            />
-            {showError && (
-              <div className="mt-1 text-sm text-red-500">
-                {validationErrors[fieldId].map((error, index) => (
-                  <p key={index}>{error}</p>
-                ))}
-              </div>
-            )}
-            {typeof props?.helperText === "string" && !showError && (
-              <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
-            )}
-          </div>
+          <FormTextareaField
+            fieldId={fieldId}
+            label={label}
+            value={
+              typeof formValues[id] === "string"
+                ? (formValues[id] as string)
+                : ""
+            }
+            onChange={(value) => handleInputChange(id, value)}
+            onBlur={() => handleBlur(id)}
+            validation={validation}
+            props={props}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+          />
         );
 
       case "radio":
         return (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {typeof label === "string" ? label : ""}
-              {!!validation?.required && (
-                <span className="text-red-500 ml-1">*</span>
-              )}
-            </label>
-            <div className="space-y-2">
-              {Array.isArray(props?.options) &&
-                props.options.map((option: Option, index: number) => {
-                  const optionLabel =
-                    typeof option === "string" ? option : option.label || "";
-                  const optionValue =
-                    typeof option === "string" ? option : option.value || "";
-
-                  return (
-                    <div key={index} className="flex items-center">
-                      <input
-                        type="radio"
-                        id={`${fieldId}-${index}`}
-                        name={fieldId}
-                        value={optionValue}
-                        checked={formValues[id] === optionValue}
-                        onChange={(e) => handleInputChange(id, e.target.value)}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                        required={!!validation?.required}
-                      />
-                      <label
-                        htmlFor={`${fieldId}-${index}`}
-                        className="ml-2 text-sm text-gray-700"
-                      >
-                        {optionLabel}
-                      </label>
-                    </div>
-                  );
-                })}
-            </div>
-            {showError && (
-              <div className="mt-1 text-sm text-red-500">
-                {validationErrors[fieldId].map((error, index) => (
-                  <p key={index}>{error}</p>
-                ))}
-              </div>
-            )}
-          </div>
+          <FormRadioField
+            fieldId={fieldId}
+            label={label}
+            value={
+              typeof formValues[id] === "string"
+                ? (formValues[id] as string)
+                : ""
+            }
+            onChange={(value) => handleInputChange(id, value)}
+            validation={validation}
+            props={props}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+          />
         );
 
       case "checkbox":
-        // Handle single checkbox without options
-        if (!props?.options) {
-          return (
-            <div className="mb-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id={fieldId}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                  checked={formValues[id] === true}
-                  onChange={(e) => handleInputChange(id, e.target.checked)}
-                  onBlur={() => handleBlur(id)}
-                  required={!!validation?.required}
-                />
-                <label htmlFor={fieldId} className="ml-2 text-sm text-gray-700">
-                  {typeof label === "string" ? label : ""}
-                  {!!validation?.required && (
-                    <span className="text-red-500 ml-1">*</span>
-                  )}
-                </label>
-              </div>
-              {showError && (
-                <div className="mt-1 text-sm text-red-500">
-                  {validationErrors[fieldId].map((error, index) => (
-                    <p key={index}>{error}</p>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        }
-
-        // Handle multiple checkboxes with options
         return (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {typeof label === "string" ? label : ""}
-              {!!validation?.required && (
-                <span className="text-red-500 ml-1">*</span>
-              )}
-            </label>
-            <div className="space-y-2">
-              {Array.isArray(props?.options) &&
-                props.options.map((option: Option, index: number) => {
-                  const optionLabel =
-                    typeof option === "string" ? option : option.label || "";
-                  const optionValue =
-                    typeof option === "string" ? option : option.value || "";
-
-                  return (
-                    <div key={index} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`${fieldId}-${index}`}
-                        name={fieldId}
-                        value={optionValue}
-                        checked={
-                          Array.isArray(formValues[id])
-                            ? (formValues[id] as string[]).includes(optionValue)
-                            : false
-                        }
-                        onChange={(e) => {
-                          const currentValues = Array.isArray(formValues[id])
-                            ? (formValues[id] as string[])
-                            : [];
-                          const newValues = e.target.checked
-                            ? [...currentValues, optionValue]
-                            : currentValues.filter((v) => v !== optionValue);
-                          handleInputChange(id, newValues);
-                        }}
-                        onBlur={() => handleBlur(id)}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                        required={!!validation?.required}
-                      />
-                      <label
-                        htmlFor={`${fieldId}-${index}`}
-                        className="ml-2 text-sm text-gray-700"
-                      >
-                        {optionLabel}
-                      </label>
-                    </div>
-                  );
-                })}
-            </div>
-            {showError && (
-              <div className="mt-1 text-sm text-red-500">
-                {validationErrors[fieldId].map((error, index) => (
-                  <p key={index}>{error}</p>
-                ))}
-              </div>
-            )}
-          </div>
+          <FormCheckboxField
+            fieldId={fieldId}
+            label={label}
+            value={formValues[id] as boolean | string[]}
+            onChange={(value) => handleInputChange(id, value)}
+            onBlur={() => handleBlur(id)}
+            validation={validation}
+            props={props}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+          />
         );
 
       case "select":
         return (
-          <div className="mb-4">
-            <label
-              htmlFor={fieldId}
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {typeof label === "string" ? label : ""}
-              {!!validation?.required && (
-                <span className="text-red-500 ml-1">*</span>
-              )}
-            </label>
-            <select
-              id={fieldId}
-              className={`w-full p-2 border ${
-                showError ? "border-red-500" : "border-gray-300"
-              } rounded-md bg-white`}
-              value={
-                typeof formValues[id] === "string"
-                  ? (formValues[id] as string)
-                  : ""
-              }
-              onChange={(e) => handleInputChange(id, e.target.value)}
-              onBlur={() => handleBlur(id)}
-              required={!!validation?.required}
-            >
-              <option value="">Select an option</option>
-              {Array.isArray(props?.options) &&
-                props.options.map((option: Option, index: number) => {
-                  const optionLabel =
-                    typeof option === "string" ? option : option.label || "";
-                  const optionValue =
-                    typeof option === "string" ? option : option.value || "";
-
-                  return (
-                    <option key={index} value={optionValue}>
-                      {optionLabel}
-                    </option>
-                  );
-                })}
-            </select>
-            {showError && (
-              <div className="mt-1 text-sm text-red-500">
-                {validationErrors[fieldId].map((error, index) => (
-                  <p key={index}>{error}</p>
-                ))}
-              </div>
-            )}
-          </div>
+          <FormSelectField
+            fieldId={fieldId}
+            label={label}
+            value={
+              typeof formValues[id] === "string"
+                ? (formValues[id] as string)
+                : ""
+            }
+            onChange={(value) => handleInputChange(id, value)}
+            onBlur={() => handleBlur(id)}
+            validation={validation}
+            props={props}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+          />
         );
 
       case "date":
         return (
-          <div className="mb-4">
-            <label
-              htmlFor={fieldId}
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {typeof label === "string" ? label : ""}
-              {!!validation?.required && (
-                <span className="text-red-500 ml-1">*</span>
-              )}
-            </label>
-            <input
-              id={fieldId}
-              type="date"
-              className={`w-full p-2 border ${
-                showError ? "border-red-500" : "border-gray-300"
-              } rounded-md`}
-              value={
-                typeof formValues[id] === "string"
-                  ? (formValues[id] as string)
-                  : ""
-              }
-              min={props?.minDate}
-              max={props?.maxDate}
-              onChange={(e) => handleInputChange(id, e.target.value)}
-              onBlur={() => handleBlur(id)}
-              required={!!validation?.required}
-            />
-            {showError && (
-              <div className="mt-1 text-sm text-red-500">
-                {validationErrors[fieldId].map((error, index) => (
-                  <p key={index}>{error}</p>
-                ))}
-              </div>
-            )}
-            {typeof props?.helperText === "string" && !showError && (
-              <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
-            )}
-          </div>
+          <FormDateField
+            fieldId={fieldId}
+            label={label}
+            value={
+              typeof formValues[id] === "string"
+                ? (formValues[id] as string)
+                : ""
+            }
+            onChange={(value) => handleInputChange(id, value)}
+            onBlur={() => handleBlur(id)}
+            validation={validation}
+            props={props}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+          />
         );
 
       case "button":
@@ -981,25 +654,12 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
 
       case "section":
         return (
-          <div className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
-            {label && (
-              <h3 className="text-lg font-medium mb-4 text-indigo-700">
-                {label}
-              </h3>
-            )}
-            <div className="space-y-3">
-              {Array.isArray(component.children) &&
-              component.children.length > 0 ? (
-                component.children.map((child, index) => (
-                  <div key={index}>{renderComponent(child, fieldId)}</div>
-                ))
-              ) : (
-                <div className="text-sm text-gray-500">
-                  No content in this section
-                </div>
-              )}
-            </div>
-          </div>
+          <FormSectionField
+            fieldId={fieldId}
+            label={label}
+            children={component.children}
+            renderComponent={renderComponent}
+          />
         );
 
       case "form":
@@ -1090,7 +750,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
   };
 
   const renderArrayField = (
-    component: ComponentProps,
+    component: FormComponentFieldProps,
     parentId: string
   ): React.ReactElement => {
     const items = arrayItems[component.id] || [];
