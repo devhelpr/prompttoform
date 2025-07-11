@@ -11,10 +11,10 @@ import schemaJson from "../../../schema.json";
 import { Alert } from "./Alert";
 import FormFlow from "./FormFlow";
 import FormFlowMermaid from "./FormFlowMermaid";
-import { FieldType } from "../../types/field-types";
 import { exampleForm } from "./example-form-definitions/example-form";
 import { multiStepForm } from "./example-form-definitions/multi-step-form";
 import { detectPIIWithBSN } from "../../utils/pii-detect";
+import { FormComponentFieldProps } from "../../interfaces/form-interfaces";
 
 // Define the evaluation result type
 interface EvaluationResult {
@@ -35,50 +35,6 @@ const uiSchema = schemaJson as unknown as UISchema;
 // Skip validation for now to avoid schema issues
 const skipValidation = true;
 
-// Define interface for visibility conditions
-interface VisibilityCondition {
-  field: string;
-  operator:
-    | "=="
-    | "!="
-    | ">"
-    | "<"
-    | ">="
-    | "<="
-    | "equals"
-    | "notEquals"
-    | "greaterThan"
-    | "lessThan";
-  value: string | number | boolean;
-}
-
-// Define interface for component properties
-interface ComponentProps {
-  type: FieldType;
-  id: string;
-  label?: string;
-  props?: Record<string, unknown>;
-  children?: ComponentProps[];
-  validation?: {
-    required?: boolean;
-    minLength?: number;
-    maxLength?: number;
-    pattern?: string;
-    minItems?: number;
-    maxItems?: number;
-    minDate?: string;
-    maxDate?: string;
-    min?: number;
-    max?: number;
-  };
-  visibilityConditions?: VisibilityCondition[];
-  eventHandlers?: Record<string, unknown>;
-  arrayItems?: Array<{
-    id: string;
-    components: ComponentProps[];
-  }>;
-}
-
 // Define interface for JSON types
 interface UIJson {
   app: {
@@ -88,7 +44,7 @@ interface UIJson {
       title: string;
       route: string;
       layout?: string;
-      components: ComponentProps[];
+      components: FormComponentFieldProps[];
       isEndPage?: boolean;
     }>;
     dataSources?: Array<{
