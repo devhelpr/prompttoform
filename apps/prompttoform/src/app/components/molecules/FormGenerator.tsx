@@ -6,7 +6,7 @@ import { Settings } from './Settings';
 import { evaluateAndRerunIfNeeded } from '../../services/prompt-eval';
 import { getCurrentAPIConfig } from '../../services/llm-api';
 import { getSystemPrompt } from '../../prompt-library/system-prompt';
-import schemaJson from '../../../schema.json';
+import schemaJson from '@schema';
 import { Alert } from './Alert';
 import FormFlow from './FormFlow';
 import FormFlowMermaid from './FormFlowMermaid';
