@@ -1,5 +1,10 @@
 import { FieldType } from "../types/field-types";
 
+export interface DateRange {
+  minDate?: string;
+  maxDate?: string;
+}
+
 export interface FormComponentFieldProps {
   type: FieldType;
   id: string;
@@ -8,8 +13,6 @@ export interface FormComponentFieldProps {
   options?: { label: string; value: string }[];
   props?: Record<string, unknown> & {
     inputType?: string;
-    minDate?: string;
-    maxDate?: string;
     min?: number;
     max?: number;
     placeholder?: string;
@@ -17,7 +20,7 @@ export interface FormComponentFieldProps {
     rows?: number;
     buttonType?: string;
     onClick?: string;
-  };
+  } & DateRange;
   children?: FormComponentFieldProps[];
   visibilityConditions?: VisibilityCondition[];
   eventHandlers?: {
@@ -33,11 +36,9 @@ export interface FormComponentFieldProps {
     pattern?: string;
     minItems?: number;
     maxItems?: number;
-    minDate?: string;
-    maxDate?: string;
     min?: number;
     max?: number;
-  };
+  } & DateRange;
 }
 
 export interface PageProps {
