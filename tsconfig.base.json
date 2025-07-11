@@ -1,0 +1,9 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@devhelpr/react-forms": ["libs/react-forms/src/index.ts"]
+    }
+  }
+}

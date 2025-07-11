@@ -1,20 +1,21 @@
-import { useState, useEffect } from "react";
-import Ajv2020 from "ajv/dist/2020";
-import { UISchema } from "../../types/ui-schema";
-import { generateUIFromPrompt, updateFormWithPatch } from "../../services/llm";
-import { Settings } from "./Settings";
-import { evaluateAndRerunIfNeeded } from "../../services/prompt-eval";
-import { getCurrentAPIConfig } from "../../services/llm-api";
-import FormRenderer from "./FormRenderer";
-import { getSystemPrompt } from "../../prompt-library/system-prompt";
-import schemaJson from "../../../schema.json";
-import { Alert } from "./Alert";
-import FormFlow from "./FormFlow";
-import FormFlowMermaid from "./FormFlowMermaid";
-import { exampleForm } from "./example-form-definitions/example-form";
-import { multiStepForm } from "./example-form-definitions/multi-step-form";
-import { detectPIIWithBSN } from "../../utils/pii-detect";
-import { FormComponentFieldProps } from "../../interfaces/form-interfaces";
+import { useState, useEffect } from 'react';
+import Ajv2020 from 'ajv/dist/2020';
+import { UISchema } from '../../types/ui-schema';
+import { generateUIFromPrompt, updateFormWithPatch } from '../../services/llm';
+import { Settings } from './Settings';
+import { evaluateAndRerunIfNeeded } from '../../services/prompt-eval';
+import { getCurrentAPIConfig } from '../../services/llm-api';
+import FormRenderer from './FormRenderer';
+import { getSystemPrompt } from '../../prompt-library/system-prompt';
+import schemaJson from '../../../schema.json';
+import { Alert } from './Alert';
+import FormFlow from './FormFlow';
+import FormFlowMermaid from './FormFlowMermaid';
+import { exampleForm } from './example-form-definitions/example-form';
+import { multiStepForm } from './example-form-definitions/multi-step-form';
+import { detectPIIWithBSN } from '../../utils/pii-detect';
+import { FormComponentFieldProps } from '../../interfaces/form-interfaces';
+import { ReactForms } from '@devhelpr/react-forms';
 
 // Define the evaluation result type
 interface EvaluationResult {
@@ -27,7 +28,7 @@ interface EvaluationResult {
 }
 
 // Define view modes
-type ViewMode = "json" | "form" | "flow" | "mermaid-flow";
+type ViewMode = 'json' | 'form' | 'flow' | 'mermaid-flow';
 
 // Cast schema to unknown first, then to UISchema
 const uiSchema = schemaJson as unknown as UISchema;
@@ -55,13 +56,13 @@ interface UIJson {
 }
 
 export function FormGenerator() {
-  const [prompt, setPrompt] = useState("");
-  const [updatePrompt, setUpdatePrompt] = useState("");
+  const [prompt, setPrompt] = useState('');
+  const [updatePrompt, setUpdatePrompt] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
-  const [generatedJson, setGeneratedJson] = useState("");
+  const [generatedJson, setGeneratedJson] = useState('');
   const [parsedJson, setParsedJson] = useState<UIJson | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("form");
+  const [viewMode, setViewMode] = useState<ViewMode>('form');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -90,12 +91,12 @@ export function FormGenerator() {
     }
   }, [isSettingsOpen]);
 
-  const validatePII = (text: string, field: "prompt" | "updatePrompt") => {
+  const validatePII = (text: string, field: 'prompt' | 'updatePrompt') => {
     const piiEntities = detectPIIWithBSN(text);
     if (piiEntities.length > 0) {
       const warningMessage = `Warning: Privacy sensitive data detected: ${piiEntities
         .map((entity) => `${entity.type} (${entity.match})`)
-        .join(", ")}`;
+        .join(', ')}`;
       setPiiErrors((prev) => ({ ...prev, [field]: warningMessage }));
       return true; // Always return true since we're not blocking
     }
@@ -108,7 +109,7 @@ export function FormGenerator() {
     setPrompt(newValue);
     setError(null);
     setEvaluation(null);
-    validatePII(newValue, "prompt");
+    validatePII(newValue, 'prompt');
   };
 
   const handleViewModeChange = (mode: ViewMode) => {
@@ -120,7 +121,7 @@ export function FormGenerator() {
     setParsedJson(exampleForm as UIJson);
 
     // If example form is loaded, switch to form view automatically
-    setViewMode("form");
+    setViewMode('form');
     setEvaluation(null);
   };
 
@@ -129,13 +130,13 @@ export function FormGenerator() {
     setParsedJson(multiStepForm as UIJson);
 
     // If example form is loaded, switch to form view automatically
-    setViewMode("form");
+    setViewMode('form');
     setEvaluation(null);
   };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      setError("Please enter a prompt");
+      setError('Please enter a prompt');
       return;
     }
 
@@ -164,7 +165,7 @@ export function FormGenerator() {
       try {
         parsedResponse = JSON.parse(response) as UIJson;
       } catch {
-        setError("Failed to parse the generated JSON. Please try again.");
+        setError('Failed to parse the generated JSON. Please try again.');
         setGeneratedJson(response);
         setIsLoading(false);
         return;
@@ -184,11 +185,11 @@ export function FormGenerator() {
           const validate = ajv.compile(uiSchema);
           const valid = validate(parsedResponse);
           if (!valid && validate.errors) {
-            console.warn("UI validation errors:", validate.errors);
+            console.warn('UI validation errors:', validate.errors);
             setError(`Validation failed: ${ajv.errorsText(validate.errors)}`);
           }
         } catch (validationErr) {
-          console.error("Schema validation error:", validationErr);
+          console.error('Schema validation error:', validationErr);
           // Continue despite validation errors
         }
       }
@@ -198,8 +199,8 @@ export function FormGenerator() {
 
       // Format and store string version with proper newlines
       const formattedJson = JSON.stringify(parsedResponse, null, 2)
-        .replace(/\\n/g, "\n")
-        .replace(/\\\\/g, "\\");
+        .replace(/\\n/g, '\n')
+        .replace(/\\\\/g, '\\');
       setGeneratedJson(formattedJson);
     } catch (err) {
       setError(`An error occurred while generating the UI/Form.`);
@@ -211,7 +212,7 @@ export function FormGenerator() {
 
   const handleEvaluateAndRerun = async () => {
     if (!generatedJson) {
-      setError("Generate content first before evaluating");
+      setError('Generate content first before evaluating');
       return;
     }
 
@@ -251,18 +252,18 @@ export function FormGenerator() {
 
           // Format the improved output with proper newlines
           const formattedJson = JSON.stringify(parsedOutput, null, 2)
-            .replace(/\\n/g, "\n")
-            .replace(/\\\\/g, "\\");
+            .replace(/\\n/g, '\n')
+            .replace(/\\\\/g, '\\');
 
           setGeneratedJson(formattedJson);
           setParsedJson(parsedOutput);
         } catch (parseError) {
-          console.error("Error parsing improved output:", parseError);
+          console.error('Error parsing improved output:', parseError);
           // Keep original output if parsing fails
         }
       }
     } catch (err) {
-      setError("An error occurred during evaluation.");
+      setError('An error occurred during evaluation.');
       console.error(err);
     } finally {
       setIsEvaluating(false);
@@ -270,21 +271,21 @@ export function FormGenerator() {
   };
 
   const handleCopyToClipboard = () => {
-    if (viewMode === "json") {
+    if (viewMode === 'json') {
       navigator.clipboard.writeText(generatedJson);
     }
   };
 
   const handleDownload = () => {
     let blob: Blob;
-    let filename = "";
+    let filename = '';
 
-    if (viewMode === "json" && generatedJson) {
-      blob = new Blob([generatedJson], { type: "application/json" });
-      filename = "ui-schema.json";
+    if (viewMode === 'json' && generatedJson) {
+      blob = new Blob([generatedJson], { type: 'application/json' });
+      filename = 'ui-schema.json';
 
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
@@ -301,16 +302,16 @@ export function FormGenerator() {
 
       // If parsing succeeds, format it nicely with actual newlines
       const formattedJson = JSON.stringify(parsed, null, 2)
-        .replace(/\\n/g, "\n") // Replace escaped newlines with actual newlines
-        .replace(/\\\\/g, "\\"); // Replace double backslashes with single backslashes
+        .replace(/\\n/g, '\n') // Replace escaped newlines with actual newlines
+        .replace(/\\\\/g, '\\'); // Replace double backslashes with single backslashes
 
       setGeneratedJson(formattedJson);
       setParsedJson(parsed);
       setJsonError(null);
     } catch (error) {
-      setJsonError("Invalid JSON format");
+      setJsonError('Invalid JSON format');
       setGeneratedJson(newJson); // Keep the invalid JSON in the textarea
-      console.error("JSON parsing error:", error);
+      console.error('JSON parsing error:', error);
     }
   };
 
@@ -331,20 +332,20 @@ export function FormGenerator() {
           return;
         }
       } catch (validationErr) {
-        console.error("Schema validation error:", validationErr);
-        setError("Schema validation error occurred");
+        console.error('Schema validation error:', validationErr);
+        setError('Schema validation error occurred');
         return;
       }
     }
 
     setError(null);
-    setViewMode("form");
+    setViewMode('form');
   };
 
   const handleUpdateForm = async () => {
     if (!updatePrompt.trim() || !generatedJson || !parsedJson) {
       setUpdateError(
-        "Please enter an update prompt and make sure a form is generated"
+        'Please enter an update prompt and make sure a form is generated'
       );
       return;
     }
@@ -355,7 +356,7 @@ export function FormGenerator() {
 
     try {
       // Before sending to updateFormWithPatch, convert newlines back to escaped form
-      const jsonForUpdate = generatedJson.replace(/\n/g, "\\n");
+      const jsonForUpdate = generatedJson.replace(/\n/g, '\\n');
       const patch = await updateFormWithPatch(jsonForUpdate, updatePrompt);
 
       // First parse the patch operations
@@ -370,7 +371,7 @@ export function FormGenerator() {
       // Apply the patch operations to the current form
       for (const operation of patchOperations) {
         const { op, path, value } = operation;
-        const pathParts = path.split("/").filter(Boolean);
+        const pathParts = path.split('/').filter(Boolean);
         let current: unknown = updatedForm;
 
         for (let i = 0; i < pathParts.length - 1; i++) {
@@ -380,7 +381,7 @@ export function FormGenerator() {
               current = current[parseInt(part)];
             }
           } else {
-            if (typeof current === "object" && current !== null) {
+            if (typeof current === 'object' && current !== null) {
               current = (current as Record<string, unknown>)[part];
             }
           }
@@ -389,26 +390,26 @@ export function FormGenerator() {
         const lastPart = pathParts[pathParts.length - 1];
         if (lastPart.match(/^\d+$/)) {
           const index = parseInt(lastPart);
-          if (op === "add") {
+          if (op === 'add') {
             if (Array.isArray(current)) {
               current.splice(index, 0, value);
             }
-          } else if (op === "remove") {
+          } else if (op === 'remove') {
             if (Array.isArray(current)) {
               current.splice(index, 1);
             }
-          } else if (op === "replace") {
+          } else if (op === 'replace') {
             if (Array.isArray(current)) {
               current[index] = value;
             }
           }
         } else {
-          if (op === "add" || op === "replace") {
-            if (typeof current === "object" && current !== null) {
+          if (op === 'add' || op === 'replace') {
+            if (typeof current === 'object' && current !== null) {
               (current as Record<string, unknown>)[lastPart] = value;
             }
-          } else if (op === "remove") {
-            if (typeof current === "object" && current !== null) {
+          } else if (op === 'remove') {
+            if (typeof current === 'object' && current !== null) {
               delete (current as Record<string, unknown>)[lastPart];
             }
           }
@@ -417,15 +418,15 @@ export function FormGenerator() {
 
       // Format the updated form with proper newlines
       const formattedJson = JSON.stringify(updatedForm, null, 2)
-        .replace(/\\n/g, "\n")
-        .replace(/\\\\/g, "\\");
+        .replace(/\\n/g, '\n')
+        .replace(/\\\\/g, '\\');
 
       setGeneratedJson(formattedJson);
       setParsedJson(updatedForm as UIJson);
     } catch (error) {
-      console.error("Error updating form:", error);
+      console.error('Error updating form:', error);
       setUpdateError(
-        error instanceof Error ? error.message : "Failed to update form"
+        error instanceof Error ? error.message : 'Failed to update form'
       );
     } finally {
       setIsUpdating(false);
@@ -439,7 +440,7 @@ export function FormGenerator() {
     setUpdatePrompt(newValue);
     setError(null);
     setEvaluation(null);
-    validatePII(newValue, "updatePrompt");
+    validatePII(newValue, 'updatePrompt');
   };
 
   return (
@@ -477,7 +478,7 @@ export function FormGenerator() {
           id="prompt"
           rows={5}
           className={`w-full rounded-lg border ${
-            piiErrors.prompt ? "border-amber-300" : "border-zinc-200"
+            piiErrors.prompt ? 'border-amber-300' : 'border-zinc-200'
           } shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 mt-2 text-base`}
           placeholder=""
           value={prompt}
@@ -511,10 +512,10 @@ export function FormGenerator() {
           >
             <span
               className={`relative z-10 ${
-                isLoading ? "loading-gradient-text-dark" : ""
+                isLoading ? 'loading-gradient-text-dark' : ''
               }`}
             >
-              {isLoading ? "Generating..." : "Generate UI/Form"}
+              {isLoading ? 'Generating...' : 'Generate UI/Form'}
             </span>
           </button>
 
@@ -527,10 +528,10 @@ export function FormGenerator() {
             >
               <span
                 className={`relative z-10 ${
-                  isEvaluating ? "loading-gradient-text-light" : ""
+                  isEvaluating ? 'loading-gradient-text-light' : ''
                 }`}
               >
-                {isEvaluating ? "Evaluating..." : "Evaluate & Improve"}
+                {isEvaluating ? 'Evaluating...' : 'Evaluate & Improve'}
               </span>
             </button>
           )}
@@ -560,11 +561,11 @@ export function FormGenerator() {
               <div className="mt-2 text-sm text-blue-700 space-y-2">
                 <div className="flex justify-between">
                   <span>Matches Prompt:</span>
-                  <span>{evaluation.matchesPrompt ? "✓" : "✗"}</span>
+                  <span>{evaluation.matchesPrompt ? '✓' : '✗'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Matches System Prompt:</span>
-                  <span>{evaluation.matchesSystemPrompt ? "✓" : "✗"}</span>
+                  <span>{evaluation.matchesSystemPrompt ? '✓' : '✗'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Score:</span>
@@ -597,7 +598,7 @@ export function FormGenerator() {
       {generatedJson && !isLoading && (
         <div
           className={`space-y-4 ${
-            isEvaluating ? "opacity-50 pointer-events-none" : ""
+            isEvaluating ? 'opacity-50 pointer-events-none' : ''
           }`}
         >
           <div className="flex items-center justify-between">
@@ -608,11 +609,11 @@ export function FormGenerator() {
               <div className="inline-flex rounded-md shadow-sm" role="group">
                 <button
                   type="button"
-                  onClick={() => handleViewModeChange("form")}
+                  onClick={() => handleViewModeChange('form')}
                   className={`px-4 py-2 text-sm font-medium rounded-l-md ${
-                    viewMode === "form"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-50"
+                    viewMode === 'form'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
                   } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
                 >
                   Form Preview
@@ -630,22 +631,22 @@ export function FormGenerator() {
                 </button> */}
                 <button
                   type="button"
-                  onClick={() => handleViewModeChange("mermaid-flow")}
+                  onClick={() => handleViewModeChange('mermaid-flow')}
                   className={`px-4 py-2 text-sm font-medium  ${
-                    viewMode === "mermaid-flow"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-50"
+                    viewMode === 'mermaid-flow'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
                   } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
                 >
                   Visual Flow
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleViewModeChange("json")}
+                  onClick={() => handleViewModeChange('json')}
                   className={`px-4 py-2 text-sm font-medium rounded-r-md  ${
-                    viewMode === "json"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-50"
+                    viewMode === 'json'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
                   } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
                 >
                   JSON
@@ -654,7 +655,7 @@ export function FormGenerator() {
             </div>
           </div>
 
-          {viewMode === "json" ? (
+          {viewMode === 'json' ? (
             <div className="space-y-4">
               <textarea
                 value={generatedJson}
@@ -675,14 +676,14 @@ export function FormGenerator() {
                 </button>
               </div>
             </div>
-          ) : viewMode === "form" ? (
+          ) : viewMode === 'form' ? (
             parsedJson &&
             parsedJson.app && (
               <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
                 <FormRenderer formJson={parsedJson} />
               </div>
             )
-          ) : viewMode === "flow" ? (
+          ) : viewMode === 'flow' ? (
             parsedJson &&
             parsedJson.app && (
               <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
@@ -757,8 +758,8 @@ export function FormGenerator() {
                 onChange={handleUpdatePromptChange}
                 className={`w-full rounded-lg border ${
                   piiErrors.updatePrompt
-                    ? "border-amber-300"
-                    : "border-zinc-200"
+                    ? 'border-amber-300'
+                    : 'border-zinc-200'
                 } shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 text-base`}
                 placeholder="Describe the changes you want to make to the form..."
                 rows={4}
@@ -776,7 +777,7 @@ export function FormGenerator() {
                 disabled={isUpdating}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isUpdating ? "Updating..." : "Update Form"}
+                {isUpdating ? 'Updating...' : 'Update Form'}
               </button>
             </div>
           </div>
@@ -787,6 +788,7 @@ export function FormGenerator() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
       />
+      <ReactForms />
     </div>
   );
 }
