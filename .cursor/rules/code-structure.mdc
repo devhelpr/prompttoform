@@ -4,7 +4,7 @@ globs:
 alwaysApply: true
 ---
 ---
-description: 
+description: code guidelines
 globs: 
 alwaysApply: true
 ---
@@ -16,3 +16,4 @@ alwaysApply: true
 - Keep components small and use react hooks
 - Put functions and classes in separate files in a proper folder structure
 - use kebab-case for filenames
+- use interface and types and put these in separate files , reuse were possible
