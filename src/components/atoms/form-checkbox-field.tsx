@@ -1,11 +1,6 @@
 import React from "react";
 
-type Option =
-  | {
-      label?: string;
-      value?: string;
-    }
-  | string;
+import { Option } from "../../interfaces/form-interfaces";
 
 interface FormCheckboxFieldProps {
   fieldId: string;

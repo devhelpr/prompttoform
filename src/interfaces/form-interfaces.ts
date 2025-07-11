@@ -109,3 +109,10 @@ export interface ValidationError {
   fieldId: string;
   message: string;
 }
+
+export type Option =
+  | {
+      label?: string;
+      value?: string;
+    }
+  | string;
