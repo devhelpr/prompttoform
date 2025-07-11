@@ -5,8 +5,10 @@ https://nx.dev/core-features/manage-releases
 
 
 
-nx release --dry-run
+npx nx release --projects=react-forms patch --dry-run
 
+npm login
+npx nx release --projects=react-forms patch
 
 
 npx nx build <project> 
