@@ -1,0 +1,193 @@
+{
+  "app": {
+    "title": "Multi-step Form Example",
+    "pages": [
+      {
+        "id": "personal-info",
+        "title": "Personal Information",
+        "route": "/personal",
+        "nextPage": "employment-info",
+        "components": [
+          {
+            "type": "text",
+            "id": "intro",
+            "props": {
+              "text": "Please provide your personal information"
+            }
+          },
+          {
+            "type": "input",
+            "id": "name",
+            "label": "Full Name",
+            "validation": {
+              "required": true,
+              "minLength": 2
+            }
+          },
+          {
+            "type": "input",
+            "id": "email",
+            "label": "Email",
+            "props": {
+              "type": "email"
+            },
+            "validation": {
+              "required": true,
+              "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+            }
+          },
+          {
+            "type": "array",
+            "id": "contacts",
+            "label": "Contacts",
+            "validation": {
+              "minItems": 1,
+              "maxItems": 5
+            },
+            "arrayItems": [
+              {
+                "id": "contact",
+                "components": [
+                  {
+                    "type": "input",
+                    "id": "name",
+                    "label": "Name",
+                    "validation": {
+                      "required": true
+                    }
+                  },
+                  {
+                    "type": "input",
+                    "id": "email",
+                    "label": "Email",
+                    "validation": {
+                      "required": true,
+                      "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "employment-info",
+        "title": "Employment Information",
+        "route": "/employment",
+        "branches": [
+          {
+            "condition": {
+              "field": "employment-status",
+              "operator": "==",
+              "value": "employed"
+            },
+            "nextPage": "company-info"
+          },
+          {
+            "condition": {
+              "field": "employment-status",
+              "operator": "==",
+              "value": "student"
+            },
+            "nextPage": "school-info"
+          }
+        ],
+        "nextPage": "preferences",
+        "components": [
+          {
+            "type": "text",
+            "id": "employment-intro",
+            "props": {
+              "text": "Tell us about your employment"
+            }
+          },
+          {
+            "type": "select",
+            "id": "employment-status",
+            "label": "Employment Status",
+            "props": {
+              "options": [
+                { "value": "employed", "label": "Employed" },
+                { "value": "unemployed", "label": "Unemployed" },
+                { "value": "student", "label": "Student" }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ]
+      },
+      {
+        "id": "company-info",
+        "title": "Company Information",
+        "route": "/company",
+        "nextPage": "preferences",
+        "components": [
+          {
+            "type": "input",
+            "id": "company",
+            "label": "Company Name",
+            "validation": {
+              "required": true
+            }
+          }
+        ]
+      },
+      {
+        "id": "school-info",
+        "title": "School Information",
+        "route": "/school",
+        "nextPage": "preferences",
+        "components": [
+          {
+            "type": "input",
+            "id": "school",
+            "label": "School Name",
+            "validation": {
+              "required": true
+            }
+          }
+        ]
+      },
+      {
+        "id": "preferences",
+        "title": "Preferences",
+        "route": "/preferences",
+        "isEndPage": true,
+        "components": [
+          {
+            "type": "text",
+            "id": "preferences-intro",
+            "props": {
+              "text": "Tell us about your preferences"
+            }
+          },
+          {
+            "type": "radio",
+            "id": "newsletter",
+            "label": "Would you like to receive our newsletter?",
+            "props": {
+              "options": [
+                { "value": "yes", "label": "Yes" },
+                { "value": "no", "label": "No" }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          },
+          {
+            "type": "checkbox",
+            "id": "terms",
+            "label": "I agree to the terms and conditions",
+            "validation": {
+              "required": true
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

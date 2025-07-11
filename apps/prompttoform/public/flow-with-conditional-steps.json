@@ -1,0 +1,245 @@
+{
+  "app": {
+    "title": "Multi-Step Test Form with Conditional Logic",
+    "pages": [
+      {
+        "id": "welcomePage",
+        "title": "Welcome",
+        "route": "/welcome",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "welcomeText",
+            "props": {
+              "content": "Welcome to our multi-step test form. Please click Start to begin."
+            }
+          },
+          {
+            "type": "button",
+            "id": "startButton",
+            "label": "Start"
+          }
+        ],
+        "nextPage": "personalInfoPage"
+      },
+      {
+        "id": "personalInfoPage",
+        "title": "Personal Information",
+        "route": "/personal-info",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "input",
+            "id": "fullNameInput",
+            "label": "Full Name",
+            "props": {
+              "placeholder": "Enter your full name"
+            },
+            "validation": {
+              "required": true,
+              "minLength": 2
+            }
+          },
+          {
+            "type": "input",
+            "id": "emailInput",
+            "label": "Email Address",
+            "props": {
+              "type": "email",
+              "placeholder": "Enter your email"
+            },
+            "validation": {
+              "required": true,
+              "pattern": "^S+@S+.S+$"
+            }
+          },
+          {
+            "type": "button",
+            "id": "personalInfoNextButton",
+            "label": "Next"
+          }
+        ],
+        "nextPage": "optionalDetailsPage"
+      },
+      {
+        "id": "optionalDetailsPage",
+        "title": "Optional Details",
+        "route": "/optional-details",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "addressQueryText",
+            "props": {
+              "content": "Would you like to provide your address information?"
+            }
+          },
+          {
+            "type": "radio",
+            "id": "provideAddressRadio",
+            "label": "Provide Address?",
+            "props": {
+              "options": [
+                {
+                  "value": "Yes",
+                  "label": "Yes"
+                },
+                {
+                  "value": "No",
+                  "label": "No"
+                }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          },
+          {
+            "type": "button",
+            "id": "optionalDetailsNextButton",
+            "label": "Next"
+          }
+        ],
+        "branches": [
+          {
+            "condition": {
+              "field": "provideAddressRadio",
+              "operator": "==",
+              "value": "Yes"
+            },
+            "nextPage": "addressPage"
+          },
+          {
+            "condition": {
+              "field": "provideAddressRadio",
+              "operator": "==",
+              "value": "No"
+            },
+            "nextPage": "preferencesPage"
+          }
+        ]
+      },
+      {
+        "id": "addressPage",
+        "title": "Address Information",
+        "route": "/address",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "input",
+            "id": "streetInput",
+            "label": "Street Address",
+            "props": {
+              "placeholder": "e.g., 123 Main St"
+            }
+          },
+          {
+            "type": "input",
+            "id": "cityInput",
+            "label": "City",
+            "props": {
+              "placeholder": "e.g., Anytown"
+            }
+          },
+          {
+            "type": "input",
+            "id": "zipInput",
+            "label": "Zip Code",
+            "props": {
+              "placeholder": "e.g., 12345"
+            }
+          },
+          {
+            "type": "button",
+            "id": "addressNextButton",
+            "label": "Next"
+          }
+        ],
+        "nextPage": "preferencesPage"
+      },
+      {
+        "id": "preferencesPage",
+        "title": "Your Preferences",
+        "route": "/preferences",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "checkbox",
+            "id": "newsletterCheckbox",
+            "label": "Subscribe to newsletter"
+          },
+          {
+            "type": "select",
+            "id": "contactMethodSelect",
+            "label": "Preferred contact method",
+            "props": {
+              "options": [
+                {
+                  "value": "",
+                  "label": "Select one..."
+                },
+                {
+                  "value": "email",
+                  "label": "Email"
+                },
+                {
+                  "value": "phone",
+                  "label": "Phone"
+                },
+                {
+                  "value": "mail",
+                  "label": "Mail"
+                }
+              ]
+            }
+          },
+          {
+            "type": "button",
+            "id": "preferencesNextButton",
+            "label": "Next"
+          }
+        ],
+        "nextPage": "reviewPage"
+      },
+      {
+        "id": "reviewPage",
+        "title": "Review Your Information",
+        "route": "/review",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "reviewText",
+            "props": {
+              "content": "Please review your information before submitting. (Summary display is not implemented in this example)"
+            }
+          },
+          {
+            "type": "button",
+            "id": "submitButton",
+            "label": "Submit Form"
+          }
+        ],
+        "isEndPage": true,
+        "nextPage": "thankYouPage"
+      },
+      {
+        "id": "thankYouPage",
+        "title": "Thank You",
+        "route": "/thank-you",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "thankYouText",
+            "props": {
+              "content": "Thank you for completing the form! Your submission has been received."
+            }
+          }
+        ],
+        "isEndPage": true
+      }
+    ]
+  }
+}

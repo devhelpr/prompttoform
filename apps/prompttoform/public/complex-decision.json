@@ -1,0 +1,834 @@
+{
+  "app": {
+    "title": "Health Decision Tree",
+    "pages": [
+      {
+        "id": "page1",
+        "title": "Initial Health Screening",
+        "route": "/screening",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "welcomeText",
+            "props": {
+              "content": "Welcome to the Health Symptom Checker. Please answer the following questions."
+            }
+          },
+          {
+            "type": "radio",
+            "id": "symptomsQuestion",
+            "label": "Are you currently experiencing any symptoms?",
+            "props": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": "yes"
+                },
+                {
+                  "label": "No",
+                  "value": "no"
+                }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ],
+        "branches": [
+          {
+            "condition": {
+              "field": "symptomsQuestion",
+              "operator": "==",
+              "value": "yes"
+            },
+            "nextPage": "page2"
+          },
+          {
+            "condition": {
+              "field": "symptomsQuestion",
+              "operator": "==",
+              "value": "no"
+            },
+            "nextPage": "page3"
+          }
+        ]
+      },
+      {
+        "id": "page2",
+        "title": "Symptom Severity",
+        "route": "/symptoms/severity",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "radio",
+            "id": "severityQuestion",
+            "label": "How would you rate the severity of your symptoms?",
+            "props": {
+              "options": [
+                {
+                  "label": "Mild",
+                  "value": "mild"
+                },
+                {
+                  "label": "Moderate",
+                  "value": "moderate"
+                },
+                {
+                  "label": "Severe",
+                  "value": "severe"
+                }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ],
+        "branches": [
+          {
+            "condition": {
+              "field": "severityQuestion",
+              "operator": "==",
+              "value": "mild"
+            },
+            "nextPage": "page4"
+          },
+          {
+            "condition": {
+              "field": "severityQuestion",
+              "operator": "==",
+              "value": "moderate"
+            },
+            "nextPage": "page5"
+          },
+          {
+            "condition": {
+              "field": "severityQuestion",
+              "operator": "==",
+              "value": "severe"
+            },
+            "nextPage": "page6"
+          }
+        ]
+      },
+      {
+        "id": "page3",
+        "title": "General Wellness",
+        "route": "/wellness",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "radio",
+            "id": "wellnessInterestQuestion",
+            "label": "Are you interested in improving your general wellness?",
+            "props": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": "yes"
+                },
+                {
+                  "label": "No",
+                  "value": "no"
+                }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ],
+        "branches": [
+          {
+            "condition": {
+              "field": "wellnessInterestQuestion",
+              "operator": "==",
+              "value": "yes"
+            },
+            "nextPage": "page7"
+          },
+          {
+            "condition": {
+              "field": "wellnessInterestQuestion",
+              "operator": "==",
+              "value": "no"
+            },
+            "nextPage": "page8"
+          }
+        ]
+      },
+      {
+        "id": "page4",
+        "title": "Mild Symptoms Advice",
+        "route": "/symptoms/mild-advice",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "mildSymptomsText",
+            "props": {
+              "content": "For mild symptoms, rest and hydration are recommended. Monitor your symptoms."
+            }
+          },
+          {
+            "type": "radio",
+            "id": "symptomsPersistQuestion",
+            "label": "Have your symptoms persisted for more than 3 days?",
+            "props": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": "yes"
+                },
+                {
+                  "label": "No",
+                  "value": "no"
+                }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ],
+        "branches": [
+          {
+            "condition": {
+              "field": "symptomsPersistQuestion",
+              "operator": "==",
+              "value": "yes"
+            },
+            "nextPage": "page9"
+          },
+          {
+            "condition": {
+              "field": "symptomsPersistQuestion",
+              "operator": "==",
+              "value": "no"
+            },
+            "nextPage": "page10"
+          }
+        ]
+      },
+      {
+        "id": "page5",
+        "title": "Moderate Symptoms Advice",
+        "route": "/symptoms/moderate-advice",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "moderateSymptomsText",
+            "props": {
+              "content": "For moderate symptoms, consider consulting a healthcare professional."
+            }
+          },
+          {
+            "type": "radio",
+            "id": "preexistingConditionQuestion",
+            "label": "Do you have a pre-existing condition that might be affected?",
+            "props": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": "yes"
+                },
+                {
+                  "label": "No",
+                  "value": "no"
+                }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ],
+        "branches": [
+          {
+            "condition": {
+              "field": "preexistingConditionQuestion",
+              "operator": "==",
+              "value": "yes"
+            },
+            "nextPage": "page11"
+          },
+          {
+            "condition": {
+              "field": "preexistingConditionQuestion",
+              "operator": "==",
+              "value": "no"
+            },
+            "nextPage": "page12"
+          }
+        ]
+      },
+      {
+        "id": "page6",
+        "title": "Severe Symptoms Advice",
+        "route": "/symptoms/severe-advice",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "severeSymptomsText",
+            "props": {
+              "content": "For severe symptoms, please seek immediate medical attention."
+            }
+          },
+          {
+            "type": "button",
+            "id": "emergencyButton",
+            "label": "Find Emergency Services"
+          }
+        ],
+        "isEndPage": true
+      },
+      {
+        "id": "page7",
+        "title": "Wellness Goals",
+        "route": "/wellness/goals",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "select",
+            "id": "wellnessAreaQuestion",
+            "label": "What area of wellness are you most interested in?",
+            "props": {
+              "options": [
+                {
+                  "label": "Diet and Nutrition",
+                  "value": "diet"
+                },
+                {
+                  "label": "Exercise and Fitness",
+                  "value": "exercise"
+                },
+                {
+                  "label": "Mental Health and Stress Management",
+                  "value": "mental_health"
+                }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ],
+        "branches": [
+          {
+            "condition": {
+              "field": "wellnessAreaQuestion",
+              "operator": "==",
+              "value": "diet"
+            },
+            "nextPage": "page13"
+          },
+          {
+            "condition": {
+              "field": "wellnessAreaQuestion",
+              "operator": "==",
+              "value": "exercise"
+            },
+            "nextPage": "page14"
+          },
+          {
+            "condition": {
+              "field": "wellnessAreaQuestion",
+              "operator": "==",
+              "value": "mental_health"
+            },
+            "nextPage": "page15"
+          }
+        ]
+      },
+      {
+        "id": "page8",
+        "title": "End - No Action",
+        "route": "/end/no-action",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "noActionText",
+            "props": {
+              "content": "Thank you for your time. Stay healthy!"
+            }
+          }
+        ],
+        "isEndPage": true
+      },
+      {
+        "id": "page9",
+        "title": "Persistent Mild Symptoms",
+        "route": "/symptoms/mild-persistent",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "persistentMildSymptomsText",
+            "props": {
+              "content": "If mild symptoms persist, it's advisable to consult a healthcare professional."
+            }
+          },
+          {
+            "type": "radio",
+            "id": "seeDoctorQuestion",
+            "label": "Are you able to see a doctor within the next 48 hours?",
+            "props": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": "yes"
+                },
+                {
+                  "label": "No",
+                  "value": "no"
+                }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ],
+        "branches": [
+          {
+            "condition": {
+              "field": "seeDoctorQuestion",
+              "operator": "==",
+              "value": "yes"
+            },
+            "nextPage": "page16"
+          },
+          {
+            "condition": {
+              "field": "seeDoctorQuestion",
+              "operator": "==",
+              "value": "no"
+            },
+            "nextPage": "page17"
+          }
+        ]
+      },
+      {
+        "id": "page10",
+        "title": "End - Monitor Symptoms",
+        "route": "/end/monitor-symptoms",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "monitorSymptomsText",
+            "props": {
+              "content": "Continue monitoring your symptoms. If they worsen or do not improve, seek medical advice."
+            }
+          }
+        ],
+        "isEndPage": true
+      },
+      {
+        "id": "page11",
+        "title": "Consult Doctor - Pre-existing Condition",
+        "route": "/symptoms/moderate-preexisting",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "consultDoctorPreexistingText",
+            "props": {
+              "content": "Given your pre-existing condition, it is highly recommended to consult your doctor regarding your current symptoms."
+            }
+          },
+          {
+            "type": "radio",
+            "id": "doctorContactQuestion",
+            "label": "Do you have your doctor's contact information readily available?",
+            "props": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": "yes"
+                },
+                {
+                  "label": "No",
+                  "value": "no"
+                }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ],
+        "branches": [
+          {
+            "condition": {
+              "field": "doctorContactQuestion",
+              "operator": "==",
+              "value": "yes"
+            },
+            "nextPage": "page18"
+          },
+          {
+            "condition": {
+              "field": "doctorContactQuestion",
+              "operator": "==",
+              "value": "no"
+            },
+            "nextPage": "page19"
+          }
+        ]
+      },
+      {
+        "id": "page12",
+        "title": "Consider Consultation",
+        "route": "/symptoms/moderate-consider-consultation",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "considerConsultationText",
+            "props": {
+              "content": "Consider scheduling a consultation with a healthcare provider if your symptoms don't improve or if you have concerns."
+            }
+          }
+        ],
+        "isEndPage": true
+      },
+      {
+        "id": "page13",
+        "title": "Diet Advice",
+        "route": "/wellness/diet-advice",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "dietAdviceText",
+            "props": {
+              "content": "Focus on a balanced diet with plenty of fruits, vegetables, lean proteins, and whole grains."
+            }
+          },
+          {
+            "type": "radio",
+            "id": "dietPlansQuestion",
+            "label": "Are you interested in specific diet plans or resources?",
+            "props": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": "yes"
+                },
+                {
+                  "label": "No",
+                  "value": "no"
+                }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ],
+        "branches": [
+          {
+            "condition": {
+              "field": "dietPlansQuestion",
+              "operator": "==",
+              "value": "yes"
+            },
+            "nextPage": "page20"
+          },
+          {
+            "condition": {
+              "field": "dietPlansQuestion",
+              "operator": "==",
+              "value": "no"
+            },
+            "nextPage": "page21"
+          }
+        ]
+      },
+      {
+        "id": "page14",
+        "title": "Exercise Advice",
+        "route": "/wellness/exercise-advice",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "exerciseAdviceText",
+            "props": {
+              "content": "Regular physical activity is beneficial. Aim for at least 150 minutes of moderate-intensity aerobic activity or 75 minutes of vigorous-intensity activity per week, plus muscle-strengthening activities on 2 or more days a week."
+            }
+          },
+          {
+            "type": "radio",
+            "id": "workoutPreferenceQuestion",
+            "label": "Do you prefer home workouts or gym sessions?",
+            "props": {
+              "options": [
+                {
+                  "label": "Home Workouts",
+                  "value": "home"
+                },
+                {
+                  "label": "Gym Sessions",
+                  "value": "gym"
+                },
+                {
+                  "label": "Both/No Preference",
+                  "value": "both"
+                }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ],
+        "branches": [
+          {
+            "condition": {
+              "field": "workoutPreferenceQuestion",
+              "operator": "==",
+              "value": "home"
+            },
+            "nextPage": "page22"
+          },
+          {
+            "condition": {
+              "field": "workoutPreferenceQuestion",
+              "operator": "==",
+              "value": "gym"
+            },
+            "nextPage": "page23"
+          },
+          {
+            "condition": {
+              "field": "workoutPreferenceQuestion",
+              "operator": "==",
+              "value": "both"
+            },
+            "nextPage": "page22"
+          }
+        ]
+      },
+      {
+        "id": "page15",
+        "title": "Mental Health Advice",
+        "route": "/wellness/mental-health-advice",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "mentalHealthAdviceText",
+            "props": {
+              "content": "Prioritizing mental well-being is crucial. Consider mindfulness, meditation, or relaxation techniques. Ensure you get enough sleep and connect with supportive people."
+            }
+          },
+          {
+            "type": "radio",
+            "id": "mentalHealthResourcesQuestion",
+            "label": "Would you like resources for mental health support?",
+            "props": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": "yes"
+                },
+                {
+                  "label": "No",
+                  "value": "no"
+                }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ],
+        "branches": [
+          {
+            "condition": {
+              "field": "mentalHealthResourcesQuestion",
+              "operator": "==",
+              "value": "yes"
+            },
+            "nextPage": "page24"
+          },
+          {
+            "condition": {
+              "field": "mentalHealthResourcesQuestion",
+              "operator": "==",
+              "value": "no"
+            },
+            "nextPage": "page25"
+          }
+        ]
+      },
+      {
+        "id": "page16",
+        "title": "Schedule Appointment",
+        "route": "/action/schedule-appointment",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "scheduleAppointmentText",
+            "props": {
+              "content": "Please schedule an appointment with your doctor soon to discuss your persistent symptoms."
+            }
+          }
+        ],
+        "isEndPage": true
+      },
+      {
+        "id": "page17",
+        "title": "Alternative Care Options",
+        "route": "/action/alternative-care",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "alternativeCareText",
+            "props": {
+              "content": "If you cannot see a doctor promptly, consider telehealth services for a remote consultation or visit an urgent care clinic if your symptoms warrant it and it's appropriate for your situation."
+            }
+          }
+        ],
+        "isEndPage": true
+      },
+      {
+        "id": "page18",
+        "title": "Contact Doctor Now",
+        "route": "/action/contact-doctor",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "contactDoctorText",
+            "props": {
+              "content": "Please contact your doctor as soon as possible to discuss your symptoms, especially considering your pre-existing condition."
+            }
+          }
+        ],
+        "isEndPage": true
+      },
+      {
+        "id": "page19",
+        "title": "Find Doctor Info",
+        "route": "/action/find-doctor-info",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "findDoctorInfoText",
+            "props": {
+              "content": "Please locate your doctor's contact information. You can check your insurance provider's directory, previous medical records, or the clinic's website."
+            }
+          }
+        ],
+        "isEndPage": true
+      },
+      {
+        "id": "page20",
+        "title": "Diet Plan Resources",
+        "route": "/wellness/diet-resources",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "dietResourcesText",
+            "props": {
+              "content": "Here are some general resources for healthy eating: MyPlate.gov, EatRight.org. For specific diet plans, it's best to consult a registered dietitian or your healthcare provider."
+            }
+          }
+        ],
+        "isEndPage": true
+      },
+      {
+        "id": "page21",
+        "title": "General Diet Tips",
+        "route": "/wellness/diet-tips",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "generalDietTipsText",
+            "props": {
+              "content": "Remember to drink plenty of water, limit processed foods and sugary drinks, and focus on portion control. Small, consistent changes can make a big difference."
+            }
+          }
+        ],
+        "isEndPage": true
+      },
+      {
+        "id": "page22",
+        "title": "Home Workout Ideas",
+        "route": "/wellness/home-workouts",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "homeWorkoutsText",
+            "props": {
+              "content": "Explore online videos for bodyweight exercises, yoga, pilates, or dance workouts that you can do at home. Many apps also offer guided home fitness programs."
+            }
+          }
+        ],
+        "isEndPage": true
+      },
+      {
+        "id": "page23",
+        "title": "Gym Routine Tips",
+        "route": "/wellness/gym-tips",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "gymTipsText",
+            "props": {
+              "content": "At the gym, consider a mix of cardiovascular exercises (like treadmill, elliptical, cycling) and strength training (weights, resistance machines). If you're new, a session with a personal trainer can help you create a safe and effective plan."
+            }
+          }
+        ],
+        "isEndPage": true
+      },
+      {
+        "id": "page24",
+        "title": "Mental Health Resources",
+        "route": "/wellness/mental-health-resources",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "mentalHealthResourcesText",
+            "props": {
+              "content": "Here are some general resources: National Alliance on Mental Illness (NAMI), MentalHealth.gov. If you are in crisis, please contact a crisis hotline or emergency services."
+            }
+          }
+        ],
+        "isEndPage": true
+      },
+      {
+        "id": "page25",
+        "title": "Self-Care Reminders",
+        "route": "/wellness/self-care",
+        "layout": "vertical",
+        "components": [
+          {
+            "type": "text",
+            "id": "selfCareText",
+            "props": {
+              "content": "Remember to incorporate self-care into your routine. This can include taking breaks, engaging in hobbies you enjoy, spending time in nature, and connecting with loved ones."
+            }
+          }
+        ],
+        "isEndPage": true
+      }
+    ]
+  }
+}

@@ -9,8 +9,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "nx serve",
-    "_build": "nx run-many -t build",
+    "dev": "nx serve prompttoform",
+    "build": "nx build prompttoform",
     "_lint": "eslint .",
     "_preview": "nx vite:preview"
   },
