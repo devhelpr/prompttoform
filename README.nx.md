@@ -13,3 +13,4 @@ npx nx build <project>
 npx nx run-many -t build
 
 just npx nx build doesnt'work
+this does work: npm run build
