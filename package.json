@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "nx serve prompttoform",
     "build": "nx build prompttoform",
+    "publish-forms": "node scripts/publish.js",
     "_lint": "eslint .",
     "_preview": "nx vite:preview"
   },
