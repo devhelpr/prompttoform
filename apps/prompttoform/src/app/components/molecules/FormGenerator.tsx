@@ -18,6 +18,7 @@ import { FormRenderer } from '@devhelpr/react-forms';
 import { createFormZip, downloadZip } from '../../utils/zip-utils';
 import { saveFormJsonToLocalStorage } from '../../utils/local-storage';
 import { deployWithNetlify } from '../../utils/netlify-deploy';
+import { blobToBase64 } from '../../utils/blob-to-base64';
 
 // Define the evaluation result type
 interface EvaluationResult {
@@ -465,9 +466,11 @@ export function FormGenerator() {
     validatePII(newValue, 'updatePrompt');
   };
 
-  function handleDeployToNetlify(): void {
+  async function handleDeployToNetlify(): Promise<void> {
     setIsDeploying(true);
-    deployWithNetlify(generatedJson);
+    const zipBlob = await createFormZip(generatedJson);
+    const base64 = await blobToBase64(zipBlob);
+    deployWithNetlify(base64);
   }
 
   return (
