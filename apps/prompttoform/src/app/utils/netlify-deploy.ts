@@ -17,7 +17,7 @@ export const deployWithNetlify = (json: string) => {
       body: JSON.stringify({
         netlifyAccessToken: netlifyAccessToken,
         netlifySiteId: netlifySiteId,
-        zipContents: new Buffer(json).toString('base64'),
+        zipContents: btoa(json),
       }),
     })
       .then((response) => response.json())
