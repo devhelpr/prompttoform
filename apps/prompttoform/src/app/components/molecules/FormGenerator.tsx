@@ -16,6 +16,8 @@ import { detectPIIWithBSN } from '../../utils/pii-detect';
 import { FormComponentFieldProps } from '@devhelpr/react-forms';
 import { FormRenderer } from '@devhelpr/react-forms';
 import { createFormZip, downloadZip } from '../../utils/zip-utils';
+import { saveFormJsonToLocalStorage } from '../../utils/local-storage';
+import { deployWithNetlify } from '../../utils/netlify-deploy';
 
 // Define the evaluation result type
 interface EvaluationResult {
@@ -75,6 +77,7 @@ export function FormGenerator() {
     updatePrompt?: string;
   }>({});
   const [isZipDownloading, setIsZipDownloading] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
 
   useEffect(() => {
     // Check for API key on mount
@@ -117,20 +120,22 @@ export function FormGenerator() {
     setViewMode(mode);
   };
 
-  const loadExampleForm = () => {
-    setGeneratedJson(JSON.stringify(exampleForm, null, 2));
-    setParsedJson(exampleForm as UIJson);
+  const setAndPersistGeneratedJson = (json: string, parsed?: UIJson | null) => {
+    setGeneratedJson(json);
+    if (parsed) setParsedJson(parsed);
+    saveFormJsonToLocalStorage(json);
+  };
 
-    // If example form is loaded, switch to form view automatically
+  const loadExampleForm = () => {
+    const formattedJson = JSON.stringify(exampleForm, null, 2);
+    setAndPersistGeneratedJson(formattedJson, exampleForm as UIJson);
     setViewMode('form');
     setEvaluation(null);
   };
 
   const loadMultiStepExample = () => {
-    setGeneratedJson(JSON.stringify(multiStepForm, null, 2));
-    setParsedJson(multiStepForm as UIJson);
-
-    // If example form is loaded, switch to form view automatically
+    const formattedJson = JSON.stringify(multiStepForm, null, 2);
+    setAndPersistGeneratedJson(formattedJson, multiStepForm as UIJson);
     setViewMode('form');
     setEvaluation(null);
   };
@@ -197,12 +202,11 @@ export function FormGenerator() {
 
       // Store parsed response
       setParsedJson(parsedResponse);
-
       // Format and store string version with proper newlines
       const formattedJson = JSON.stringify(parsedResponse, null, 2)
         .replace(/\\n/g, '\n')
         .replace(/\\\\/g, '\\');
-      setGeneratedJson(formattedJson);
+      setAndPersistGeneratedJson(formattedJson, parsedResponse);
     } catch (err) {
       setError(`An error occurred while generating the UI/Form.`);
       console.error(err);
@@ -256,8 +260,7 @@ export function FormGenerator() {
             .replace(/\\n/g, '\n')
             .replace(/\\\\/g, '\\');
 
-          setGeneratedJson(formattedJson);
-          setParsedJson(parsedOutput);
+          setAndPersistGeneratedJson(formattedJson, parsedOutput);
         } catch (parseError) {
           console.error('Error parsing improved output:', parseError);
           // Keep original output if parsing fails
@@ -326,8 +329,7 @@ export function FormGenerator() {
         .replace(/\\n/g, '\n') // Replace escaped newlines with actual newlines
         .replace(/\\\\/g, '\\'); // Replace double backslashes with single backslashes
 
-      setGeneratedJson(formattedJson);
-      setParsedJson(parsed);
+      setAndPersistGeneratedJson(formattedJson, parsed);
       setJsonError(null);
     } catch (error) {
       setJsonError('Invalid JSON format');
@@ -442,8 +444,7 @@ export function FormGenerator() {
         .replace(/\\n/g, '\n')
         .replace(/\\\\/g, '\\');
 
-      setGeneratedJson(formattedJson);
-      setParsedJson(updatedForm as UIJson);
+      setAndPersistGeneratedJson(formattedJson, updatedForm as UIJson);
     } catch (error) {
       console.error('Error updating form:', error);
       setUpdateError(
@@ -463,6 +464,11 @@ export function FormGenerator() {
     setEvaluation(null);
     validatePII(newValue, 'updatePrompt');
   };
+
+  function handleDeployToNetlify(): void {
+    setIsDeploying(true);
+    deployWithNetlify(generatedJson);
+  }
 
   return (
     <div className="space-y-6">
@@ -815,6 +821,13 @@ export function FormGenerator() {
                   ? 'Creating Zip...'
                   : 'Download React Form Zip'}
               </span>
+            </button>
+            <button
+              onClick={handleDeployToNetlify}
+              disabled={isDeploying}
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 group relative disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Deploy to Netlify
             </button>
           </div>
 

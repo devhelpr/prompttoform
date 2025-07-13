@@ -11,9 +11,11 @@ alwaysApply: true
 
 # We use clean-code principles and atomic design
 
+- follow SOLID principles
 - Put business logic in classes
 - Split components according to atomic design
 - Keep components small and use react hooks
 - Put functions and classes in separate files in a proper folder structure
 - use kebab-case for filenames
 - use interface and types and put these in separate files , reuse were possible
+  
