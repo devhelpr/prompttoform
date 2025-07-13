@@ -79,6 +79,7 @@ export function FormGenerator({ formJson }: { formJson: string }) {
   }>({});
   const [isZipDownloading, setIsZipDownloading] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
+  const [siteUrl, setSiteUrl] = useState('');
 
   useEffect(() => {
     // Check for API key on mount
@@ -472,7 +473,9 @@ export function FormGenerator({ formJson }: { formJson: string }) {
     console.log('zipBlob', zipBlob);
     const base64 = await blobToBase64(zipBlob);
     console.log('base64', base64);
-    deployWithNetlify(base64);
+    deployWithNetlify(base64, (siteUrl) => {
+      setSiteUrl(siteUrl);
+    });
   }
 
   return (
@@ -834,6 +837,11 @@ export function FormGenerator({ formJson }: { formJson: string }) {
             >
               Deploy to Netlify
             </button>
+            {siteUrl && (
+              <a href={siteUrl} target="_blank" rel="noopener noreferrer">
+                {siteUrl}
+              </a>
+            )}
           </div>
 
           <div className="mt-8 border-t pt-6">

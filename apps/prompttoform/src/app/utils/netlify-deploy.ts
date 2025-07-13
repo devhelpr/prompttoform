@@ -4,7 +4,10 @@ import {
   setNetlifySiteId,
 } from './netlify-token-handler';
 
-export const deployWithNetlify = (json: string) => {
+export const deployWithNetlify = (
+  json: string,
+  onSetSiteUrl: (siteUrl: string) => void
+) => {
   //const redirectUrl = `https://localhost:8787/netlify/code-flow-canvas`;
   if (netlifyAccessToken) {
     const postUrl =
@@ -26,6 +29,9 @@ export const deployWithNetlify = (json: string) => {
         alert('Deployment successful!');
         if (data.siteId) {
           setNetlifySiteId(data.siteId);
+        }
+        if (data.siteUrl) {
+          onSetSiteUrl(data.siteUrl);
         }
       })
       .catch((error) => {
