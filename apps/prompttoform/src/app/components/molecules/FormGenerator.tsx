@@ -58,7 +58,13 @@ interface UIJson {
   };
 }
 
-export function FormGenerator({ formJson }: { formJson: string }) {
+export function FormGenerator({
+  formJson,
+  triggerDeploy,
+}: {
+  formJson: string;
+  triggerDeploy: boolean;
+}) {
   const [prompt, setPrompt] = useState('');
   const [updatePrompt, setUpdatePrompt] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -86,6 +92,10 @@ export function FormGenerator({ formJson }: { formJson: string }) {
     const apiConfig = getCurrentAPIConfig();
     if (!apiConfig.apiKey && !apiConfig.systemKey) {
       setShowApiKeyHint(true);
+    }
+    if (triggerDeploy && generatedJson) {
+      setIsLoading(true);
+      handleDeployToNetlify();
     }
   }, []);
 
@@ -475,6 +485,7 @@ export function FormGenerator({ formJson }: { formJson: string }) {
     console.log('base64', base64);
     deployWithNetlify(base64, (siteUrl) => {
       setSiteUrl(siteUrl);
+      setIsLoading(false);
     });
   }
 
@@ -838,9 +849,11 @@ export function FormGenerator({ formJson }: { formJson: string }) {
               Deploy to Netlify
             </button>
             {siteUrl && (
-              <a href={siteUrl} target="_blank" rel="noopener noreferrer">
-                {siteUrl}
-              </a>
+              <div className="flex flex-row items-center">
+                <a href={siteUrl} target="_blank" rel="noopener noreferrer">
+                  {siteUrl}
+                </a>
+              </div>
             )}
           </div>
 
