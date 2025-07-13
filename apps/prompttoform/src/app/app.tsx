@@ -12,9 +12,10 @@ if (
   window.location.search.includes('provider')
 ) {
   triggerDeploy = true;
+  window.history.replaceState({}, '', '/');
 }
 
-const formJson = loadFormJsonFromLocalStorage();
+const formJson = triggerDeploy ? loadFormJsonFromLocalStorage() : '';
 function App() {
   return (
     <Layout>
