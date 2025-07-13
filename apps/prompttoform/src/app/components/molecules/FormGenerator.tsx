@@ -486,6 +486,7 @@ export function FormGenerator({
     deployWithNetlify(base64, (siteUrl) => {
       setSiteUrl(siteUrl);
       setIsLoading(false);
+      setIsDeploying(false);
     });
   }
 
