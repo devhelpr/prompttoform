@@ -469,7 +469,9 @@ export function FormGenerator() {
   async function handleDeployToNetlify(): Promise<void> {
     setIsDeploying(true);
     const zipBlob = await createFormZip(generatedJson);
+    console.log('zipBlob', zipBlob);
     const base64 = await blobToBase64(zipBlob);
+    console.log('base64', base64);
     deployWithNetlify(base64);
   }
 
