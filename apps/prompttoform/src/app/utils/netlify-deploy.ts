@@ -17,7 +17,7 @@ export const deployWithNetlify = (json: string) => {
       body: JSON.stringify({
         netlifyAccessToken: netlifyAccessToken,
         netlifySiteId: netlifySiteId,
-        zipContents: btoa(json),
+        zipContents: new Buffer(json).toString('base64'),
       }),
     })
       .then((response) => response.json())
@@ -33,8 +33,7 @@ export const deployWithNetlify = (json: string) => {
         alert('Deployment failed: ' + error.message);
       });
   } else {
-    const redirectUrl =
-      'https://form-generator-worker.maikel-f16.workers.dev/netlify/auth-prompttoform';
+    const redirectUrl = `https://form-generator-worker.maikel-f16.workers.dev/netlify/auth-prompttoform?state=${window.location.href}`;
 
     window.location.href = redirectUrl;
   }
