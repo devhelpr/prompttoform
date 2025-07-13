@@ -58,12 +58,12 @@ interface UIJson {
   };
 }
 
-export function FormGenerator() {
+export function FormGenerator({ formJson }: { formJson: string }) {
   const [prompt, setPrompt] = useState('');
   const [updatePrompt, setUpdatePrompt] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
-  const [generatedJson, setGeneratedJson] = useState('');
+  const [generatedJson, setGeneratedJson] = useState(formJson || '');
   const [parsedJson, setParsedJson] = useState<UIJson | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('form');
   const [isLoading, setIsLoading] = useState(false);
