@@ -1,4 +1,4 @@
-import { FieldType } from "../types/field-types";
+import { FieldType } from '../types/field-types';
 
 export interface DateRange {
   minDate?: string;
@@ -59,14 +59,16 @@ export interface PageProps {
   nextPage?: string;
 }
 
-export interface FormRendererProps {
-  formJson: {
-    app: {
-      title: string;
-      pages: PageProps[];
-      dataSources?: Record<string, unknown>[];
-    };
+export interface FormDefinition {
+  app: {
+    title: string;
+    pages: PageProps[];
+    dataSources?: Record<string, unknown>[];
   };
+}
+
+export interface FormRendererProps {
+  formJson: FormDefinition;
 }
 
 export interface FormValues {
@@ -80,16 +82,16 @@ export interface ValidationErrors {
 export interface VisibilityCondition {
   field: string;
   operator:
-    | "equals"
-    | "notEquals"
-    | "greaterThan"
-    | "lessThan"
-    | "=="
-    | "!="
-    | ">"
-    | "<"
-    | ">="
-    | "<=";
+    | 'equals'
+    | 'notEquals'
+    | 'greaterThan'
+    | 'lessThan'
+    | '=='
+    | '!='
+    | '>'
+    | '<'
+    | '>='
+    | '<=';
   value: string | number | boolean;
 }
 

@@ -15,6 +15,10 @@ import { multiStepForm } from './example-form-definitions/multi-step-form';
 import { detectPIIWithBSN } from '../../utils/pii-detect';
 import { FormComponentFieldProps } from '@devhelpr/react-forms';
 import { FormRenderer } from '@devhelpr/react-forms';
+import { createFormZip, downloadZip } from '../../utils/zip-utils';
+import { saveFormJsonToLocalStorage } from '../../utils/local-storage';
+import { deployWithNetlify } from '../../utils/netlify-deploy';
+import { blobToBase64 } from '../../utils/blob-to-base64';
 
 // Define the evaluation result type
 interface EvaluationResult {
@@ -54,12 +58,18 @@ interface UIJson {
   };
 }
 
-export function FormGenerator() {
+export function FormGenerator({
+  formJson,
+  triggerDeploy,
+}: {
+  formJson: string;
+  triggerDeploy: boolean;
+}) {
   const [prompt, setPrompt] = useState('');
   const [updatePrompt, setUpdatePrompt] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
-  const [generatedJson, setGeneratedJson] = useState('');
+  const [generatedJson, setGeneratedJson] = useState(formJson || '');
   const [parsedJson, setParsedJson] = useState<UIJson | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('form');
   const [isLoading, setIsLoading] = useState(false);
@@ -73,12 +83,19 @@ export function FormGenerator() {
     prompt?: string;
     updatePrompt?: string;
   }>({});
+  const [isZipDownloading, setIsZipDownloading] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [siteUrl, setSiteUrl] = useState('');
 
   useEffect(() => {
     // Check for API key on mount
     const apiConfig = getCurrentAPIConfig();
     if (!apiConfig.apiKey && !apiConfig.systemKey) {
       setShowApiKeyHint(true);
+    }
+    if (triggerDeploy && generatedJson) {
+      setIsLoading(true);
+      handleDeployToNetlify();
     }
   }, []);
 
@@ -115,20 +132,22 @@ export function FormGenerator() {
     setViewMode(mode);
   };
 
-  const loadExampleForm = () => {
-    setGeneratedJson(JSON.stringify(exampleForm, null, 2));
-    setParsedJson(exampleForm as UIJson);
+  const setAndPersistGeneratedJson = (json: string, parsed?: UIJson | null) => {
+    setGeneratedJson(json);
+    if (parsed) setParsedJson(parsed);
+    saveFormJsonToLocalStorage(json);
+  };
 
-    // If example form is loaded, switch to form view automatically
+  const loadExampleForm = () => {
+    const formattedJson = JSON.stringify(exampleForm, null, 2);
+    setAndPersistGeneratedJson(formattedJson, exampleForm as UIJson);
     setViewMode('form');
     setEvaluation(null);
   };
 
   const loadMultiStepExample = () => {
-    setGeneratedJson(JSON.stringify(multiStepForm, null, 2));
-    setParsedJson(multiStepForm as UIJson);
-
-    // If example form is loaded, switch to form view automatically
+    const formattedJson = JSON.stringify(multiStepForm, null, 2);
+    setAndPersistGeneratedJson(formattedJson, multiStepForm as UIJson);
     setViewMode('form');
     setEvaluation(null);
   };
@@ -195,12 +214,11 @@ export function FormGenerator() {
 
       // Store parsed response
       setParsedJson(parsedResponse);
-
       // Format and store string version with proper newlines
       const formattedJson = JSON.stringify(parsedResponse, null, 2)
         .replace(/\\n/g, '\n')
         .replace(/\\\\/g, '\\');
-      setGeneratedJson(formattedJson);
+      setAndPersistGeneratedJson(formattedJson, parsedResponse);
     } catch (err) {
       setError(`An error occurred while generating the UI/Form.`);
       console.error(err);
@@ -254,8 +272,7 @@ export function FormGenerator() {
             .replace(/\\n/g, '\n')
             .replace(/\\\\/g, '\\');
 
-          setGeneratedJson(formattedJson);
-          setParsedJson(parsedOutput);
+          setAndPersistGeneratedJson(formattedJson, parsedOutput);
         } catch (parseError) {
           console.error('Error parsing improved output:', parseError);
           // Keep original output if parsing fails
@@ -294,6 +311,26 @@ export function FormGenerator() {
     }
   };
 
+  const handleDownloadZip = async () => {
+    if (!generatedJson) {
+      setError('No form generated to download');
+      return;
+    }
+
+    setIsZipDownloading(true);
+    setError(null);
+
+    try {
+      const zipBlob = await createFormZip(generatedJson);
+      downloadZip(zipBlob, 'react-form.zip');
+    } catch (error) {
+      console.error('Error downloading zip:', error);
+      setError('Failed to create zip file. Please try again.');
+    } finally {
+      setIsZipDownloading(false);
+    }
+  };
+
   const handleJsonChange = (newJson: string) => {
     try {
       // First try to parse the JSON to validate it
@@ -304,8 +341,7 @@ export function FormGenerator() {
         .replace(/\\n/g, '\n') // Replace escaped newlines with actual newlines
         .replace(/\\\\/g, '\\'); // Replace double backslashes with single backslashes
 
-      setGeneratedJson(formattedJson);
-      setParsedJson(parsed);
+      setAndPersistGeneratedJson(formattedJson, parsed);
       setJsonError(null);
     } catch (error) {
       setJsonError('Invalid JSON format');
@@ -420,8 +456,7 @@ export function FormGenerator() {
         .replace(/\\n/g, '\n')
         .replace(/\\\\/g, '\\');
 
-      setGeneratedJson(formattedJson);
-      setParsedJson(updatedForm as UIJson);
+      setAndPersistGeneratedJson(formattedJson, updatedForm as UIJson);
     } catch (error) {
       console.error('Error updating form:', error);
       setUpdateError(
@@ -441,6 +476,19 @@ export function FormGenerator() {
     setEvaluation(null);
     validatePII(newValue, 'updatePrompt');
   };
+
+  async function handleDeployToNetlify(): Promise<void> {
+    setIsDeploying(true);
+    const zipBlob = await createFormZip(generatedJson);
+    console.log('zipBlob', zipBlob);
+    const base64 = await blobToBase64(zipBlob);
+    console.log('base64', base64);
+    deployWithNetlify(base64, (siteUrl) => {
+      setSiteUrl(siteUrl);
+      setIsLoading(false);
+      setIsDeploying(false);
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -745,6 +793,69 @@ export function FormGenerator() {
                 Download
               </span>
             </button>
+            <button
+              onClick={handleDownloadZip}
+              disabled={isZipDownloading}
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 group relative disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Download React Form Zip"
+            >
+              {isZipDownloading ? (
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                  />
+                </svg>
+              )}
+              <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                {isZipDownloading
+                  ? 'Creating Zip...'
+                  : 'Download React Form Zip'}
+              </span>
+            </button>
+            <button
+              onClick={handleDeployToNetlify}
+              disabled={isDeploying}
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 group relative disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Deploy to Netlify
+            </button>
+            {siteUrl && (
+              <div className="flex flex-row items-center">
+                <a href={siteUrl} target="_blank" rel="noopener noreferrer">
+                  {siteUrl}
+                </a>
+              </div>
+            )}
           </div>
 
           <div className="mt-8 border-t pt-6">
