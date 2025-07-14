@@ -69,6 +69,7 @@ export interface FormDefinition {
 
 export interface FormRendererProps {
   formJson: FormDefinition;
+  onSubmit?: (formValues: FormValues) => void;
 }
 
 export interface FormValues {

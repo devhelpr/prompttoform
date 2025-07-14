@@ -19,7 +19,10 @@ import {
   VisibilityCondition,
 } from '../interfaces/form-interfaces';
 
-export const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
+export const FormRenderer: React.FC<FormRendererProps> = ({
+  formJson,
+  onSubmit,
+}) => {
   const [formValues, setFormValues] = useState<FormValues>({});
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
@@ -239,6 +242,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({ formJson }) => {
       ...prev,
       [formId]: formValues,
     }));
+    if (onSubmit) {
+      onSubmit(formValues);
+    }
 
     // Reset form values and validation errors
     setFormValues({});
