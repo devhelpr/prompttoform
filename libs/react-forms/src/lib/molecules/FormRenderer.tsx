@@ -673,6 +673,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           <div className="mb-6">
             {label && <h3 className="text-lg font-medium mb-4">{label}</h3>}
             <form
+              data-netlify="true"
               onSubmit={(e) => {
                 e.preventDefault();
                 // Don't submit the form directly, the Next button will handle it
