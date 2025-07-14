@@ -8,7 +8,7 @@ https://nx.dev/core-features/manage-releases
 npx nx release --projects=react-forms patch --dry-run
 
 ## Publish steps
-npm run build
+npx nx build react-forms
 
 npm login --scope=@devhelpr
 npx nx release --projects=react-forms patch
@@ -17,6 +17,10 @@ npx nx release --projects=react-forms patch
 
 
 =======================
+npx nx release --projects=react-forms patch -- --otp=YOUR_OTP
+
+npx nx build <project> 
+npx nx run-many -t build
 
 just npx nx build doesnt'work
 this does work: npm run build
