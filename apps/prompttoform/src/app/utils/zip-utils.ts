@@ -38,11 +38,9 @@ function generateHiddenFormFields(
       html += `<textarea name="${component.id}" class="hidden"></textarea>\n`;
     } else if (component.type === 'checkbox') {
       html += `<input type="checkbox" name="${component.id}" class="hidden" />\n`;
-    } else if (component.type === 'radio' && component.options) {
-      for (const option of component.options) {
-        html += `<input type="radio" name="${component.id}" value="${option.value}" class="hidden" />\n`;
-      }
-    } else if (component.type === 'select' && component.options) {
+    } else if (component.type === 'radio') {
+      html += `<input type="text" name="${component.id}" class="hidden" />\n`;
+    } else if (component.type === 'select') {
       html += `<input type="text" name="${component.id}" class="hidden" />\n`;
     } else if (component.type === 'date') {
       html += `<input type="text" name="${component.id}" class="hidden" />\n`;
