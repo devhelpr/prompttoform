@@ -17,7 +17,10 @@ export function Layout({ children }: LayoutProps) {
                 className="mx-auto h-16 sm:h-20 mb-8 mt-8"
               />
               <p className="text-zinc-600">
-                Generate and edit Form JSON with natural language prompts
+                Generate and edit a Form with natural language prompts
+              </p>
+              <p className="text-zinc-400 mt-2">
+                Prompt → Form → Preview → Deploy
               </p>
             </div>
 
@@ -33,7 +36,7 @@ export function Layout({ children }: LayoutProps) {
               >
                 Vanilla JS Implementation
               </a> */}
-              <span>Currently supporting Form specification v0.1</span>
+              <span>Currently supporting Form Schema v0.1</span>
             </div>
           </div>
         </div>
