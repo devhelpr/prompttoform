@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
 interface LayoutProps {
   children: ReactNode;
@@ -17,10 +17,7 @@ export function Layout({ children }: LayoutProps) {
                 className="mx-auto h-16 sm:h-20 mb-8 mt-8"
               />
               <p className="text-zinc-600">
-                Generate/edit Form/UI JSON files for your projects using prompts
-              </p>
-              <p className="text-sm text-zinc-500 mt-2">
-                Currently supporting Form specification v0.1
+                Generate and edit Form JSON with natural language prompts
               </p>
             </div>
 
@@ -30,12 +27,13 @@ export function Layout({ children }: LayoutProps) {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-zinc-500">
               <span>Prompt based Form generator</span>
               <span>•</span>
-              <a
+              {/* <a
                 href="/vanilla"
                 className="text-blue-600 hover:text-blue-800 hover:underline"
               >
                 Vanilla JS Implementation
-              </a>
+              </a> */}
+              <span>Currently supporting Form specification v0.1</span>
             </div>
           </div>
         </div>

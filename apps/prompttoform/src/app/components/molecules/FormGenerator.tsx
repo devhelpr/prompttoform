@@ -493,9 +493,7 @@ export function FormGenerator({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-zinc-900">
-          Generate Form/UI
-        </h2>
+        <h2 className="text-xl font-semibold text-zinc-900">Create a Form</h2>
         <button
           onClick={() => setIsSettingsOpen(true)}
           className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -516,18 +514,17 @@ export function FormGenerator({
           htmlFor="prompt"
           className="block text-sm font-medium text-zinc-700 mb-2"
         >
-          Enter your prompt
+          Describe your form (e.g., 'Contact form with name, email, and
+          message')
         </label>
-        <p className="text-sm text-zinc-500 mb-4">
-          Describe a UI / Form / Layout / etc.
-        </p>
+
         <textarea
           id="prompt"
           rows={5}
           className={`w-full rounded-lg border ${
             piiErrors.prompt ? 'border-amber-300' : 'border-zinc-200'
           } shadow-sm focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 p-4 mt-2 text-base`}
-          placeholder=""
+          placeholder="A registration form with name, email, password, and a submit button"
           value={prompt}
           onChange={handlePromptChange}
         />
@@ -541,7 +538,7 @@ export function FormGenerator({
             disabled={isLoading || isEvaluating}
             className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 text-center md:text-left"
           >
-            Load Example Form
+            Load Sample Form
           </button>
           <button
             type="button"
@@ -562,7 +559,7 @@ export function FormGenerator({
                 isLoading ? 'loading-gradient-text-dark' : ''
               }`}
             >
-              {isLoading ? 'Generating...' : 'Generate UI/Form'}
+              {isLoading ? 'Generating...' : 'Create Form'}
             </span>
           </button>
 
