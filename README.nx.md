@@ -25,3 +25,5 @@ npx nx run-many -t build
 just npx nx build doesnt'work
 this does work: npm run build
 
+manual publish:
+npm publish --access public

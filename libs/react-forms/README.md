@@ -1,7 +1,22 @@
 # react-forms
 
-This library was generated with [Nx](https://nx.dev).
+React Forms is a library for building forms with React.
 
-## Running unit tests
+## Installation
 
-Run `nx test react-forms` to execute the unit tests via [Vitest](https://vitest.dev/).
+```bash
+npm install react-forms
+```
+
+## Usage
+
+<FormRenderer formJson={...} />
+
+FormJson is a JSON object that follows the https://prompttoform.ai/schema/v0.1/schema.json schema. Forms can be generated with the https://app.prompttoform.ai
+
+Another requirement is currently tailwindcss.
+
+If you use tailwind v4, then you need this in your main css file:
+@source "../node_modules/@devhelpr/react-forms";
+
+
