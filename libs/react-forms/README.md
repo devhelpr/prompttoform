@@ -12,7 +12,7 @@ npm install react-forms
 
 <FormRenderer formJson={...} />
 
-FormJson is a JSON object that follows the https://prompttoform.ai/schema/v0.1/schema.json schema. Forms can be generated with the https://app.prompttoform.ai
+FormJson is a JSON object that follows the https://prompttoform.ai/schema/v0.1/schema.json schema. Forms can be generated with https://app.prompttoform.ai
 
 Another requirement is currently tailwindcss.
 
