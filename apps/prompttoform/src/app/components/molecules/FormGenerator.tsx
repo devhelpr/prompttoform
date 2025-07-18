@@ -77,6 +77,7 @@ export function FormGenerator({
   const [siteUrl, setSiteUrl] = useState('');
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showSessionHistory, setShowSessionHistory] = useState(false);
+  const [sessionHistoryKey, setSessionHistoryKey] = useState(0); // Add key to force refresh
 
   useEffect(() => {
     // Check for API key on mount
@@ -173,18 +174,15 @@ export function FormGenerator({
         const formattedJson = formatJsonForDisplay(result.parsedJson);
         setAndPersistGeneratedJson(formattedJson, result.parsedJson);
 
-        // Store session in IndexedDB - store the raw JSON string, not the formatted one
-        try {
-          const rawJson = getRawJsonForStorage(result.parsedJson);
-          console.log('Storing session with raw JSON length:', rawJson.length);
-          const sessionId = await FormSessionService.createSession(
-            prompt,
-            rawJson
-          );
-          setCurrentSessionId(sessionId);
-          console.log('Session stored with ID:', sessionId);
-        } catch (error) {
-          console.error('Failed to store session in IndexedDB:', error);
+        // Set the session ID from the service (it already created the session)
+        if (result.sessionId) {
+          setCurrentSessionId(result.sessionId);
+          console.log('Session created with ID:', result.sessionId);
+
+          // Refresh session history if it's open
+          if (showSessionHistory) {
+            setSessionHistoryKey((prev) => prev + 1);
+          }
         }
       } else {
         setError(result.error || 'Failed to generate form');
@@ -252,6 +250,11 @@ export function FormGenerator({
                 currentSessionId,
                 getRawJsonForStorage(parsedOutput)
               );
+
+              // Refresh session history if it's open
+              if (showSessionHistory) {
+                setSessionHistoryKey((prev) => prev + 1);
+              }
             }
           }
         } catch (parseError) {
@@ -395,6 +398,11 @@ export function FormGenerator({
                 getRawJsonForStorage(updatedForm)
               );
               console.log('Update stored for session:', currentSessionId);
+
+              // Refresh session history if it's open
+              if (showSessionHistory) {
+                setSessionHistoryKey((prev) => prev + 1);
+              }
             } catch (error) {
               console.error('Failed to store update in IndexedDB:', error);
             }
@@ -442,10 +450,18 @@ export function FormGenerator({
           ? getRawJsonForStorage(parsedJson)
           : generatedJson;
         FormSessionService.updateSession(currentSessionId, rawJson, siteId)
-          .then(() =>
-            console.log('Netlify site ID stored for session:', currentSessionId)
-          )
-          .catch((error: any) =>
+          .then(() => {
+            console.log(
+              'Netlify site ID stored for session:',
+              currentSessionId
+            );
+
+            // Refresh session history if it's open
+            if (showSessionHistory) {
+              setSessionHistoryKey((prev) => prev + 1);
+            }
+          })
+          .catch((error: Error) =>
             console.error('Failed to store Netlify site ID:', error)
           );
       }
@@ -498,6 +514,11 @@ export function FormGenerator({
     setUpdatePrompt('');
     setUpdateError(null);
     setSiteUrl('');
+
+    // Refresh session history if it's open
+    if (showSessionHistory) {
+      setSessionHistoryKey((prev) => prev + 1);
+    }
   };
 
   return (
@@ -529,6 +550,7 @@ export function FormGenerator({
 
       {showSessionHistory && (
         <SessionHistory
+          key={sessionHistoryKey}
           onLoadSession={handleLoadSession}
           onStartNewSession={handleStartNewSession}
         />
