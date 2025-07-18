@@ -142,6 +142,18 @@ export function FormGenerator({
     saveFormJsonToLocalStorage(json);
   };
 
+  // Utility function to format JSON for display
+  const formatJsonForDisplay = (parsedJson: UIJson): string => {
+    return JSON.stringify(parsedJson, null, 2)
+      .replace(/\\n/g, '\n')
+      .replace(/\\\\/g, '\\');
+  };
+
+  // Utility function to get raw JSON for storage
+  const getRawJsonForStorage = (parsedJson: UIJson): string => {
+    return JSON.stringify(parsedJson);
+  };
+
   const loadExampleForm = () => {
     const formattedJson = JSON.stringify(exampleForm, null, 2);
     setAndPersistGeneratedJson(formattedJson, exampleForm as UIJson);
@@ -224,11 +236,13 @@ export function FormGenerator({
         .replace(/\\\\/g, '\\');
       setAndPersistGeneratedJson(formattedJson, parsedResponse);
 
-      // Store session in IndexedDB
+      // Store session in IndexedDB - store the raw JSON string, not the formatted one
       try {
+        const rawJson = getRawJsonForStorage(parsedResponse);
+        console.log('Storing session with raw JSON length:', rawJson.length);
         const sessionId = await FormSessionService.createSession(
           prompt,
-          formattedJson
+          rawJson
         );
         setCurrentSessionId(sessionId);
         console.log('Session stored with ID:', sessionId);
@@ -289,6 +303,14 @@ export function FormGenerator({
             .replace(/\\\\/g, '\\');
 
           setAndPersistGeneratedJson(formattedJson, parsedOutput);
+
+          // Update the session with the new JSON
+          if (currentSessionId) {
+            await FormSessionService.updateSession(
+              currentSessionId,
+              getRawJsonForStorage(parsedOutput)
+            );
+          }
         } catch (parseError) {
           console.error('Error parsing improved output:', parseError);
           // Keep original output if parsing fails
@@ -480,7 +502,7 @@ export function FormGenerator({
           await FormSessionService.storeUpdate(
             currentSessionId,
             updatePrompt,
-            formattedJson
+            getRawJsonForStorage(updatedForm as UIJson)
           );
           console.log('Update stored for session:', currentSessionId);
         } catch (error) {
@@ -521,11 +543,11 @@ export function FormGenerator({
       // Store Netlify site ID in the current session
       if (currentSessionId && siteUrl) {
         const siteId = siteUrl.split('/').pop() || siteUrl; // Extract site ID from URL
-        FormSessionService.updateSession(
-          currentSessionId,
-          generatedJson,
-          siteId
-        )
+        // Store the raw JSON (not the formatted one)
+        const rawJson = parsedJson
+          ? getRawJsonForStorage(parsedJson)
+          : generatedJson;
+        FormSessionService.updateSession(currentSessionId, rawJson, siteId)
           .then(() =>
             console.log('Netlify site ID stored for session:', currentSessionId)
           )
@@ -537,14 +559,33 @@ export function FormGenerator({
   }
 
   const handleLoadSession = (session: FormSession) => {
-    setPrompt(session.prompt);
-    setGeneratedJson(session.generatedJson);
-    setCurrentSessionId(session.id);
-    setParsedJson(JSON.parse(session.generatedJson) as UIJson);
-    setViewMode('form');
-    setShowSessionHistory(false);
-    setError(null);
-    setEvaluation(null);
+    try {
+      console.log('Loading session:', session.id);
+      console.log('Stored JSON length:', session.generatedJson.length);
+
+      setPrompt(session.prompt);
+      setCurrentSessionId(session.id);
+
+      // Parse the stored JSON - it should be valid JSON string
+      const parsedJson = JSON.parse(session.generatedJson) as UIJson;
+      console.log('Successfully parsed JSON:', parsedJson);
+      setParsedJson(parsedJson);
+
+      // Format the JSON for display (with proper newlines)
+      const formattedJson = formatJsonForDisplay(parsedJson);
+      setGeneratedJson(formattedJson);
+
+      setViewMode('form');
+      setShowSessionHistory(false);
+      setError(null);
+      setEvaluation(null);
+
+      console.log('Session loaded successfully');
+    } catch (error) {
+      console.error('Error loading session:', error);
+      console.error('Problematic JSON:', session.generatedJson);
+      setError('Failed to load session: Invalid JSON format');
+    }
   };
 
   const handleStartNewSession = () => {
