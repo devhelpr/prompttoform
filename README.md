@@ -14,6 +14,9 @@
 * Conditional logic via prompt
 * Live preview as you prompt
 * Exportable JSON schema
+* Session management with IndexedDB storage
+* Form update history tracking
+* Netlify deployment integration with session linking
 
 ## TODO
 
@@ -21,7 +24,18 @@
 - [x] remove "ocif" references and names...
 - [x] use cloudflare worker as proxy to prevent CORS issues
 - [x] add a visual schema of the generated form steps
-- [ ] split up FormRenderer into multiple components
+- [x] split up FormRenderer into multiple components and library
+- [x] deploy netlify and support for netlify forms
+- [ ] improve ui so that it:
+  - [x] store prompt and generated json in indexeddb
+- [x] store all changes (which were done using "update"-functionality) and resulting form json in indexeddb and link to the orginal prompt (via guid)
+- [x] "start new session" button
+  - [x] also store netlify siteid for this session
+- [x] show overview of all sessions and prompts
+- [x] load previous session from indexeddb
+  
+  - [ ] add a "dropdown-button" for examples (including an empty example) 
+
 - [ ] split up FormGenerator into multiple components
 - [ ] Make vitest component tests for FormRenderer using testing-library
 
