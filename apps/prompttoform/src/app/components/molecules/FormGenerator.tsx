@@ -377,8 +377,12 @@ export function FormGenerator({
 
     try {
       // Use the form generation service for updates
+      // Pass the raw JSON (not formatted) to avoid JSON parsing issues
+      const rawJson = parsedJson
+        ? getRawJsonForStorage(parsedJson)
+        : generatedJson;
       const result = await formGenerationService.updateForm(
-        generatedJson,
+        rawJson,
         updatePrompt,
         currentSessionId || undefined
       );
