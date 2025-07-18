@@ -17,6 +17,7 @@ FormJson is a JSON object that follows the https://prompttoform.ai/schema/v0.1/s
 Another requirement is currently tailwindcss.
 
 If you use tailwind v4, then you need this in your main css file:
+
 @source "../node_modules/@devhelpr/react-forms";
 
 
