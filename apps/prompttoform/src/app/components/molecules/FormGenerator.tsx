@@ -19,6 +19,8 @@ import { createFormZip, downloadZip } from '../../utils/zip-utils';
 import { saveFormJsonToLocalStorage } from '../../utils/local-storage';
 import { deployWithNetlify } from '../../utils/netlify-deploy';
 import { blobToBase64 } from '../../utils/blob-to-base64';
+import { FormSessionService, FormSession } from '../../services/indexeddb';
+import { SessionHistory } from './SessionHistory';
 
 // Define the evaluation result type
 interface EvaluationResult {
@@ -86,6 +88,8 @@ export function FormGenerator({
   const [isZipDownloading, setIsZipDownloading] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [siteUrl, setSiteUrl] = useState('');
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [showSessionHistory, setShowSessionHistory] = useState(false);
 
   useEffect(() => {
     // Check for API key on mount
@@ -219,6 +223,18 @@ export function FormGenerator({
         .replace(/\\n/g, '\n')
         .replace(/\\\\/g, '\\');
       setAndPersistGeneratedJson(formattedJson, parsedResponse);
+
+      // Store session in IndexedDB
+      try {
+        const sessionId = await FormSessionService.createSession(
+          prompt,
+          formattedJson
+        );
+        setCurrentSessionId(sessionId);
+        console.log('Session stored with ID:', sessionId);
+      } catch (error) {
+        console.error('Failed to store session in IndexedDB:', error);
+      }
     } catch (err) {
       setError(`An error occurred while generating the UI/Form.`);
       console.error(err);
@@ -457,6 +473,20 @@ export function FormGenerator({
         .replace(/\\\\/g, '\\');
 
       setAndPersistGeneratedJson(formattedJson, updatedForm as UIJson);
+
+      // Store update in IndexedDB if we have a current session
+      if (currentSessionId) {
+        try {
+          await FormSessionService.storeUpdate(
+            currentSessionId,
+            updatePrompt,
+            formattedJson
+          );
+          console.log('Update stored for session:', currentSessionId);
+        } catch (error) {
+          console.error('Failed to store update in IndexedDB:', error);
+        }
+      }
     } catch (error) {
       console.error('Error updating form:', error);
       setUpdateError(
@@ -487,19 +517,68 @@ export function FormGenerator({
       setSiteUrl(siteUrl);
       setIsLoading(false);
       setIsDeploying(false);
+
+      // Store Netlify site ID in the current session
+      if (currentSessionId && siteUrl) {
+        const siteId = siteUrl.split('/').pop() || siteUrl; // Extract site ID from URL
+        FormSessionService.updateSession(
+          currentSessionId,
+          generatedJson,
+          siteId
+        )
+          .then(() =>
+            console.log('Netlify site ID stored for session:', currentSessionId)
+          )
+          .catch((error) =>
+            console.error('Failed to store Netlify site ID:', error)
+          );
+      }
     });
   }
+
+  const handleLoadSession = (session: FormSession) => {
+    setPrompt(session.prompt);
+    setGeneratedJson(session.generatedJson);
+    setCurrentSessionId(session.id);
+    setParsedJson(JSON.parse(session.generatedJson) as UIJson);
+    setViewMode('form');
+    setShowSessionHistory(false);
+    setError(null);
+    setEvaluation(null);
+  };
+
+  const handleStartNewSession = () => {
+    setPrompt('');
+    setGeneratedJson('');
+    setParsedJson(null);
+    setCurrentSessionId(null);
+    setViewMode('form');
+    setShowSessionHistory(false);
+    setError(null);
+    setEvaluation(null);
+    setUpdatePrompt('');
+    setUpdateError(null);
+    setSiteUrl('');
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-zinc-900">Create a Form</h2>
-        <button
-          onClick={() => setIsSettingsOpen(true)}
-          className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Settings
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setShowSessionHistory(!showSessionHistory)}
+            className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            {showSessionHistory ? 'Hide History' : 'Show History'}
+          </button>
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Settings
+          </button>
+        </div>
       </div>
 
       {showApiKeyHint && (
@@ -507,6 +586,13 @@ export function FormGenerator({
           No API key configured. Please go to Settings to configure your
           preferred LLM API key to start generating forms.
         </Alert>
+      )}
+
+      {showSessionHistory && (
+        <SessionHistory
+          onLoadSession={handleLoadSession}
+          onStartNewSession={handleStartNewSession}
+        />
       )}
 
       <div>
