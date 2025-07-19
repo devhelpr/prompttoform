@@ -175,7 +175,7 @@ describe('Service Integration Tests', () => {
       vi.mocked(updateFormWithPatch).mockResolvedValue(mockPatch);
 
       const { FormSessionService } = await import('./indexeddb');
-      vi.mocked(FormSessionService.storeUpdate).mockResolvedValue();
+      vi.mocked(FormSessionService.storeUpdate).mockResolvedValue('update-123');
 
       const result = await formGenerationService.updateForm(
         JSON.stringify(currentForm),
@@ -188,7 +188,8 @@ describe('Service Integration Tests', () => {
       expect(FormSessionService.storeUpdate).toHaveBeenCalledWith(
         'session-123',
         'Update the form title',
-        expect.any(String)
+        expect.any(String),
+        'patch'
       );
     });
 
@@ -264,7 +265,7 @@ describe('Service Integration Tests', () => {
         generatedJson: '{"app":{"title":"Test","pages":[]}}',
         createdAt: new Date(),
         updatedAt: new Date(),
-        netlifySiteId: null,
+        netlifySiteId: undefined,
       };
 
       const result = await sessionManagementService.loadSession(mockSession);
@@ -281,7 +282,8 @@ describe('Service Integration Tests', () => {
         prompt: 'Test prompt',
         generatedJson: 'invalid json',
         createdAt: new Date(),
-        netlifySiteId: null,
+        updatedAt: new Date(),
+        netlifySiteId: undefined,
       };
 
       const result = await sessionManagementService.loadSession(mockSession);
@@ -332,14 +334,16 @@ describe('Service Integration Tests', () => {
           prompt: 'Test 1',
           generatedJson: '{"app":{"title":"Test 1","pages":[]}}',
           createdAt: new Date(),
-          netlifySiteId: null,
+          updatedAt: new Date(),
+          netlifySiteId: undefined,
         },
         {
           id: 'session-2',
           prompt: 'Test 2',
           generatedJson: '{"app":{"title":"Test 2","pages":[]}}',
           createdAt: new Date(),
-          netlifySiteId: null,
+          updatedAt: new Date(),
+          netlifySiteId: undefined,
         },
       ];
 
@@ -375,6 +379,10 @@ describe('Service Integration Tests', () => {
         name: 'test-api',
         apiKey: '',
         systemKey: '',
+        baseUrl: 'https://api.test.com',
+        model: 'test-model',
+        description: 'Test API',
+        isChatCompletionCompatible: true,
       });
 
       const result = await formGenerationService.generateForm('Create a form');

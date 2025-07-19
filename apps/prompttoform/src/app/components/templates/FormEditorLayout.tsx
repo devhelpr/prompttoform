@@ -8,6 +8,7 @@ interface FormEditorLayoutProps {
   onToggleSidebar: () => void;
   onSettingsClick: () => void;
   onHistoryClick: () => void;
+  onImportJsonClick: () => void;
 }
 
 export function FormEditorLayout({
@@ -17,6 +18,7 @@ export function FormEditorLayout({
   onToggleSidebar,
   onSettingsClick,
   onHistoryClick,
+  onImportJsonClick,
 }: FormEditorLayoutProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileOverlay, setShowMobileOverlay] = useState(false);
@@ -134,6 +136,7 @@ export function FormEditorLayout({
           <ResponsiveNavbar
             onSettingsClick={onSettingsClick}
             onHistoryClick={onHistoryClick}
+            onImportJsonClick={onImportJsonClick}
           />
         )}
 

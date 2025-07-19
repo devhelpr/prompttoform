@@ -426,6 +426,7 @@ function AppContent() {
               }
               onSettingsClick={() => setIsSettingsOpen(true)}
               onHistoryClick={() => setIsSessionHistoryOpen(true)}
+              onImportJsonClick={() => setIsImportJsonOpen(true)}
             />
           </div>
         </MainLayout>
@@ -537,6 +538,7 @@ function AppContent() {
             onToggleSidebar={() => setSidebarCollapsed(!state.sidebarCollapsed)}
             onSettingsClick={() => setIsSettingsOpen(true)}
             onHistoryClick={() => setIsSessionHistoryOpen(true)}
+            onImportJsonClick={() => setIsImportJsonOpen(true)}
           />
         </div>
       </MainLayout>

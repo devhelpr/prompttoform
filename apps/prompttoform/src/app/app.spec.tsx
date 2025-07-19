@@ -25,14 +25,14 @@ describe('App', () => {
     expect(baseElement).toBeTruthy();
   });
 
-  it('should have a greeting as the title', () => {
+  it('should have a form description label', () => {
     const { getAllByText } = render(
       <BrowserRouter>
         <App />
       </BrowserRouter>
     );
     expect(
-      getAllByText(new RegExp('Create a Form', 'gi')).length > 0
+      getAllByText(new RegExp('Describe your form', 'gi')).length > 0
     ).toBeTruthy();
   });
 });
