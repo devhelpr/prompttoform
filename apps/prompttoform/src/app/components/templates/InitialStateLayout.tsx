@@ -5,12 +5,14 @@ interface InitialStateLayoutProps {
   children: ReactNode;
   onSettingsClick: () => void;
   onHistoryClick: () => void;
+  onImportJsonClick: () => void;
 }
 
 export function InitialStateLayout({
   children,
   onSettingsClick,
   onHistoryClick,
+  onImportJsonClick,
 }: InitialStateLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100">
@@ -19,6 +21,7 @@ export function InitialStateLayout({
         <ResponsiveNavbar
           onSettingsClick={onSettingsClick}
           onHistoryClick={onHistoryClick}
+          onImportJsonClick={onImportJsonClick}
         />
 
         {/* Main content area */}

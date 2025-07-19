@@ -44,9 +44,13 @@
 - [x] when the sidebar is open, a "update form" textarea is shown but it has no "update" button.
 - [x] also show the history of the creation process in the sidebar.
 - [x] remove the icons in the tabs
-- [ ] show the menubar also on the page when the sidebar is closed.
-- [ ] the "update form" functionality should use the json-patch functionality that was used in earlier versions.
-
+- [x] show the menubar also on the page when the sidebar is closed.
+- [x] the "update form" functionality should use the json-patch functionality that was used in earlier versions.
+- [ ] fix "deploy to netlify" functionality : after authentication netlify redirects to app.prompttoform.ai .. and then it should reload the last session: store the sessionid in localstorage when triggering the deploy and auth.
+- [ ] add a "import json" button to the top menubar.
+- [ ] add some ready-made jsons to the exmple dropdown which will use those jsons to start a new session and open the form in the edit mode with side-bar open
+  
+  
 ## Why?
 
 Forms are painful to spec, slow to build, and hard to get right — especially when technical and non-technical teams need to collaborate. PromptToForm bridges that gap with AI-driven simplicity.

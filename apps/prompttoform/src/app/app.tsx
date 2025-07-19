@@ -14,8 +14,16 @@ import {
 } from './components/molecules/AppStateManager';
 import { Settings } from './components/molecules/Settings';
 import { SessionHistory } from './components/molecules/SessionHistory';
+import { ImportJsonModal } from './components/molecules/ImportJsonModal';
 import { netlifyTokenHandler } from './utils/netlify-token-handler';
-import { loadFormJsonFromLocalStorage } from './utils/local-storage';
+import {
+  saveFormJsonToLocalStorage,
+  saveSessionIdToLocalStorage,
+  loadSessionIdFromLocalStorage,
+  clearFormJsonFromLocalStorage,
+  clearSessionIdFromLocalStorage,
+  loadFormJsonFromLocalStorage,
+} from './utils/local-storage';
 import { FormGenerationService } from './services/form-generation.service';
 import { UISchema } from './types/ui-schema';
 import schemaJson from '@schema';
@@ -30,6 +38,7 @@ import { getCurrentAPIConfig } from './services/llm-api';
 
 netlifyTokenHandler();
 let triggerDeploy = false;
+let storedSessionId: string | null = null;
 
 if (
   window.location.search.includes('state') &&
@@ -37,6 +46,7 @@ if (
   window.location.search.includes('provider')
 ) {
   triggerDeploy = true;
+  storedSessionId = loadSessionIdFromLocalStorage();
   window.history.replaceState({}, '', '/');
 }
 
@@ -71,6 +81,7 @@ function AppContent() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSessionHistoryOpen, setIsSessionHistoryOpen] = useState(false);
+  const [isImportJsonOpen, setIsImportJsonOpen] = useState(false);
   const [updatePrompt, setUpdatePrompt] = useState('');
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
@@ -222,6 +233,12 @@ function AppContent() {
 
     setIsDeploying(true);
     try {
+      // Store current session ID and form JSON for post-authentication restoration
+      if (state.currentSessionId) {
+        saveSessionIdToLocalStorage(state.currentSessionId);
+        saveFormJsonToLocalStorage(state.generatedJson);
+      }
+
       const zipBlob = await createFormZip(state.generatedJson);
       const base64 = await blobToBase64(zipBlob);
 
@@ -240,6 +257,10 @@ function AppContent() {
             );
           }
         }
+
+        // Clear stored data after successful deployment
+        clearFormJsonFromLocalStorage();
+        clearSessionIdFromLocalStorage();
 
         setIsDeploying(false);
       });
@@ -311,19 +332,67 @@ function AppContent() {
     setIsSessionHistoryOpen(false);
   };
 
+  const handleImportJson = async (json: string, prompt?: string) => {
+    try {
+      // Parse the JSON to validate it
+      const parsedJson = parseJsonSafely(json);
+      if (!parsedJson) {
+        setError('Invalid JSON format');
+        return;
+      }
+
+      // Format the JSON for display
+      const formattedJson = formatJsonForDisplay(parsedJson);
+
+      // Set the form data
+      setPrompt(prompt || 'Imported form');
+      setGeneratedJson(formattedJson, parsedJson);
+
+      // Create a new session for the imported form
+      const sessionId = await FormSessionService.createSession(
+        prompt || 'Imported form',
+        formattedJson
+      );
+      setCurrentSessionId(sessionId);
+
+      // Transition to editor view
+      transitionToEditor();
+      setError(null);
+    } catch (err) {
+      setError('Failed to import JSON form');
+      console.error(err);
+    }
+  };
+
   // If we have a formJson from URL params (triggerDeploy), show the editor view
   if (triggerDeploy && formJson) {
+    // Restore session if we have a stored session ID
+    if (storedSessionId && !state.currentSessionId) {
+      setCurrentSessionId(storedSessionId);
+    }
+
+    // Set the form JSON if not already set
+    if (!state.generatedJson) {
+      setGeneratedJson(formJson);
+    }
+
+    // Transition to editor if not already there
+    if (state.currentView !== 'editor') {
+      transitionToEditor();
+    }
+
     return (
       <ErrorBoundary>
         <MainLayout
           onSettingsClick={() => setIsSettingsOpen(true)}
           onHistoryClick={() => setIsSessionHistoryOpen(true)}
+          onImportJsonClick={() => setIsImportJsonOpen(true)}
         >
           <div className="h-screen">
             <FormEditorLayout
               sidebar={
                 <FormEditorSidebar
-                  originalPrompt=""
+                  originalPrompt={state.prompt || 'Form loaded from deployment'}
                   updatePrompt={updatePrompt}
                   onUpdatePromptChange={setUpdatePrompt}
                   onDeploy={handleDeploy}
@@ -373,6 +442,12 @@ function AppContent() {
           onStartNewSession={handleStartNewSession}
         />
 
+        <ImportJsonModal
+          isOpen={isImportJsonOpen}
+          onClose={() => setIsImportJsonOpen(false)}
+          onImport={handleImportJson}
+        />
+
         <PerformanceMonitor />
       </ErrorBoundary>
     );
@@ -385,9 +460,11 @@ function AppContent() {
         <InitialStateLayout
           onSettingsClick={() => setIsSettingsOpen(true)}
           onHistoryClick={() => setIsSessionHistoryOpen(true)}
+          onImportJsonClick={() => setIsImportJsonOpen(true)}
         >
           <InitialPromptInput
             onGenerate={handleGenerate}
+            onLoadJson={handleImportJson}
             isLoading={state.isLoading}
             error={state.error}
           />
@@ -405,6 +482,12 @@ function AppContent() {
           onStartNewSession={handleStartNewSession}
         />
 
+        <ImportJsonModal
+          isOpen={isImportJsonOpen}
+          onClose={() => setIsImportJsonOpen(false)}
+          onImport={handleImportJson}
+        />
+
         <PerformanceMonitor />
       </ErrorBoundary>
     );
@@ -416,6 +499,7 @@ function AppContent() {
       <MainLayout
         onSettingsClick={() => setIsSettingsOpen(true)}
         onHistoryClick={() => setIsSessionHistoryOpen(true)}
+        onImportJsonClick={() => setIsImportJsonOpen(true)}
       >
         <div className="h-screen">
           <FormEditorLayout
@@ -467,6 +551,12 @@ function AppContent() {
         onClose={() => setIsSessionHistoryOpen(false)}
         onLoadSession={handleLoadSession}
         onStartNewSession={handleStartNewSession}
+      />
+
+      <ImportJsonModal
+        isOpen={isImportJsonOpen}
+        onClose={() => setIsImportJsonOpen(false)}
+        onImport={handleImportJson}
       />
 
       <PerformanceMonitor />

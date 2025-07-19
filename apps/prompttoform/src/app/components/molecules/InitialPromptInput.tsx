@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { READY_MADE_FORMS } from './example-form-definitions/ready-made-forms';
 
 interface InitialPromptInputProps {
   onGenerate: (prompt: string) => void;
+  onLoadJson: (json: string, prompt?: string) => void;
   isLoading: boolean;
   error?: string | null;
 }
@@ -45,6 +47,7 @@ const EXAMPLE_PROMPTS = [
 
 export function InitialPromptInput({
   onGenerate,
+  onLoadJson,
   isLoading,
   error,
 }: InitialPromptInputProps) {
@@ -164,18 +167,92 @@ export function InitialPromptInput({
 
           {/* Examples dropdown menu */}
           {isExamplesOpen && (
-            <div className="absolute z-10 mt-1 w-80 bg-white rounded-lg shadow-lg border border-zinc-200 py-1">
+            <div className="absolute z-10 mt-1 w-96 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 max-h-96 overflow-y-auto">
+              {/* Ready-made Forms Section */}
+              <div className="px-4 py-2 bg-zinc-50 border-b border-zinc-200">
+                <h3 className="text-sm font-semibold text-zinc-700">
+                  Ready-made Forms
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  Load complete form definitions
+                </p>
+              </div>
+              {READY_MADE_FORMS.map((form, index) => (
+                <button
+                  key={`form-${index}`}
+                  onClick={() => {
+                    onLoadJson(form.json, form.prompt);
+                    setIsExamplesOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 hover:bg-zinc-50 focus:bg-zinc-50 focus:outline-none transition-colors border-b border-zinc-100"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="font-medium text-zinc-900 flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-2 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        {form.name}
+                      </div>
+                      <div className="text-sm text-zinc-600 mt-1">
+                        {form.description}
+                      </div>
+                    </div>
+                    <div className="text-xs text-zinc-400 bg-zinc-100 px-2 py-1 rounded">
+                      Load JSON
+                    </div>
+                  </div>
+                </button>
+              ))}
+
+              {/* Prompts Section */}
+              <div className="px-4 py-2 bg-zinc-50 border-b border-zinc-200">
+                <h3 className="text-sm font-semibold text-zinc-700">
+                  Example Prompts
+                </h3>
+                <p className="text-xs text-zinc-500">Generate forms with AI</p>
+              </div>
               {EXAMPLE_PROMPTS.map((example, index) => (
                 <button
-                  key={index}
+                  key={`prompt-${index}`}
                   onClick={() => handleExampleSelect(example.prompt)}
-                  className="w-full text-left px-4 py-3 hover:bg-zinc-50 focus:bg-zinc-50 focus:outline-none transition-colors"
+                  className="w-full text-left px-4 py-3 hover:bg-zinc-50 focus:bg-zinc-50 focus:outline-none transition-colors border-b border-zinc-100"
                 >
-                  <div className="font-medium text-zinc-900">
-                    {example.name}
-                  </div>
-                  <div className="text-sm text-zinc-600 mt-1 truncate">
-                    {example.prompt}
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="font-medium text-zinc-900 flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-2 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 10V3L4 14h7v7l9-11h-7z"
+                          />
+                        </svg>
+                        {example.name}
+                      </div>
+                      <div className="text-sm text-zinc-600 mt-1 truncate">
+                        {example.prompt}
+                      </div>
+                    </div>
+                    <div className="text-xs text-zinc-400 bg-zinc-100 px-2 py-1 rounded">
+                      Generate
+                    </div>
                   </div>
                 </button>
               ))}

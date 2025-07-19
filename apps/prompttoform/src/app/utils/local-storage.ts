@@ -1,21 +1,25 @@
 // Utility functions for handling localStorage operations for generated form JSON
 
-const FORM_JSON_KEY = 'generatedForm';
+export const loadFormJsonFromLocalStorage = (): string => {
+  return localStorage.getItem('formJson') || '';
+};
 
-export function saveFormJsonToLocalStorage(json: string) {
-  try {
-    localStorage.setItem(FORM_JSON_KEY, json);
-  } catch (e) {
-    // Optionally handle quota exceeded or other errors
-    console.error('Failed to save form JSON to localStorage:', e);
-  }
-}
+export const saveFormJsonToLocalStorage = (json: string): void => {
+  localStorage.setItem('formJson', json);
+};
 
-export function loadFormJsonFromLocalStorage(): string | null {
-  try {
-    return localStorage.getItem(FORM_JSON_KEY);
-  } catch (e) {
-    console.error('Failed to load form JSON from localStorage:', e);
-    return null;
-  }
-}
+export const clearFormJsonFromLocalStorage = (): void => {
+  localStorage.removeItem('formJson');
+};
+
+export const saveSessionIdToLocalStorage = (sessionId: string): void => {
+  localStorage.setItem('deploySessionId', sessionId);
+};
+
+export const loadSessionIdFromLocalStorage = (): string | null => {
+  return localStorage.getItem('deploySessionId');
+};
+
+export const clearSessionIdFromLocalStorage = (): void => {
+  localStorage.removeItem('deploySessionId');
+};
