@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { MainLayout } from './components/templates/MainLayout';
 import { InitialStateLayout } from './components/templates/InitialStateLayout';
 import { FormEditorLayout } from './components/templates/FormEditorLayout';
 import { InitialPromptInput } from './components/molecules/InitialPromptInput';
 import { FormEditorSidebar } from './components/molecules/FormEditorSidebar';
 import { FormPreviewPanel } from './components/molecules/FormPreviewPanel';
+import { ErrorBoundary } from './components/molecules/ErrorBoundary';
 import {
   AppStateProvider,
   useAppState,
@@ -25,6 +26,8 @@ import { blobToBase64 } from './utils/blob-to-base64';
 import { getSystemPrompt } from './prompt-library/system-prompt';
 import { getCurrentAPIConfig } from './services/llm-api';
 
+// Lazy load heavy components - removed unused import
+
 netlifyTokenHandler();
 let triggerDeploy = false;
 
@@ -42,6 +45,15 @@ const formJson = triggerDeploy ? loadFormJsonFromLocalStorage() : '';
 // Initialize services
 const uiSchema = schemaJson as unknown as UISchema;
 const formGenerationService = new FormGenerationService(uiSchema, true);
+
+// Loading component
+function LoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+    </div>
+  );
+}
 
 function AppContent() {
   const {
@@ -211,7 +223,7 @@ function AppContent() {
   // If we have a formJson from URL params (triggerDeploy), show the editor view
   if (triggerDeploy && formJson) {
     return (
-      <>
+      <ErrorBoundary>
         <MainLayout
           onSettingsClick={() => setIsSettingsOpen(true)}
           onHistoryClick={() => setIsSessionHistoryOpen(true)}
@@ -231,18 +243,20 @@ function AppContent() {
                 />
               }
               mainContent={
-                <FormPreviewPanel
-                  parsedJson={state.parsedJson}
-                  activeTab={state.activeTab}
-                  onTabChange={setActiveTab}
-                  onJsonChange={setGeneratedJson}
-                  generatedJson={state.generatedJson}
-                  onCopyToClipboard={handleCopyToClipboard}
-                  onDownload={handleDownload}
-                  onDownloadZip={handleDownloadZip}
-                  isZipDownloading={isZipDownloading}
-                  siteUrl={siteUrl}
-                />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <FormPreviewPanel
+                    parsedJson={state.parsedJson}
+                    activeTab={state.activeTab}
+                    onTabChange={setActiveTab}
+                    onJsonChange={setGeneratedJson}
+                    generatedJson={state.generatedJson}
+                    onCopyToClipboard={handleCopyToClipboard}
+                    onDownload={handleDownload}
+                    onDownloadZip={handleDownloadZip}
+                    isZipDownloading={isZipDownloading}
+                    siteUrl={siteUrl}
+                  />
+                </Suspense>
               }
               sidebarCollapsed={state.sidebarCollapsed}
               onToggleSidebar={() =>
@@ -263,26 +277,28 @@ function AppContent() {
           onLoadSession={handleLoadSession}
           onStartNewSession={handleStartNewSession}
         />
-      </>
+      </ErrorBoundary>
     );
   }
 
   // Show initial state or editor based on current view
   if (state.currentView === 'initial') {
     return (
-      <InitialStateLayout>
-        <InitialPromptInput
-          onGenerate={handleGenerate}
-          isLoading={state.isLoading}
-          error={state.error}
-        />
-      </InitialStateLayout>
+      <ErrorBoundary>
+        <InitialStateLayout>
+          <InitialPromptInput
+            onGenerate={handleGenerate}
+            isLoading={state.isLoading}
+            error={state.error}
+          />
+        </InitialStateLayout>
+      </ErrorBoundary>
     );
   }
 
   // Show editor view
   return (
-    <>
+    <ErrorBoundary>
       <MainLayout
         onSettingsClick={() => setIsSettingsOpen(true)}
         onHistoryClick={() => setIsSessionHistoryOpen(true)}
@@ -302,18 +318,20 @@ function AppContent() {
               />
             }
             mainContent={
-              <FormPreviewPanel
-                parsedJson={state.parsedJson}
-                activeTab={state.activeTab}
-                onTabChange={setActiveTab}
-                onJsonChange={setGeneratedJson}
-                generatedJson={state.generatedJson}
-                onCopyToClipboard={handleCopyToClipboard}
-                onDownload={handleDownload}
-                onDownloadZip={handleDownloadZip}
-                isZipDownloading={isZipDownloading}
-                siteUrl={siteUrl}
-              />
+              <Suspense fallback={<LoadingSpinner />}>
+                <FormPreviewPanel
+                  parsedJson={state.parsedJson}
+                  activeTab={state.activeTab}
+                  onTabChange={setActiveTab}
+                  onJsonChange={setGeneratedJson}
+                  generatedJson={state.generatedJson}
+                  onCopyToClipboard={handleCopyToClipboard}
+                  onDownload={handleDownload}
+                  onDownloadZip={handleDownloadZip}
+                  isZipDownloading={isZipDownloading}
+                  siteUrl={siteUrl}
+                />
+              </Suspense>
             }
             sidebarCollapsed={state.sidebarCollapsed}
             onToggleSidebar={() => setSidebarCollapsed(!state.sidebarCollapsed)}
@@ -332,15 +350,17 @@ function AppContent() {
         onLoadSession={handleLoadSession}
         onStartNewSession={handleStartNewSession}
       />
-    </>
+    </ErrorBoundary>
   );
 }
 
 function App() {
   return (
-    <AppStateProvider>
-      <AppContent />
-    </AppStateProvider>
+    <ErrorBoundary>
+      <AppStateProvider>
+        <AppContent />
+      </AppStateProvider>
+    </ErrorBoundary>
   );
 }
 

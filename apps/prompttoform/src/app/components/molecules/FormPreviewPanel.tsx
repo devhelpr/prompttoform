@@ -3,6 +3,7 @@ import { ViewMode } from './AppStateManager';
 import { FormRenderer } from '@devhelpr/react-forms';
 import FormFlow from './FormFlow';
 import FormFlowMermaid from './FormFlowMermaid';
+import { useEffect, useMemo } from 'react';
 
 interface FormPreviewPanelProps {
   parsedJson: UIJson | null;
@@ -29,18 +30,68 @@ export function FormPreviewPanel({
   isZipDownloading,
   siteUrl,
 }: FormPreviewPanelProps) {
-  const tabs = [
-    { id: 'form' as ViewMode, label: 'Form Preview', icon: '📋' },
-    { id: 'flow' as ViewMode, label: 'Flow', icon: '🔄' },
-    { id: 'mermaid-flow' as ViewMode, label: 'Visual Flow', icon: '📊' },
-    { id: 'json' as ViewMode, label: 'JSON', icon: '{}' },
-  ];
+  const tabs = useMemo(
+    () => [
+      {
+        id: 'form' as ViewMode,
+        label: 'Form Preview',
+        icon: '📋',
+        shortcut: '1',
+      },
+      { id: 'flow' as ViewMode, label: 'Flow', icon: '🔄', shortcut: '2' },
+      {
+        id: 'mermaid-flow' as ViewMode,
+        label: 'Visual Flow',
+        icon: '📊',
+        shortcut: '3',
+      },
+      { id: 'json' as ViewMode, label: 'JSON', icon: '{}', shortcut: '4' },
+    ],
+    []
+  );
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle shortcuts when not typing in input fields
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      // Tab switching shortcuts (1-4)
+      if (e.key >= '1' && e.key <= '4') {
+        const tabIndex = parseInt(e.key) - 1;
+        if (tabs[tabIndex]) {
+          e.preventDefault();
+          onTabChange(tabs[tabIndex].id);
+        }
+      }
+
+      // Copy shortcut (Cmd/Ctrl + C)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
+        e.preventDefault();
+        onCopyToClipboard();
+      }
+
+      // Download shortcut (Cmd/Ctrl + D)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
+        e.preventDefault();
+        onDownload();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onTabChange, onCopyToClipboard, onDownload, tabs]);
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'form':
         return parsedJson && parsedJson.app ? (
-          <div className="bg-white p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-200px)]">
+          <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-200px)]">
             <FormRenderer formJson={parsedJson} />
           </div>
         ) : (
@@ -51,7 +102,7 @@ export function FormPreviewPanel({
 
       case 'flow':
         return parsedJson && parsedJson.app ? (
-          <div className="bg-white p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-200px)]">
+          <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-200px)]">
             <FormFlow formJson={parsedJson} />
           </div>
         ) : (
@@ -62,7 +113,7 @@ export function FormPreviewPanel({
 
       case 'mermaid-flow':
         return parsedJson && parsedJson.app ? (
-          <div className="bg-white p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-200px)]">
+          <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-200px)]">
             <FormFlowMermaid formJson={parsedJson} />
           </div>
         ) : (
@@ -77,9 +128,10 @@ export function FormPreviewPanel({
             <textarea
               value={generatedJson}
               onChange={(e) => onJsonChange(e.target.value)}
-              className="w-full h-96 p-4 font-mono text-sm border border-zinc-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+              className="w-full h-64 sm:h-96 p-4 font-mono text-sm border border-zinc-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
               spellCheck={false}
               placeholder="JSON content will appear here..."
+              aria-label="JSON editor"
             />
             <div className="flex justify-end">
               <button
@@ -103,16 +155,17 @@ export function FormPreviewPanel({
   return (
     <div className="h-full flex flex-col">
       {/* Header with tabs */}
-      <div className="bg-white border-b border-zinc-200 px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-white border-b border-zinc-200 px-4 sm:px-6 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2 className="text-lg font-semibold text-zinc-900">Form Preview</h2>
 
           {/* Action buttons */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 overflow-x-auto pb-2 sm:pb-0">
             <button
               onClick={onCopyToClipboard}
-              className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-              title="Copy to Clipboard"
+              className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors whitespace-nowrap"
+              title="Copy to Clipboard (⌘+C)"
+              aria-label="Copy to clipboard"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -132,8 +185,9 @@ export function FormPreviewPanel({
 
             <button
               onClick={onDownload}
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-              title="Download JSON"
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors whitespace-nowrap"
+              title="Download JSON (⌘+D)"
+              aria-label="Download JSON"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -154,8 +208,9 @@ export function FormPreviewPanel({
             <button
               onClick={onDownloadZip}
               disabled={isZipDownloading}
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               title="Download React Form Zip"
+              aria-label="Download React form zip"
             >
               {isZipDownloading ? (
                 <svg
@@ -200,19 +255,29 @@ export function FormPreviewPanel({
 
         {/* Tab navigation */}
         <div className="mt-4">
-          <nav className="flex space-x-8">
+          <nav
+            className="flex space-x-4 sm:space-x-8 overflow-x-auto pb-2 sm:pb-0"
+            role="tablist"
+          >
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                aria-controls={`tabpanel-${tab.id}`}
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'border-indigo-500 text-indigo-600'
                     : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
                 }`}
+                title={`${tab.label} (${tab.shortcut})`}
               >
                 <span className="mr-2">{tab.icon}</span>
                 {tab.label}
+                <span className="ml-2 text-xs opacity-60">
+                  ({tab.shortcut})
+                </span>
               </button>
             ))}
           </nav>
@@ -223,7 +288,7 @@ export function FormPreviewPanel({
           <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center space-x-2">
               <svg
-                className="w-4 h-4 text-green-600"
+                className="w-4 h-4 text-green-600 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -242,7 +307,7 @@ export function FormPreviewPanel({
                 href={siteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-green-600 hover:text-green-800 underline"
+                className="text-sm text-green-600 hover:text-green-800 underline truncate"
               >
                 {siteUrl}
               </a>
@@ -252,7 +317,15 @@ export function FormPreviewPanel({
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 p-6 overflow-y-auto">{renderTabContent()}</div>
+      <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
+        <div
+          role="tabpanel"
+          id={`tabpanel-${activeTab}`}
+          aria-labelledby={`tab-${activeTab}`}
+        >
+          {renderTabContent()}
+        </div>
+      </div>
     </div>
   );
 }
