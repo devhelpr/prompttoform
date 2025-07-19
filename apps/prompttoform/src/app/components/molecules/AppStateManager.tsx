@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { UIJson } from '../../types/form-generator.types';
 
-export type ViewMode = 'form' | 'flow' | 'json';
+export type ViewMode = 'form' | 'flow' | 'mermaid-flow' | 'json';
 export type AppView = 'initial' | 'editor';
 
 interface AppState {

@@ -253,11 +253,11 @@ interface FormPreviewPanelProps {
 - [x] Create InitialStateLayout
 - [x] Set up state management structure
 
-### Week 2: Core Components
-- [ ] Implement InitialPromptInput
-- [ ] Create FormEditorLayout
-- [ ] Build FormEditorSidebar
-- [ ] Develop FormPreviewPanel
+### Week 2: Core Components ✅ COMPLETED
+- [x] Implement InitialPromptInput
+- [x] Create FormEditorLayout
+- [x] Build FormEditorSidebar
+- [x] Develop FormPreviewPanel
 
 ### Week 3: Integration
 - [ ] Refactor App.tsx
