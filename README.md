@@ -40,10 +40,12 @@
 - [x] change the layout so that when the application or session starts that there's only a textarea in the middle of the screen. The application will also have a top menu bar (which should be reponsive) with on the right the menu options for settings and show history. On mobile (smaller viewport) a hambuerger menu should be shown with these options.
 - [x] after entering the promt to create a form, the layout of the application should change to show the form preview, the visiual flow the form json. On the left side of the screen should be a sidebar which contains the entered prompt in read-only mode and a new textarea to update the form. There also should be a button to "deploy to netlify" and a button to "evaluate and rerun".
 
-- [ ] change the flow and visual-flow tabs and replace with a single tab "visual flow" that uses FormFlowMermaid component
-- [ ] when the sidebar is open, a "update form" textarea is shown but it has no "update" button.
-- [ ] also show the history of the creation process in the sidebar.
-- [ ] remove the icons in the tabs
+- [x] change the flow and visual-flow tabs and replace with a single tab "visual flow" that uses FormFlowMermaid component
+- [x] when the sidebar is open, a "update form" textarea is shown but it has no "update" button.
+- [x] also show the history of the creation process in the sidebar.
+- [x] remove the icons in the tabs
+- [ ] show the menubar also on the page when the sidebar is closed.
+- [ ] the "update form" functionality should use the json-patch functionality that was used in earlier versions.
 
 ## Why?
 

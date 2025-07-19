@@ -182,45 +182,27 @@ function AppContent() {
     setError(null);
 
     try {
-      // For now, we'll use the same evaluation logic as handleEvaluate
-      // In the future, this could be a simpler update without full evaluation
-      const systemMessage = getSystemPrompt(uiSchema);
-      const apiConfig = getCurrentAPIConfig();
-
-      if (!apiConfig.apiKey && !apiConfig.systemKey) {
-        setError(
-          `No API key set for ${apiConfig.name}. Please configure it in the Settings.`
-        );
-        setIsUpdating(false);
-        return;
-      }
-
-      const result = await evaluateAndRerunIfNeeded(
-        state.prompt,
-        systemMessage,
+      // Use the form generation service's updateForm method which uses JSON-patch
+      const formGenerationService = new FormGenerationService(uiSchema, true);
+      const result = await formGenerationService.updateForm(
         state.generatedJson,
-        apiConfig
+        updatePrompt,
+        state.currentSessionId || undefined
       );
 
-      if (result.wasRerun && result.improvedOutput) {
-        try {
-          const parsedOutput = parseJsonSafely(result.improvedOutput);
-          if (parsedOutput) {
-            const formattedJson = formatJsonForDisplay(parsedOutput);
-            setGeneratedJson(formattedJson, parsedOutput);
-
-            // Store update in session
-            if (state.currentSessionId) {
-              await FormSessionService.storeUpdate(
-                state.currentSessionId,
-                updatePrompt,
-                formattedJson
-              );
-            }
-          }
-        } catch (parseError) {
-          console.error('Error parsing improved output:', parseError);
+      if (result.success && result.updatedJson) {
+        // Parse the updated JSON to update the parsed state
+        const parsedJson = parseJsonSafely(result.updatedJson);
+        if (parsedJson) {
+          setGeneratedJson(result.updatedJson, parsedJson);
+        } else {
+          setGeneratedJson(result.updatedJson);
         }
+
+        // Clear the update prompt after successful update
+        setUpdatePrompt('');
+      } else {
+        setError(result.error || 'Failed to update form');
       }
     } catch (err) {
       setError('An error occurred during update.');
@@ -373,6 +355,8 @@ function AppContent() {
               onToggleSidebar={() =>
                 setSidebarCollapsed(!state.sidebarCollapsed)
               }
+              onSettingsClick={() => setIsSettingsOpen(true)}
+              onHistoryClick={() => setIsSessionHistoryOpen(true)}
             />
           </div>
         </MainLayout>
@@ -451,6 +435,8 @@ function AppContent() {
             }
             sidebarCollapsed={state.sidebarCollapsed}
             onToggleSidebar={() => setSidebarCollapsed(!state.sidebarCollapsed)}
+            onSettingsClick={() => setIsSettingsOpen(true)}
+            onHistoryClick={() => setIsSessionHistoryOpen(true)}
           />
         </div>
       </MainLayout>

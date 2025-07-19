@@ -1,10 +1,13 @@
 import { ReactNode, useEffect, useState } from 'react';
+import { ResponsiveNavbar } from './ResponsiveNavbar';
 
 interface FormEditorLayoutProps {
   sidebar: ReactNode;
   mainContent: ReactNode;
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
+  onSettingsClick: () => void;
+  onHistoryClick: () => void;
 }
 
 export function FormEditorLayout({
@@ -12,6 +15,8 @@ export function FormEditorLayout({
   mainContent,
   sidebarCollapsed,
   onToggleSidebar,
+  onSettingsClick,
+  onHistoryClick,
 }: FormEditorLayoutProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileOverlay, setShowMobileOverlay] = useState(false);
@@ -124,6 +129,14 @@ export function FormEditorLayout({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-0">
+        {/* Menu Bar - Show when sidebar is collapsed or on mobile */}
+        {(sidebarCollapsed || isMobile) && (
+          <ResponsiveNavbar
+            onSettingsClick={onSettingsClick}
+            onHistoryClick={onHistoryClick}
+          />
+        )}
+
         {/* Mobile Sidebar Toggle Button */}
         {isMobile && (
           <div className="lg:hidden p-2 border-b border-zinc-200 bg-white">
