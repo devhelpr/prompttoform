@@ -1,10 +1,8 @@
 import { UIJson } from '../../types/form-generator.types';
 import { ViewMode } from './AppStateManager';
 import { FormRenderer } from '@devhelpr/react-forms';
-import FormFlow from './FormFlow';
-
+import FormFlowMermaid from './FormFlowMermaid';
 import { JsonValidator } from './JsonValidator';
-import { EnhancedFormFlow } from './EnhancedFormFlow';
 import { useEffect, useMemo, useState } from 'react';
 
 interface FormPreviewPanelProps {
@@ -37,20 +35,9 @@ export function FormPreviewPanel({
 
   const tabs = useMemo(
     () => [
-      {
-        id: 'form' as ViewMode,
-        label: 'Form Preview',
-        icon: '📋',
-        shortcut: '1',
-      },
-      { id: 'flow' as ViewMode, label: 'Flow', icon: '🔄', shortcut: '2' },
-      {
-        id: 'mermaid-flow' as ViewMode,
-        label: 'Visual Flow',
-        icon: '📊',
-        shortcut: '3',
-      },
-      { id: 'json' as ViewMode, label: 'JSON', icon: '{}', shortcut: '4' },
+      { id: 'form' as ViewMode, label: 'Form Preview', shortcut: '1' },
+      { id: 'flow' as ViewMode, label: 'Visual Flow', shortcut: '2' },
+      { id: 'json' as ViewMode, label: 'JSON', shortcut: '3' },
     ],
     []
   );
@@ -66,8 +53,8 @@ export function FormPreviewPanel({
         return;
       }
 
-      // Tab switching shortcuts (1-4)
-      if (e.key >= '1' && e.key <= '4') {
+      // Tab switching shortcuts (1-3)
+      if (e.key >= '1' && e.key <= '3') {
         const tabIndex = parseInt(e.key) - 1;
         if (tabs[tabIndex]) {
           e.preventDefault();
@@ -120,18 +107,7 @@ export function FormPreviewPanel({
       case 'flow':
         return parsedJson && parsedJson.app ? (
           <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-200px)]">
-            <FormFlow formJson={parsedJson} />
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-64 text-zinc-500">
-            No form data available
-          </div>
-        );
-
-      case 'mermaid-flow':
-        return parsedJson && parsedJson.app ? (
-          <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-200px)]">
-            <EnhancedFormFlow formJson={parsedJson} />
+            <FormFlowMermaid formJson={parsedJson} />
           </div>
         ) : (
           <div className="flex items-center justify-center h-64 text-zinc-500">
@@ -356,7 +332,6 @@ export function FormPreviewPanel({
                 }`}
                 title={`${tab.label} (${tab.shortcut})`}
               >
-                <span className="mr-2">{tab.icon}</span>
                 {tab.label}
                 <span className="ml-2 text-xs opacity-60">
                   ({tab.shortcut})

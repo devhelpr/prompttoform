@@ -73,6 +73,7 @@ function AppContent() {
   const [updatePrompt, setUpdatePrompt] = useState('');
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [isZipDownloading, setIsZipDownloading] = useState(false);
   const [siteUrl, setSiteUrl] = useState('');
 
@@ -168,6 +169,64 @@ function AppContent() {
       console.error(err);
     } finally {
       setIsEvaluating(false);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!updatePrompt.trim() || !state.generatedJson) {
+      setError('Please enter an update prompt and ensure form is generated');
+      return;
+    }
+
+    setIsUpdating(true);
+    setError(null);
+
+    try {
+      // For now, we'll use the same evaluation logic as handleEvaluate
+      // In the future, this could be a simpler update without full evaluation
+      const systemMessage = getSystemPrompt(uiSchema);
+      const apiConfig = getCurrentAPIConfig();
+
+      if (!apiConfig.apiKey && !apiConfig.systemKey) {
+        setError(
+          `No API key set for ${apiConfig.name}. Please configure it in the Settings.`
+        );
+        setIsUpdating(false);
+        return;
+      }
+
+      const result = await evaluateAndRerunIfNeeded(
+        state.prompt,
+        systemMessage,
+        state.generatedJson,
+        apiConfig
+      );
+
+      if (result.wasRerun && result.improvedOutput) {
+        try {
+          const parsedOutput = parseJsonSafely(result.improvedOutput);
+          if (parsedOutput) {
+            const formattedJson = formatJsonForDisplay(parsedOutput);
+            setGeneratedJson(formattedJson, parsedOutput);
+
+            // Store update in session
+            if (state.currentSessionId) {
+              await FormSessionService.storeUpdate(
+                state.currentSessionId,
+                updatePrompt,
+                formattedJson
+              );
+            }
+          }
+        } catch (parseError) {
+          console.error('Error parsing improved output:', parseError);
+        }
+      }
+    } catch (err) {
+      setError('An error occurred during update.');
+      console.error(err);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -287,8 +346,10 @@ function AppContent() {
                   onUpdatePromptChange={setUpdatePrompt}
                   onDeploy={handleDeploy}
                   onEvaluate={handleEvaluate}
+                  onUpdate={handleUpdate}
                   isDeploying={isDeploying}
                   isEvaluating={isEvaluating}
+                  isUpdating={isUpdating}
                   currentSessionId={state.currentSessionId}
                 />
               }
@@ -365,8 +426,10 @@ function AppContent() {
                 onUpdatePromptChange={setUpdatePrompt}
                 onDeploy={handleDeploy}
                 onEvaluate={handleEvaluate}
+                onUpdate={handleUpdate}
                 isDeploying={isDeploying}
                 isEvaluating={isEvaluating}
+                isUpdating={isUpdating}
                 currentSessionId={state.currentSessionId}
               />
             }

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { FormUpdate, FormSessionService } from '../../services/indexeddb';
 
 interface FormEditorSidebarProps {
   originalPrompt: string;
@@ -6,8 +7,10 @@ interface FormEditorSidebarProps {
   onUpdatePromptChange: (prompt: string) => void;
   onDeploy: () => void;
   onEvaluate: () => void;
+  onUpdate: () => void;
   isDeploying: boolean;
   isEvaluating: boolean;
+  isUpdating: boolean;
   currentSessionId: string | null;
 }
 
@@ -17,11 +20,32 @@ export function FormEditorSidebar({
   onUpdatePromptChange,
   onDeploy,
   onEvaluate,
+  onUpdate,
   isDeploying,
   isEvaluating,
+  isUpdating,
   currentSessionId,
 }: FormEditorSidebarProps) {
   const [piiWarning, setPiiWarning] = useState<string | null>(null);
+  const [creationHistory, setCreationHistory] = useState<FormUpdate[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Load creation history when session changes
+  useEffect(() => {
+    if (currentSessionId) {
+      const loadHistory = async () => {
+        try {
+          const updates = await FormSessionService.getSessionUpdates(
+            currentSessionId
+          );
+          setCreationHistory(updates);
+        } catch (error) {
+          console.error('Failed to load creation history:', error);
+        }
+      };
+      loadHistory();
+    }
+  }, [currentSessionId]);
 
   const handleUpdatePromptChange = (
     e: React.ChangeEvent<HTMLTextAreaElement>
@@ -45,8 +69,23 @@ export function FormEditorSidebar({
     }
   };
 
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const truncatePrompt = (prompt: string, maxLength = 60) => {
+    return prompt.length > maxLength
+      ? prompt.substring(0, maxLength) + '...'
+      : prompt;
+  };
+
   return (
-    <div className="p-4 space-y-6 h-full">
+    <div className="p-4 space-y-6 h-full overflow-y-auto">
       {/* Session Info */}
       {currentSessionId && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -109,7 +148,109 @@ export function FormEditorSidebar({
             {piiWarning}
           </div>
         )}
+
+        {/* Update Button */}
+        <button
+          onClick={onUpdate}
+          disabled={isUpdating || !updatePrompt.trim()}
+          className={`mt-3 w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
+            isUpdating ? 'cursor-not-allowed' : ''
+          }`}
+        >
+          {isUpdating ? (
+            <>
+              <svg
+                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Updating...
+            </>
+          ) : (
+            <>
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+              Update Form
+            </>
+          )}
+        </button>
       </div>
+
+      {/* Creation History */}
+      {creationHistory.length > 0 && (
+        <div>
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="flex items-center justify-between w-full text-left text-sm font-medium text-zinc-700 mb-2 hover:text-zinc-900"
+          >
+            <span>Creation History ({creationHistory.length})</span>
+            <svg
+              className={`w-4 h-4 transition-transform ${
+                showHistory ? 'rotate-180' : ''
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          {showHistory && (
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {creationHistory.map((update, index) => (
+                <div
+                  key={update.id}
+                  className="p-3 bg-zinc-50 border border-zinc-200 rounded-lg"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium text-zinc-600">
+                      Update {creationHistory.length - index}
+                    </span>
+                    <span className="text-xs text-zinc-500">
+                      {formatDate(update.createdAt)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-700">
+                    {truncatePrompt(update.updatePrompt)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="space-y-3">
@@ -218,6 +359,10 @@ export function FormEditorSidebar({
 
       {/* Help Text */}
       <div className="text-xs text-zinc-500 space-y-2">
+        <p>
+          <strong>Update Form:</strong> Applies your changes directly to the
+          form.
+        </p>
         <p>
           <strong>Evaluate & Improve:</strong> Analyzes your form and suggests
           improvements based on your update prompt.
