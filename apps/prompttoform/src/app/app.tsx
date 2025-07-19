@@ -66,6 +66,7 @@ function AppContent() {
     setSidebarCollapsed,
     setActiveTab,
     transitionToEditor,
+    transitionToInitial,
   } = useAppState();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -304,11 +305,9 @@ function AppContent() {
   };
 
   const handleStartNewSession = () => {
-    // Reset to initial state
-    setPrompt('');
-    setGeneratedJson('');
-    setCurrentSessionId(null);
-    setError(null);
+    // Reset to initial state using the proper transition function
+    transitionToInitial();
+    setUpdatePrompt('');
     setIsSessionHistoryOpen(false);
   };
 

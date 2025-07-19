@@ -253,6 +253,7 @@ The application now provides an **exceptional user experience** across all devic
 - ✅ **NEW**: Enhanced form changes tracking with visual distinction between Update Form and Evaluate & Improve operations
 - ✅ **NEW**: Added menu bar to initial state screen (create form textarea)
 - ✅ **NEW**: Enhanced form changes debugging and database migration for updateType field
+- ✅ **NEW**: Fixed Start New Session to properly reset UI to main screen with create form textarea
 
 ## Future Enhancements (Optional)
 
