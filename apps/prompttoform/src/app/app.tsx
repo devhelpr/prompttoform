@@ -231,18 +231,31 @@ function AppContent() {
       return;
     }
 
+    console.log('🚀 Starting deployment process...');
+    console.log('📦 Current session ID:', state.currentSessionId);
+    console.log('📄 Form JSON length:', state.generatedJson.length);
+
     setIsDeploying(true);
     try {
       // Store current session ID and form JSON for post-authentication restoration
       if (state.currentSessionId) {
+        console.log(
+          '💾 Storing session data for post-authentication restoration...'
+        );
         saveSessionIdToLocalStorage(state.currentSessionId);
         saveFormJsonToLocalStorage(state.generatedJson);
+        console.log('✅ Session data stored in localStorage');
+      } else {
+        console.log(
+          '⚠️ No session ID available, skipping localStorage storage'
+        );
       }
 
       const zipBlob = await createFormZip(state.generatedJson);
       const base64 = await blobToBase64(zipBlob);
 
       deployWithNetlify(base64, (url) => {
+        console.log('🎉 Deployment successful! URL:', url);
         setSiteUrl(url);
 
         // Update session with Netlify site ID
@@ -250,6 +263,7 @@ function AppContent() {
           // Extract site ID from URL
           const siteId = url.split('/').pop()?.split('.')[0];
           if (siteId) {
+            console.log('🔗 Updating session with Netlify site ID:', siteId);
             FormSessionService.updateSession(
               state.currentSessionId,
               state.generatedJson,
@@ -259,14 +273,17 @@ function AppContent() {
         }
 
         // Clear stored data after successful deployment
+        console.log(
+          '🧹 Clearing localStorage data after successful deployment'
+        );
         clearFormJsonFromLocalStorage();
         clearSessionIdFromLocalStorage();
 
         setIsDeploying(false);
       });
     } catch (err) {
+      console.error('❌ Deployment failed:', err);
       setError('Failed to deploy to Netlify');
-      console.error(err);
       setIsDeploying(false);
     }
   };
@@ -366,18 +383,89 @@ function AppContent() {
 
   // If we have a formJson from URL params (triggerDeploy), show the editor view
   if (triggerDeploy && formJson) {
+    console.log(
+      '🔄 TriggerDeploy: Restoring session after Netlify authentication'
+    );
+    console.log('📦 Stored session ID:', storedSessionId);
+    console.log(
+      '📄 Form JSON from localStorage:',
+      formJson ? 'Present' : 'Missing'
+    );
+
     // Restore session if we have a stored session ID
     if (storedSessionId && !state.currentSessionId) {
+      console.log('🔄 Loading session data from IndexedDB...');
       setCurrentSessionId(storedSessionId);
-    }
 
-    // Set the form JSON if not already set
-    if (!state.generatedJson) {
-      setGeneratedJson(formJson);
+      // Load session data from IndexedDB
+      FormSessionService.getSessionWithLatestJson(storedSessionId)
+        .then((sessionData) => {
+          console.log(
+            '✅ Session data loaded from IndexedDB:',
+            sessionData ? 'Success' : 'Not found'
+          );
+          if (sessionData) {
+            console.log('📝 Setting prompt:', sessionData.session.prompt);
+            console.log(
+              '📄 Setting JSON from session (length):',
+              sessionData.latestJson.length
+            );
+
+            // Set the prompt from the session
+            setPrompt(sessionData.session.prompt);
+
+            // Parse and set the form JSON
+            const parsedJson = parseJsonSafely(sessionData.latestJson);
+            if (parsedJson) {
+              console.log(
+                '✅ JSON parsed successfully, setting both string and parsed versions'
+              );
+              setGeneratedJson(sessionData.latestJson, parsedJson);
+            } else {
+              console.log(
+                '⚠️ JSON parsing failed, setting string version only'
+              );
+              setGeneratedJson(sessionData.latestJson);
+            }
+          }
+        })
+        .catch((error) => {
+          console.error(
+            '❌ Failed to load session data from IndexedDB:',
+            error
+          );
+          console.log('🔄 Falling back to localStorage data...');
+          // Fallback to localStorage data
+          const parsedJson = parseJsonSafely(formJson);
+          if (parsedJson) {
+            console.log('✅ Fallback JSON parsed successfully');
+            setGeneratedJson(formJson, parsedJson);
+          } else {
+            console.log('⚠️ Fallback JSON parsing failed');
+            setGeneratedJson(formJson);
+          }
+        });
+    } else {
+      console.log(
+        '🔄 No stored session ID or session already loaded, using localStorage data'
+      );
+      // Set the form JSON if not already set
+      if (!state.generatedJson) {
+        // Parse the JSON to set both the string and parsed versions
+        const parsedJson = parseJsonSafely(formJson);
+        if (parsedJson) {
+          console.log('✅ localStorage JSON parsed successfully');
+          setGeneratedJson(formJson, parsedJson);
+        } else {
+          console.log('⚠️ localStorage JSON parsing failed');
+          setGeneratedJson(formJson);
+        }
+      }
     }
 
     // Transition to editor if not already there
     if (state.currentView !== 'editor') {
+      console.log('🔄 Transitioning to editor view');
       transitionToEditor();
     }
 
