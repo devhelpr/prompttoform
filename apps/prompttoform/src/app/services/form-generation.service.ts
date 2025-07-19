@@ -124,9 +124,18 @@ export class FormGenerationService {
     }
 
     try {
-      // Convert newlines back to escaped form for the update API
-      const jsonForUpdate = currentJson.replace(/\n/g, '\\n');
-      const patch = await updateFormWithPatch(jsonForUpdate, updatePrompt);
+      // First, try to parse the current JSON to ensure it's valid
+      const parsedCurrentForm = parseJsonSafely(currentJson);
+      if (!parsedCurrentForm) {
+        return {
+          success: false,
+          error: 'Failed to parse current form JSON',
+        };
+      }
+
+      // Get the raw JSON (without formatting) for the update API
+      const rawJsonForUpdate = getRawJsonForStorage(parsedCurrentForm);
+      const patch = await updateFormWithPatch(rawJsonForUpdate, updatePrompt);
 
       // Parse the patch operations
       let patchOperations = JSON.parse(patch);
@@ -134,24 +143,15 @@ export class FormGenerationService {
         patchOperations = [patchOperations];
       }
 
-      // Parse the current form
-      const currentForm = parseJsonSafely(currentJson);
-      if (!currentForm) {
-        return {
-          success: false,
-          error: 'Failed to parse current form JSON',
-        };
-      }
-
       // Apply the patch operations
       const updatedForm = this.applyPatchOperations(
-        currentForm,
+        parsedCurrentForm,
         patchOperations
       );
 
       // Format the updated form
       const formattedJson = formatJsonForDisplay(updatedForm);
-      const rawJson = getRawJsonForStorage(updatedForm);
+      const rawJsonForStorage = getRawJsonForStorage(updatedForm);
 
       // Store update in IndexedDB if we have a session
       if (sessionId) {
@@ -159,7 +159,7 @@ export class FormGenerationService {
           await FormSessionService.storeUpdate(
             sessionId,
             updatePrompt,
-            rawJson
+            rawJsonForStorage
           );
           console.log('Update stored for session:', sessionId);
         } catch (error) {
