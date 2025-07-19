@@ -196,7 +196,8 @@ export class FormGenerationService {
           await FormSessionService.storeUpdate(
             sessionId,
             updatePrompt,
-            rawJsonForStorage
+            rawJsonForStorage,
+            'patch'
           );
           console.log('Update stored for session:', sessionId);
         } catch (error) {
@@ -245,18 +246,22 @@ export class FormGenerationService {
   /**
    * Apply patch operations to a form
    */
-  private applyPatchOperations(form: UIJson, operations: any[]): UIJson {
+  private applyPatchOperations(form: UIJson, operations: unknown[]): UIJson {
     const updatedForm = { ...form } as UIJson;
 
     for (const operation of operations) {
-      const { op, path, value } = operation;
+      const { op, path, value } = operation as {
+        op: string;
+        path: string;
+        value: unknown;
+      };
       console.log(`Applying operation: ${op} at path: ${path}`);
 
       // Sanitize the value to prevent JSON issues
       const sanitizedValue = this.sanitizeValue(value);
 
       const pathParts = path.split('/').filter(Boolean);
-      let current: any = updatedForm;
+      let current: unknown = updatedForm;
 
       // Navigate to the parent of the target
       for (let i = 0; i < pathParts.length - 1; i++) {
@@ -267,7 +272,7 @@ export class FormGenerationService {
           }
         } else {
           if (typeof current === 'object' && current !== null) {
-            current = current[part];
+            current = (current as Record<string, unknown>)[part];
           }
         }
       }
@@ -291,11 +296,11 @@ export class FormGenerationService {
       } else {
         if (op === 'add' || op === 'replace') {
           if (typeof current === 'object' && current !== null) {
-            current[lastPart] = sanitizedValue;
+            (current as Record<string, unknown>)[lastPart] = sanitizedValue;
           }
         } else if (op === 'remove') {
           if (typeof current === 'object' && current !== null) {
-            delete current[lastPart];
+            delete (current as Record<string, unknown>)[lastPart];
           }
         }
       }
@@ -307,21 +312,31 @@ export class FormGenerationService {
   /**
    * Sanitize a value to prevent JSON parsing issues
    */
-  private sanitizeValue(value: any): any {
+  private sanitizeValue(value: unknown): unknown {
     if (typeof value === 'string') {
-      // Only remove control characters, don't escape quotes or backslashes
-      // as they might already be properly escaped
-      return value.replace(
-        /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g,
-        ''
-      );
+      // Remove control characters by filtering them out
+      return value
+        .split('')
+        .filter((char) => {
+          const code = char.charCodeAt(0);
+          return code >= 32 || code === 9 || code === 10 || code === 13;
+        })
+        .join('');
     } else if (typeof value === 'object' && value !== null) {
       // Recursively sanitize object properties
-      const sanitized: any = Array.isArray(value) ? [] : {};
-      for (const [key, val] of Object.entries(value)) {
-        sanitized[key] = this.sanitizeValue(val);
+      if (Array.isArray(value)) {
+        const sanitized: unknown[] = [];
+        for (let i = 0; i < value.length; i++) {
+          sanitized[i] = this.sanitizeValue(value[i]);
+        }
+        return sanitized;
+      } else {
+        const sanitized: Record<string, unknown> = {};
+        for (const [key, val] of Object.entries(value)) {
+          sanitized[key] = this.sanitizeValue(val);
+        }
+        return sanitized;
       }
-      return sanitized;
     }
     return value;
   }

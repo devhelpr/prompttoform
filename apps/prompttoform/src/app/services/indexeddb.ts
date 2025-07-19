@@ -16,6 +16,7 @@ export interface FormUpdate {
   updatePrompt: string;
   updatedJson: string;
   createdAt: Date;
+  updateType: 'patch' | 'evaluate'; // Type of update: patch (Update Form) or evaluate (Evaluate & Improve)
 }
 
 // Extend Dexie to include our tables
@@ -111,7 +112,8 @@ export class FormSessionService {
   static async storeUpdate(
     sessionId: string,
     updatePrompt: string,
-    updatedJson: string
+    updatedJson: string,
+    updateType: 'patch' | 'evaluate' = 'patch'
   ): Promise<string> {
     const updateId = generateGuid();
     const now = new Date();
@@ -122,6 +124,7 @@ export class FormSessionService {
       updatePrompt,
       updatedJson,
       createdAt: now,
+      updateType,
     };
 
     await db.transaction('rw', [db.sessions, db.updates], async () => {

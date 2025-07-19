@@ -209,7 +209,7 @@ export function FormEditorSidebar({
             onClick={() => setShowHistory(!showHistory)}
             className="flex items-center justify-between w-full text-left text-sm font-medium text-zinc-700 mb-2 hover:text-zinc-900"
           >
-            <span>Creation History ({creationHistory.length})</span>
+            <span>Form Changes ({creationHistory.length})</span>
             <svg
               className={`w-4 h-4 transition-transform ${
                 showHistory ? 'rotate-180' : ''
@@ -228,22 +228,71 @@ export function FormEditorSidebar({
           </button>
 
           {showHistory && (
-            <div className="space-y-2 max-h-48 overflow-y-auto">
+            <div className="space-y-2 max-h-64 overflow-y-auto">
               {creationHistory.map((update, index) => (
                 <div
                   key={update.id}
-                  className="p-3 bg-zinc-50 border border-zinc-200 rounded-lg"
+                  className={`p-3 border rounded-lg ${
+                    update.updateType === 'patch'
+                      ? 'bg-blue-50 border-blue-200'
+                      : 'bg-purple-50 border-purple-200'
+                  }`}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-zinc-600">
-                      Update {creationHistory.length - index}
-                    </span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          update.updateType === 'patch'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-purple-100 text-purple-800'
+                        }`}
+                      >
+                        {update.updateType === 'patch' ? (
+                          <>
+                            <svg
+                              className="w-3 h-3 mr-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                              />
+                            </svg>
+                            Update
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              className="w-3 h-3 mr-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            Evaluate
+                          </>
+                        )}
+                      </span>
+                      <span className="text-xs font-medium text-zinc-600">
+                        Change {creationHistory.length - index}
+                      </span>
+                    </div>
                     <span className="text-xs text-zinc-500">
                       {formatDate(update.createdAt)}
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-700">
-                    {truncatePrompt(update.updatePrompt)}
+                  <p className="text-xs text-zinc-700 leading-relaxed">
+                    {truncatePrompt(update.updatePrompt, 80)}
                   </p>
                 </div>
               ))}
@@ -360,12 +409,12 @@ export function FormEditorSidebar({
       {/* Help Text */}
       <div className="text-xs text-zinc-500 space-y-2">
         <p>
-          <strong>Update Form:</strong> Applies your changes directly to the
-          form.
+          <strong>Update Form:</strong> Applies precise changes using JSON-patch
+          operations. Faster and more targeted.
         </p>
         <p>
           <strong>Evaluate & Improve:</strong> Analyzes your form and suggests
-          improvements based on your update prompt.
+          comprehensive improvements. May regenerate the entire form.
         </p>
         <p>
           <strong>Deploy to Netlify:</strong> Creates a live, shareable version

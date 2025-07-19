@@ -156,7 +156,8 @@ function AppContent() {
               await FormSessionService.storeUpdate(
                 state.currentSessionId,
                 updatePrompt,
-                formattedJson
+                formattedJson,
+                'evaluate'
               );
             }
           }

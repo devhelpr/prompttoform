@@ -250,6 +250,7 @@ The application now provides an **exceptional user experience** across all devic
 - ✅ Updated keyboard shortcuts to match new structure
 - ✅ **NEW**: Show menu bar when sidebar is closed
 - ✅ **NEW**: Implement JSON-patch functionality for update form
+- ✅ **NEW**: Enhanced form changes tracking with visual distinction between Update Form and Evaluate & Improve operations
 
 ## Future Enhancements (Optional)
 
