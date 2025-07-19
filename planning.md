@@ -248,6 +248,8 @@ The application now provides an **exceptional user experience** across all devic
 - ✅ Added dedicated "Update Form" button to sidebar
 - ✅ Implemented creation history display in sidebar
 - ✅ Updated keyboard shortcuts to match new structure
+- ✅ **NEW**: Show menu bar when sidebar is closed
+- ✅ **NEW**: Implement JSON-patch functionality for update form
 
 ## Future Enhancements (Optional)
 
