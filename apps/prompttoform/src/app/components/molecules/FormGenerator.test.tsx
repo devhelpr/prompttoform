@@ -51,21 +51,27 @@ vi.mock('./Settings', () => ({
 
 vi.mock('./SessionHistory', () => ({
   SessionHistory: ({
+    isOpen,
+    onClose,
     onLoadSession,
     onStartNewSession,
   }: {
+    isOpen: boolean;
+    onClose: () => void;
     onLoadSession: (session: any) => void;
     onStartNewSession: () => void;
-  }) => (
-    <div data-testid="session-history">
-      <button
-        onClick={() => onLoadSession({ id: 'test-session', prompt: 'Test' })}
-      >
-        Load Session
-      </button>
-      <button onClick={onStartNewSession}>New Session</button>
-    </div>
-  ),
+  }) =>
+    isOpen ? (
+      <div data-testid="session-history">
+        <button
+          onClick={() => onLoadSession({ id: 'test-session', prompt: 'Test' })}
+        >
+          Load Session
+        </button>
+        <button onClick={onStartNewSession}>New Session</button>
+        <button onClick={onClose}>Close</button>
+      </div>
+    ) : null,
 }));
 
 vi.mock('./Alert', () => ({
@@ -174,7 +180,7 @@ describe('FormGenerator Component', () => {
   });
 
   describe('Session Management', () => {
-    it('should show/hide session history', async () => {
+    it('should open and close session history modal', async () => {
       render(<FormGenerator formJson="" triggerDeploy={false} />);
 
       const historyButton = screen.getByRole('button', {
@@ -184,8 +190,8 @@ describe('FormGenerator Component', () => {
 
       expect(screen.getByTestId('session-history')).toBeTruthy();
 
-      const hideButton = screen.getByRole('button', { name: 'Hide History' });
-      await user.click(hideButton);
+      const closeButton = screen.getByRole('button', { name: 'Close' });
+      await user.click(closeButton);
 
       expect(screen.queryByTestId('session-history')).toBeFalsy();
     });

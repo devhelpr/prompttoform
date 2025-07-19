@@ -76,8 +76,7 @@ export function FormGenerator({
   const [isDeploying, setIsDeploying] = useState(false);
   const [siteUrl, setSiteUrl] = useState('');
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [showSessionHistory, setShowSessionHistory] = useState(false);
-  const [sessionHistoryKey, setSessionHistoryKey] = useState(0); // Add key to force refresh
+  const [isSessionHistoryOpen, setIsSessionHistoryOpen] = useState(false);
 
   useEffect(() => {
     // Check for API key on mount
@@ -180,8 +179,8 @@ export function FormGenerator({
           console.log('Session created with ID:', result.sessionId);
 
           // Refresh session history if it's open
-          if (showSessionHistory) {
-            setSessionHistoryKey((prev) => prev + 1);
+          if (isSessionHistoryOpen) {
+            // The session history will reload when the dialog opens
           }
         }
       } else {
@@ -252,8 +251,8 @@ export function FormGenerator({
               );
 
               // Refresh session history if it's open
-              if (showSessionHistory) {
-                setSessionHistoryKey((prev) => prev + 1);
+              if (isSessionHistoryOpen) {
+                // The session history will reload when the dialog opens
               }
             }
           }
@@ -404,8 +403,8 @@ export function FormGenerator({
               console.log('Update stored for session:', currentSessionId);
 
               // Refresh session history if it's open
-              if (showSessionHistory) {
-                setSessionHistoryKey((prev) => prev + 1);
+              if (isSessionHistoryOpen) {
+                // The session history will reload when the dialog opens
               }
             } catch (error) {
               console.error('Failed to store update in IndexedDB:', error);
@@ -461,8 +460,8 @@ export function FormGenerator({
             );
 
             // Refresh session history if it's open
-            if (showSessionHistory) {
-              setSessionHistoryKey((prev) => prev + 1);
+            if (isSessionHistoryOpen) {
+              // The session history will reload when the dialog opens
             }
           })
           .catch((error: Error) =>
@@ -491,7 +490,7 @@ export function FormGenerator({
         setGeneratedJson(formattedJson);
 
         setViewMode('form');
-        setShowSessionHistory(false);
+        setIsSessionHistoryOpen(false);
         setError(null);
         setEvaluation(null);
 
@@ -512,7 +511,7 @@ export function FormGenerator({
     setParsedJson(null);
     setCurrentSessionId(null);
     setViewMode('form');
-    setShowSessionHistory(false);
+    setIsSessionHistoryOpen(false);
     setError(null);
     setEvaluation(null);
     setUpdatePrompt('');
@@ -520,8 +519,8 @@ export function FormGenerator({
     setSiteUrl('');
 
     // Refresh session history if it's open
-    if (showSessionHistory) {
-      setSessionHistoryKey((prev) => prev + 1);
+    if (isSessionHistoryOpen) {
+      // The session history will reload when the dialog opens
     }
   };
 
@@ -531,10 +530,10 @@ export function FormGenerator({
         <h2 className="text-xl font-semibold text-zinc-900">Create a Form</h2>
         <div className="flex space-x-2">
           <button
-            onClick={() => setShowSessionHistory(!showSessionHistory)}
+            onClick={() => setIsSessionHistoryOpen(true)}
             className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            {showSessionHistory ? 'Hide History' : 'Show History'}
+            Show History
           </button>
           <button
             onClick={() => setIsSettingsOpen(true)}
@@ -552,13 +551,12 @@ export function FormGenerator({
         </Alert>
       )}
 
-      {showSessionHistory && (
-        <SessionHistory
-          key={sessionHistoryKey}
-          onLoadSession={handleLoadSession}
-          onStartNewSession={handleStartNewSession}
-        />
-      )}
+      <SessionHistory
+        isOpen={isSessionHistoryOpen}
+        onClose={() => setIsSessionHistoryOpen(false)}
+        onLoadSession={handleLoadSession}
+        onStartNewSession={handleStartNewSession}
+      />
 
       <div>
         <label
