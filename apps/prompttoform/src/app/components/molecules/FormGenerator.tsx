@@ -377,9 +377,22 @@ export function FormGenerator({
     try {
       // Use the form generation service for updates
       // Pass the raw JSON (not formatted) to avoid JSON parsing issues
-      const rawJson = parsedJson
-        ? getRawJsonForStorage(parsedJson)
-        : generatedJson;
+      let rawJson: string;
+      if (parsedJson) {
+        rawJson = getRawJsonForStorage(parsedJson);
+      } else if (generatedJson) {
+        // If we don't have parsedJson but have generatedJson, try to parse it first
+        const parsed = parseJsonSafely(generatedJson);
+        if (parsed) {
+          rawJson = getRawJsonForStorage(parsed);
+        } else {
+          setUpdateError('Invalid JSON format in generated form');
+          return;
+        }
+      } else {
+        setUpdateError('No form data available for update');
+        return;
+      }
       const result = await formGenerationService.updateForm(
         rawJson,
         updatePrompt,
