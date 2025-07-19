@@ -35,17 +35,43 @@ export function FormEditorSidebar({
     if (currentSessionId) {
       const loadHistory = async () => {
         try {
+          console.log(
+            'Loading creation history for session:',
+            currentSessionId
+          );
           const updates = await FormSessionService.getSessionUpdates(
             currentSessionId
           );
+          console.log('Loaded updates:', updates);
           setCreationHistory(updates);
         } catch (error) {
           console.error('Failed to load creation history:', error);
         }
       };
       loadHistory();
+    } else {
+      setCreationHistory([]);
     }
   }, [currentSessionId]);
+
+  // Refresh history after updates (when isUpdating changes from true to false)
+  useEffect(() => {
+    if (!isUpdating && currentSessionId) {
+      const refreshHistory = async () => {
+        try {
+          console.log('Refreshing creation history after update');
+          const updates = await FormSessionService.getSessionUpdates(
+            currentSessionId
+          );
+          console.log('Refreshed updates:', updates);
+          setCreationHistory(updates);
+        } catch (error) {
+          console.error('Failed to refresh creation history:', error);
+        }
+      };
+      refreshHistory();
+    }
+  }, [isUpdating, currentSessionId]);
 
   const handleUpdatePromptChange = (
     e: React.ChangeEvent<HTMLTextAreaElement>
@@ -203,13 +229,16 @@ export function FormEditorSidebar({
       </div>
 
       {/* Creation History */}
-      {creationHistory.length > 0 && (
+      {currentSessionId && (
         <div>
           <button
             onClick={() => setShowHistory(!showHistory)}
             className="flex items-center justify-between w-full text-left text-sm font-medium text-zinc-700 mb-2 hover:text-zinc-900"
           >
-            <span>Form Changes ({creationHistory.length})</span>
+            <span>
+              Form Changes{' '}
+              {creationHistory.length > 0 ? `(${creationHistory.length})` : ''}
+            </span>
             <svg
               className={`w-4 h-4 transition-transform ${
                 showHistory ? 'rotate-180' : ''
@@ -229,73 +258,95 @@ export function FormEditorSidebar({
 
           {showHistory && (
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {creationHistory.map((update, index) => (
-                <div
-                  key={update.id}
-                  className={`p-3 border rounded-lg ${
-                    update.updateType === 'patch'
-                      ? 'bg-blue-50 border-blue-200'
-                      : 'bg-purple-50 border-purple-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          update.updateType === 'patch'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-purple-100 text-purple-800'
-                        }`}
-                      >
-                        {update.updateType === 'patch' ? (
-                          <>
-                            <svg
-                              className="w-3 h-3 mr-1"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                              />
-                            </svg>
-                            Update
-                          </>
-                        ) : (
-                          <>
-                            <svg
-                              className="w-3 h-3 mr-1"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            Evaluate
-                          </>
-                        )}
-                      </span>
-                      <span className="text-xs font-medium text-zinc-600">
-                        Change {creationHistory.length - index}
+              {creationHistory.length > 0 ? (
+                creationHistory.map((update, index) => (
+                  <div
+                    key={update.id}
+                    className={`p-3 border rounded-lg ${
+                      update.updateType === 'patch'
+                        ? 'bg-blue-50 border-blue-200'
+                        : 'bg-purple-50 border-purple-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            update.updateType === 'patch'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-purple-100 text-purple-800'
+                          }`}
+                        >
+                          {update.updateType === 'patch' ? (
+                            <>
+                              <svg
+                                className="w-3 h-3 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                />
+                              </svg>
+                              Update
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                className="w-3 h-3 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              Evaluate
+                            </>
+                          )}
+                        </span>
+                        <span className="text-xs font-medium text-zinc-600">
+                          Change {creationHistory.length - index}
+                        </span>
+                      </div>
+                      <span className="text-xs text-zinc-500">
+                        {formatDate(update.createdAt)}
                       </span>
                     </div>
-                    <span className="text-xs text-zinc-500">
-                      {formatDate(update.createdAt)}
-                    </span>
+                    <p className="text-xs text-zinc-700 leading-relaxed">
+                      {truncatePrompt(update.updatePrompt, 80)}
+                    </p>
                   </div>
-                  <p className="text-xs text-zinc-700 leading-relaxed">
-                    {truncatePrompt(update.updatePrompt, 80)}
+                ))
+              ) : (
+                <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-lg text-center">
+                  <svg
+                    className="w-8 h-8 mx-auto text-zinc-400 mb-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <p className="text-sm text-zinc-600">No changes yet</p>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    Use "Update Form" or "Evaluate & Improve" to make changes
                   </p>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>

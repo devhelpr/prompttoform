@@ -30,6 +30,24 @@ export class FormGeneratorDatabase extends Dexie {
       sessions: 'id, createdAt',
       updates: 'id, sessionId, createdAt',
     });
+
+    // Add version 2 to handle the new updateType field
+    this.version(2)
+      .stores({
+        sessions: 'id, createdAt',
+        updates: 'id, sessionId, createdAt',
+      })
+      .upgrade((tx) => {
+        // Update existing records to have the default updateType
+        return tx
+          .table('updates')
+          .toCollection()
+          .modify((update) => {
+            if (!update.updateType) {
+              update.updateType = 'patch'; // Default to patch for existing records
+            }
+          });
+      });
   }
 }
 

@@ -193,16 +193,23 @@ export class FormGenerationService {
       // Store update in IndexedDB if we have a session
       if (sessionId) {
         try {
+          console.log('Storing update in IndexedDB:', {
+            sessionId,
+            updatePrompt,
+            updateType: 'patch',
+          });
           await FormSessionService.storeUpdate(
             sessionId,
             updatePrompt,
             rawJsonForStorage,
             'patch'
           );
-          console.log('Update stored for session:', sessionId);
+          console.log('Update stored successfully for session:', sessionId);
         } catch (error) {
           console.error('Failed to store update in IndexedDB:', error);
         }
+      } else {
+        console.log('No sessionId provided, skipping update storage');
       }
 
       return {
