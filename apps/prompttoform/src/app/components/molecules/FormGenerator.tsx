@@ -364,10 +364,13 @@ export function FormGenerator({
   };
 
   const handleUpdateForm = async () => {
-    if (!updatePrompt.trim() || !generatedJson || !parsedJson) {
-      setUpdateError(
-        'Please enter an update prompt and make sure a form is generated'
-      );
+    if (!updatePrompt.trim()) {
+      setUpdateError('Please enter an update prompt');
+      return;
+    }
+
+    if (!generatedJson) {
+      setUpdateError('Please generate a form first before updating');
       return;
     }
 
@@ -378,14 +381,28 @@ export function FormGenerator({
       // Use the form generation service for updates
       // Pass the raw JSON (not formatted) to avoid JSON parsing issues
       let rawJson: string;
+
+      console.log('Update form - parsedJson exists:', !!parsedJson);
+      console.log('Update form - generatedJson length:', generatedJson?.length);
+
       if (parsedJson) {
         rawJson = getRawJsonForStorage(parsedJson);
+        console.log(
+          'Using parsedJson for update, rawJson length:',
+          rawJson.length
+        );
       } else if (generatedJson) {
         // If we don't have parsedJson but have generatedJson, try to parse it first
+        console.log('Attempting to parse generatedJson for update');
         const parsed = parseJsonSafely(generatedJson);
         if (parsed) {
           rawJson = getRawJsonForStorage(parsed);
+          console.log(
+            'Successfully parsed generatedJson, rawJson length:',
+            rawJson.length
+          );
         } else {
+          console.error('Failed to parse generatedJson for update');
           setUpdateError('Invalid JSON format in generated form');
           return;
         }

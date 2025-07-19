@@ -124,14 +124,23 @@ export class FormGenerationService {
     }
 
     try {
+      console.log('updateForm - currentJson length:', currentJson?.length);
+      console.log(
+        'updateForm - currentJson preview:',
+        currentJson?.substring(0, 100)
+      );
+
       // First, try to parse the current JSON to ensure it's valid
       const parsedCurrentForm = parseJsonSafely(currentJson);
       if (!parsedCurrentForm) {
+        console.error('updateForm - Failed to parse current JSON');
         return {
           success: false,
           error: 'Failed to parse current form JSON',
         };
       }
+
+      console.log('updateForm - Successfully parsed current JSON');
 
       // Get the raw JSON (without formatting) for the update API
       const rawJsonForUpdate = getRawJsonForStorage(parsedCurrentForm);
