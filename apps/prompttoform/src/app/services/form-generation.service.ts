@@ -153,14 +153,42 @@ export class FormGenerationService {
       }
 
       // Apply the patch operations
+      console.log('Applying patch operations:', patchOperations);
       const updatedForm = this.applyPatchOperations(
         parsedCurrentForm,
         patchOperations
       );
 
+      console.log('Updated form structure:', {
+        hasApp: !!updatedForm.app,
+        hasPages: !!updatedForm.app?.pages,
+        pagesLength: updatedForm.app?.pages?.length,
+      });
+
       // Format the updated form
       const formattedJson = formatJsonForDisplay(updatedForm);
+      console.log('Formatted JSON length:', formattedJson.length);
+
+      // Test if the formatted JSON is valid
+      try {
+        JSON.parse(formattedJson);
+        console.log('✅ Formatted JSON is valid');
+      } catch (parseError) {
+        console.error('❌ Formatted JSON is invalid:', parseError);
+        console.log('Formatted JSON preview:', formattedJson.substring(0, 200));
+      }
+
       const rawJsonForStorage = getRawJsonForStorage(updatedForm);
+      console.log('Raw JSON for storage length:', rawJsonForStorage.length);
+
+      // Test if the raw JSON is valid
+      try {
+        JSON.parse(rawJsonForStorage);
+        console.log('✅ Raw JSON for storage is valid');
+      } catch (parseError) {
+        console.error('❌ Raw JSON for storage is invalid:', parseError);
+        console.log('Raw JSON preview:', rawJsonForStorage.substring(0, 200));
+      }
 
       // Store update in IndexedDB if we have a session
       if (sessionId) {
@@ -222,6 +250,11 @@ export class FormGenerationService {
 
     for (const operation of operations) {
       const { op, path, value } = operation;
+      console.log(`Applying operation: ${op} at path: ${path}`);
+
+      // Sanitize the value to prevent JSON issues
+      const sanitizedValue = this.sanitizeValue(value);
+
       const pathParts = path.split('/').filter(Boolean);
       let current: any = updatedForm;
 
@@ -244,7 +277,7 @@ export class FormGenerationService {
         const index = parseInt(lastPart);
         if (op === 'add') {
           if (Array.isArray(current)) {
-            current.splice(index, 0, value);
+            current.splice(index, 0, sanitizedValue);
           }
         } else if (op === 'remove') {
           if (Array.isArray(current)) {
@@ -252,13 +285,13 @@ export class FormGenerationService {
           }
         } else if (op === 'replace') {
           if (Array.isArray(current)) {
-            current[index] = value;
+            current[index] = sanitizedValue;
           }
         }
       } else {
         if (op === 'add' || op === 'replace') {
           if (typeof current === 'object' && current !== null) {
-            current[lastPart] = value;
+            current[lastPart] = sanitizedValue;
           }
         } else if (op === 'remove') {
           if (typeof current === 'object' && current !== null) {
@@ -269,5 +302,27 @@ export class FormGenerationService {
     }
 
     return updatedForm;
+  }
+
+  /**
+   * Sanitize a value to prevent JSON parsing issues
+   */
+  private sanitizeValue(value: any): any {
+    if (typeof value === 'string') {
+      // Only remove control characters, don't escape quotes or backslashes
+      // as they might already be properly escaped
+      return value.replace(
+        /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g,
+        ''
+      );
+    } else if (typeof value === 'object' && value !== null) {
+      // Recursively sanitize object properties
+      const sanitized: any = Array.isArray(value) ? [] : {};
+      for (const [key, val] of Object.entries(value)) {
+        sanitized[key] = this.sanitizeValue(val);
+      }
+      return sanitized;
+    }
+    return value;
   }
 }
