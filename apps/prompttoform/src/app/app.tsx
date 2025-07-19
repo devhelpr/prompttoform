@@ -383,13 +383,29 @@ function AppContent() {
   if (state.currentView === 'initial') {
     return (
       <ErrorBoundary>
-        <InitialStateLayout>
+        <InitialStateLayout
+          onSettingsClick={() => setIsSettingsOpen(true)}
+          onHistoryClick={() => setIsSessionHistoryOpen(true)}
+        >
           <InitialPromptInput
             onGenerate={handleGenerate}
             isLoading={state.isLoading}
             error={state.error}
           />
         </InitialStateLayout>
+
+        <Settings
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+        />
+
+        <SessionHistory
+          isOpen={isSessionHistoryOpen}
+          onClose={() => setIsSessionHistoryOpen(false)}
+          onLoadSession={handleLoadSession}
+          onStartNewSession={handleStartNewSession}
+        />
+
         <PerformanceMonitor />
       </ErrorBoundary>
     );

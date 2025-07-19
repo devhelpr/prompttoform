@@ -1,15 +1,28 @@
 import { ReactNode } from 'react';
+import { ResponsiveNavbar } from './ResponsiveNavbar';
 
 interface InitialStateLayoutProps {
   children: ReactNode;
+  onSettingsClick: () => void;
+  onHistoryClick: () => void;
 }
 
-export function InitialStateLayout({ children }: InitialStateLayoutProps) {
+export function InitialStateLayout({
+  children,
+  onSettingsClick,
+  onHistoryClick,
+}: InitialStateLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100">
       <div className="flex flex-col min-h-screen">
+        {/* Top Navigation Bar */}
+        <ResponsiveNavbar
+          onSettingsClick={onSettingsClick}
+          onHistoryClick={onHistoryClick}
+        />
+
         {/* Main content area */}
-        <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           <div className="w-full max-w-4xl">
             {/* Header section */}
             <div className="text-center mb-12">
