@@ -6,6 +6,8 @@ import { InitialPromptInput } from './components/molecules/InitialPromptInput';
 import { FormEditorSidebar } from './components/molecules/FormEditorSidebar';
 import { FormPreviewPanel } from './components/molecules/FormPreviewPanel';
 import { ErrorBoundary } from './components/molecules/ErrorBoundary';
+
+import { PerformanceMonitor } from './components/molecules/PerformanceMonitor';
 import {
   AppStateProvider,
   useAppState,
@@ -18,15 +20,13 @@ import { FormGenerationService } from './services/form-generation.service';
 import { UISchema } from './types/ui-schema';
 import schemaJson from '@schema';
 import { formatJsonForDisplay, parseJsonSafely } from './utils/json-utils';
-import { FormSession } from './services/indexeddb';
+import { FormSession, FormSessionService } from './services/indexeddb';
 import { evaluateAndRerunIfNeeded } from './services/prompt-eval';
 import { deployWithNetlify } from './utils/netlify-deploy';
 import { createFormZip, downloadZip } from './utils/zip-utils';
 import { blobToBase64 } from './utils/blob-to-base64';
 import { getSystemPrompt } from './prompt-library/system-prompt';
 import { getCurrentAPIConfig } from './services/llm-api';
-
-// Lazy load heavy components - removed unused import
 
 netlifyTokenHandler();
 let triggerDeploy = false;
@@ -88,8 +88,16 @@ function AppContent() {
         const formattedJson = formatJsonForDisplay(result.parsedJson);
         setGeneratedJson(formattedJson, result.parsedJson);
 
+        // Create session in IndexedDB
         if (result.sessionId) {
           setCurrentSessionId(result.sessionId);
+        } else {
+          // Create new session if none exists
+          const sessionId = await FormSessionService.createSession(
+            prompt,
+            formattedJson
+          );
+          setCurrentSessionId(sessionId);
         }
 
         transitionToEditor();
@@ -141,6 +149,15 @@ function AppContent() {
           if (parsedOutput) {
             const formattedJson = formatJsonForDisplay(parsedOutput);
             setGeneratedJson(formattedJson, parsedOutput);
+
+            // Store update in session
+            if (state.currentSessionId) {
+              await FormSessionService.storeUpdate(
+                state.currentSessionId,
+                updatePrompt,
+                formattedJson
+              );
+            }
           }
         } catch (parseError) {
           console.error('Error parsing improved output:', parseError);
@@ -167,6 +184,20 @@ function AppContent() {
 
       deployWithNetlify(base64, (url) => {
         setSiteUrl(url);
+
+        // Update session with Netlify site ID
+        if (state.currentSessionId) {
+          // Extract site ID from URL
+          const siteId = url.split('/').pop()?.split('.')[0];
+          if (siteId) {
+            FormSessionService.updateSession(
+              state.currentSessionId,
+              state.generatedJson,
+              siteId
+            );
+          }
+        }
+
         setIsDeploying(false);
       });
     } catch (err) {
@@ -211,13 +242,32 @@ function AppContent() {
   };
 
   const handleLoadSession = async (session: FormSession) => {
-    // TODO: Implement session loading logic
-    console.log('Loading session:', session);
+    try {
+      setPrompt(session.prompt);
+      setGeneratedJson(session.generatedJson);
+      setCurrentSessionId(session.id);
+
+      // Parse the JSON to update the parsed state
+      const parsedJson = parseJsonSafely(session.generatedJson);
+      if (parsedJson) {
+        setGeneratedJson(session.generatedJson, parsedJson);
+      }
+
+      transitionToEditor();
+      setIsSessionHistoryOpen(false);
+    } catch (err) {
+      setError('Failed to load session');
+      console.error(err);
+    }
   };
 
   const handleStartNewSession = () => {
-    // TODO: Implement new session logic
-    console.log('Starting new session');
+    // Reset to initial state
+    setPrompt('');
+    setGeneratedJson('');
+    setCurrentSessionId(null);
+    setError(null);
+    setIsSessionHistoryOpen(false);
   };
 
   // If we have a formJson from URL params (triggerDeploy), show the editor view
@@ -277,6 +327,8 @@ function AppContent() {
           onLoadSession={handleLoadSession}
           onStartNewSession={handleStartNewSession}
         />
+
+        <PerformanceMonitor />
       </ErrorBoundary>
     );
   }
@@ -292,6 +344,7 @@ function AppContent() {
             error={state.error}
           />
         </InitialStateLayout>
+        <PerformanceMonitor />
       </ErrorBoundary>
     );
   }
@@ -350,6 +403,8 @@ function AppContent() {
         onLoadSession={handleLoadSession}
         onStartNewSession={handleStartNewSession}
       />
+
+      <PerformanceMonitor />
     </ErrorBoundary>
   );
 }

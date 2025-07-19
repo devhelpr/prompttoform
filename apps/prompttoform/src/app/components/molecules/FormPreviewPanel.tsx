@@ -2,8 +2,10 @@ import { UIJson } from '../../types/form-generator.types';
 import { ViewMode } from './AppStateManager';
 import { FormRenderer } from '@devhelpr/react-forms';
 import FormFlow from './FormFlow';
-import FormFlowMermaid from './FormFlowMermaid';
-import { useEffect, useMemo } from 'react';
+
+import { JsonValidator } from './JsonValidator';
+import { EnhancedFormFlow } from './EnhancedFormFlow';
+import { useEffect, useMemo, useState } from 'react';
 
 interface FormPreviewPanelProps {
   parsedJson: UIJson | null;
@@ -30,6 +32,9 @@ export function FormPreviewPanel({
   isZipDownloading,
   siteUrl,
 }: FormPreviewPanelProps) {
+  const [jsonErrors, setJsonErrors] = useState<string[]>([]);
+  const [isJsonValid, setIsJsonValid] = useState(true);
+
   const tabs = useMemo(
     () => [
       {
@@ -87,6 +92,18 @@ export function FormPreviewPanel({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onTabChange, onCopyToClipboard, onDownload, tabs]);
 
+  const handleValidJson = () => {
+    setIsJsonValid(true);
+    setJsonErrors([]);
+    // Update the parsed JSON in the parent component
+    // This would need to be passed down as a prop or handled differently
+  };
+
+  const handleInvalidJson = (errors: string[]) => {
+    setIsJsonValid(false);
+    setJsonErrors(errors);
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'form':
@@ -114,7 +131,7 @@ export function FormPreviewPanel({
       case 'mermaid-flow':
         return parsedJson && parsedJson.app ? (
           <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-200px)]">
-            <FormFlowMermaid formJson={parsedJson} />
+            <EnhancedFormFlow formJson={parsedJson} />
           </div>
         ) : (
           <div className="flex items-center justify-center h-64 text-zinc-500">
@@ -125,21 +142,87 @@ export function FormPreviewPanel({
       case 'json':
         return (
           <div className="space-y-4">
-            <textarea
-              value={generatedJson}
-              onChange={(e) => onJsonChange(e.target.value)}
-              className="w-full h-64 sm:h-96 p-4 font-mono text-sm border border-zinc-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
-              spellCheck={false}
-              placeholder="JSON content will appear here..."
-              aria-label="JSON editor"
+            {/* JSON Validator */}
+            <JsonValidator
+              jsonString={generatedJson}
+              onValidJson={handleValidJson}
+              onInvalidJson={handleInvalidJson}
             />
-            <div className="flex justify-end">
+
+            {/* JSON Editor */}
+            <div className="space-y-2">
+              <label
+                htmlFor="json-editor"
+                className="block text-sm font-medium text-zinc-700"
+              >
+                JSON Editor{' '}
+                {!isJsonValid && (
+                  <span className="text-red-600">(Has Errors)</span>
+                )}
+              </label>
+              <textarea
+                id="json-editor"
+                value={generatedJson}
+                onChange={(e) => onJsonChange(e.target.value)}
+                className={`w-full h-64 sm:h-96 p-4 font-mono text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none ${
+                  !isJsonValid ? 'border-red-300 bg-red-50' : 'border-zinc-300'
+                }`}
+                spellCheck={false}
+                placeholder="JSON content will appear here..."
+                aria-label="JSON editor"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-zinc-600">
+                {isJsonValid ? (
+                  <span className="text-green-600 flex items-center space-x-1">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span>Valid JSON</span>
+                  </span>
+                ) : (
+                  <span className="text-red-600 flex items-center space-x-1">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                      />
+                    </svg>
+                    <span>
+                      {jsonErrors.length} Error
+                      {jsonErrors.length !== 1 ? 's' : ''}
+                    </span>
+                  </span>
+                )}
+              </div>
+
               <button
                 onClick={() => {
-                  // TODO: Implement JSON validation
+                  // TODO: Implement JSON validation and update preview
                   console.log('JSON updated');
                 }}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                disabled={!isJsonValid}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Update Preview
               </button>
