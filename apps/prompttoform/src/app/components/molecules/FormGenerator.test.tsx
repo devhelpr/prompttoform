@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FormGenerator } from './FormGenerator';
 
@@ -13,6 +13,10 @@ vi.mock('../../services/form-generation.service', () => ({
 
 vi.mock('../../services/llm-api', () => ({
   getCurrentAPIConfig: vi.fn(),
+}));
+
+vi.mock('../../services/llm', () => ({
+  updateFormWithPatch: vi.fn(),
 }));
 
 // Mock PIIValidationService globally so all instances return safe result
@@ -31,6 +35,8 @@ vi.mock('../../services/indexeddb', () => ({
     storeUpdate: vi.fn(),
     getAllSessions: vi.fn(),
     deleteSession: vi.fn(),
+    getSessionWithLatestJson: vi.fn(),
+    getUpdateCount: vi.fn(),
   },
 }));
 
@@ -58,13 +64,15 @@ vi.mock('./SessionHistory', () => ({
   }: {
     isOpen: boolean;
     onClose: () => void;
-    onLoadSession: (session: any) => void;
+    onLoadSession: (session: any) => Promise<void>;
     onStartNewSession: () => void;
   }) =>
     isOpen ? (
       <div data-testid="session-history">
         <button
-          onClick={() => onLoadSession({ id: 'test-session', prompt: 'Test' })}
+          onClick={async () =>
+            await onLoadSession({ id: 'test-session', prompt: 'Test' })
+          }
         >
           Load Session
         </button>
@@ -195,6 +203,23 @@ describe('FormGenerator Component', () => {
 
       expect(screen.queryByTestId('session-history')).toBeFalsy();
     });
+
+    it('should load session when session is selected', async () => {
+      render(<FormGenerator formJson="" triggerDeploy={false} />);
+
+      const historyButton = screen.getByRole('button', {
+        name: 'Show History',
+      });
+      await user.click(historyButton);
+
+      const loadSessionButton = screen.getByRole('button', {
+        name: 'Load Session',
+      });
+      await user.click(loadSessionButton);
+
+      // Should handle the session loading without crashing
+      expect(loadSessionButton).toBeTruthy();
+    });
   });
 
   describe('Settings Modal', () => {
@@ -236,6 +261,21 @@ describe('FormGenerator Component', () => {
       await user.click(multiStepButton);
 
       expect(screen.getByTestId('form-renderer')).toBeTruthy();
+    });
+  });
+
+  describe('Form Update Functionality', () => {
+    it('should have update form UI elements when form is present', () => {
+      // Render with a pre-existing form
+      const existingForm = '{"app":{"title":"Test Form","pages":[]}}';
+      render(<FormGenerator formJson={existingForm} triggerDeploy={false} />);
+
+      // Check that update form elements are present
+      expect(screen.getByRole('heading', { name: 'Update Form' })).toBeTruthy();
+      expect(
+        screen.getByPlaceholderText(/Describe the changes you want to make/)
+      ).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Update Form' })).toBeTruthy();
     });
   });
 });

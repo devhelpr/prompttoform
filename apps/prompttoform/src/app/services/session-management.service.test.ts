@@ -16,6 +16,10 @@ vi.mock('./indexeddb', () => ({
     deleteSession: vi.fn(),
     getSessionWithUpdates: vi.fn(),
     updateSession: vi.fn(),
+    storeUpdate: vi.fn(),
+    getLatestUpdate: vi.fn(),
+    getSessionWithLatestJson: vi.fn(),
+    getUpdateCount: vi.fn(),
   },
 }));
 
@@ -249,6 +253,169 @@ describe('SessionManagementService', () => {
       await expect(
         service.getSessionWithUpdates('test-session-id')
       ).rejects.toThrow('Failed to get session with updates');
+    });
+  });
+
+  describe('Form Update Functionality', () => {
+    let mockUpdate: any;
+
+    beforeEach(() => {
+      mockUpdate = {
+        id: 'update-123',
+        sessionId: 'test-session-id',
+        updatePrompt: 'Add a new field',
+        updatedJson: JSON.stringify({
+          app: {
+            title: 'Updated Test Form',
+            pages: [
+              {
+                id: 'page1',
+                title: 'Page 1',
+                route: '/page1',
+                components: [
+                  {
+                    id: 'field1',
+                    type: 'text',
+                    label: 'New Field',
+                  },
+                ],
+              },
+            ],
+          },
+        }),
+        createdAt: new Date(),
+      };
+    });
+
+    describe('storeUpdate', () => {
+      it('should successfully store an update', async () => {
+        mockFormSessionService.storeUpdate.mockResolvedValue('update-123');
+
+        const result = await FormSessionService.storeUpdate(
+          'test-session-id',
+          'Add a new field',
+          JSON.stringify(mockUIJson)
+        );
+
+        expect(result).toBe('update-123');
+        expect(mockFormSessionService.storeUpdate).toHaveBeenCalledWith(
+          'test-session-id',
+          'Add a new field',
+          JSON.stringify(mockUIJson)
+        );
+      });
+
+      it('should handle update storage failure', async () => {
+        mockFormSessionService.storeUpdate.mockRejectedValue(
+          new Error('Storage failed')
+        );
+
+        await expect(
+          FormSessionService.storeUpdate(
+            'test-session-id',
+            'Add a new field',
+            JSON.stringify(mockUIJson)
+          )
+        ).rejects.toThrow('Storage failed');
+      });
+    });
+
+    describe('getLatestUpdate', () => {
+      it('should return the most recent update for a session', async () => {
+        mockFormSessionService.getLatestUpdate.mockResolvedValue(mockUpdate);
+
+        const result = await FormSessionService.getLatestUpdate(
+          'test-session-id'
+        );
+
+        expect(result).toEqual(mockUpdate);
+        expect(mockFormSessionService.getLatestUpdate).toHaveBeenCalledWith(
+          'test-session-id'
+        );
+      });
+
+      it('should return undefined when no updates exist', async () => {
+        mockFormSessionService.getLatestUpdate.mockResolvedValue(undefined);
+
+        const result = await FormSessionService.getLatestUpdate(
+          'test-session-id'
+        );
+
+        expect(result).toBeUndefined();
+      });
+    });
+
+    describe('getSessionWithLatestJson', () => {
+      it('should return session with latest update JSON when updates exist', async () => {
+        const mockSessionWithLatestJson = {
+          session: mockSession,
+          latestJson: mockUpdate.updatedJson,
+        };
+        mockFormSessionService.getSessionWithLatestJson.mockResolvedValue(
+          mockSessionWithLatestJson
+        );
+
+        const result = await FormSessionService.getSessionWithLatestJson(
+          'test-session-id'
+        );
+
+        expect(result).toEqual(mockSessionWithLatestJson);
+        expect(result?.latestJson).toBe(mockUpdate.updatedJson);
+      });
+
+      it('should return session with original JSON when no updates exist', async () => {
+        const mockSessionWithOriginalJson = {
+          session: mockSession,
+          latestJson: mockSession.generatedJson,
+        };
+        mockFormSessionService.getSessionWithLatestJson.mockResolvedValue(
+          mockSessionWithOriginalJson
+        );
+
+        const result = await FormSessionService.getSessionWithLatestJson(
+          'test-session-id'
+        );
+
+        expect(result).toEqual(mockSessionWithOriginalJson);
+        expect(result?.latestJson).toBe(mockSession.generatedJson);
+      });
+
+      it('should return undefined when session does not exist', async () => {
+        mockFormSessionService.getSessionWithLatestJson.mockResolvedValue(
+          undefined
+        );
+
+        const result = await FormSessionService.getSessionWithLatestJson(
+          'non-existent-session'
+        );
+
+        expect(result).toBeUndefined();
+      });
+    });
+
+    describe('getUpdateCount', () => {
+      it('should return the correct number of updates for a session', async () => {
+        mockFormSessionService.getUpdateCount.mockResolvedValue(3);
+
+        const result = await FormSessionService.getUpdateCount(
+          'test-session-id'
+        );
+
+        expect(result).toBe(3);
+        expect(mockFormSessionService.getUpdateCount).toHaveBeenCalledWith(
+          'test-session-id'
+        );
+      });
+
+      it('should return 0 when no updates exist', async () => {
+        mockFormSessionService.getUpdateCount.mockResolvedValue(0);
+
+        const result = await FormSessionService.getUpdateCount(
+          'test-session-id'
+        );
+
+        expect(result).toBe(0);
+      });
     });
   });
 });

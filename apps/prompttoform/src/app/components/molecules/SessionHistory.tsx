@@ -4,7 +4,7 @@ import { FormSessionService, FormSession } from '../../services/indexeddb';
 interface SessionHistoryProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoadSession: (session: FormSession) => void;
+  onLoadSession: (session: FormSession) => Promise<void>;
   onStartNewSession: () => void;
 }
 
@@ -15,6 +15,7 @@ export function SessionHistory({
   onStartNewSession,
 }: SessionHistoryProps) {
   const [sessions, setSessions] = useState<FormSession[]>([]);
+  const [updateCounts, setUpdateCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -37,6 +38,15 @@ export function SessionHistory({
       setIsLoading(true);
       const allSessions = await FormSessionService.getAllSessions();
       setSessions(allSessions);
+
+      // Load update counts for each session
+      const counts: Record<string, number> = {};
+      for (const session of allSessions) {
+        counts[session.id] = await FormSessionService.getUpdateCount(
+          session.id
+        );
+      }
+      setUpdateCounts(counts);
     } catch (err) {
       setError('Failed to load sessions');
       console.error('Error loading sessions:', err);
@@ -62,8 +72,8 @@ export function SessionHistory({
     }
   };
 
-  const handleLoadSession = (session: FormSession) => {
-    onLoadSession(session);
+  const handleLoadSession = async (session: FormSession) => {
+    await onLoadSession(session);
     onClose(); // Close the dialog after loading
   };
 
@@ -136,6 +146,13 @@ export function SessionHistory({
                         <div className="text-sm text-zinc-500 space-y-1">
                           <p>Created: {formatDate(session.createdAt)}</p>
                           <p>Updated: {formatDate(session.updatedAt)}</p>
+                          {updateCounts[session.id] > 0 && (
+                            <p className="text-green-600">
+                              {updateCounts[session.id]} update
+                              {updateCounts[session.id] !== 1 ? 's' : ''}{' '}
+                              applied
+                            </p>
+                          )}
                           {session.netlifySiteId && (
                             <p className="text-indigo-600">
                               Deployed to: {session.netlifySiteId}

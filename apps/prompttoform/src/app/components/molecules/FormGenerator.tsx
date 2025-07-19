@@ -471,16 +471,25 @@ export function FormGenerator({
     });
   }
 
-  const handleLoadSession = (session: FormSession) => {
+  const handleLoadSession = async (session: FormSession) => {
     try {
       console.log('Loading session:', session.id);
-      console.log('Stored JSON length:', session.generatedJson.length);
 
       setPrompt(session.prompt);
       setCurrentSessionId(session.id);
 
-      // Parse the stored JSON - it should be valid JSON string
-      const parsedJson = parseJsonSafely(session.generatedJson) as UIJson;
+      // Get the session with the most recent JSON (including updates)
+      const sessionWithLatestJson =
+        await FormSessionService.getSessionWithLatestJson(session.id);
+      if (!sessionWithLatestJson) {
+        throw new Error('Session not found');
+      }
+
+      const { latestJson } = sessionWithLatestJson;
+      console.log('Latest JSON length:', latestJson.length);
+
+      // Parse the latest JSON - it should be valid JSON string
+      const parsedJson = parseJsonSafely(latestJson) as UIJson;
       if (parsedJson) {
         console.log('Successfully parsed JSON:', parsedJson);
         setParsedJson(parsedJson);
@@ -494,13 +503,12 @@ export function FormGenerator({
         setError(null);
         setEvaluation(null);
 
-        console.log('Session loaded successfully');
+        console.log('Session loaded successfully with latest updates');
       } else {
         throw new Error('Failed to parse JSON');
       }
     } catch (error) {
       console.error('Error loading session:', error);
-      console.error('Problematic JSON:', session.generatedJson);
       setError('Failed to load session: Invalid JSON format');
     }
   };
