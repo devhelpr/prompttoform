@@ -1,29 +1,17 @@
 import { UIJson, JsonFormatOptions } from '../types/form-generator.types';
 
 /**
- * Format JSON for display with proper indentation and newline handling
+ * Format JSON for display with proper indentation
  */
 export function formatJsonForDisplay(
   parsedJson: UIJson,
   options: JsonFormatOptions = {}
 ): string {
-  const {
-    indent = 2,
-    replaceNewlines = true,
-    replaceBackslashes = true,
-  } = options;
+  const { indent = 2 } = options;
 
-  let formatted = JSON.stringify(parsedJson, null, indent);
-
-  if (replaceNewlines) {
-    formatted = formatted.replace(/\\n/g, '\n');
-  }
-
-  if (replaceBackslashes) {
-    formatted = formatted.replace(/\\\\/g, '\\');
-  }
-
-  return formatted;
+  // Simply return the properly formatted JSON without any post-processing
+  // This prevents corruption of properly escaped characters
+  return JSON.stringify(parsedJson, null, indent);
 }
 
 /**

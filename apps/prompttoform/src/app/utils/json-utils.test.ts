@@ -49,7 +49,7 @@ describe('JSON Utils', () => {
       expect(result).toMatch(/^\s*\{/); // Should start with indentation
     });
 
-    it('should handle newline replacement', () => {
+    it('should handle newlines in strings properly', () => {
       const jsonWithNewlines: UIJson = {
         app: {
           title: 'Test\nForm',
@@ -58,10 +58,11 @@ describe('JSON Utils', () => {
       };
 
       const result = formatJsonForDisplay(jsonWithNewlines);
-      expect(result).toContain('Test\nForm');
+      // Should contain the escaped newline character, not an actual newline
+      expect(result).toContain('Test\\nForm');
     });
 
-    it('should handle backslash replacement', () => {
+    it('should handle backslashes in strings properly', () => {
       const jsonWithBackslashes: UIJson = {
         app: {
           title: 'Test\\Form',
@@ -70,7 +71,8 @@ describe('JSON Utils', () => {
       };
 
       const result = formatJsonForDisplay(jsonWithBackslashes);
-      expect(result).toContain('Test\\Form');
+      // Should contain the escaped backslash, not a single backslash
+      expect(result).toContain('Test\\\\Form');
     });
   });
 
