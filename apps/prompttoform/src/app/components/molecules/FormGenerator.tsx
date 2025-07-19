@@ -405,23 +405,13 @@ export function FormGenerator({
         if (updatedForm) {
           setAndPersistGeneratedJson(result.updatedJson, updatedForm);
 
-          // Store update in IndexedDB if we have a current session
-          if (currentSessionId) {
-            try {
-              await FormSessionService.storeUpdate(
-                currentSessionId,
-                updatePrompt,
-                getRawJsonForStorage(updatedForm)
-              );
-              console.log('Update stored for session:', currentSessionId);
+          // The update is already stored in IndexedDB by the formGenerationService
+          // No need to store it again here
+          console.log('Update completed successfully');
 
-              // Refresh session history if it's open
-              if (isSessionHistoryOpen) {
-                // The session history will reload when the dialog opens
-              }
-            } catch (error) {
-              console.error('Failed to store update in IndexedDB:', error);
-            }
+          // Refresh session history if it's open
+          if (isSessionHistoryOpen) {
+            // The session history will reload when the dialog opens
           }
         }
       } else {
