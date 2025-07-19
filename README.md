@@ -33,11 +33,13 @@
   - [x] also store netlify siteid for this session
 - [x] show overview of all sessions and prompts
 - [x] load previous session from indexeddb
+- [x] split up FormGenerator into multiple components
+- [x] Make vitest component tests for FormRenderer using testing-library
   
-  - [ ] add a "dropdown-button" for examples (including an empty example) 
+- [ ] add a "dropdown-button" for examples (including an empty example) 
+- [ ] change the layout so that when the application or session starts that there's only a textarea in the middle of the screen. The application will also have a top menu bar (which should be reponsive) with on the right the menu options for settings and show history. On mobile (smaller viewport) a hambuerger menu should be shown with these options.
+- [ ] after entering the promt to create a form, the layout of the application should change to show the form preview, the visiual flow the form json. On the left side of the screen should be a sidebar which contains the entered prompt in read-only mode and a new textarea to update the form. There also should be a button to "deploy to netlify" and a button to "evaluate and rerun".
 
-- [ ] split up FormGenerator into multiple components
-- [ ] Make vitest component tests for FormRenderer using testing-library
 
 ## Why?
 
