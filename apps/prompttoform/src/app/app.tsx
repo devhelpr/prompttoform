@@ -1,4 +1,4 @@
-import { useState, Suspense } from 'react';
+import React, { useState, Suspense } from 'react';
 import { MainLayout } from './components/templates/MainLayout';
 import { InitialStateLayout } from './components/templates/InitialStateLayout';
 import { FormEditorLayout } from './components/templates/FormEditorLayout';
@@ -381,94 +381,126 @@ function AppContent() {
     }
   };
 
-  // If we have a formJson from URL params (triggerDeploy), show the editor view
-  if (triggerDeploy && formJson) {
-    console.log(
-      '🔄 TriggerDeploy: Restoring session after Netlify authentication'
-    );
-    console.log('📦 Stored session ID:', storedSessionId);
-    console.log(
-      '📄 Form JSON from localStorage:',
-      formJson ? 'Present' : 'Missing'
-    );
+  // Handle triggerDeploy logic after all handlers are defined
+  React.useEffect(() => {
+    if (triggerDeploy && formJson) {
+      console.log(
+        '🔄 TriggerDeploy: Restoring session after Netlify authentication'
+      );
+      console.log('📦 Stored session ID:', storedSessionId);
+      console.log(
+        '📄 Form JSON from localStorage:',
+        formJson ? 'Present' : 'Missing'
+      );
 
-    // Restore session if we have a stored session ID
-    if (storedSessionId && !state.currentSessionId) {
-      console.log('🔄 Loading session data from IndexedDB...');
-      setCurrentSessionId(storedSessionId);
+      // Restore session if we have a stored session ID
+      if (storedSessionId && !state.currentSessionId) {
+        console.log('🔄 Loading session data from IndexedDB...');
+        setCurrentSessionId(storedSessionId);
 
-      // Load session data from IndexedDB
-      FormSessionService.getSessionWithLatestJson(storedSessionId)
-        .then((sessionData) => {
-          console.log(
-            '✅ Session data loaded from IndexedDB:',
-            sessionData ? 'Success' : 'Not found'
-          );
-          if (sessionData) {
-            console.log('📝 Setting prompt:', sessionData.session.prompt);
+        // Load session data from IndexedDB
+        FormSessionService.getSessionWithLatestJson(storedSessionId)
+          .then((sessionData) => {
             console.log(
-              '📄 Setting JSON from session (length):',
-              sessionData.latestJson.length
+              '✅ Session data loaded from IndexedDB:',
+              sessionData ? 'Success' : 'Not found'
             );
-
-            // Set the prompt from the session
-            setPrompt(sessionData.session.prompt);
-
-            // Parse and set the form JSON
-            const parsedJson = parseJsonSafely(sessionData.latestJson);
-            if (parsedJson) {
+            if (sessionData) {
+              console.log('📝 Setting prompt:', sessionData.session.prompt);
               console.log(
-                '✅ JSON parsed successfully, setting both string and parsed versions'
+                '📄 Setting JSON from session (length):',
+                sessionData.latestJson.length
               );
-              setGeneratedJson(sessionData.latestJson, parsedJson);
-            } else {
+
+              // Set the prompt from the session
+              setPrompt(sessionData.session.prompt);
+
+              // Parse and set the form JSON
+              const parsedJson = parseJsonSafely(sessionData.latestJson);
+              if (parsedJson) {
+                console.log(
+                  '✅ JSON parsed successfully, setting both string and parsed versions'
+                );
+                setGeneratedJson(sessionData.latestJson, parsedJson);
+              } else {
+                console.log(
+                  '⚠️ JSON parsing failed, setting string version only'
+                );
+                setGeneratedJson(sessionData.latestJson);
+              }
+
+              // Automatically trigger deployment after session restoration
               console.log(
-                '⚠️ JSON parsing failed, setting string version only'
+                '🚀 Auto-triggering deployment after session restoration...'
               );
-              setGeneratedJson(sessionData.latestJson);
+              setTimeout(() => {
+                handleDeploy();
+              }, 1000); // Small delay to ensure state is fully set
             }
-          }
-        })
-        .catch((error) => {
-          console.error(
-            '❌ Failed to load session data from IndexedDB:',
-            error
-          );
-          console.log('🔄 Falling back to localStorage data...');
-          // Fallback to localStorage data
+          })
+          .catch((error) => {
+            console.error(
+              '❌ Failed to load session data from IndexedDB:',
+              error
+            );
+            console.log('🔄 Falling back to localStorage data...');
+            // Fallback to localStorage data
+            const parsedJson = parseJsonSafely(formJson);
+            if (parsedJson) {
+              console.log('✅ Fallback JSON parsed successfully');
+              setGeneratedJson(formJson, parsedJson);
+            } else {
+              console.log('⚠️ Fallback JSON parsing failed');
+              setGeneratedJson(formJson);
+            }
+
+            // Auto-trigger deployment with fallback data
+            console.log('🚀 Auto-triggering deployment with fallback data...');
+            setTimeout(() => {
+              handleDeploy();
+            }, 1000);
+          });
+      } else {
+        console.log(
+          '🔄 No stored session ID or session already loaded, using localStorage data'
+        );
+        // Set the form JSON if not already set
+        if (!state.generatedJson) {
+          // Parse the JSON to set both the string and parsed versions
           const parsedJson = parseJsonSafely(formJson);
           if (parsedJson) {
-            console.log('✅ Fallback JSON parsed successfully');
+            console.log('✅ localStorage JSON parsed successfully');
             setGeneratedJson(formJson, parsedJson);
           } else {
-            console.log('⚠️ Fallback JSON parsing failed');
+            console.log('⚠️ localStorage JSON parsing failed');
             setGeneratedJson(formJson);
           }
-        });
-    } else {
-      console.log(
-        '🔄 No stored session ID or session already loaded, using localStorage data'
-      );
-      // Set the form JSON if not already set
-      if (!state.generatedJson) {
-        // Parse the JSON to set both the string and parsed versions
-        const parsedJson = parseJsonSafely(formJson);
-        if (parsedJson) {
-          console.log('✅ localStorage JSON parsed successfully');
-          setGeneratedJson(formJson, parsedJson);
-        } else {
-          console.log('⚠️ localStorage JSON parsing failed');
-          setGeneratedJson(formJson);
         }
+
+        // Auto-trigger deployment with localStorage data
+        console.log('🚀 Auto-triggering deployment with localStorage data...');
+        setTimeout(() => {
+          handleDeploy();
+        }, 1000);
+      }
+
+      // Transition to editor if not already there
+      if (state.currentView !== 'editor') {
+        console.log('🔄 Transitioning to editor view');
+        transitionToEditor();
       }
     }
+  }, [
+    triggerDeploy,
+    formJson,
+    storedSessionId,
+    state.currentSessionId,
+    state.currentView,
+    state.generatedJson,
+  ]);
 
-    // Transition to editor if not already there
-    if (state.currentView !== 'editor') {
-      console.log('🔄 Transitioning to editor view');
-      transitionToEditor();
-    }
-
+  // If we have a formJson from URL params (triggerDeploy), show the editor view
+  if (triggerDeploy && formJson) {
     return (
       <ErrorBoundary>
         <MainLayout
