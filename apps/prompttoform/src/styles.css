@@ -2,6 +2,17 @@
 
 @source '../../../libs/react-forms/src/';
 
+/* Dialog backdrop styling */
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Dialog centering and positioning */
+dialog {
+  margin: auto;
+  padding: 0;
+}
+
 /* Fade-in animation for initial state */
 @keyframes fade-in {
   from {

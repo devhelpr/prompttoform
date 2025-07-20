@@ -84,7 +84,7 @@ export function ImportJsonModal({
   return (
     <dialog
       ref={dialogRef}
-      className="backdrop:bg-black backdrop:bg-opacity-50 rounded-lg p-0 border-0 shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+      className="backdrop:bg-black backdrop:bg-opacity-50 rounded-lg p-0 border-0 shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden bg-white"
       onClose={handleClose}
     >
       {/* Header */}
