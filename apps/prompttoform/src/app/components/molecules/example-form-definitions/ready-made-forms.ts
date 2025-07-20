@@ -709,4 +709,113 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
       },
     },
   },
+  {
+    name: 'Question Loop Form',
+    description: 'A form that has a loop in the definition',
+    prompt:
+      'create a form that asks a question, and in the next step if the answer is wrong and you press "next" that it sends you back to the previous step (i want a loop in the definition).. this feedback should occur in the next step which shows a message that it answer was wrong',
+    json: {
+      app: {
+        title: 'Question Loop Form',
+        pages: [
+          {
+            id: 'questionPage',
+            title: 'Question',
+            route: '/question',
+            layout: 'vertical',
+            components: [
+              {
+                id: 'questionText',
+                type: 'text',
+                label: 'Question',
+                props: {
+                  helperText: 'Please answer the following question:',
+                },
+              },
+              {
+                id: 'answerInput',
+                type: 'input',
+                label: 'What is 2 + 2?',
+                props: {
+                  placeholder: 'Enter your answer',
+                },
+                validation: {
+                  required: true,
+                },
+              },
+              {
+                id: 'nextButton',
+                type: 'button',
+                label: 'Next',
+                props: {
+                  className: 'primary',
+                },
+              },
+            ],
+            branches: [
+              {
+                condition: {
+                  field: 'answerInput',
+                  operator: '==',
+                  value: '4',
+                },
+                nextPage: 'successPage',
+              },
+              {
+                condition: {
+                  field: 'answerInput',
+                  operator: '!=',
+                  value: '4',
+                },
+                nextPage: 'wrongAnswerPage',
+              },
+            ],
+          },
+          {
+            id: 'wrongAnswerPage',
+            title: 'Incorrect Answer',
+            route: '/wrong',
+            layout: 'vertical',
+            components: [
+              {
+                id: 'wrongMessage',
+                type: 'text',
+                label: 'Incorrect',
+                props: {
+                  helperText:
+                    'Sorry, your answer was incorrect. Please try again.',
+                },
+              },
+              {
+                id: 'backButton',
+                type: 'button',
+                label: 'Back to Question',
+                props: {
+                  className: 'secondary',
+                },
+              },
+            ],
+            nextPage: 'questionPage',
+          },
+          {
+            id: 'successPage',
+            title: 'Correct Answer',
+            route: '/success',
+            layout: 'vertical',
+            components: [
+              {
+                id: 'successMessage',
+                type: 'text',
+                label: 'Congratulations!',
+                props: {
+                  helperText: 'You answered correctly!',
+                },
+              },
+            ],
+            isEndPage: true,
+          },
+        ],
+      },
+    },
+  },
 ];
