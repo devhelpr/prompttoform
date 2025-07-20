@@ -7,7 +7,6 @@ import { FormEditorSidebar } from './components/molecules/FormEditorSidebar';
 import { FormPreviewPanel } from './components/molecules/FormPreviewPanel';
 import { ErrorBoundary } from './components/molecules/ErrorBoundary';
 
-import { PerformanceMonitor } from './components/molecules/PerformanceMonitor';
 import {
   AppStateProvider,
   useAppState,
@@ -618,7 +617,6 @@ function AppContent() {
           onImport={handleImportJson}
         />
 
-        <PerformanceMonitor />
         <DeploymentOverlay
           isVisible={deploymentOverlay.isVisible}
           message={deploymentOverlay.message}
@@ -667,7 +665,6 @@ function AppContent() {
           onImport={handleImportJson}
         />
 
-        <PerformanceMonitor />
         <DeploymentOverlay
           isVisible={deploymentOverlay.isVisible}
           message={deploymentOverlay.message}
@@ -749,7 +746,6 @@ function AppContent() {
         onImport={handleImportJson}
       />
 
-      <PerformanceMonitor />
       <DeploymentOverlay
         isVisible={deploymentOverlay.isVisible}
         message={deploymentOverlay.message}
