@@ -56,7 +56,7 @@ export function FormEditorLayout({
       {/* Mobile Overlay */}
       {isMobile && showMobileOverlay && (
         <div
-          className="fixed inset-0 bg-zinc-900 bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-zinc-900 opacity-25 z-40 lg:hidden"
           onClick={() => setShowMobileOverlay(false)}
         />
       )}
