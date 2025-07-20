@@ -91,6 +91,9 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       currentView: 'editor',
       sidebarCollapsed: window.innerWidth < 768, // Auto-collapse on mobile
     }));
+
+    // Reset scroll position to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const transitionToInitial = () => {
@@ -103,6 +106,9 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       currentSessionId: null,
       error: null,
     }));
+
+    // Reset scroll position to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const resetState = () => {
