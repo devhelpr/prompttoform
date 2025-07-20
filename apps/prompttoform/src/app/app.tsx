@@ -15,6 +15,7 @@ import {
 import { Settings } from './components/molecules/Settings';
 import { SessionHistory } from './components/molecules/SessionHistory';
 import { ImportJsonModal } from './components/molecules/ImportJsonModal';
+import { DeploymentOverlay } from './components/molecules/DeploymentOverlay';
 import { netlifyTokenHandler } from './utils/netlify-token-handler';
 import {
   saveFormJsonToLocalStorage,
@@ -88,6 +89,12 @@ function AppContent() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isZipDownloading, setIsZipDownloading] = useState(false);
   const [siteUrl, setSiteUrl] = useState('');
+  const [deploymentOverlay, setDeploymentOverlay] = useState({
+    isVisible: false,
+    message: '',
+    isSuccess: false,
+    siteUrl: '',
+  });
 
   const handleGenerate = async (prompt: string) => {
     setPrompt(prompt);
@@ -236,6 +243,13 @@ function AppContent() {
     console.log('📄 Form JSON length:', state.generatedJson.length);
 
     setIsDeploying(true);
+    setDeploymentOverlay({
+      isVisible: true,
+      message: 'Preparing deployment...',
+      isSuccess: false,
+      siteUrl: '',
+    });
+
     try {
       // Store current session ID and form JSON for post-authentication restoration
       if (state.currentSessionId) {
@@ -254,37 +268,71 @@ function AppContent() {
       const zipBlob = await createFormZip(state.generatedJson);
       const base64 = await blobToBase64(zipBlob);
 
-      deployWithNetlify(base64, (url) => {
-        console.log('🎉 Deployment successful! URL:', url);
-        setSiteUrl(url);
+      setDeploymentOverlay((prev) => ({
+        ...prev,
+        message: 'Deploying to Netlify...',
+      }));
 
-        // Update session with Netlify site ID
-        if (state.currentSessionId) {
-          // Extract site ID from URL
-          const siteId = url.split('/').pop()?.split('.')[0];
-          if (siteId) {
-            console.log('🔗 Updating session with Netlify site ID:', siteId);
-            FormSessionService.updateSession(
-              state.currentSessionId,
-              state.generatedJson,
-              siteId
-            );
+      deployWithNetlify(
+        base64,
+        (url) => {
+          console.log('🎉 Deployment successful! URL:', url);
+          setSiteUrl(url);
+
+          // Update session with Netlify site ID
+          if (state.currentSessionId) {
+            // Extract site ID from URL
+            const siteId = url.split('/').pop()?.split('.')[0];
+            if (siteId) {
+              console.log('🔗 Updating session with Netlify site ID:', siteId);
+              FormSessionService.updateSession(
+                state.currentSessionId,
+                state.generatedJson,
+                siteId
+              );
+            }
           }
+
+          // Clear stored data after successful deployment
+          console.log(
+            '🧹 Clearing localStorage data after successful deployment'
+          );
+          clearFormJsonFromLocalStorage();
+          clearSessionIdFromLocalStorage();
+
+          setIsDeploying(false);
+          setDeploymentOverlay({
+            isVisible: true,
+            message: 'Your form has been successfully deployed to Netlify!',
+            isSuccess: true,
+            siteUrl: url,
+          });
+        },
+        () => {
+          // Success callback - handled in the URL callback
+        },
+        (errorMessage) => {
+          console.error('❌ Deployment failed:', errorMessage);
+          setError('Failed to deploy to Netlify');
+          setIsDeploying(false);
+          setDeploymentOverlay({
+            isVisible: true,
+            message: `Deployment failed: ${errorMessage}`,
+            isSuccess: false,
+            siteUrl: '',
+          });
         }
-
-        // Clear stored data after successful deployment
-        console.log(
-          '🧹 Clearing localStorage data after successful deployment'
-        );
-        clearFormJsonFromLocalStorage();
-        clearSessionIdFromLocalStorage();
-
-        setIsDeploying(false);
-      });
+      );
     } catch (err) {
       console.error('❌ Deployment failed:', err);
       setError('Failed to deploy to Netlify');
       setIsDeploying(false);
+      setDeploymentOverlay({
+        isVisible: true,
+        message: 'Failed to prepare deployment',
+        isSuccess: false,
+        siteUrl: '',
+      });
     }
   };
 
@@ -570,6 +618,15 @@ function AppContent() {
         />
 
         <PerformanceMonitor />
+        <DeploymentOverlay
+          isVisible={deploymentOverlay.isVisible}
+          message={deploymentOverlay.message}
+          isSuccess={deploymentOverlay.isSuccess}
+          siteUrl={deploymentOverlay.siteUrl}
+          onClose={() =>
+            setDeploymentOverlay({ ...deploymentOverlay, isVisible: false })
+          }
+        />
       </ErrorBoundary>
     );
   }
@@ -610,6 +667,15 @@ function AppContent() {
         />
 
         <PerformanceMonitor />
+        <DeploymentOverlay
+          isVisible={deploymentOverlay.isVisible}
+          message={deploymentOverlay.message}
+          isSuccess={deploymentOverlay.isSuccess}
+          siteUrl={deploymentOverlay.siteUrl}
+          onClose={() =>
+            setDeploymentOverlay({ ...deploymentOverlay, isVisible: false })
+          }
+        />
       </ErrorBoundary>
     );
   }
@@ -682,6 +748,15 @@ function AppContent() {
       />
 
       <PerformanceMonitor />
+      <DeploymentOverlay
+        isVisible={deploymentOverlay.isVisible}
+        message={deploymentOverlay.message}
+        isSuccess={deploymentOverlay.isSuccess}
+        siteUrl={deploymentOverlay.siteUrl}
+        onClose={() =>
+          setDeploymentOverlay({ ...deploymentOverlay, isVisible: false })
+        }
+      />
     </ErrorBoundary>
   );
 }

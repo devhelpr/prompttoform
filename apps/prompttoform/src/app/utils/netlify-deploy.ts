@@ -6,7 +6,9 @@ import {
 
 export const deployWithNetlify = (
   json: string,
-  onSetSiteUrl: (siteUrl: string) => void
+  onSetSiteUrl: (siteUrl: string) => void,
+  onSuccess?: () => void,
+  onError?: (error: string) => void
 ) => {
   //const redirectUrl = `https://localhost:8787/netlify/code-flow-canvas`;
   if (netlifyAccessToken) {
@@ -26,17 +28,17 @@ export const deployWithNetlify = (
       .then((response) => response.json())
       .then((data) => {
         console.log('Deployment response:', data);
-        alert('Deployment successful!');
         if (data.siteId) {
           setNetlifySiteId(data.siteId);
         }
         if (data.siteUrl) {
           onSetSiteUrl(data.siteUrl);
         }
+        onSuccess?.();
       })
       .catch((error) => {
         console.error('Error during deployment:', error);
-        alert('Deployment failed: ' + error.message);
+        onError?.(error.message);
       });
   } else {
     const redirectUrl = `https://form-generator-worker.maikel-f16.workers.dev/netlify/auth-prompttoform?state=${window.location.href}`;
