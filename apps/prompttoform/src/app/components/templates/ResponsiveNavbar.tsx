@@ -42,7 +42,7 @@ export function ResponsiveNavbar({
                 className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
               >
                 <svg
-                  className="w-4 h-4 mr-2"
+                  className="w-3 h-3 mr-2"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -129,7 +129,7 @@ export function ResponsiveNavbar({
           >
             <div className="flex items-center">
               <svg
-                className="w-4 h-4 mr-2"
+                className="w-3 h-3 mr-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
