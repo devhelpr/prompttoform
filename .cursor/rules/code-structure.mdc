@@ -18,4 +18,6 @@ alwaysApply: true
 - Put functions and classes in separate files in a proper folder structure
 - use kebab-case for filenames
 - use interface and types and put these in separate files , reuse were possible
+- DONT use inline styles, use tailwind classes instead
+- use modern web-api's like dialog elements, etc.
   
