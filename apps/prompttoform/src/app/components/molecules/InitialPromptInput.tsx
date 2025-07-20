@@ -204,7 +204,7 @@ export function InitialPromptInput({
                         </svg>
                         {form.name}
                       </div>
-                      <div className="text-sm text-zinc-600 mt-1">
+                      <div className="text-sm text-zinc-600 mt-1 whitespace-normal">
                         {form.description}
                       </div>
                     </div>
@@ -246,7 +246,7 @@ export function InitialPromptInput({
                         </svg>
                         {example.name}
                       </div>
-                      <div className="text-sm text-zinc-600 mt-1 truncate">
+                      <div className="text-sm text-zinc-600 mt-1 truncate whitespace-normal">
                         {example.prompt}
                       </div>
                     </div>
