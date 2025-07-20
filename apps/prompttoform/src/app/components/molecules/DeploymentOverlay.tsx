@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface DeploymentOverlayProps {
   isVisible: boolean;
@@ -15,11 +15,30 @@ export function DeploymentOverlay({
   siteUrl,
   onClose,
 }: DeploymentOverlayProps) {
-  if (!isVisible) return null;
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    if (isVisible) {
+      dialog.showModal();
+    } else {
+      dialog.close();
+    }
+  }, [isVisible]);
+
+  const handleClose = () => {
+    onClose?.();
+  };
 
   return (
-    <div className="fixed inset-0 bg-black opacity-25 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
+    <dialog
+      ref={dialogRef}
+      className="backdrop:bg-black backdrop:bg-opacity-50 rounded-lg p-0 border-0 shadow-xl max-w-md w-full mx-4"
+      onClose={handleClose}
+    >
+      <div className="p-8">
         <div className="text-center">
           {!isSuccess ? (
             // Deployment in progress
@@ -64,18 +83,16 @@ export function DeploymentOverlay({
                   </a>
                 </div>
               )}
-              {onClose && (
-                <button
-                  onClick={onClose}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-                >
-                  Close
-                </button>
-              )}
+              <button
+                onClick={handleClose}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Close
+              </button>
             </>
           )}
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
