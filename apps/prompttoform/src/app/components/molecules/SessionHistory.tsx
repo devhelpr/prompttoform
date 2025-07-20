@@ -5,6 +5,7 @@ import {
   FormUpdate,
 } from '../../services/indexeddb';
 import { UpdateAccordion } from './UpdateAccordion';
+import { ConfirmationDialog } from './ConfirmationDialog';
 
 interface SessionHistoryProps {
   isOpen: boolean;
@@ -29,6 +30,10 @@ export function SessionHistory({
   >({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    sessionId: string | null;
+  }>({ isOpen: false, sessionId: null });
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -67,20 +72,25 @@ export function SessionHistory({
   };
 
   const handleDeleteSession = async (sessionId: string) => {
-    // eslint-disable-next-line no-alert
-    if (
-      window.confirm(
-        'Are you sure you want to delete this session? This action cannot be undone.'
-      )
-    ) {
-      try {
-        await FormSessionService.deleteSession(sessionId);
-        await loadSessions(); // Reload the list
-      } catch (err) {
-        setError('Failed to delete session');
-        console.error('Error deleting session:', err);
-      }
+    setDeleteConfirmation({ isOpen: true, sessionId });
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!deleteConfirmation.sessionId) return;
+
+    try {
+      await FormSessionService.deleteSession(deleteConfirmation.sessionId);
+      await loadSessions(); // Reload the list
+    } catch (err) {
+      setError('Failed to delete session');
+      console.error('Error deleting session:', err);
+    } finally {
+      setDeleteConfirmation({ isOpen: false, sessionId: null });
     }
+  };
+
+  const cancelDeleteSession = () => {
+    setDeleteConfirmation({ isOpen: false, sessionId: null });
   };
 
   const handleLoadSession = async (session: FormSession) => {
@@ -293,6 +303,16 @@ export function SessionHistory({
           </button>
         </div>
       </div>
+      <ConfirmationDialog
+        isOpen={deleteConfirmation.isOpen}
+        title="Delete Session"
+        message="Are you sure you want to delete this session? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteSession}
+        onCancel={cancelDeleteSession}
+        variant="danger"
+      />
     </dialog>
   );
 }
