@@ -17,6 +17,7 @@
     "_preview": "nx vite:preview"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.4",
     "@langchain/core": "^0.3.43",
     "@langchain/google-genai": "^0.2.2",
     "compromise": "^14.14.4",
