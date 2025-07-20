@@ -1,33 +1,35 @@
-export const multiStepForm = {
+import { FormDefinition } from '@devhelpr/react-forms';
+
+export const multiStepForm: FormDefinition = {
   app: {
-    title: "Product Order Wizard",
+    title: 'Product Order Wizard',
     pages: [
       {
-        id: "customer-info",
-        title: "Customer Information",
-        route: "/order/customer",
-        layout: "vertical",
-        nextPage: "product-selection",
+        id: 'customer-info',
+        title: 'Customer Information',
+        route: '/order/customer',
+        layout: 'vertical',
+        nextPage: 'product-selection',
         components: [
           {
-            type: "text",
-            id: "step1-intro",
+            type: 'text',
+            id: 'step1-intro',
             props: {
               content:
-                "Please provide your contact information to get started with your order.",
+                'Please provide your contact information to get started with your order.',
             },
           },
           {
-            type: "form",
-            id: "customer-form",
-            label: "Contact Information",
+            type: 'form',
+            id: 'customer-form',
+            label: 'Contact Information',
             children: [
               {
-                type: "input",
-                id: "fullName",
-                label: "Full Name",
+                type: 'input',
+                id: 'fullName',
+                label: 'Full Name',
                 props: {
-                  placeholder: "John Doe",
+                  placeholder: 'John Doe',
                 },
                 validation: {
                   required: true,
@@ -35,40 +37,40 @@ export const multiStepForm = {
                 },
               },
               {
-                type: "input",
-                id: "email",
-                label: "Email Address",
+                type: 'input',
+                id: 'email',
+                label: 'Email Address',
                 props: {
-                  inputType: "email",
-                  placeholder: "john@example.com",
+                  inputType: 'email',
+                  placeholder: 'john@example.com',
                   helperText:
                     "We'll send your order confirmation to this email",
                 },
                 validation: {
                   required: true,
-                  pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                  pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
                 },
               },
               {
-                type: "input",
-                id: "phone",
-                label: "Phone Number",
+                type: 'input',
+                id: 'phone',
+                label: 'Phone Number',
                 props: {
-                  inputType: "tel",
-                  placeholder: "(555) 555-5555",
+                  inputType: 'tel',
+                  placeholder: '(555) 555-5555',
                 },
                 validation: {
-                  pattern: "^\\+?[1-9]\\d{1,14}$",
+                  pattern: '^\\+?[1-9]\\d{1,14}$',
                 },
               },
               {
-                type: "select",
-                id: "customerType",
-                label: "Customer Type",
+                type: 'select',
+                id: 'customerType',
+                label: 'Customer Type',
                 props: {
                   options: [
-                    { label: "Individual", value: "individual" },
-                    { label: "Business", value: "business" },
+                    { label: 'Individual', value: 'individual' },
+                    { label: 'Business', value: 'business' },
                   ],
                 },
                 validation: {
@@ -76,17 +78,17 @@ export const multiStepForm = {
                 },
               },
               {
-                type: "input",
-                id: "companyName",
-                label: "Company Name",
+                type: 'input',
+                id: 'companyName',
+                label: 'Company Name',
                 props: {
-                  placeholder: "Acme Inc.",
+                  placeholder: 'Acme Inc.',
                 },
                 visibilityConditions: [
                   {
-                    field: "customerType",
-                    operator: "==",
-                    value: "business",
+                    field: 'customerType',
+                    operator: '==',
+                    value: 'business',
                   },
                 ],
                 validation: {
@@ -95,22 +97,22 @@ export const multiStepForm = {
                 },
               },
               {
-                type: "input",
-                id: "taxId",
-                label: "Tax ID / VAT Number",
+                type: 'input',
+                id: 'taxId',
+                label: 'Tax ID / VAT Number',
                 props: {
-                  placeholder: "12345678",
+                  placeholder: '12345678',
                 },
                 visibilityConditions: [
                   {
-                    field: "customerType",
-                    operator: "==",
-                    value: "business",
+                    field: 'customerType',
+                    operator: '==',
+                    value: 'business',
                   },
                 ],
                 validation: {
                   required: true,
-                  pattern: "^[A-Z0-9]{8,12}$",
+                  pattern: '^[A-Z0-9]{8,12}$',
                 },
               },
             ],
@@ -118,33 +120,33 @@ export const multiStepForm = {
         ],
       },
       {
-        id: "product-selection",
-        title: "Product Selection",
-        route: "/order/products",
-        layout: "vertical",
-        nextPage: "payment-info",
+        id: 'product-selection',
+        title: 'Product Selection',
+        route: '/order/products',
+        layout: 'vertical',
+        nextPage: 'payment-info',
         components: [
           {
-            type: "text",
-            id: "step2-intro",
+            type: 'text',
+            id: 'step2-intro',
             props: {
-              content: "Select the products you want to order.",
+              content: 'Select the products you want to order.',
             },
           },
           {
-            type: "form",
-            id: "product-form",
-            label: "Products",
+            type: 'form',
+            id: 'product-form',
+            label: 'Products',
             children: [
               {
-                type: "select",
-                id: "productCategory",
-                label: "Product Category",
+                type: 'select',
+                id: 'productCategory',
+                label: 'Product Category',
                 props: {
                   options: [
-                    { label: "Electronics", value: "electronics" },
-                    { label: "Furniture", value: "furniture" },
-                    { label: "Clothing", value: "clothing" },
+                    { label: 'Electronics', value: 'electronics' },
+                    { label: 'Furniture', value: 'furniture' },
+                    { label: 'Clothing', value: 'clothing' },
                   ],
                 },
                 validation: {
@@ -152,22 +154,22 @@ export const multiStepForm = {
                 },
               },
               {
-                type: "select",
-                id: "electronicsProduct",
-                label: "Select Electronics",
+                type: 'select',
+                id: 'electronicsProduct',
+                label: 'Select Electronics',
                 props: {
                   options: [
-                    { label: "Smartphone", value: "smartphone" },
-                    { label: "Laptop", value: "laptop" },
-                    { label: "Tablet", value: "tablet" },
-                    { label: "Smart Watch", value: "smartwatch" },
+                    { label: 'Smartphone', value: 'smartphone' },
+                    { label: 'Laptop', value: 'laptop' },
+                    { label: 'Tablet', value: 'tablet' },
+                    { label: 'Smart Watch', value: 'smartwatch' },
                   ],
                 },
                 visibilityConditions: [
                   {
-                    field: "productCategory",
-                    operator: "==",
-                    value: "electronics",
+                    field: 'productCategory',
+                    operator: '==',
+                    value: 'electronics',
                   },
                 ],
                 validation: {
@@ -175,22 +177,22 @@ export const multiStepForm = {
                 },
               },
               {
-                type: "select",
-                id: "furnitureProduct",
-                label: "Select Furniture",
+                type: 'select',
+                id: 'furnitureProduct',
+                label: 'Select Furniture',
                 props: {
                   options: [
-                    { label: "Sofa", value: "sofa" },
-                    { label: "Dining Table", value: "dining_table" },
-                    { label: "Bed Frame", value: "bed_frame" },
-                    { label: "Office Desk", value: "office_desk" },
+                    { label: 'Sofa', value: 'sofa' },
+                    { label: 'Dining Table', value: 'dining_table' },
+                    { label: 'Bed Frame', value: 'bed_frame' },
+                    { label: 'Office Desk', value: 'office_desk' },
                   ],
                 },
                 visibilityConditions: [
                   {
-                    field: "productCategory",
-                    operator: "==",
-                    value: "furniture",
+                    field: 'productCategory',
+                    operator: '==',
+                    value: 'furniture',
                   },
                 ],
                 validation: {
@@ -198,22 +200,22 @@ export const multiStepForm = {
                 },
               },
               {
-                type: "select",
-                id: "clothingProduct",
-                label: "Select Clothing",
+                type: 'select',
+                id: 'clothingProduct',
+                label: 'Select Clothing',
                 props: {
                   options: [
-                    { label: "T-Shirt", value: "tshirt" },
-                    { label: "Jeans", value: "jeans" },
-                    { label: "Jacket", value: "jacket" },
-                    { label: "Dress", value: "dress" },
+                    { label: 'T-Shirt', value: 'tshirt' },
+                    { label: 'Jeans', value: 'jeans' },
+                    { label: 'Jacket', value: 'jacket' },
+                    { label: 'Dress', value: 'dress' },
                   ],
                 },
                 visibilityConditions: [
                   {
-                    field: "productCategory",
-                    operator: "==",
-                    value: "clothing",
+                    field: 'productCategory',
+                    operator: '==',
+                    value: 'clothing',
                   },
                 ],
                 validation: {
@@ -221,12 +223,12 @@ export const multiStepForm = {
                 },
               },
               {
-                type: "input",
-                id: "quantity",
-                label: "Quantity",
+                type: 'input',
+                id: 'quantity',
+                label: 'Quantity',
                 props: {
-                  inputType: "number",
-                  placeholder: "1",
+                  inputType: 'number',
+                  placeholder: '1',
                 },
                 validation: {
                   required: true,
@@ -239,33 +241,33 @@ export const multiStepForm = {
         ],
       },
       {
-        id: "payment-info",
-        title: "Payment Information",
-        route: "/order/payment",
-        layout: "vertical",
+        id: 'payment-info',
+        title: 'Payment Information',
+        route: '/order/payment',
+        layout: 'vertical',
         components: [
           {
-            type: "text",
-            id: "step3-intro",
+            type: 'text',
+            id: 'step3-intro',
             props: {
               content:
-                "Please provide your payment details to complete your order.",
+                'Please provide your payment details to complete your order.',
             },
           },
           {
-            type: "form",
-            id: "payment-form",
-            label: "Payment Details",
+            type: 'form',
+            id: 'payment-form',
+            label: 'Payment Details',
             children: [
               {
-                type: "radio",
-                id: "paymentMethod",
-                label: "Payment Method",
+                type: 'radio',
+                id: 'paymentMethod',
+                label: 'Payment Method',
                 props: {
                   options: [
-                    { label: "Credit Card", value: "credit_card" },
-                    { label: "PayPal", value: "paypal" },
-                    { label: "Bank Transfer", value: "bank_transfer" },
+                    { label: 'Credit Card', value: 'credit_card' },
+                    { label: 'PayPal', value: 'paypal' },
+                    { label: 'Bank Transfer', value: 'bank_transfer' },
                   ],
                 },
                 validation: {
@@ -273,35 +275,35 @@ export const multiStepForm = {
                 },
               },
               {
-                type: "section",
-                id: "credit-card-details",
-                label: "Credit Card Details",
+                type: 'section',
+                id: 'credit-card-details',
+                label: 'Credit Card Details',
                 visibilityConditions: [
                   {
-                    field: "paymentMethod",
-                    operator: "==",
-                    value: "credit_card",
+                    field: 'paymentMethod',
+                    operator: '==',
+                    value: 'credit_card',
                   },
                 ],
                 children: [
                   {
-                    type: "input",
-                    id: "cardNumber",
-                    label: "Card Number",
+                    type: 'input',
+                    id: 'cardNumber',
+                    label: 'Card Number',
                     props: {
-                      placeholder: "XXXX XXXX XXXX XXXX",
+                      placeholder: 'XXXX XXXX XXXX XXXX',
                     },
                     validation: {
                       required: true,
-                      pattern: "^[0-9]{16}$",
+                      pattern: '^[0-9]{16}$',
                     },
                   },
                   {
-                    type: "input",
-                    id: "cardName",
-                    label: "Name on Card",
+                    type: 'input',
+                    id: 'cardName',
+                    label: 'Name on Card',
                     props: {
-                      placeholder: "John Doe",
+                      placeholder: 'John Doe',
                     },
                     validation: {
                       required: true,
@@ -309,77 +311,77 @@ export const multiStepForm = {
                     },
                   },
                   {
-                    type: "input",
-                    id: "cardExpiry",
-                    label: "Expiration Date",
+                    type: 'input',
+                    id: 'cardExpiry',
+                    label: 'Expiration Date',
                     props: {
-                      placeholder: "MM/YY",
+                      placeholder: 'MM/YY',
                     },
                     validation: {
                       required: true,
-                      pattern: "^(0[1-9]|1[0-2])\\/([0-9]{2})$",
+                      pattern: '^(0[1-9]|1[0-2])\\/([0-9]{2})$',
                     },
                   },
                   {
-                    type: "input",
-                    id: "cardCVV",
-                    label: "CVV",
+                    type: 'input',
+                    id: 'cardCVV',
+                    label: 'CVV',
                     props: {
-                      placeholder: "123",
+                      placeholder: '123',
                     },
                     validation: {
                       required: true,
-                      pattern: "^[0-9]{3,4}$",
+                      pattern: '^[0-9]{3,4}$',
                     },
                   },
                 ],
               },
               {
-                type: "section",
-                id: "paypal-details",
-                label: "PayPal Details",
+                type: 'section',
+                id: 'paypal-details',
+                label: 'PayPal Details',
                 visibilityConditions: [
                   {
-                    field: "paymentMethod",
-                    operator: "==",
-                    value: "paypal",
+                    field: 'paymentMethod',
+                    operator: '==',
+                    value: 'paypal',
                   },
                 ],
                 children: [
                   {
-                    type: "input",
-                    id: "paypalEmail",
-                    label: "PayPal Email",
+                    type: 'input',
+                    id: 'paypalEmail',
+                    label: 'PayPal Email',
                     props: {
-                      inputType: "email",
-                      placeholder: "your-email@example.com",
+                      inputType: 'email',
+                      placeholder: 'your-email@example.com',
                     },
                     validation: {
                       required: true,
                       pattern:
-                        "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                        '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
                     },
                   },
                 ],
               },
               {
-                type: "section",
-                id: "bank-details",
-                label: "Bank Details",
+                type: 'section',
+                id: 'bank-details',
+                label: 'Bank Details',
                 visibilityConditions: [
                   {
-                    field: "paymentMethod",
-                    operator: "==",
-                    value: "bank_transfer",
+                    field: 'paymentMethod',
+                    operator: '==',
+                    value: 'bank_transfer',
                   },
                 ],
                 children: [
                   {
-                    type: "input",
-                    id: "accountName",
-                    label: "Account Holder Name",
+                    type: 'input',
+                    id: 'accountName',
+                    label: 'Account Holder Name',
                     props: {
-                      placeholder: "John Doe",
+                      placeholder: 'John Doe',
                     },
                     validation: {
                       required: true,
@@ -387,23 +389,23 @@ export const multiStepForm = {
                     },
                   },
                   {
-                    type: "input",
-                    id: "accountNumber",
-                    label: "Account Number",
+                    type: 'input',
+                    id: 'accountNumber',
+                    label: 'Account Number',
                     props: {
-                      placeholder: "XXXXXXXX",
+                      placeholder: 'XXXXXXXX',
                     },
                     validation: {
                       required: true,
-                      pattern: "^[A-Z0-9]{8,12}$",
+                      pattern: '^[A-Z0-9]{8,12}$',
                     },
                   },
                   {
-                    type: "input",
-                    id: "bankName",
-                    label: "Bank Name",
+                    type: 'input',
+                    id: 'bankName',
+                    label: 'Bank Name',
                     props: {
-                      placeholder: "Bank of Example",
+                      placeholder: 'Bank of Example',
                     },
                     validation: {
                       required: true,
@@ -413,9 +415,9 @@ export const multiStepForm = {
                 ],
               },
               {
-                type: "checkbox",
-                id: "termsAgreed",
-                label: "I agree to the terms and conditions",
+                type: 'checkbox',
+                id: 'termsAgreed',
+                label: 'I agree to the terms and conditions',
                 validation: {
                   required: true,
                 },

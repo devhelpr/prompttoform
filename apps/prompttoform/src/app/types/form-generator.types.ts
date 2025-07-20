@@ -1,4 +1,4 @@
-import { FormComponentFieldProps } from '@devhelpr/react-forms';
+import { FormDefinition } from '@devhelpr/react-forms';
 
 // Define the evaluation result type
 export interface EvaluationResult {
@@ -14,23 +14,7 @@ export interface EvaluationResult {
 export type ViewMode = 'json' | 'form' | 'flow' | 'mermaid-flow';
 
 // Define interface for JSON types
-export interface UIJson {
-  app: {
-    title: string;
-    pages: Array<{
-      id: string;
-      title: string;
-      route: string;
-      layout?: string;
-      components: FormComponentFieldProps[];
-      isEndPage?: boolean;
-    }>;
-    dataSources?: Array<{
-      type: string;
-      [key: string]: unknown;
-    }>;
-  };
-}
+export type UIJson = FormDefinition;
 
 // Form generator state interface
 export interface FormGeneratorState {

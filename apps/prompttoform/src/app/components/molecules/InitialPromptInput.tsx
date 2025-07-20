@@ -181,7 +181,7 @@ export function InitialPromptInput({
                 <button
                   key={`form-${index}`}
                   onClick={() => {
-                    onLoadJson(form.json, form.prompt);
+                    onLoadJson(JSON.stringify(form.json, null, 2), form.prompt);
                     setIsExamplesOpen(false);
                   }}
                   className="w-full text-left px-4 py-3 hover:bg-zinc-50 focus:bg-zinc-50 focus:outline-none transition-colors border-b border-zinc-100"

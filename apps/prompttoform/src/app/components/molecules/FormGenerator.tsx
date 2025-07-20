@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react';
 import Ajv2020 from 'ajv/dist/2020';
 import { UISchema } from '../../types/ui-schema';
 
@@ -78,7 +78,7 @@ export function FormGenerator({
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isSessionHistoryOpen, setIsSessionHistoryOpen] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Check for API key on mount
     const apiConfig = getCurrentAPIConfig();
     if (!apiConfig.apiKey && !apiConfig.systemKey) {

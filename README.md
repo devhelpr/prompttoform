@@ -17,38 +17,6 @@
 * Session management with IndexedDB storage
 * Form update history tracking
 * Netlify deployment integration with session linking
-
-## TODO
-
-- [x] fix branching logic for steps
-- [x] remove "ocif" references and names...
-- [x] use cloudflare worker as proxy to prevent CORS issues
-- [x] add a visual schema of the generated form steps
-- [x] split up FormRenderer into multiple components and library
-- [x] deploy netlify and support for netlify forms
-- [ ] improve ui so that it:
-  - [x] store prompt and generated json in indexeddb
-- [x] store all changes (which were done using "update"-functionality) and resulting form json in indexeddb and link to the orginal prompt (via guid)
-- [x] "start new session" button
-  - [x] also store netlify siteid for this session
-- [x] show overview of all sessions and prompts
-- [x] load previous session from indexeddb
-- [x] split up FormGenerator into multiple components
-- [x] Make vitest component tests for FormRenderer using testing-library
-  
-- [x] add a "dropdown-button" for examples (including an empty example) 
-- [x] change the layout so that when the application or session starts that there's only a textarea in the middle of the screen. The application will also have a top menu bar (which should be reponsive) with on the right the menu options for settings and show history. On mobile (smaller viewport) a hambuerger menu should be shown with these options.
-- [x] after entering the promt to create a form, the layout of the application should change to show the form preview, the visiual flow the form json. On the left side of the screen should be a sidebar which contains the entered prompt in read-only mode and a new textarea to update the form. There also should be a button to "deploy to netlify" and a button to "evaluate and rerun".
-
-- [x] change the flow and visual-flow tabs and replace with a single tab "visual flow" that uses FormFlowMermaid component
-- [x] when the sidebar is open, a "update form" textarea is shown but it has no "update" button.
-- [x] also show the history of the creation process in the sidebar.
-- [x] remove the icons in the tabs
-- [x] show the menubar also on the page when the sidebar is closed.
-- [x] the "update form" functionality should use the json-patch functionality that was used in earlier versions.
-- [ ] fix "deploy to netlify" functionality : after authentication netlify redirects to app.prompttoform.ai .. and then it should reload the last session: store the sessionid in localstorage when triggering the deploy and auth.
-- [ ] add a "import json" button to the top menubar.
-- [ ] add some ready-made jsons to the exmple dropdown which will use those jsons to start a new session and open the form in the edit mode with side-bar open
   
   
 ## Why?
