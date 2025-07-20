@@ -69,7 +69,7 @@ export function FormEditorLayout({
               ? 'fixed left-0 top-0 h-full w-80 z-50 shadow-xl'
               : 'hidden'
             : sidebarCollapsed
-            ? 'w-16'
+            ? 'w-12'
             : 'w-80 lg:w-96'
         }`}
       >
@@ -100,18 +100,34 @@ export function FormEditorLayout({
           </button>
         </div>
 
-        {/* Sidebar Content */}
-        <div
-          className={`${
-            sidebarCollapsed ? 'hidden' : 'block'
-          } h-full overflow-y-auto`}
-        >
-          {sidebar}
-        </div>
+        {/* Fixed-width content container with clip-path animation */}
+        <div className="relative h-full">
+          {/* Sidebar Content - Fixed width, clipped during animation */}
+          <div
+            className={`absolute inset-0 w-80 lg:w-96 transition-all duration-300 ease-in-out ${
+              sidebarCollapsed
+                ? 'clip-path-inset-0-0-0-full'
+                : 'clip-path-inset-0-0-0-0'
+            }`}
+            style={{
+              clipPath: sidebarCollapsed
+                ? 'inset(0 100% 0 0)'
+                : 'inset(0 0% 0 0)',
+            }}
+          >
+            <div className="h-full overflow-y-auto">{sidebar}</div>
+          </div>
 
-        {/* Collapsed Sidebar Icon */}
-        {sidebarCollapsed && !isMobile && (
-          <div className="flex flex-col items-center py-4 space-y-4">
+          {/* Collapsed Sidebar Icon - Properly centered */}
+          <div
+            className={`absolute top-4 transition-all duration-300 ease-in-out ${
+              sidebarCollapsed && !isMobile ? 'opacity-100' : 'opacity-0'
+            }`}
+            style={{
+              left: sidebarCollapsed ? '6px' : '50%',
+              transform: sidebarCollapsed ? 'none' : 'translateX(-50%)',
+            }}
+          >
             <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
               <svg
                 className="w-5 h-5 text-indigo-600"
@@ -128,7 +144,7 @@ export function FormEditorLayout({
               </svg>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Main Content Area */}
