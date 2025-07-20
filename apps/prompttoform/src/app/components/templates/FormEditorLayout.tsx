@@ -9,6 +9,7 @@ interface FormEditorLayoutProps {
   onSettingsClick: () => void;
   onHistoryClick: () => void;
   onImportJsonClick: () => void;
+  showNavbar?: boolean;
 }
 
 export function FormEditorLayout({
@@ -19,6 +20,7 @@ export function FormEditorLayout({
   onSettingsClick,
   onHistoryClick,
   onImportJsonClick,
+  showNavbar = true,
 }: FormEditorLayoutProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileOverlay, setShowMobileOverlay] = useState(false);
@@ -54,7 +56,7 @@ export function FormEditorLayout({
       {/* Mobile Overlay */}
       {isMobile && showMobileOverlay && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-zinc-900 bg-opacity-50 z-40 lg:hidden"
           onClick={() => setShowMobileOverlay(false)}
         />
       )}
@@ -132,7 +134,7 @@ export function FormEditorLayout({
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-0">
         {/* Menu Bar - Show when sidebar is collapsed or on mobile */}
-        {(sidebarCollapsed || isMobile) && (
+        {showNavbar && (sidebarCollapsed || isMobile) && (
           <ResponsiveNavbar
             onSettingsClick={onSettingsClick}
             onHistoryClick={onHistoryClick}
