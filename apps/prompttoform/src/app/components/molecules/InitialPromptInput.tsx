@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { READY_MADE_FORMS } from './example-form-definitions/ready-made-forms';
 
 interface InitialPromptInputProps {
@@ -54,6 +54,11 @@ export function InitialPromptInput({
   const [prompt, setPrompt] = useState('');
   const [isExamplesOpen, setIsExamplesOpen] = useState(false);
   const [piiWarning, setPiiWarning] = useState<string | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>(
+    'bottom'
+  );
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
@@ -93,6 +98,48 @@ export function InitialPromptInput({
     setPrompt(example);
     setIsExamplesOpen(false);
   };
+
+  const calculateDropdownPosition = () => {
+    if (!buttonRef.current || !dropdownRef.current) return;
+
+    const buttonRect = buttonRef.current.getBoundingClientRect();
+    const dropdownHeight = 384; // max-h-96 = 24rem = 384px
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - buttonRect.bottom;
+    const spaceAbove = buttonRect.top;
+
+    // If there's not enough space below but enough space above, position above
+    if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+      setDropdownPosition('top');
+    } else {
+      setDropdownPosition('bottom');
+    }
+  };
+
+  const handleExamplesToggle = () => {
+    const newIsOpen = !isExamplesOpen;
+    setIsExamplesOpen(newIsOpen);
+
+    if (newIsOpen) {
+      // Calculate position when opening
+      setTimeout(calculateDropdownPosition, 0);
+    }
+  };
+
+  useEffect(() => {
+    const updatePosition = () => {
+      if (isExamplesOpen) {
+        calculateDropdownPosition();
+      }
+    };
+
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true); // true for capture phase
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isExamplesOpen]);
 
   return (
     <div className="space-y-6">
@@ -145,9 +192,10 @@ export function InitialPromptInput({
         <div className="relative">
           <button
             type="button"
-            onClick={() => setIsExamplesOpen(!isExamplesOpen)}
+            onClick={handleExamplesToggle}
             disabled={isLoading}
             className="inline-flex items-center justify-center px-4 py-3 border border-zinc-300 shadow-sm text-sm font-medium rounded-lg text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            ref={buttonRef}
           >
             <svg
               className="w-4 h-4 mr-2"
@@ -167,7 +215,14 @@ export function InitialPromptInput({
 
           {/* Examples dropdown menu */}
           {isExamplesOpen && (
-            <div className="absolute z-10 mt-1 w-96 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 max-h-96 overflow-y-auto">
+            <div
+              ref={dropdownRef}
+              className={`absolute z-10 w-96 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 max-h-96 overflow-y-auto ${
+                dropdownPosition === 'top'
+                  ? 'bottom-full mb-1'
+                  : 'top-full mt-1'
+              }`}
+            >
               {/* Ready-made Forms Section */}
               <div className="px-4 py-2 bg-zinc-50 border-b border-zinc-200">
                 <h3 className="text-sm font-semibold text-zinc-700">
