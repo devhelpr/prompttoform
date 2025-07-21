@@ -503,27 +503,27 @@ function AppContent() {
             }
           });
       } else {
-        // console.log(
-        //   '🔄 No stored session ID or session already loaded, using localStorage data'
-        // );
-        // // Set the form JSON if not already set
-        // if (!state.generatedJson) {
-        //   // Parse the JSON to set both the string and parsed versions
-        //   const parsedJson = parseJsonSafely(formJson);
-        //   if (parsedJson) {
-        //     console.log('✅ localStorage JSON parsed successfully');
-        //     setGeneratedJson(formJson, parsedJson);
-        //   } else {
-        //     console.log('⚠️ localStorage JSON parsing failed');
-        //     setGeneratedJson(formJson);
-        //   }
-        // }
-        // // Auto-trigger deployment with localStorage data
-        // console.log('🚀 Auto-triggering deployment with localStorage data...');
-        // setTimeout(() => {
-        //   handleDeploy();
-        //   triggerDeploy = false;
-        // }, 200);
+        console.log(
+          '🔄 No stored session ID or session already loaded, using localStorage data'
+        );
+        // Set the form JSON if not already set
+        if (!state.generatedJson) {
+          // Parse the JSON to set both the string and parsed versions
+          const parsedJson = parseJsonSafely(formJson);
+          if (parsedJson) {
+            console.log('✅ localStorage JSON parsed successfully');
+            setGeneratedJson(formJson, parsedJson);
+          } else {
+            console.log('⚠️ localStorage JSON parsing failed');
+            setGeneratedJson(formJson);
+          }
+        }
+        // Auto-trigger deployment with localStorage data
+        console.log('🚀 Auto-triggering deployment with localStorage data...');
+        setTimeout(() => {
+          handleDeploy();
+          triggerDeploy = false;
+        }, 200);
       }
 
       // Transition to editor if not already there
