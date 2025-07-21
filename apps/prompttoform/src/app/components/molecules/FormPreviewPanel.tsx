@@ -95,7 +95,7 @@ export function FormPreviewPanel({
     switch (activeTab) {
       case 'form':
         return parsedJson && parsedJson.app ? (
-          <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-200px)]">
+          <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-230px)]">
             <FormRenderer formJson={parsedJson} />
           </div>
         ) : (
@@ -106,8 +106,10 @@ export function FormPreviewPanel({
 
       case 'flow':
         return parsedJson && parsedJson.app ? (
-          <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-200px)]">
-            <FormFlowMermaid formJson={parsedJson} />
+          <div className="grid grid-rows-[1fr] bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 max-h-[calc(100vh-230px)] overflow-auto">
+            <div className="w-full">
+              <FormFlowMermaid formJson={parsedJson} />
+            </div>
           </div>
         ) : (
           <div className="flex items-center justify-center h-64 text-zinc-500">
@@ -117,7 +119,7 @@ export function FormPreviewPanel({
 
       case 'json':
         return (
-          <div className="space-y-4">
+          <div className="grid grid-rows-[auto_1fr] space-y-4 max-h-[calc(100vh-230px)] overflow-auto">
             {/* JSON Validator */}
             <JsonValidator
               jsonString={generatedJson}
@@ -125,83 +127,87 @@ export function FormPreviewPanel({
               onInvalidJson={handleInvalidJson}
             />
 
-            {/* JSON Editor */}
-            <div className="space-y-2">
-              <label
-                htmlFor="json-editor"
-                className="block text-sm font-medium text-zinc-700"
-              >
-                JSON Editor{' '}
-                {!isJsonValid && (
-                  <span className="text-red-600">(Has Errors)</span>
-                )}
-              </label>
-              <textarea
-                id="json-editor"
-                value={generatedJson}
-                onChange={(e) => onJsonChange(e.target.value)}
-                className={`w-full h-64 sm:h-96 p-4 font-mono text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none ${
-                  !isJsonValid ? 'border-red-300 bg-red-50' : 'border-zinc-300'
-                }`}
-                spellCheck={false}
-                placeholder="JSON content will appear here..."
-                aria-label="JSON editor"
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-zinc-600">
-                {isJsonValid ? (
-                  <span className="text-green-600 flex items-center space-x-1">
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span>Valid JSON</span>
-                  </span>
-                ) : (
-                  <span className="text-red-600 flex items-center space-x-1">
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                      />
-                    </svg>
-                    <span>
-                      {jsonErrors.length} Error
-                      {jsonErrors.length !== 1 ? 's' : ''}
-                    </span>
-                  </span>
-                )}
+            <div className="grid grid-rows-[1fr_auto]">
+              {/* JSON Editor */}
+              <div className="space-y-2 grid grid-rows-[auto_1fr]">
+                <label
+                  htmlFor="json-editor"
+                  className="block text-sm font-medium text-zinc-700"
+                >
+                  JSON Editor{' '}
+                  {!isJsonValid && (
+                    <span className="text-red-600">(Has Errors)</span>
+                  )}
+                </label>
+                <textarea
+                  id="json-editor"
+                  value={generatedJson}
+                  onChange={(e) => onJsonChange(e.target.value)}
+                  className={`w-full _h-64 _sm:h-96 p-4 font-mono text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none ${
+                    !isJsonValid
+                      ? 'border-red-300 bg-red-50'
+                      : 'border-zinc-300'
+                  }`}
+                  spellCheck={false}
+                  placeholder="JSON content will appear here..."
+                  aria-label="JSON editor"
+                />
               </div>
 
-              <button
-                onClick={() => {
-                  // TODO: Implement JSON validation and update preview
-                  console.log('JSON updated');
-                }}
-                disabled={!isJsonValid}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Update Preview
-              </button>
+              {/* Action Buttons */}
+              <div className="flex justify-between items-center mt-4">
+                <div className="text-sm text-zinc-600">
+                  {isJsonValid ? (
+                    <span className="text-green-600 flex items-center space-x-1">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span>Valid JSON</span>
+                    </span>
+                  ) : (
+                    <span className="text-red-600 flex items-center space-x-1">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                        />
+                      </svg>
+                      <span>
+                        {jsonErrors.length} Error
+                        {jsonErrors.length !== 1 ? 's' : ''}
+                      </span>
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => {
+                    // TODO: Implement JSON validation and update preview
+                    console.log('JSON updated');
+                  }}
+                  disabled={!isJsonValid}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Update Preview
+                </button>
+              </div>
             </div>
           </div>
         );
@@ -212,7 +218,7 @@ export function FormPreviewPanel({
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="grid grid-rows-[auto_1fr] _h-full _flex flex-col">
       {/* Header with tabs */}
       <div className="bg-white border-b border-zinc-200 px-4 sm:px-6 py-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -375,11 +381,12 @@ export function FormPreviewPanel({
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
+      <div className="grid grid-rows-[1fr] flex-1 p-4 sm:p-6 _overflow-y-auto">
         <div
           role="tabpanel"
           id={`tabpanel-${activeTab}`}
           aria-labelledby={`tab-${activeTab}`}
+          className="grid grid-rows-[1fr]"
         >
           {renderTabContent()}
         </div>

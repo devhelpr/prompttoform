@@ -52,7 +52,7 @@ export function FormEditorLayout({
   };
 
   return (
-    <div className="flex h-full relative">
+    <div className="grid grid-cols-[1fr] md:grid-cols-[auto_1fr] relative">
       {/* Mobile Overlay */}
       {isMobile && showMobileOverlay && (
         <div
@@ -63,7 +63,7 @@ export function FormEditorLayout({
 
       {/* Sidebar */}
       <div
-        className={`bg-white border-r border-zinc-200 transition-all duration-300 ease-in-out ${
+        className={`grid grid-rows-[auto_1fr] bg-white border-r border-zinc-200 transition-all duration-300 ease-in-out ${
           isMobile
             ? showMobileOverlay
               ? 'fixed left-0 top-0 h-full w-80 z-50 shadow-xl'
@@ -101,10 +101,10 @@ export function FormEditorLayout({
         </div>
 
         {/* Fixed-width content container with clip-path animation */}
-        <div className="relative h-full">
+        <div className="relative">
           {/* Sidebar Content - Fixed width, clipped during animation */}
           <div
-            className={`absolute inset-0 w-80 lg:w-96 transition-all duration-300 ease-in-out ${
+            className={`absolute overflow-y-auto inset-0 w-80 lg:w-96 transition-all duration-300 ease-in-out ${
               sidebarCollapsed
                 ? 'clip-path-inset-0-0-0-full'
                 : 'clip-path-inset-0-0-0-0'
@@ -115,7 +115,7 @@ export function FormEditorLayout({
                 : 'inset(0 0% 0 0)',
             }}
           >
-            <div className="h-full overflow-y-auto">{sidebar}</div>
+            <div className="">{sidebar}</div>
           </div>
 
           {/* Collapsed Sidebar Icon - Properly centered */}
@@ -184,7 +184,11 @@ export function FormEditorLayout({
         )}
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto bg-zinc-50">{mainContent}</div>
+        <div className="grid flex-1 overflow-hidden bg-zinc-50 min-w-0">
+          <div className="grid grid-rows-[1fr] _w-full _h-full _overflow-auto">
+            {mainContent}
+          </div>
+        </div>
       </div>
     </div>
   );

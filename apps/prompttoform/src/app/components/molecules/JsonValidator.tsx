@@ -121,7 +121,7 @@ export function JsonValidator({
     } else {
       onInvalidJson(validateJson.errors);
     }
-  }, [validateJson, onValidJson, onInvalidJson]);
+  }, [validateJson]);
 
   const getLineNumber = (error: string): number | null => {
     // Try to extract line number from JSON parse errors

@@ -16,7 +16,7 @@ export function MainLayout({
 }: MainLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100">
-      <div className="flex flex-col min-h-screen">
+      <div className="grid grid-rows-[auto_1fr] min-h-screen">
         {/* Top Navigation Bar */}
         <ResponsiveNavbar
           onSettingsClick={onSettingsClick}
@@ -25,7 +25,7 @@ export function MainLayout({
         />
 
         {/* Main Content Area */}
-        <main className="flex-1">{children}</main>
+        <main className="grid grid-rows-[1fr]">{children}</main>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
-import React, { useMemo, useEffect, useRef } from "react";
-import mermaid from "mermaid";
+import React, { useMemo, useEffect, useRef } from 'react';
+import mermaid from 'mermaid';
 
 interface BranchCondition {
   field: string;
@@ -43,40 +43,42 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
     // Initialize mermaid
     mermaid.initialize({
       startOnLoad: true,
-      theme: "default",
-      securityLevel: "loose",
+      theme: 'default',
+      securityLevel: 'loose',
       flowchart: {
         useMaxWidth: false,
         htmlLabels: true,
-        curve: "basis",
+        curve: 'basis',
+        nodeSpacing: 50,
+        rankSpacing: 50,
       },
     });
   }, []);
 
   const mermaidDiagram = useMemo(() => {
     const pages = formJson.app.pages;
-    let diagram = "graph TD\n";
+    let diagram = 'graph TD\n';
 
     // Add nodes
     pages.forEach((page) => {
-      const nodeId = page.id.replace(/[^a-zA-Z0-9]/g, "_");
+      const nodeId = page.id.replace(/[^a-zA-Z0-9]/g, '_');
       diagram += `    ${nodeId}["${page.title}"]\n`;
     });
 
     // Add edges
     pages.forEach((page) => {
-      const sourceId = page.id.replace(/[^a-zA-Z0-9]/g, "_");
+      const sourceId = page.id.replace(/[^a-zA-Z0-9]/g, '_');
 
       // Add default next page edge
       if (page.nextPage) {
-        const targetId = page.nextPage.replace(/[^a-zA-Z0-9]/g, "_");
+        const targetId = page.nextPage.replace(/[^a-zA-Z0-9]/g, '_');
         diagram += `    ${sourceId} --> ${targetId}\n`;
       }
 
       // Add branch edges
       if (page.branches) {
         page.branches.forEach((branch) => {
-          const targetId = branch.nextPage.replace(/[^a-zA-Z0-9]/g, "_");
+          const targetId = branch.nextPage.replace(/[^a-zA-Z0-9]/g, '_');
           const condition = `${branch.condition.field} ${branch.condition.operator} ${branch.condition.value}`;
           diagram += `    ${sourceId} -->|${condition}| ${targetId}\n`;
         });
@@ -96,18 +98,33 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
             mermaidRef.current
           );
           mermaidRef.current.innerHTML = svg;
+
+          // Ensure SVG respects container boundaries
+          // const svgElement = mermaidRef.current.querySelector('svg');
+          // if (svgElement) {
+          //   svgElement.style.maxWidth = '100%';
+          //   svgElement.style.width = '100%';
+          //   svgElement.style.height = 'auto';
+          //   svgElement.style.overflow = 'visible';
+          // }
+
           bindFunctions?.(mermaidRef.current);
         } catch (e) {
-          console.log("error", e);
+          console.error('Error rendering mermaid diagram:', e);
         }
       }
     }
-    renderMermaid();
-  }, [idRef, mermaidDiagram]);
+
+    if (mermaidDiagram) {
+      renderMermaid();
+    }
+  }, [mermaidDiagram]);
 
   return (
-    <div className="w-full h-[600px] overflow-auto bg-white p-4 rounded-lg border border-zinc-300">
-      <div ref={mermaidRef} />
+    <div className="w-full h-screen bg-white p-4 rounded-lg border border-zinc-300">
+      <div className="w-full h-full overflow-auto">
+        <div ref={mermaidRef} className="inline-block min-w-full" />
+      </div>
     </div>
   );
 };

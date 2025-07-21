@@ -555,7 +555,7 @@ function AppContent() {
           onHistoryClick={() => setIsSessionHistoryOpen(true)}
           onImportJsonClick={() => setIsImportJsonOpen(true)}
         >
-          <div className="h-screen">
+          <div className="grid grid-rows-[1fr]">
             <FormEditorLayout
               sidebar={
                 <FormEditorSidebar
@@ -686,7 +686,7 @@ function AppContent() {
         onHistoryClick={() => setIsSessionHistoryOpen(true)}
         onImportJsonClick={() => setIsImportJsonOpen(true)}
       >
-        <div className="h-screen">
+        <div className="grid grid-rows-[1fr]">
           <FormEditorLayout
             sidebar={
               <FormEditorSidebar
