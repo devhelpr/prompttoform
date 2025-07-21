@@ -302,21 +302,6 @@ export function SessionHistory({
             )}
           </>
         )}
-
-        <div className="mt-8 flex justify-between">
-          <button
-            onClick={handleStartNewSession}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Start New Session
-          </button>
-          <button
-            onClick={onClose}
-            className="px-5 py-2.5 text-sm font-medium text-zinc-700 hover:text-zinc-900"
-          >
-            Close
-          </button>
-        </div>
       </div>
       <ConfirmationDialog
         isOpen={deleteConfirmation.isOpen}
