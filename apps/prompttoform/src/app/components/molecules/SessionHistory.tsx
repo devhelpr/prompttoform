@@ -167,6 +167,21 @@ export function SessionHistory({
       <div className="p-8 max-h-[calc(80vh-4rem)] overflow-y-auto">
         <h2 className="text-2xl font-bold mb-6">Session History</h2>
 
+        <div className="mb-8 flex justify-between">
+          <button
+            onClick={handleStartNewSession}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Start New Session
+          </button>
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 text-sm font-medium text-zinc-700 hover:text-zinc-900"
+          >
+            Close
+          </button>
+        </div>
+
         {isLoading ? (
           <div className="animate-pulse">
             <div className="h-4 bg-zinc-200 rounded w-1/4 mb-4"></div>

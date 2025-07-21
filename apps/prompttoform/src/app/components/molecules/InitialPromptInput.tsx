@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Menu } from '@headlessui/react';
 import { READY_MADE_FORMS } from './example-form-definitions/ready-made-forms';
 
@@ -55,7 +55,7 @@ export function InitialPromptInput({
   const [prompt, setPrompt] = useState('');
   const [piiWarning, setPiiWarning] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>(
-    'bottom'
+    'top'
   );
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -100,25 +100,21 @@ export function InitialPromptInput({
     setPrompt(example);
   };
 
-  const calculateDropdownPosition = () => {
-    if (!buttonRef.current) return 'bottom';
+  // const calculateDropdownPosition = () => {
+  //   if (!buttonRef.current) return 'bottom';
 
-    const buttonRect = buttonRef.current.getBoundingClientRect();
-    const dropdownHeight = 384; // max-h-96 = 24rem = 384px
-    const viewportHeight = window.innerHeight;
-    const spaceBelow = viewportHeight - buttonRect.bottom;
-    const spaceAbove = buttonRect.top;
+  //   const buttonRect = buttonRef.current.getBoundingClientRect();
+  //   const dropdownHeight = 384; // max-h-96 = 24rem = 384px
+  //   const viewportHeight = window.innerHeight;
+  //   const spaceBelow = viewportHeight - buttonRect.bottom;
+  //   const spaceAbove = buttonRect.top;
 
-    // If there's not enough space below but enough space above, position above
-    if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
-      return 'top';
-    }
-    return 'bottom';
-  };
-
-  const handleMenuOpen = () => {
-    setDropdownPosition(calculateDropdownPosition());
-  };
+  //   // If there's not enough space below but enough space above, position above
+  //   if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+  //     return 'top';
+  //   }
+  //   return 'bottom';
+  // };
 
   return (
     <div className="space-y-6">
@@ -172,12 +168,12 @@ export function InitialPromptInput({
           <Menu as="div" className="relative inline-block text-left">
             {({ open }) => {
               // Calculate position when menu opens
-              if (open && dropdownPosition === 'bottom') {
-                // Use setTimeout to ensure this runs after the menu is rendered
-                setTimeout(() => {
-                  setDropdownPosition(calculateDropdownPosition());
-                }, 0);
-              }
+              // if (open && dropdownPosition === 'bottom') {
+              //   // Use setTimeout to ensure this runs after the menu is rendered
+              //   setTimeout(() => {
+              //     setDropdownPosition(calculateDropdownPosition());
+              //   }, 0);
+              // }
 
               return (
                 <>

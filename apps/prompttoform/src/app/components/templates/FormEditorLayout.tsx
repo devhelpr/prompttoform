@@ -63,7 +63,7 @@ export function FormEditorLayout({
 
       {/* Sidebar */}
       <div
-        className={`grid grid-rows-[auto_1fr] bg-white border-r border-zinc-200 transition-all duration-300 ease-in-out ${
+        className={`grid grid-rows-[auto_1fr] overflow-clip  bg-white border-r border-zinc-200 transition-all duration-300 ease-in-out ${
           isMobile
             ? showMobileOverlay
               ? 'fixed left-0 top-0 h-full w-80 z-50 shadow-xl'
@@ -104,18 +104,13 @@ export function FormEditorLayout({
         <div className="relative">
           {/* Sidebar Content - Fixed width, clipped during animation */}
           <div
-            className={`absolute overflow-y-auto inset-0 w-80 lg:w-96 transition-all duration-300 ease-in-out ${
+            className={`absolute __overflow-y-auto overflow-clip inset-0 w-80 lg:w-96 transition-all duration-300 ease-in-out ${
               sidebarCollapsed
-                ? 'clip-path-inset-0-0-0-full'
-                : 'clip-path-inset-0-0-0-0'
+                ? '[clip-path:inset(0_100%_0_0)] opacity-0'
+                : '[clip-path:inset(0_0_0_0)] opacity-100'
             }`}
-            style={{
-              clipPath: sidebarCollapsed
-                ? 'inset(0 100% 0 0)'
-                : 'inset(0 0% 0 0)',
-            }}
           >
-            <div className="">{sidebar}</div>
+            <div className="grid grid-rows-[1fr] h-full">{sidebar}</div>
           </div>
 
           {/* Collapsed Sidebar Icon - Properly centered */}
@@ -185,9 +180,7 @@ export function FormEditorLayout({
 
         {/* Main Content */}
         <div className="grid flex-1 overflow-hidden bg-zinc-50 min-w-0">
-          <div className="grid grid-rows-[1fr] _w-full _h-full _overflow-auto">
-            {mainContent}
-          </div>
+          <div className="grid grid-rows-[1fr]">{mainContent}</div>
         </div>
       </div>
     </div>
