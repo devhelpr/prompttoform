@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react';
 import Ajv2020 from 'ajv/dist/2020';
 import { UISchema } from '../../types/ui-schema';
-import { generateUIFromPrompt, updateFormWithPatch } from '../../services/llm';
+
 import { Settings } from './Settings';
 import { evaluateAndRerunIfNeeded } from '../../services/prompt-eval';
 import { getCurrentAPIConfig } from '../../services/llm-api';
@@ -12,26 +12,27 @@ import FormFlow from './FormFlow';
 import FormFlowMermaid from './FormFlowMermaid';
 import { exampleForm } from './example-form-definitions/example-form';
 import { multiStepForm } from './example-form-definitions/multi-step-form';
-import { detectPIIWithBSN } from '../../utils/pii-detect';
-import { FormComponentFieldProps } from '@devhelpr/react-forms';
+
 import { FormRenderer } from '@devhelpr/react-forms';
 import { createFormZip, downloadZip } from '../../utils/zip-utils';
 import { saveFormJsonToLocalStorage } from '../../utils/local-storage';
 import { deployWithNetlify } from '../../utils/netlify-deploy';
 import { blobToBase64 } from '../../utils/blob-to-base64';
+import { FormSessionService, FormSession } from '../../services/indexeddb';
+import { SessionHistory } from './SessionHistory';
+import {
+  ViewMode,
+  EvaluationResult,
+  UIJson,
+} from '../../types/form-generator.types';
+import {
+  formatJsonForDisplay,
+  getRawJsonForStorage,
+  parseJsonSafely,
+} from '../../utils/json-utils';
+import { FormGenerationService } from '../../services/form-generation.service';
 
-// Define the evaluation result type
-interface EvaluationResult {
-  matchesPrompt: boolean;
-  matchesSystemPrompt: boolean;
-  missingElements: string[];
-  suggestedHints: string[];
-  score: number;
-  reasoning: string;
-}
-
-// Define view modes
-type ViewMode = 'json' | 'form' | 'flow' | 'mermaid-flow';
+import { PIIValidationService } from '../../services/pii-validation.service';
 
 // Cast schema to unknown first, then to UISchema
 const uiSchema = schemaJson as unknown as UISchema;
@@ -39,24 +40,12 @@ const uiSchema = schemaJson as unknown as UISchema;
 // Skip validation for now to avoid schema issues
 const skipValidation = true;
 
-// Define interface for JSON types
-interface UIJson {
-  app: {
-    title: string;
-    pages: Array<{
-      id: string;
-      title: string;
-      route: string;
-      layout?: string;
-      components: FormComponentFieldProps[];
-      isEndPage?: boolean;
-    }>;
-    dataSources?: Array<{
-      type: string;
-      [key: string]: unknown;
-    }>;
-  };
-}
+// Initialize services
+const formGenerationService = new FormGenerationService(
+  uiSchema,
+  skipValidation
+);
+const piiValidationService = new PIIValidationService();
 
 export function FormGenerator({
   formJson,
@@ -86,8 +75,10 @@ export function FormGenerator({
   const [isZipDownloading, setIsZipDownloading] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [siteUrl, setSiteUrl] = useState('');
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [isSessionHistoryOpen, setIsSessionHistoryOpen] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Check for API key on mount
     const apiConfig = getCurrentAPIConfig();
     if (!apiConfig.apiKey && !apiConfig.systemKey) {
@@ -108,12 +99,9 @@ export function FormGenerator({
   }, [isSettingsOpen]);
 
   const validatePII = (text: string, field: 'prompt' | 'updatePrompt') => {
-    const piiEntities = detectPIIWithBSN(text);
-    if (piiEntities.length > 0) {
-      const warningMessage = `Warning: Privacy sensitive data detected: ${piiEntities
-        .map((entity) => `${entity.type} (${entity.match})`)
-        .join(', ')}`;
-      setPiiErrors((prev) => ({ ...prev, [field]: warningMessage }));
+    const piiResult = piiValidationService.validatePII(text);
+    if (piiResult.hasPII) {
+      setPiiErrors((prev) => ({ ...prev, [field]: piiResult.warningMessage }));
       return true; // Always return true since we're not blocking
     }
     setPiiErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -158,7 +146,6 @@ export function FormGenerator({
       return;
     }
 
-    // Remove PII validation blocking
     setIsLoading(true);
     setError(null);
     setEvaluation(null);
@@ -175,50 +162,33 @@ export function FormGenerator({
         return;
       }
 
-      // Call the UI generation API
-      const response = await generateUIFromPrompt(prompt, uiSchema);
+      // Use the form generation service
+      const result = await formGenerationService.generateForm(prompt);
 
-      // Try to parse the response as JSON
-      let parsedResponse;
-      try {
-        parsedResponse = JSON.parse(response) as UIJson;
-      } catch {
-        setError('Failed to parse the generated JSON. Please try again.');
-        setGeneratedJson(response);
-        setIsLoading(false);
-        return;
-      }
+      if (result.success && result.parsedJson) {
+        // Store parsed response
+        setParsedJson(result.parsedJson);
 
-      // Skip validation for now to avoid schema issues
-      if (!skipValidation) {
-        try {
-          // Initialize Ajv only when validation is needed
-          const ajv = new Ajv2020({
-            allErrors: true,
-            strict: false,
-            validateSchema: false,
-          });
+        // Format and store string version with proper newlines
+        const formattedJson = formatJsonForDisplay(result.parsedJson);
+        setAndPersistGeneratedJson(formattedJson, result.parsedJson);
 
-          // Compile schema
-          const validate = ajv.compile(uiSchema);
-          const valid = validate(parsedResponse);
-          if (!valid && validate.errors) {
-            console.warn('UI validation errors:', validate.errors);
-            setError(`Validation failed: ${ajv.errorsText(validate.errors)}`);
+        // Set the session ID from the service (it already created the session)
+        if (result.sessionId) {
+          setCurrentSessionId(result.sessionId);
+          console.log('Session created with ID:', result.sessionId);
+
+          // Refresh session history if it's open
+          if (isSessionHistoryOpen) {
+            // The session history will reload when the dialog opens
           }
-        } catch (validationErr) {
-          console.error('Schema validation error:', validationErr);
-          // Continue despite validation errors
+        }
+      } else {
+        setError(result.error || 'Failed to generate form');
+        if (result.formattedJson) {
+          setGeneratedJson(result.formattedJson);
         }
       }
-
-      // Store parsed response
-      setParsedJson(parsedResponse);
-      // Format and store string version with proper newlines
-      const formattedJson = JSON.stringify(parsedResponse, null, 2)
-        .replace(/\\n/g, '\n')
-        .replace(/\\\\/g, '\\');
-      setAndPersistGeneratedJson(formattedJson, parsedResponse);
     } catch (err) {
       setError(`An error occurred while generating the UI/Form.`);
       console.error(err);
@@ -265,14 +235,27 @@ export function FormGenerator({
       if (result.wasRerun && result.improvedOutput) {
         try {
           // Parse the improved output string into a proper UIJson object
-          const parsedOutput = JSON.parse(result.improvedOutput) as UIJson;
+          const parsedOutput = parseJsonSafely(result.improvedOutput) as UIJson;
 
-          // Format the improved output with proper newlines
-          const formattedJson = JSON.stringify(parsedOutput, null, 2)
-            .replace(/\\n/g, '\n')
-            .replace(/\\\\/g, '\\');
+          if (parsedOutput) {
+            // Format the improved output with proper newlines
+            const formattedJson = formatJsonForDisplay(parsedOutput);
 
-          setAndPersistGeneratedJson(formattedJson, parsedOutput);
+            setAndPersistGeneratedJson(formattedJson, parsedOutput);
+
+            // Update the session with the new JSON
+            if (currentSessionId) {
+              await FormSessionService.updateSession(
+                currentSessionId,
+                getRawJsonForStorage(parsedOutput)
+              );
+
+              // Refresh session history if it's open
+              if (isSessionHistoryOpen) {
+                // The session history will reload when the dialog opens
+              }
+            }
+          }
         } catch (parseError) {
           console.error('Error parsing improved output:', parseError);
           // Keep original output if parsing fails
@@ -334,15 +317,18 @@ export function FormGenerator({
   const handleJsonChange = (newJson: string) => {
     try {
       // First try to parse the JSON to validate it
-      const parsed = JSON.parse(newJson) as UIJson;
+      const parsed = parseJsonSafely(newJson) as UIJson;
 
-      // If parsing succeeds, format it nicely with actual newlines
-      const formattedJson = JSON.stringify(parsed, null, 2)
-        .replace(/\\n/g, '\n') // Replace escaped newlines with actual newlines
-        .replace(/\\\\/g, '\\'); // Replace double backslashes with single backslashes
+      if (parsed) {
+        // If parsing succeeds, format it nicely with actual newlines
+        const formattedJson = formatJsonForDisplay(parsed);
 
-      setAndPersistGeneratedJson(formattedJson, parsed);
-      setJsonError(null);
+        setAndPersistGeneratedJson(formattedJson, parsed);
+        setJsonError(null);
+      } else {
+        setJsonError('Invalid JSON format');
+        setGeneratedJson(newJson); // Keep the invalid JSON in the textarea
+      }
     } catch (error) {
       setJsonError('Invalid JSON format');
       setGeneratedJson(newJson); // Keep the invalid JSON in the textarea
@@ -378,85 +364,76 @@ export function FormGenerator({
   };
 
   const handleUpdateForm = async () => {
-    if (!updatePrompt.trim() || !generatedJson || !parsedJson) {
-      setUpdateError(
-        'Please enter an update prompt and make sure a form is generated'
-      );
+    if (!updatePrompt.trim()) {
+      setUpdateError('Please enter an update prompt');
       return;
     }
 
-    // Remove PII validation blocking
+    if (!generatedJson) {
+      setUpdateError('Please generate a form first before updating');
+      return;
+    }
+
     setIsUpdating(true);
     setUpdateError(null);
 
     try {
-      // Before sending to updateFormWithPatch, convert newlines back to escaped form
-      const jsonForUpdate = generatedJson.replace(/\n/g, '\\n');
-      const patch = await updateFormWithPatch(jsonForUpdate, updatePrompt);
+      // Use the form generation service for updates
+      // Pass the raw JSON (not formatted) to avoid JSON parsing issues
+      let rawJson: string;
 
-      // First parse the patch operations
-      let patchOperations = JSON.parse(patch);
-      if (!Array.isArray(patchOperations)) {
-        patchOperations = [patchOperations];
-      }
+      console.log('Update form - parsedJson exists:', !!parsedJson);
+      console.log('Update form - generatedJson length:', generatedJson?.length);
 
-      // Parse the current form, ensuring we're working with a clean object
-      const updatedForm = { ...parsedJson } as UIJson;
-
-      // Apply the patch operations to the current form
-      for (const operation of patchOperations) {
-        const { op, path, value } = operation;
-        const pathParts = path.split('/').filter(Boolean);
-        let current: unknown = updatedForm;
-
-        for (let i = 0; i < pathParts.length - 1; i++) {
-          const part = pathParts[i];
-          if (part.match(/^\d+$/)) {
-            if (Array.isArray(current)) {
-              current = current[parseInt(part)];
-            }
-          } else {
-            if (typeof current === 'object' && current !== null) {
-              current = (current as Record<string, unknown>)[part];
-            }
-          }
-        }
-
-        const lastPart = pathParts[pathParts.length - 1];
-        if (lastPart.match(/^\d+$/)) {
-          const index = parseInt(lastPart);
-          if (op === 'add') {
-            if (Array.isArray(current)) {
-              current.splice(index, 0, value);
-            }
-          } else if (op === 'remove') {
-            if (Array.isArray(current)) {
-              current.splice(index, 1);
-            }
-          } else if (op === 'replace') {
-            if (Array.isArray(current)) {
-              current[index] = value;
-            }
-          }
+      if (parsedJson) {
+        rawJson = getRawJsonForStorage(parsedJson);
+        console.log(
+          'Using parsedJson for update, rawJson length:',
+          rawJson.length
+        );
+      } else if (generatedJson) {
+        // If we don't have parsedJson but have generatedJson, try to parse it first
+        console.log('Attempting to parse generatedJson for update');
+        const parsed = parseJsonSafely(generatedJson);
+        if (parsed) {
+          rawJson = getRawJsonForStorage(parsed);
+          console.log(
+            'Successfully parsed generatedJson, rawJson length:',
+            rawJson.length
+          );
         } else {
-          if (op === 'add' || op === 'replace') {
-            if (typeof current === 'object' && current !== null) {
-              (current as Record<string, unknown>)[lastPart] = value;
-            }
-          } else if (op === 'remove') {
-            if (typeof current === 'object' && current !== null) {
-              delete (current as Record<string, unknown>)[lastPart];
-            }
+          console.error('Failed to parse generatedJson for update');
+          setUpdateError('Invalid JSON format in generated form');
+          return;
+        }
+      } else {
+        setUpdateError('No form data available for update');
+        return;
+      }
+      const result = await formGenerationService.updateForm(
+        rawJson,
+        updatePrompt,
+        currentSessionId || undefined
+      );
+
+      if (result.success && result.updatedJson) {
+        // Parse the updated JSON
+        const updatedForm = parseJsonSafely(result.updatedJson) as UIJson;
+        if (updatedForm) {
+          setAndPersistGeneratedJson(result.updatedJson, updatedForm);
+
+          // The update is already stored in IndexedDB by the formGenerationService
+          // No need to store it again here
+          console.log('Update completed successfully');
+
+          // Refresh session history if it's open
+          if (isSessionHistoryOpen) {
+            // The session history will reload when the dialog opens
           }
         }
+      } else {
+        setUpdateError(result.error || 'Failed to update form');
       }
-
-      // Format the updated form with proper newlines
-      const formattedJson = JSON.stringify(updatedForm, null, 2)
-        .replace(/\\n/g, '\n')
-        .replace(/\\\\/g, '\\');
-
-      setAndPersistGeneratedJson(formattedJson, updatedForm as UIJson);
     } catch (error) {
       console.error('Error updating form:', error);
       setUpdateError(
@@ -487,19 +464,112 @@ export function FormGenerator({
       setSiteUrl(siteUrl);
       setIsLoading(false);
       setIsDeploying(false);
+
+      // Store Netlify site ID in the current session
+      if (currentSessionId && siteUrl) {
+        const siteId = siteUrl.split('/').pop() || siteUrl; // Extract site ID from URL
+        // Store the raw JSON (not the formatted one)
+        const rawJson = parsedJson
+          ? getRawJsonForStorage(parsedJson)
+          : generatedJson;
+        FormSessionService.updateSession(currentSessionId, rawJson, siteId)
+          .then(() => {
+            console.log(
+              'Netlify site ID stored for session:',
+              currentSessionId
+            );
+
+            // Refresh session history if it's open
+            if (isSessionHistoryOpen) {
+              // The session history will reload when the dialog opens
+            }
+          })
+          .catch((error: Error) =>
+            console.error('Failed to store Netlify site ID:', error)
+          );
+      }
     });
   }
+
+  const handleLoadSession = async (session: FormSession) => {
+    try {
+      console.log('Loading session:', session.id);
+
+      setPrompt(session.prompt);
+      setCurrentSessionId(session.id);
+
+      // Get the session with the most recent JSON (including updates)
+      const sessionWithLatestJson =
+        await FormSessionService.getSessionWithLatestJson(session.id);
+      if (!sessionWithLatestJson) {
+        throw new Error('Session not found');
+      }
+
+      const { latestJson } = sessionWithLatestJson;
+      console.log('Latest JSON length:', latestJson.length);
+
+      // Parse the latest JSON - it should be valid JSON string
+      const parsedJson = parseJsonSafely(latestJson) as UIJson;
+      if (parsedJson) {
+        console.log('Successfully parsed JSON:', parsedJson);
+        setParsedJson(parsedJson);
+
+        // Format the JSON for display (with proper newlines)
+        const formattedJson = formatJsonForDisplay(parsedJson);
+        setGeneratedJson(formattedJson);
+
+        setViewMode('form');
+        setIsSessionHistoryOpen(false);
+        setError(null);
+        setEvaluation(null);
+
+        console.log('Session loaded successfully with latest updates');
+      } else {
+        throw new Error('Failed to parse JSON');
+      }
+    } catch (error) {
+      console.error('Error loading session:', error);
+      setError('Failed to load session: Invalid JSON format');
+    }
+  };
+
+  const handleStartNewSession = () => {
+    setPrompt('');
+    setGeneratedJson('');
+    setParsedJson(null);
+    setCurrentSessionId(null);
+    setViewMode('form');
+    setIsSessionHistoryOpen(false);
+    setError(null);
+    setEvaluation(null);
+    setUpdatePrompt('');
+    setUpdateError(null);
+    setSiteUrl('');
+
+    // Refresh session history if it's open
+    if (isSessionHistoryOpen) {
+      // The session history will reload when the dialog opens
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-zinc-900">Create a Form</h2>
-        <button
-          onClick={() => setIsSettingsOpen(true)}
-          className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Settings
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setIsSessionHistoryOpen(true)}
+            className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Show History
+          </button>
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="inline-flex items-center px-3 py-2 border border-zinc-300 shadow-sm text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Settings
+          </button>
+        </div>
       </div>
 
       {showApiKeyHint && (
@@ -508,6 +578,13 @@ export function FormGenerator({
           preferred LLM API key to start generating forms.
         </Alert>
       )}
+
+      <SessionHistory
+        isOpen={isSessionHistoryOpen}
+        onClose={() => setIsSessionHistoryOpen(false)}
+        onLoadSession={handleLoadSession}
+        onStartNewSession={handleStartNewSession}
+      />
 
       <div>
         <label

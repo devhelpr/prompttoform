@@ -14,17 +14,11 @@
 * Conditional logic via prompt
 * Live preview as you prompt
 * Exportable JSON schema
-
-## TODO
-
-- [x] fix branching logic for steps
-- [x] remove "ocif" references and names...
-- [x] use cloudflare worker as proxy to prevent CORS issues
-- [x] add a visual schema of the generated form steps
-- [ ] split up FormRenderer into multiple components
-- [ ] split up FormGenerator into multiple components
-- [ ] Make vitest component tests for FormRenderer using testing-library
-
+* Session management with IndexedDB storage
+* Form update history tracking
+* Netlify deployment integration with session linking
+  
+  
 ## Why?
 
 Forms are painful to spec, slow to build, and hard to get right — especially when technical and non-technical teams need to collaborate. PromptToForm bridges that gap with AI-driven simplicity.

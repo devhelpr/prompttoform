@@ -11,16 +11,19 @@
   "scripts": {
     "dev": "nx serve prompttoform",
     "build": "nx build prompttoform",
+    "test": "nx test prompttoform",
     "publish-forms": "node scripts/publish.js",
     "_lint": "eslint .",
     "_preview": "nx vite:preview"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.4",
     "@langchain/core": "^0.3.43",
     "@langchain/google-genai": "^0.2.2",
     "compromise": "^14.14.4",
     "d3-force": "^3.0.0",
     "dagre": "^0.8.5",
+    "dexie": "^4.0.11",
     "json5": "^2.2.3",
     "jszip": "^3.10.1",
     "langchain": "^0.3.20",
@@ -52,6 +55,7 @@
     "@tailwindcss/vite": "^4.0.14",
     "@testing-library/dom": "10.4.0",
     "@testing-library/react": "16.1.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/ajv": "^0.0.5",
     "@types/d3-force": "^3.0.10",
     "@types/jsdom": "^21.1.7",

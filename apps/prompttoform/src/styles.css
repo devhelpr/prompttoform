@@ -2,6 +2,36 @@
 
 @source '../../../libs/react-forms/src/';
 
+button:not(:disabled) {
+  cursor: pointer;
+}
+/* Dialog backdrop styling */
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Dialog centering and positioning */
+dialog {
+  margin: auto;
+  padding: 0;
+}
+
+/* Fade-in animation for initial state */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out;
+}
+
 /* Array Field Styles */
 .array-field {
   display: flex;
