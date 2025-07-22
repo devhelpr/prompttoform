@@ -2,6 +2,9 @@
 
 @source '../../../libs/react-forms/src/';
 
+button:not(:disabled) {
+  cursor: pointer;
+}
 /* Dialog backdrop styling */
 dialog::backdrop {
   background-color: rgba(0, 0, 0, 0.5);

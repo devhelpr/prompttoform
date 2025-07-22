@@ -27,11 +27,13 @@ export function ResponsiveNavbar({
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <img
-              src="/logo.png"
-              alt="PromptToForm Logo"
-              className="h-8 w-auto"
-            />
+            <a href="/">
+              <img
+                src="/logo.png"
+                alt="PromptToForm Logo"
+                className="h-8 w-auto"
+              />
+            </a>
           </div>
 
           {/* Desktop Navigation */}
