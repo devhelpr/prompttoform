@@ -105,3 +105,28 @@ show age field and if age < 18 show a parent consent
 ```
 make a form that is complex , has branches at least 4 layers deep... so a real decision tree.. make it about health and just make something up.. this is just for testing
 ```
+
+
+## Todos
+
+## prompt to form
+
+- [ ] poc "flow"-editor with code-flow-canvas and react-flow
+- [ ] add "complex-flow"-example
+- [ ] "agent"-mode
+- [ ] different "system"-prompts for different form-types
+- [ ] show system-prompt in the UI (and evaluate prompts as well)
+- [ ] improve prompts
+
+## react-forms library
+
+- [ ] "summary" component type
+- [ ] "single-form"-mode
+- [ ] info-icons with popovers/tooltips
+- [ ] "crud"-mode
+- [ ] "search"-mode
+- [ ] "master-detail"-mode
+- [ ] assign pages to categories
+- [ ] "color" field type (single color , single color from palette)
+- [ ] multi-language support
+- [ ] support for custom field types
