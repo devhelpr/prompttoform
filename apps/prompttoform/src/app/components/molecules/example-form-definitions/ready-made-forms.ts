@@ -726,6 +726,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'welcomeText',
+                label: '',
                 props: {
                   content:
                     'Welcome to the Health Symptom Checker. Please answer the following questions.',
@@ -884,6 +885,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'mildSymptomsText',
+                label: '',
                 props: {
                   content:
                     'For mild symptoms, rest and hydration are recommended. Monitor your symptoms.',
@@ -938,6 +940,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'moderateSymptomsText',
+                label: '',
                 props: {
                   content:
                     'For moderate symptoms, consider consulting a healthcare professional.',
@@ -993,6 +996,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'severeSymptomsText',
+                label: '',
                 props: {
                   content:
                     'For severe symptoms, please seek immediate medical attention.',
@@ -1073,6 +1077,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'noActionText',
+                label: '',
                 props: {
                   content: 'Thank you for your time. Stay healthy!',
                 },
@@ -1089,6 +1094,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'persistentMildSymptomsText',
+                label: '',
                 props: {
                   content:
                     "If mild symptoms persist, it's advisable to consult a healthcare professional.",
@@ -1143,6 +1149,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'monitorSymptomsText',
+                label: '',
                 props: {
                   content:
                     'Continue monitoring your symptoms. If they worsen or do not improve, seek medical advice.',
@@ -1160,6 +1167,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'consultDoctorPreexistingText',
+                label: '',
                 props: {
                   content:
                     'Given your pre-existing condition, it is highly recommended to consult your doctor regarding your current symptoms.',
@@ -1215,6 +1223,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'considerConsultationText',
+                label: '',
                 props: {
                   content:
                     "Consider scheduling a consultation with a healthcare provider if your symptoms don't improve or if you have concerns.",
@@ -1232,6 +1241,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'dietAdviceText',
+                label: '',
                 props: {
                   content:
                     'Focus on a balanced diet with plenty of fruits, vegetables, lean proteins, and whole grains.',
@@ -1287,6 +1297,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'exerciseAdviceText',
+                label: '',
                 props: {
                   content:
                     'Regular physical activity is beneficial. Aim for at least 150 minutes of moderate-intensity aerobic activity or 75 minutes of vigorous-intensity activity per week, plus muscle-strengthening activities on 2 or more days a week.',
@@ -1353,6 +1364,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'mentalHealthAdviceText',
+                label: '',
                 props: {
                   content:
                     'Prioritizing mental well-being is crucial. Consider mindfulness, meditation, or relaxation techniques. Ensure you get enough sleep and connect with supportive people.',
@@ -1407,6 +1419,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'scheduleAppointmentText',
+                label: '',
                 props: {
                   content:
                     'Please schedule an appointment with your doctor soon to discuss your persistent symptoms.',
@@ -1424,6 +1437,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'alternativeCareText',
+                label: '',
                 props: {
                   content:
                     "If you cannot see a doctor promptly, consider telehealth services for a remote consultation or visit an urgent care clinic if your symptoms warrant it and it's appropriate for your situation.",
@@ -1441,6 +1455,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'contactDoctorText',
+                label: '',
                 props: {
                   content:
                     'Please contact your doctor as soon as possible to discuss your symptoms, especially considering your pre-existing condition.',
@@ -1458,6 +1473,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'findDoctorInfoText',
+                label: '',
                 props: {
                   content:
                     "Please locate your doctor's contact information. You can check your insurance provider's directory, previous medical records, or the clinic's website.",
@@ -1475,6 +1491,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'dietResourcesText',
+                label: '',
                 props: {
                   content:
                     "Here are some general resources for healthy eating: MyPlate.gov, EatRight.org. For specific diet plans, it's best to consult a registered dietitian or your healthcare provider.",
@@ -1492,6 +1509,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'generalDietTipsText',
+                label: '',
                 props: {
                   content:
                     'Remember to drink plenty of water, limit processed foods and sugary drinks, and focus on portion control. Small, consistent changes can make a big difference.',
@@ -1509,6 +1527,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'homeWorkoutsText',
+                label: '',
                 props: {
                   content:
                     'Explore online videos for bodyweight exercises, yoga, pilates, or dance workouts that you can do at home. Many apps also offer guided home fitness programs.',
@@ -1526,6 +1545,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'gymTipsText',
+                label: '',
                 props: {
                   content:
                     "At the gym, consider a mix of cardiovascular exercises (like treadmill, elliptical, cycling) and strength training (weights, resistance machines). If you're new, a session with a personal trainer can help you create a safe and effective plan.",
@@ -1543,6 +1563,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'mentalHealthResourcesText',
+                label: '',
                 props: {
                   content:
                     'Here are some general resources: National Alliance on Mental Illness (NAMI), MentalHealth.gov. If you are in crisis, please contact a crisis hotline or emergency services.',
@@ -1560,6 +1581,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 type: 'text',
                 id: 'selfCareText',
+                label: '',
                 props: {
                   content:
                     'Remember to incorporate self-care into your routine. This can include taking breaks, engaging in hobbies you enjoy, spending time in nature, and connecting with loved ones.',

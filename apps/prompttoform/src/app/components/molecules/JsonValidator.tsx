@@ -82,7 +82,7 @@ export function JsonValidator({
                     }: Missing "type" property`
                   );
                 }
-                if (!component.label) {
+                if (component.label === undefined || component.label === null) {
                   errors.push(
                     `Page ${index + 1}, Component ${
                       componentIndex + 1
