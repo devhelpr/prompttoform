@@ -22,6 +22,7 @@ import {
 export const FormRenderer: React.FC<FormRendererProps> = ({
   formJson,
   onSubmit,
+  disabled = false,
 }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
@@ -409,7 +410,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const renderStepIndicator = (
     currentStep: number,
     totalSteps: number
-  ): React.ReactElement => {
+  ): React.ReactElement | null => {
+    // Don't render step indicator if there's only one page or no pages
+    if (totalSteps <= 1) {
+      return null;
+    }
+
     return (
       <div className="mb-4 flex items-center justify-between">
         <div className="text-sm font-medium text-gray-700">
@@ -428,7 +434,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const renderMultiStepControls = (
     currentStep: number,
     totalSteps: number
-  ): React.ReactElement => {
+  ): React.ReactElement | null => {
+    if (disabled) {
+      return null;
+    }
+
     const currentPage = formJson.app.pages[currentStep - 1];
     const isEndPage = currentPage && currentPage.isEndPage === true;
 
@@ -540,6 +550,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             props={props}
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
+            disabled={disabled}
           />
         );
 
@@ -559,6 +570,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             props={props}
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
+            disabled={disabled}
           />
         );
 
@@ -577,6 +589,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             props={props}
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
+            disabled={disabled}
           />
         );
 
@@ -592,6 +605,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             props={props}
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
+            disabled={disabled}
           />
         );
 
@@ -611,6 +625,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             props={props}
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
+            disabled={disabled}
           />
         );
 
@@ -630,6 +645,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             props={props}
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
+            disabled={disabled}
           />
         );
 
@@ -647,12 +663,15 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 | 'reset'
                 | undefined) || 'button'
             }
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            className={`px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 ${
+              disabled ? 'cursor-not-allowed opacity-50' : ''
+            }`}
             onClick={
               props?.onClick
                 ? () => handleButtonClick(props.onClick as string)
                 : undefined
             }
+            disabled={disabled}
           >
             {props.label}
           </button>
@@ -829,7 +848,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             <button
               type="button"
               onClick={() => handleRemoveItem(index)}
-              className="ml-2 text-red-600 hover:text-red-800"
+              className={`ml-2 text-red-600 hover:text-red-800 ${
+                disabled ? 'cursor-not-allowed opacity-50' : ''
+              }`}
+              disabled={disabled}
             >
               Remove
             </button>
@@ -838,7 +860,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         <button
           type="button"
           onClick={handleAddItem}
-          className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+          className={`mt-2 text-sm text-blue-600 hover:text-blue-800 ${
+            disabled ? 'cursor-not-allowed opacity-50' : ''
+          }`}
+          disabled={disabled}
         >
           Add Item
         </button>
@@ -891,16 +916,18 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         <h1 className="text-2xl font-bold text-indigo-700">
           {formJson.app.title}
         </h1>
-        {Array.isArray(formJson.app.pages) && formJson.app.pages.length > 1 && (
-          <div className="mt-2 text-sm text-indigo-500">
-            This application has {formJson.app.pages.length} pages
-          </div>
-        )}
+        {Array.isArray(formJson.app.pages) &&
+          formJson.app.pages.length > 1 &&
+          !disabled && (
+            <div className="mt-2 text-sm text-indigo-500">
+              This application has {formJson.app.pages.length} pages
+            </div>
+          )}
       </div>
 
       <div className="space-y-8">{renderMultiStepForm()}</div>
 
-      {hasSubmissions && (
+      {hasSubmissions && !disabled && (
         <div className="mt-8 border-t pt-6">
           <h3 className="text-lg font-medium mb-4">Form Submissions</h3>
           <div className="bg-gray-50 p-4 rounded-md">

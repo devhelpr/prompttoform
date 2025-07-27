@@ -14,6 +14,7 @@ interface FormCheckboxFieldProps {
   props?: Record<string, unknown>;
   showError: boolean;
   validationErrors: string[];
+  disabled?: boolean;
 }
 
 export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
@@ -26,6 +27,7 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
   props,
   showError,
   validationErrors,
+  disabled = false,
 }) => {
   // Handle single checkbox without options
   if (!props?.options) {
@@ -35,11 +37,14 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
           <input
             type="checkbox"
             id={fieldId}
-            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+            className={`h-4 w-4 text-indigo-600 focus:ring-indigo-500 ${
+              disabled ? 'cursor-not-allowed opacity-50' : ''
+            }`}
             checked={value === true}
             onChange={(e) => onChange(e.target.checked)}
             onBlur={onBlur}
             required={!!validation?.required}
+            disabled={disabled}
           />
           <label htmlFor={fieldId} className="ml-2 text-sm text-gray-700">
             {typeof label === 'string' ? label : ''}
@@ -96,8 +101,11 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
                     onChange(newValues);
                   }}
                   onBlur={onBlur}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                  className={`h-4 w-4 text-indigo-600 focus:ring-indigo-500 ${
+                    disabled ? 'cursor-not-allowed opacity-50' : ''
+                  }`}
                   required={!!validation?.required}
+                  disabled={disabled}
                 />
                 <label
                   htmlFor={`${fieldId}-${index}`}

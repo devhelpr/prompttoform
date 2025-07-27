@@ -10,14 +10,49 @@ npm install react-forms
 
 ## Usage
 
-<FormRenderer formJson={...} />
+```tsx
+import { FormRenderer } from 'react-forms';
+
+<FormRenderer formJson={formDefinition} />
+```
 
 FormJson is a JSON object that follows the https://prompttoform.ai/schema/v0.1/schema.json schema. Forms can be generated with https://app.prompttoform.ai
 
-Another requirement is currently tailwindcss.
+## Props
 
-If you use tailwind v4, then you need this in your main css file:
+### FormRendererProps
 
+- `formJson: FormDefinition` - The form definition object
+- `onSubmit?: (formValues: FormValues) => void` - Callback function called when the form is submitted
+- `disabled?: boolean` - When true, disables all form fields and hides navigation buttons (default: false)
+
+## Features
+
+### Disabled State
+
+When the `disabled` prop is set to `true`:
+- All form fields (inputs, textareas, selects, checkboxes, radio buttons, date fields) are disabled
+- Next/Previous navigation buttons are hidden
+- Form submission buttons are hidden
+- Array field add/remove buttons are disabled
+- Custom buttons are disabled
+
+### Step Indicator
+
+The step indicator is automatically hidden when:
+- The form has only one page
+- The form has no pages
+
+This provides a cleaner UI for single-page forms.
+
+## Requirements
+
+- Tailwind CSS is required for styling
+
+If you use Tailwind v4, add this to your main CSS file:
+
+```css
 @source "../node_modules/@devhelpr/react-forms";
+```
 
 

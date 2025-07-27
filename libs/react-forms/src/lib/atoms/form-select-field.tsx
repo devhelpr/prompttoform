@@ -17,6 +17,7 @@ interface FormSelectFieldProps {
   };
   showError: boolean;
   validationErrors: string[];
+  disabled?: boolean;
 }
 
 export const FormSelectField: React.FC<FormSelectFieldProps> = ({
@@ -29,6 +30,7 @@ export const FormSelectField: React.FC<FormSelectFieldProps> = ({
   props,
   showError,
   validationErrors,
+  disabled = false,
 }) => {
   return (
     <div className="mb-4">
@@ -43,11 +45,14 @@ export const FormSelectField: React.FC<FormSelectFieldProps> = ({
         id={fieldId}
         className={`w-full p-2 border ${
           showError ? 'border-red-500' : 'border-gray-300'
-        } rounded-md bg-white`}
+        } rounded-md bg-white ${
+          disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+        }`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         required={!!validation?.required}
+        disabled={disabled}
       >
         <option value="">Select an option</option>
         {Array.isArray(props?.options) &&

@@ -70,6 +70,7 @@ export interface FormDefinition {
 export interface FormRendererProps {
   formJson: FormDefinition;
   onSubmit?: (formValues: FormValues) => void;
+  disabled?: boolean;
 }
 
 export interface FormValues {

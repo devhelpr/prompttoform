@@ -15,6 +15,7 @@ interface FormRadioFieldProps {
   };
   showError: boolean;
   validationErrors: string[];
+  disabled?: boolean;
 }
 
 export const FormRadioField: React.FC<FormRadioFieldProps> = ({
@@ -26,6 +27,7 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
   props,
   showError,
   validationErrors,
+  disabled = false,
 }) => {
   return (
     <div className="mb-4">
@@ -50,8 +52,11 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
                   value={optionValue}
                   checked={value === optionValue}
                   onChange={(e) => onChange(e.target.value)}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                  className={`h-4 w-4 text-indigo-600 focus:ring-indigo-500 ${
+                    disabled ? 'cursor-not-allowed opacity-50' : ''
+                  }`}
                   required={!!validation?.required}
+                  disabled={disabled}
                 />
                 <label
                   htmlFor={`${fieldId}-${index}`}
