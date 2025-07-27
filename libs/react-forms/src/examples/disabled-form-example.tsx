@@ -108,6 +108,7 @@ const multiPageForm: FormDefinition = {
 export const DisabledFormExample: React.FC = () => {
   const [isDisabled, setIsDisabled] = useState(false);
   const [currentForm, setCurrentForm] = useState<'single' | 'multi'>('single');
+  const [prefixId, setPrefixId] = useState<string>('');
 
   const handleSubmit = (formValues: any) => {
     console.log('Form submitted:', formValues);
@@ -145,6 +146,17 @@ export const DisabledFormExample: React.FC = () => {
               <option value="multi">Multi Page Form</option>
             </select>
           </div>
+
+          <div className="flex items-center space-x-4">
+            <label className="font-medium">Prefix ID:</label>
+            <input
+              type="text"
+              value={prefixId}
+              onChange={(e) => setPrefixId(e.target.value)}
+              placeholder="e.g., my-form"
+              className="border border-gray-300 rounded px-3 py-1"
+            />
+          </div>
         </div>
 
         <div className="border-t pt-6">
@@ -152,6 +164,7 @@ export const DisabledFormExample: React.FC = () => {
             formJson={currentForm === 'single' ? singlePageForm : multiPageForm}
             onSubmit={handleSubmit}
             disabled={isDisabled}
+            prefixId={prefixId || undefined}
           />
         </div>
       </div>

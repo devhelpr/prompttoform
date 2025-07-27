@@ -23,6 +23,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   formJson,
   onSubmit,
   disabled = false,
+  prefixId,
 }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
@@ -516,6 +517,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     return isSubmitted || blurredFields[fieldId] === true;
   };
 
+  const getPrefixedId = (id: string): string => {
+    return prefixId ? `${prefixId}-${id}` : id;
+  };
+
   const renderComponent = (
     component: FormComponentFieldProps,
     parentId?: string
@@ -527,6 +532,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     const { id, type, label, props, validation } = component;
     const fieldId = parentId ? `${parentId}.${id}` : id;
+    const prefixedFieldId = getPrefixedId(fieldId);
     const hasError = validationErrors[fieldId]?.length > 0;
     const showError = shouldShowError(fieldId) && hasError;
 
@@ -537,7 +543,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       case 'input':
         return (
           <FormInputField
-            fieldId={fieldId}
+            fieldId={prefixedFieldId}
             label={label}
             value={
               typeof formValues[id] === 'string'
@@ -557,7 +563,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       case 'textarea':
         return (
           <FormTextareaField
-            fieldId={fieldId}
+            fieldId={prefixedFieldId}
             label={label}
             value={
               typeof formValues[id] === 'string'
@@ -577,7 +583,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       case 'radio':
         return (
           <FormRadioField
-            fieldId={fieldId}
+            fieldId={prefixedFieldId}
             label={label}
             value={
               typeof formValues[id] === 'string'
@@ -596,7 +602,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       case 'checkbox':
         return (
           <FormCheckboxField
-            fieldId={fieldId}
+            fieldId={prefixedFieldId}
             label={label}
             value={formValues[id] as boolean | string[]}
             onChange={(value) => handleInputChange(id, value)}
@@ -612,7 +618,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       case 'select':
         return (
           <FormSelectField
-            fieldId={fieldId}
+            fieldId={prefixedFieldId}
             label={label}
             value={
               typeof formValues[id] === 'string'
@@ -632,7 +638,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       case 'date':
         return (
           <FormDateField
-            fieldId={fieldId}
+            fieldId={prefixedFieldId}
             label={label}
             value={
               typeof formValues[id] === 'string'
@@ -680,7 +686,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       case 'section':
         return (
           <FormSectionField
-            fieldId={fieldId}
+            fieldId={prefixedFieldId}
             label={label}
             children={component.children}
             renderComponent={renderComponent}
@@ -781,6 +787,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   ): React.ReactElement => {
     const items = arrayItems[component.id] || [];
     const fieldId = parentId ? `${parentId}.${component.id}` : component.id;
+    const prefixedFieldId = getPrefixedId(fieldId);
     const showError =
       shouldShowError(fieldId) && validationErrors[fieldId]?.length > 0;
 
@@ -811,7 +818,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     return (
       <div className="mb-4">
         <label
-          htmlFor={component.id}
+          htmlFor={prefixedFieldId}
           className="block text-sm font-medium text-gray-700 mb-1"
         >
           {typeof component.label === 'string' ? component.label : ''}

@@ -25,6 +25,7 @@ FormJson is a JSON object that follows the https://prompttoform.ai/schema/v0.1/s
 - `formJson: FormDefinition` - The form definition object
 - `onSubmit?: (formValues: FormValues) => void` - Callback function called when the form is submitted
 - `disabled?: boolean` - When true, disables all form fields and hides navigation buttons (default: false)
+- `prefixId?: string` - When provided, prefixes all field IDs with the specified value (e.g., "my-form" becomes "my-form-field-name")
 
 ## Features
 
@@ -44,6 +45,14 @@ The step indicator is automatically hidden when:
 - The form has no pages
 
 This provides a cleaner UI for single-page forms.
+
+### ID Prefixing
+
+When the `prefixId` prop is provided:
+- All form field IDs are prefixed with the specified value
+- Nested fields (inside sections) maintain their hierarchical structure with the prefix
+- Useful for avoiding ID conflicts when multiple forms are rendered on the same page
+- Example: `prefixId="user-form"` results in IDs like `user-form-name`, `user-form-email`, etc.
 
 ## Requirements
 

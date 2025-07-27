@@ -142,4 +142,161 @@ describe('FormRenderer', () => {
       ).not.toBeInTheDocument();
     });
   });
+
+  describe('prefixId prop', () => {
+    it('should prefix field IDs when prefixId is provided', () => {
+      render(<FormRenderer formJson={singlePageForm} prefixId="my-form" />);
+
+      const input = screen.getByLabelText(/Name/);
+      expect(input).toHaveAttribute('id', 'my-form-name');
+    });
+
+    it('should not prefix field IDs when prefixId is not provided', () => {
+      render(<FormRenderer formJson={singlePageForm} />);
+
+      const input = screen.getByLabelText(/Name/);
+      expect(input).toHaveAttribute('id', 'name');
+    });
+
+    it('should prefix field IDs for all field types', () => {
+      const formWithMultipleFields: FormDefinition = {
+        app: {
+          title: 'Multiple Field Types',
+          pages: [
+            {
+              id: 'page1',
+              title: 'Page 1',
+              route: '/page1',
+              components: [
+                {
+                  type: 'input',
+                  id: 'text-field',
+                  label: 'Text Field',
+                },
+                {
+                  type: 'textarea',
+                  id: 'textarea-field',
+                  label: 'Textarea Field',
+                },
+                {
+                  type: 'select',
+                  id: 'select-field',
+                  label: 'Select Field',
+                  props: {
+                    options: [
+                      { label: 'Option 1', value: '1' },
+                      { label: 'Option 2', value: '2' },
+                    ],
+                  },
+                },
+                {
+                  type: 'date',
+                  id: 'date-field',
+                  label: 'Date Field',
+                },
+                {
+                  type: 'radio',
+                  id: 'radio-field',
+                  label: 'Radio Field',
+                  props: {
+                    options: [
+                      { label: 'Option 1', value: '1' },
+                      { label: 'Option 2', value: '2' },
+                    ],
+                  },
+                },
+                {
+                  type: 'checkbox',
+                  id: 'checkbox-field',
+                  label: 'Checkbox Field',
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      render(
+        <FormRenderer formJson={formWithMultipleFields} prefixId="test" />
+      );
+
+      expect(screen.getByLabelText(/Text Field/)).toHaveAttribute(
+        'id',
+        'test-text-field'
+      );
+      expect(screen.getByLabelText(/Textarea Field/)).toHaveAttribute(
+        'id',
+        'test-textarea-field'
+      );
+      expect(screen.getByLabelText(/Select Field/)).toHaveAttribute(
+        'id',
+        'test-select-field'
+      );
+      expect(screen.getByLabelText(/Date Field/)).toHaveAttribute(
+        'id',
+        'test-date-field'
+      );
+      expect(screen.getByLabelText(/Option 1/)).toHaveAttribute(
+        'id',
+        'test-radio-field-0'
+      );
+      expect(screen.getByLabelText(/Checkbox Field/)).toHaveAttribute(
+        'id',
+        'test-checkbox-field'
+      );
+    });
+
+    it('should prefix section field IDs', () => {
+      const formWithSection: FormDefinition = {
+        app: {
+          title: 'Form with Section',
+          pages: [
+            {
+              id: 'page1',
+              title: 'Page 1',
+              route: '/page1',
+              components: [
+                {
+                  type: 'section',
+                  id: 'my-section',
+                  label: 'My Section',
+                  children: [
+                    {
+                      type: 'input',
+                      id: 'nested-field',
+                      label: 'Nested Field',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      render(
+        <FormRenderer formJson={formWithSection} prefixId="section-test" />
+      );
+
+      const nestedInput = screen.getByLabelText(/Nested Field/);
+      expect(nestedInput).toHaveAttribute(
+        'id',
+        'section-test-section-test-my-section.nested-field'
+      );
+    });
+
+    it('should work with disabled state', () => {
+      render(
+        <FormRenderer
+          formJson={singlePageForm}
+          prefixId="disabled-form"
+          disabled={true}
+        />
+      );
+
+      const input = screen.getByLabelText(/Name/);
+      expect(input).toHaveAttribute('id', 'disabled-form-name');
+      expect(input).toBeDisabled();
+    });
+  });
 });
