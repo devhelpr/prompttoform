@@ -10,9 +10,10 @@ export interface ReadyMadeForm {
 export const READY_MADE_FORMS: ReadyMadeForm[] = [
   {
     name: 'Simple Contact Form',
-    description: 'Basic contact form with name, email, and message',
+    description:
+      'Basic contact form with name, email, message, and thank you page',
     prompt:
-      'A simple contact form with name, email, subject, and message fields',
+      'A simple contact form with name, email, subject, message fields, and a thank you page after submission',
     json: {
       app: {
         title: 'Contact Us',
@@ -103,6 +104,26 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
             responseMapping: {},
           },
         ],
+        thankYouPage: {
+          title: 'Thank You for Contacting Us!',
+          message:
+            'Your message has been sent successfully. We will get back to you as soon as possible.',
+          showRestartButton: true,
+          showBackButton: false,
+          customActions: [
+            {
+              label: 'Back to Homepage',
+              action: 'custom',
+              customAction: 'goHome',
+              className: 'bg-blue-600 text-white hover:bg-blue-700',
+            },
+            {
+              label: 'Send Another Message',
+              action: 'restart',
+              className: 'bg-green-600 text-white hover:bg-green-700',
+            },
+          ],
+        },
       },
     },
   },
