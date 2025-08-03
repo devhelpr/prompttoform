@@ -1,3 +1,18 @@
+
+
+# build and publish:
+
+npm run build-react-forms
+npm run publish-react-forms
+
+
+
+
+
+
+
+=======================
+
 npx nx g @nx/react:lib libs/react-forms --publishable --importPath=@devhelpr/react-forms
 
 for info about publishing:
