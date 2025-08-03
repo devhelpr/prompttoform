@@ -74,7 +74,7 @@ function addHiddenFormToHtml(htmlContent: string, formFields: string): string {
 export async function createFormZip(generatedJson: string): Promise<Blob> {
   try {
     // Load the template zip file
-    const response = await fetch('/react-form.zip');
+    const response = await fetch(`/react-form.zip?v=${Date.now()}`);
     if (!response.ok) {
       throw new Error('Failed to load template zip file');
     }

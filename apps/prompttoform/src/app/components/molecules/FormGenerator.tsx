@@ -305,7 +305,7 @@ export function FormGenerator({
 
     try {
       const zipBlob = await createFormZip(generatedJson);
-      downloadZip(zipBlob, 'react-form.zip');
+      downloadZip(zipBlob, `react-form-${Date.now()}.zip`);
     } catch (error) {
       console.error('Error downloading zip:', error);
       setError('Failed to create zip file. Please try again.');
