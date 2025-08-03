@@ -1,4 +1,4 @@
-import { UISchema } from "../types/ui-schema";
+import { UISchema } from '../types/ui-schema';
 
 export function getSystemPrompt(uiSchema: UISchema) {
   return `You are an expert in generating UI and form schemas.
@@ -82,8 +82,33 @@ Important rules for UI/Form schema:
     - For navigation branches, ensure that nextPage values match existing page IDs
     - For multi-step wizards, branch navigation provides intuitive user flow
 
-13. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
-14. DONT EMBED The schema itself in the response! BUT it should be valid JSON which follows the schema.
+13. For thank you pages:
+    - When the user requests a thank you page or confirmation page after form submission, include a "thankYouPage" property in the app object
+    - The thankYouPage should contain:
+      - title: A welcoming title (e.g., "Thank You!", "Submission Confirmed")
+      - message: A clear message confirming successful submission
+      - showRestartButton: Set to true if users should be able to start a new form
+      - showBackButton: Set to true if users should be able to return to the form
+      - customActions: Array of custom buttons for additional actions
+    - Example thank you page structure:
+      "thankYouPage": {
+        "title": "Thank You for Your Submission!",
+        "message": "Your form has been submitted successfully. We will process your request shortly.",
+        "showRestartButton": true,
+        "showBackButton": false,
+        "customActions": [
+          {
+            "label": "Visit Our Website",
+            "action": "custom",
+            "customAction": "openWebsite",
+            "className": "bg-blue-600 text-white hover:bg-blue-700"
+          }
+        ]
+      }
+    - Only include thankYouPage when explicitly requested or when it makes sense for the form type (contact forms, feedback forms, etc.)
+
+14. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
+15. DONT EMBED The schema itself in the response! BUT it should be valid JSON which follows the schema.
 `;
 }
 
