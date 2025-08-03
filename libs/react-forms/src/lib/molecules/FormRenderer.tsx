@@ -17,6 +17,7 @@ import {
   FormComponentFieldProps,
   ValidationError,
   VisibilityCondition,
+  ThankYouPage,
 } from '../interfaces/form-interfaces';
 
 export const FormRenderer: React.FC<FormRendererProps> = ({
@@ -41,6 +42,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const [arrayItems, setArrayItems] = useState<
     Record<string, Record<string, unknown>[]>
   >({});
+  const [showThankYouPage, setShowThankYouPage] = useState(false);
 
   const validateComponent = useMemo(
     () =>
@@ -248,13 +250,18 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       onSubmit(formValues);
     }
 
-    // Reset form values and validation errors
-    setFormValues({});
-    setValidationErrors({});
-    setBlurredFields({});
-    setIsSubmitted(false);
-    setCurrentStepIndex(0);
-    setStepHistory([0]);
+    // Check if thank you page is configured
+    if (formJson.app.thankYouPage) {
+      setShowThankYouPage(true);
+    } else {
+      // Reset form values and validation errors
+      setFormValues({});
+      setValidationErrors({});
+      setBlurredFields({});
+      setIsSubmitted(false);
+      setCurrentStepIndex(0);
+      setStepHistory([0]);
+    }
   };
 
   const getNextPage = useCallback((): string | null => {
@@ -352,6 +359,27 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     setIsSubmitted(false);
     setCurrentStepIndex(0);
     setStepHistory([0]);
+    setShowThankYouPage(false);
+  };
+
+  const handleThankYouAction = (
+    action: 'restart' | 'back' | 'custom',
+    customAction?: string
+  ) => {
+    switch (action) {
+      case 'restart':
+        handleReset();
+        break;
+      case 'back':
+        setShowThankYouPage(false);
+        break;
+      case 'custom':
+        if (customAction) {
+          console.log('Custom action:', customAction);
+          // Handle custom actions here
+        }
+        break;
+    }
   };
 
   const handleButtonClick = (action: string) => {
@@ -878,6 +906,80 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     );
   };
 
+  const renderThankYouPage = (): React.ReactElement => {
+    const thankYouPage = formJson.app.thankYouPage;
+    if (!thankYouPage) {
+      return (
+        <div className="p-4 text-red-500">Thank you page not configured</div>
+      );
+    }
+
+    return (
+      <div className="w-full">
+        <div className="mb-4 bg-green-50 p-4 rounded-md">
+          <h1 className="text-2xl font-bold text-green-700">
+            {thankYouPage.title || 'Thank You!'}
+          </h1>
+        </div>
+
+        <div className="bg-white rounded-md shadow-sm p-6">
+          {thankYouPage.message && (
+            <div className="mb-6">
+              <p className="text-lg text-gray-700 leading-relaxed">
+                {thankYouPage.message}
+              </p>
+            </div>
+          )}
+
+          {thankYouPage.components && thankYouPage.components.length > 0 && (
+            <div className="mb-6">
+              {thankYouPage.components.map((component, index) => (
+                <div key={index}>{renderComponent(component)}</div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-4 justify-center">
+            {thankYouPage.showRestartButton && (
+              <button
+                type="button"
+                onClick={() => handleThankYouAction('restart')}
+                className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Start New Form
+              </button>
+            )}
+
+            {thankYouPage.showBackButton && (
+              <button
+                type="button"
+                onClick={() => handleThankYouAction('back')}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Go Back
+              </button>
+            )}
+
+            {thankYouPage.customActions?.map((action, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() =>
+                  handleThankYouAction(action.action, action.customAction)
+                }
+                className={`px-6 py-2 rounded-md transition-colors ${
+                  action.className || 'bg-gray-600 text-white hover:bg-gray-700'
+                }`}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderPage = (page: PageProps): React.ReactElement | null => {
     if (!page || !page.components) return null;
 
@@ -915,6 +1017,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   if (!formJson || !formJson.app) {
     return <div className="p-4 text-red-500">Invalid form data</div>;
+  }
+
+  // Show thank you page if form is submitted and thank you page is configured
+  if (showThankYouPage) {
+    return renderThankYouPage();
   }
 
   return (

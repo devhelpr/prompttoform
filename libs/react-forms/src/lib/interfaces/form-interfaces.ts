@@ -64,6 +64,7 @@ export interface FormDefinition {
     title: string;
     pages: PageProps[];
     dataSources?: Record<string, unknown>[];
+    thankYouPage?: ThankYouPage;
   };
 }
 
@@ -114,6 +115,20 @@ export interface ArrayItem {
 export interface ValidationError {
   fieldId: string;
   message: string;
+}
+
+export interface ThankYouPage {
+  title?: string;
+  message?: string;
+  components?: FormComponentFieldProps[];
+  showRestartButton?: boolean;
+  showBackButton?: boolean;
+  customActions?: Array<{
+    label: string;
+    action: 'restart' | 'back' | 'custom';
+    customAction?: string;
+    className?: string;
+  }>;
 }
 
 export type Option =
