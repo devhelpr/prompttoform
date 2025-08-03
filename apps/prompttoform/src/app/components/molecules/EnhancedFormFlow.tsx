@@ -9,7 +9,7 @@ interface EnhancedFormFlowProps {
 interface FlowNode {
   id: string;
   title: string;
-  type: 'page' | 'component' | 'condition';
+  type: 'page' | 'component' | 'condition' | 'thankYou';
   route?: string;
   components?: number;
   isEndPage?: boolean;
@@ -88,6 +88,28 @@ export function EnhancedFormFlow({
       yOffset += Math.max(120, (page.components?.length || 0) * 80 + 40);
     });
 
+    // Add thank you page if it exists
+    if (formJson.app.thankYouPage) {
+      const thankYouNode: FlowNode = {
+        id: 'thank-you-page',
+        title: formJson.app.thankYouPage.title || 'Thank You Page',
+        type: 'thankYou',
+        position: { x: 0, y: yOffset },
+      };
+      newNodes.push(thankYouNode);
+
+      // Connect end pages to thank you page
+      formJson.app.pages.forEach((page) => {
+        if (page.isEndPage) {
+          newConnections.push({
+            from: page.id,
+            to: 'thank-you-page',
+            type: 'end',
+          });
+        }
+      });
+    }
+
     setNodes(newNodes);
     setConnections(newConnections);
   }, [formJson]);
@@ -136,6 +158,8 @@ export function EnhancedFormFlow({
         return 'bg-indigo-500';
       case 'condition':
         return 'bg-yellow-500';
+      case 'thankYou':
+        return 'bg-purple-500';
       default:
         return 'bg-gray-500';
     }
@@ -186,6 +210,22 @@ export function EnhancedFormFlow({
               strokeLinejoin="round"
               strokeWidth={2}
               d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+            />
+          </svg>
+        );
+      case 'thankYou':
+        return (
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
         );
