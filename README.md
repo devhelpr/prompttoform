@@ -111,8 +111,8 @@ make a form that is complex , has branches at least 4 layers deep... so a real d
 
 ## prompt to form
 
-- [ ] poc "flow"-editor with code-flow-canvas and react-flow
-- [ ] add "complex-flow"-example
+- [x] poc "flow"-editor with code-flow-canvas and react-flow
+- [x] add "complex-flow"-example
 - [ ] "agent"-mode
 - [ ] different "system"-prompts for different form-types
 - [ ] show system-prompt in the UI (and evaluate prompts as well)
@@ -121,7 +121,7 @@ make a form that is complex , has branches at least 4 layers deep... so a real d
 ## react-forms library
 
 - [ ] "summary" component type
-- [ ] "single-form"-mode
+- [x] "single-form"-mode
 - [ ] info-icons with popovers/tooltips
 - [ ] "crud"-mode
 - [ ] "search"-mode
@@ -130,3 +130,7 @@ make a form that is complex , has branches at least 4 layers deep... so a real d
 - [ ] "color" field type (single color , single color from palette)
 - [ ] multi-language support
 - [ ] support for custom field types
+- [ ] all elements now have tailwind classes, put all this in a "element-class"-map and make it configurable from the outside so that other styling libraries are also supported (custom css, bootstrap etc)
+- [ ] support for themes
+- [ ] support for custom wrapper elements for each component type : page , form , section , field ?
+  
