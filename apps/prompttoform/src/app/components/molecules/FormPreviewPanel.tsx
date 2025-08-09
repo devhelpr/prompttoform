@@ -4,12 +4,13 @@ import { FormRenderer } from '@devhelpr/react-forms';
 import FormFlowMermaid from './FormFlowMermaid';
 import { JsonValidator } from './JsonValidator';
 import { useEffect, useMemo, useState } from 'react';
+import { parseJsonSafely } from '../../utils/json-utils';
 
 interface FormPreviewPanelProps {
   parsedJson: UIJson | null;
   activeTab: ViewMode;
   onTabChange: (tab: ViewMode) => void;
-  onJsonChange: (json: string) => void;
+  onJsonChange: (json: string, parsed?: UIJson | null) => void;
   generatedJson: string;
   onCopyToClipboard: () => void;
   onDownload: () => void;
@@ -89,6 +90,28 @@ export function FormPreviewPanel({
   const handleInvalidJson = (errors: string[]) => {
     setIsJsonValid(false);
     setJsonErrors(errors);
+  };
+
+  const handleUpdatePreview = () => {
+    if (!isJsonValid) {
+      return;
+    }
+
+    try {
+      // Parse the current JSON from the textarea
+      const parsed = parseJsonSafely(generatedJson);
+
+      if (parsed) {
+        // Update both the JSON string and parsed object
+        onJsonChange(generatedJson, parsed);
+        // Switch to form preview to show the updated form
+        onTabChange('form');
+      } else {
+        console.error('Failed to parse JSON for preview update');
+      }
+    } catch (error) {
+      console.error('Error updating preview:', error);
+    }
   };
 
   const renderTabContent = () => {
@@ -198,10 +221,7 @@ export function FormPreviewPanel({
                 </div>
 
                 <button
-                  onClick={() => {
-                    // TODO: Implement JSON validation and update preview
-                    console.log('JSON updated');
-                  }}
+                  onClick={handleUpdatePreview}
                   disabled={!isJsonValid}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
