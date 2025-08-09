@@ -117,6 +117,79 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
       : component.id;
   };
 
+  // Helper function to replace template variables in text
+  const replaceTemplateVariables = (
+    text: string,
+    values: FormValues
+  ): string => {
+    return text.replace(/\{\{([^}]+)\}\}/g, (match, variable) => {
+      const varName = variable.trim();
+
+      // Handle nested variable paths like "applicant.fullName"
+      if (varName.includes('.')) {
+        const keys = varName.split('.');
+        let value: unknown = values;
+
+        for (const key of keys) {
+          if (value && typeof value === 'object' && key in value) {
+            value = (value as Record<string, unknown>)[key];
+          } else {
+            value = undefined;
+            break;
+          }
+        }
+
+        if (value !== undefined && value !== null && value !== '') {
+          return String(value);
+        }
+      }
+
+      // Try direct field name match
+      let directValue = values[varName];
+      if (
+        directValue !== undefined &&
+        directValue !== null &&
+        directValue !== ''
+      ) {
+        return String(directValue);
+      }
+
+      // Try common field name variations
+      const variations = [
+        varName.toLowerCase(),
+        varName.replace(/([A-Z])/g, '_$1').toLowerCase(), // camelCase to snake_case
+        varName.replace(/_/g, ''), // remove underscores
+        varName.replace(/[._]/g, ''), // remove dots and underscores
+      ];
+
+      for (const variation of variations) {
+        const value = values[variation];
+        if (value !== undefined && value !== null && value !== '') {
+          return String(value);
+        }
+      }
+
+      // Try to find partial matches in field names
+      const matchingKey = Object.keys(values).find(
+        (key) =>
+          key.toLowerCase().includes(varName.toLowerCase()) ||
+          varName.toLowerCase().includes(key.toLowerCase())
+      );
+
+      if (
+        matchingKey &&
+        values[matchingKey] !== undefined &&
+        values[matchingKey] !== null &&
+        values[matchingKey] !== ''
+      ) {
+        return String(values[matchingKey]);
+      }
+
+      // Return a dash for missing/empty fields
+      return '-';
+    });
+  };
+
   // Helper function to extract form values recursively
   const extractFormValues = (
     components: FormComponentFieldProps[],
@@ -228,7 +301,11 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
     return groups;
   };
 
-  if (!showSummary) {
+  // Check if customMessage contains template variables (AI-generated summary)
+  const hasTemplateVariables =
+    customMessage && /\{\{[^}]+\}\}/.test(customMessage);
+
+  if (!showSummary && !hasTemplateVariables) {
     return (
       <div className="mb-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -265,7 +342,17 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
   return (
     <div className="mb-6">
       <h3 className="text-lg font-medium text-gray-900 mb-4">{customTitle}</h3>
-      {customMessage && <p className="text-gray-600 mb-6">{customMessage}</p>}
+      {customMessage && (
+        <div className="text-gray-600 mb-6">
+          {hasTemplateVariables ? (
+            <div className="whitespace-pre-line">
+              {replaceTemplateVariables(customMessage, formValues)}
+            </div>
+          ) : (
+            <p>{customMessage}</p>
+          )}
+        </div>
+      )}
 
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
         {Object.entries(groupedValues).map(([groupName, items], groupIndex) => (

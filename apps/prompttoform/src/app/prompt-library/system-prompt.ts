@@ -24,16 +24,18 @@ Important rules for UI/Form schema:
 6. For components:
    - Each component must have a unique ID and appropriate type
    - Use the correct component type based on functionality:
-     - text: For displaying static text
-     - input: For single-line text input
-     - textarea: For multi-line text input
-     - checkbox: For boolean selections
+     - text: For displaying static text, summaries with template variables
+     - input: For single-line text input (name, email, phone, etc.)
+     - textarea: For multi-line text input (comments, descriptions)
+     - checkbox: For boolean selections or multiple choice lists
      - radio: For single selection from multiple options
-     - select: For dropdown selections
-     - button: For user actions
+     - select: For dropdown selections with many options
+     - date: For date input fields
+     - button: For user actions (rare - forms typically auto-generate buttons)
      - table: For displaying tabular data
      - form: For grouping form elements
      - section: For grouping related components
+     - confirmation: For form summary pages (use sparingly - prefer text components with template variables)
 
 7. For form validation:
    - Include appropriate validation rules for input fields
@@ -41,9 +43,9 @@ Important rules for UI/Form schema:
    - Add custom validation messages when appropriate
 
 8. For data binding:
-   - Connect components to data sources when appropriate
-   - Specify which field the component is bound to
-   - Include onChange handlers for data updates
+   - IMPORTANT: Do NOT generate bindings objects for form components
+   - Form components automatically bind to their field ID - no explicit binding needed
+   - Only use data sources for actual API endpoints, not for form field binding
 
 9. For event handling:
    - Add event handlers for user interactions (onClick, onSubmit, onChange)
@@ -107,8 +109,90 @@ Important rules for UI/Form schema:
       }
     - Only include thankYouPage when explicitly requested or when it makes sense for the form type (contact forms, feedback forms, etc.)
 
-14. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
-15. DONT EMBED The schema itself in the response! BUT it should be valid JSON which follows the schema.
+14. For template variables and dynamic content:
+    - Use template variables with double curly braces {{fieldId}} to reference form field values
+    - Template variables work in:
+      * Text component helperText, content, and text properties
+      * All form field helperText properties
+      * Confirmation component customMessage
+    - Template variables automatically resolve to actual form values or show "-" if missing
+    - Use template variables for:
+      * Dynamic summaries: "Name: {{fullName}} | Email: {{email}}"
+      * Contextual help text: "Please confirm: {{email}}"
+      * Review pages showing entered data
+    - Template variable examples:
+      * {{fieldId}} - Direct field reference
+      * {{applicant.fullName}} - Nested object path (if supported by form structure)
+      * Text with multiple variables: "Contact: {{email}} | Phone: {{phone}}"
+    - For confirmation/summary pages, use text components with template variables instead of complex confirmation components
+
+15. For confirmation and review pages:
+    - Create review/summary pages using text components with template variables
+    - Use section components to group related summary information
+    - Example summary structure:
+      {
+        "type": "section",
+        "label": "Application Summary",
+        "children": [
+          {
+            "type": "text",
+            "label": "Personal Information", 
+            "props": {
+              "helperText": "Name: {{fullName}} | Email: {{email}}"
+            }
+          },
+          {
+            "type": "text",
+            "label": "Additional Details",
+            "props": {
+              "helperText": "Phone: {{phone}} | Date: {{applicationDate}}"
+            }
+          }
+        ]
+      }
+
+16. Examples of INCORRECT vs CORRECT patterns:
+    
+    INCORRECT - Using bindings:
+    {
+      "id": "fullName",
+      "type": "input",
+      "bindings": {
+        "dataSource": "userAPI",
+        "field": "user.fullName"
+      }
+    }
+    
+    CORRECT - Simple field ID:
+    {
+      "id": "fullName", 
+      "type": "input",
+      "label": "Full Name",
+      "validation": { "required": true }
+    }
+    
+    INCORRECT - Complex confirmation component:
+    {
+      "type": "confirmation",
+      "props": {
+        "confirmationSettings": {
+          "showSummary": true,
+          "groupBySection": true
+        }
+      }
+    }
+    
+    CORRECT - Text components with template variables:
+    {
+      "type": "text",
+      "label": "Summary",
+      "props": {
+        "helperText": "Name: {{fullName}} • Email: {{email}} • Phone: {{phone}}"
+      }
+    }
+
+17. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
+18. DONT EMBED The schema itself in the response! BUT it should be valid JSON which follows the schema.
 `;
 }
 
