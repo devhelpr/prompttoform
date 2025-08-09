@@ -41,8 +41,8 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
     component: FormComponentFieldProps,
     value: unknown
   ): string => {
-    if (value === null || value === undefined || value === '') {
-      return 'Not provided';
+    if (isEmptyValue(value)) {
+      return '-';
     }
 
     switch (component.type) {
@@ -117,6 +117,15 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
       : component.id;
   };
 
+  // Helper function to check if a value is empty/should show as dash
+  const isEmptyValue = (value: unknown): boolean => {
+    if (value === undefined || value === null) return true;
+    if (typeof value === 'string' && value.trim() === '') return true;
+    if (typeof value === 'boolean') return false; // booleans are never "empty"
+    if (typeof value === 'number') return false; // numbers are never "empty" (even 0)
+    return false;
+  };
+
   // Helper function to replace template variables in text
   const replaceTemplateVariables = (
     text: string,
@@ -139,18 +148,14 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
           }
         }
 
-        if (value !== undefined && value !== null && value !== '') {
+        if (!isEmptyValue(value)) {
           return String(value);
         }
       }
 
       // Try direct field name match
       let directValue = values[varName];
-      if (
-        directValue !== undefined &&
-        directValue !== null &&
-        directValue !== ''
-      ) {
+      if (!isEmptyValue(directValue)) {
         return String(directValue);
       }
 
@@ -164,7 +169,7 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
 
       for (const variation of variations) {
         const value = values[variation];
-        if (value !== undefined && value !== null && value !== '') {
+        if (!isEmptyValue(value)) {
           return String(value);
         }
       }
@@ -176,12 +181,7 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
           varName.toLowerCase().includes(key.toLowerCase())
       );
 
-      if (
-        matchingKey &&
-        values[matchingKey] !== undefined &&
-        values[matchingKey] !== null &&
-        values[matchingKey] !== ''
-      ) {
+      if (matchingKey && !isEmptyValue(values[matchingKey])) {
         return String(values[matchingKey]);
       }
 

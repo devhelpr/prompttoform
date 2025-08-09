@@ -172,9 +172,14 @@ Finds related fields when exact matches fail:
 - `{{medication}}` matches `takingMedication`, `currentMedications`
 - `{{phone}}` matches `phoneNumber`, `mobilePhone`
 
-### 4. Error Resilience
-Gracefully handles missing fields:
-- Shows `-` instead of breaking the UI
+### 4. Comprehensive Empty Value Handling
+Intelligently handles all types of empty/missing data:
+- **Missing fields**: Shows `-` 
+- **Empty strings**: Shows `-`
+- **Whitespace-only strings**: Shows `-`
+- **null/undefined values**: Shows `-`
+- **Numbers (including 0)**: Shows actual value (0 is not considered "empty")
+- **Booleans (including false)**: Shows actual value ("Yes"/"No" - false is not considered "empty")
 - Continues processing other template variables
 - Provides clean, professional appearance for missing data
 

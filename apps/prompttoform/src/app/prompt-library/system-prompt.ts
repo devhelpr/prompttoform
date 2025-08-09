@@ -23,6 +23,9 @@ Important rules for UI/Form schema:
 
 6. For components:
    - Each component must have a unique ID and appropriate type
+   - Use descriptive, simple field IDs that can be used directly in template variables
+     * GOOD: "fullName", "email", "phone", "heightCm", "smoker", "preExistingConditions"
+     * BAD: "applicant_full_name", "user-email", "healthData"
    - Use the correct component type based on functionality:
      - text: For displaying static text, summaries with template variables
      - input: For single-line text input (name, email, phone, etc.)
@@ -116,20 +119,24 @@ Important rules for UI/Form schema:
       * All form field helperText properties
       * Confirmation component customMessage
     - Template variables automatically resolve to actual form values or show "-" if missing
+    - IMPORTANT: Use simple field IDs in template variables, NOT nested paths
+      * CORRECT: {{fullName}}, {{email}}, {{phone}}, {{heightCm}}, {{smoker}}
+      * INCORRECT: {{applicant.fullName}}, {{user.email}}, {{health.smoker}}
     - Use template variables for:
       * Dynamic summaries: "Name: {{fullName}} | Email: {{email}}"
       * Contextual help text: "Please confirm: {{email}}"
       * Review pages showing entered data
     - Template variable examples:
-      * {{fieldId}} - Direct field reference
-      * {{applicant.fullName}} - Nested object path (if supported by form structure)
+      * {{fieldId}} - Direct field reference using the actual component ID
       * Text with multiple variables: "Contact: {{email}} | Phone: {{phone}}"
+      * Multi-line summaries with proper formatting
     - For confirmation/summary pages, use text components with template variables instead of complex confirmation components
 
 15. For confirmation and review pages:
     - Create review/summary pages using text components with template variables
     - Use section components to group related summary information
-    - Example summary structure:
+    - IMPORTANT: Template variables must match the exact field IDs from your form components
+    - Example summary structure for a health application:
       {
         "type": "section",
         "label": "Application Summary",
@@ -138,14 +145,21 @@ Important rules for UI/Form schema:
             "type": "text",
             "label": "Personal Information", 
             "props": {
-              "helperText": "Name: {{fullName}} | Email: {{email}}"
+              "helperText": "Name\n{{fullName}}\n\nEmail\n{{email}}\n\nPhone\n{{phone}}\n\nDate of birth\n{{dob}}"
             }
           },
           {
             "type": "text",
-            "label": "Additional Details",
+            "label": "Health Summary",
             "props": {
-              "helperText": "Phone: {{phone}} | Date: {{applicationDate}}"
+              "helperText": "Height: {{heightCm}} cm • Weight: {{weightKg}} kg • Smoker: {{smoker}}"
+            }
+          },
+          {
+            "type": "text",
+            "label": "Pre-existing conditions",
+            "props": {
+              "helperText": "{{preExistingConditions}}"
             }
           }
         ]
@@ -182,12 +196,21 @@ Important rules for UI/Form schema:
       }
     }
     
-    CORRECT - Text components with template variables:
+    CORRECT - Text components with template variables using direct field IDs:
     {
       "type": "text",
       "label": "Summary",
       "props": {
-        "helperText": "Name: {{fullName}} • Email: {{email}} • Phone: {{phone}}"
+        "helperText": "Name\n{{fullName}}\n\nEmail\n{{email}}\n\nPhone\n{{phone}}"
+      }
+    }
+    
+    INCORRECT - Nested template variables:
+    {
+      "type": "text",
+      "label": "Summary",
+      "props": {
+        "helperText": "Name: {{applicant.fullName}} • Email: {{user.email}}"
       }
     }
 

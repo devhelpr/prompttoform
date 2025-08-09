@@ -25,7 +25,8 @@ The system prompt has been updated to guide AI form generation towards using tem
 
 ### 2. **Added Template Variables Section**
 New comprehensive section (14) covering:
-- Template variable syntax: `{{fieldId}}`
+- Template variable syntax: `{{fieldId}}` (simple field IDs only)
+- **IMPORTANT**: Use direct field IDs like `{{fullName}}`, NOT nested paths like `{{applicant.fullName}}`
 - Where template variables work (text components, helperText, etc.)
 - Automatic resolution to form values or "-" for missing fields
 - Use cases for dynamic summaries and contextual help
@@ -82,13 +83,24 @@ New section (16) with side-by-side comparisons:
 }
 ```
 
-**CORRECT - Text components with template variables:**
+**CORRECT - Text components with template variables (direct field IDs):**
 ```json
 {
   "type": "text",
   "label": "Summary",
   "props": {
-    "helperText": "Name: {{fullName}} • Email: {{email}} • Phone: {{phone}}"
+    "helperText": "Name\n{{fullName}}\n\nEmail\n{{email}}\n\nPhone\n{{phone}}"
+  }
+}
+```
+
+**INCORRECT - Nested template variables:**
+```json
+{
+  "type": "text",
+  "label": "Summary", 
+  "props": {
+    "helperText": "Name: {{applicant.fullName}} • Email: {{user.email}}"
   }
 }
 ```
@@ -97,9 +109,11 @@ New section (16) with side-by-side comparisons:
 
 ### AI-Generated Forms Will Now:
 1. **Use Simple Field IDs**: No more complex binding objects
-2. **Generate Template Variables**: Automatic summaries using `{{fieldId}}` syntax
-3. **Create Clean Review Pages**: Using text components instead of complex confirmation setups
-4. **Show Professional Missing Data**: "-" appears for missing fields instead of errors
+2. **Generate Direct Template Variables**: Use `{{fullName}}` instead of `{{applicant.fullName}}`
+3. **Create Descriptive Field IDs**: Like "fullName", "email", "heightCm", "preExistingConditions" 
+4. **Generate Template Variables**: Automatic summaries using `{{fieldId}}` syntax
+5. **Create Clean Review Pages**: Using text components instead of complex confirmation setups
+6. **Show Professional Missing Data**: "-" appears for missing fields instead of errors
 
 ### Benefits:
 - **Simpler JSON**: Less complex structure, easier to understand
@@ -120,14 +134,21 @@ New section (16) with side-by-side comparisons:
       "type": "text",
       "label": "Personal Information",
       "props": {
-        "helperText": "Name: {{fullName}} | Email: {{email}} | DOB: {{dateOfBirth}}"
+        "helperText": "Name\n{{fullName}}\n\nEmail\n{{email}}\n\nPhone\n{{phone}}\n\nDate of birth\n{{dob}}"
       }
     },
     {
       "type": "text",
-      "label": "Health Details",
+      "label": "Health Summary",
       "props": {
-        "helperText": "Smoker: {{smoker}} • Pre-existing: {{preExisting}} • Medications: {{takingMedication}}"
+        "helperText": "Height: {{heightCm}} cm • Weight: {{weightKg}} kg • Smoker: {{smoker}}"
+      }
+    },
+    {
+      "type": "text",
+      "label": "Pre-existing conditions",
+      "props": {
+        "helperText": "{{preExistingConditions}}"
       }
     }
   ]
@@ -140,7 +161,7 @@ New section (16) with side-by-side comparisons:
   "type": "text",
   "label": "Message Summary",
   "props": {
-    "helperText": "From: {{name}} ({{email}})\nSubject: {{subject}}\nMessage: {{message}}"
+    "helperText": "Name\n{{name}}\n\nEmail\n{{email}}\n\nSubject\n{{subject}}\n\nMessage\n{{message}}"
   }
 }
 ```

@@ -605,6 +605,15 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     return allComponents;
   };
 
+  // Helper function to check if a value is empty/should show as dash
+  const isEmptyValue = (value: unknown): boolean => {
+    if (value === undefined || value === null) return true;
+    if (typeof value === 'string' && value.trim() === '') return true;
+    if (typeof value === 'boolean') return false; // booleans are never "empty"
+    if (typeof value === 'number') return false; // numbers are never "empty" (even 0)
+    return false;
+  };
+
   // Helper function to replace template variables in text
   const replaceTemplateVariables = (
     text: string,
@@ -627,18 +636,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           }
         }
 
-        if (value !== undefined && value !== null && value !== '') {
+        if (!isEmptyValue(value)) {
           return String(value);
         }
       }
 
       // Try direct field name match
       let directValue = values[varName];
-      if (
-        directValue !== undefined &&
-        directValue !== null &&
-        directValue !== ''
-      ) {
+      if (!isEmptyValue(directValue)) {
         return String(directValue);
       }
 
@@ -652,7 +657,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
       for (const variation of variations) {
         const value = values[variation];
-        if (value !== undefined && value !== null && value !== '') {
+        if (!isEmptyValue(value)) {
           return String(value);
         }
       }
@@ -664,12 +669,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           varName.toLowerCase().includes(key.toLowerCase())
       );
 
-      if (
-        matchingKey &&
-        values[matchingKey] !== undefined &&
-        values[matchingKey] !== null &&
-        values[matchingKey] !== ''
-      ) {
+      if (matchingKey && !isEmptyValue(values[matchingKey])) {
         return String(values[matchingKey]);
       }
 
