@@ -9,6 +9,7 @@ export const llmAPIs: APIConfig[] = [
     description: "OpenAI's gpt-5 model via prompttoform.ai",
     isChatCompletionCompatible: true,
     systemKey: 'openai',
+    supportsTemperature: false,
   },
   {
     name: 'OpenAI-system-v4.1',
@@ -18,6 +19,7 @@ export const llmAPIs: APIConfig[] = [
     description: "OpenAI's gpt-4.1 model via prompttoform.ai",
     isChatCompletionCompatible: true,
     systemKey: 'openai',
+    supportsTemperature: true,
   },
   {
     name: 'Gemini-2.5-experimental-system',
@@ -28,6 +30,7 @@ export const llmAPIs: APIConfig[] = [
     description: "Google's gemini-2.0-flash model via prompttoform.ai",
     isChatCompletionCompatible: false,
     systemKey: 'gemini',
+    supportsTemperature: true,
   },
   {
     name: 'OpenAI',
@@ -36,6 +39,7 @@ export const llmAPIs: APIConfig[] = [
     model: 'gpt-4.1',
     description: "OpenAI's gpt-4.1 model (provide your own API key)",
     isChatCompletionCompatible: true,
+    supportsTemperature: true,
   },
   {
     name: 'Anthropic',
@@ -45,6 +49,7 @@ export const llmAPIs: APIConfig[] = [
     description:
       "Anthropic's claude-3-7-sonnet-20250219 model (provide your own API key)",
     isChatCompletionCompatible: true,
+    supportsTemperature: true,
   },
   {
     name: 'Anthropic claude 4',
@@ -54,6 +59,7 @@ export const llmAPIs: APIConfig[] = [
     description:
       "Anthropic's claude-sonnet-4-20250514 model (provide your own API key)",
     isChatCompletionCompatible: true,
+    supportsTemperature: true,
   },
   {
     name: 'Mistral',
@@ -63,6 +69,7 @@ export const llmAPIs: APIConfig[] = [
     description:
       "Mistral's mistral-large-latest model (provide your own API key)",
     isChatCompletionCompatible: true,
+    supportsTemperature: true,
   },
   {
     name: 'Gemini',
@@ -72,7 +79,9 @@ export const llmAPIs: APIConfig[] = [
     model: 'gemini-2.0-flash',
     description: "Google's gemini-2.0-flash model (provide your own API key)",
     isChatCompletionCompatible: false,
+    supportsTemperature: true,
   },
+  ///
   // {
   //   name: "Ollama",
   //   baseUrl: "http://localhost:11434/v1",

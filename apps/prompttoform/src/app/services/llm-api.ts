@@ -1,7 +1,7 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { z, ZodTypeAny } from "zod";
-import { APIConfig } from "../interfaces/api-config";
-import { llmAPIs } from "../config/llms";
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { z, ZodTypeAny } from 'zod';
+import { APIConfig } from '../interfaces/api-config';
+import { llmAPIs } from '../config/llms';
 
 interface LLMResponse {
   choices: Array<{
@@ -33,7 +33,7 @@ interface GenerateStructuredOutputParams<T extends ZodTypeAny> {
 }
 
 export function getCurrentAPIConfig(): APIConfig {
-  const savedSettings = localStorage.getItem("llmSettings");
+  const savedSettings = localStorage.getItem('llmSettings');
   if (savedSettings) {
     const { apis, selectedAPI } = JSON.parse(savedSettings);
     const selectedConfig = apis.find(
@@ -56,11 +56,11 @@ export function getCurrentAPIConfig(): APIConfig {
 
 export async function generateStructuredOutput<T extends ZodTypeAny>(
   { schema, request, temperature = 1.5 }: GenerateStructuredOutputParams<T>,
-  apiKey = ""
+  apiKey = ''
 ): Promise<z.infer<T>> {
   try {
     const model = new ChatGoogleGenerativeAI({
-      model: "gemini-2.0-flash",
+      model: 'gemini-2.0-flash',
       apiKey: apiKey,
       temperature,
     });
@@ -71,7 +71,7 @@ export async function generateStructuredOutput<T extends ZodTypeAny>(
     });
     return await structuredLlm.invoke(request);
   } catch (error) {
-    console.error("Error in generateStructuredOutput:", error);
+    console.error('Error in generateStructuredOutput:', error);
     // Re-throw the error with more context
     if (error instanceof Error) {
       throw new Error(`Failed to generate structured output: ${error.message}`);
@@ -81,10 +81,10 @@ export async function generateStructuredOutput<T extends ZodTypeAny>(
 }
 
 function removeAdditionalProperties(schema: Record<string, unknown>): void {
-  if (schema && typeof schema === "object") {
+  if (schema && typeof schema === 'object') {
     delete schema.additionalProperties;
     Object.values(schema).forEach((value) => {
-      if (typeof value === "object" && value !== null) {
+      if (typeof value === 'object' && value !== null) {
         removeAdditionalProperties(value as Record<string, unknown>);
       }
     });
@@ -108,7 +108,7 @@ export function removeMarkdownCodeBlocks(content: string): string {
   let extractedContent = content;
   if (strictMatch && strictMatch[1]) {
     extractedContent = strictMatch[1].trim();
-  } else if (content.includes("{") && content.includes("}")) {
+  } else if (content.includes('{') && content.includes('}')) {
     // If not, try to find and extract JSON objects wrapped in {}
     const jsonObjectPattern = /({[\s\S]*})/;
     const jsonMatch = content.match(jsonObjectPattern);
@@ -118,11 +118,11 @@ export function removeMarkdownCodeBlocks(content: string): string {
         // Verify it's valid JSON
         JSON.parse(
           jsonMatch[1]
-            .replace(/(?<!\\)\\n/g, "\\\\n") // Replace \n with \\n if not already escaped
-            .replace(/(?<!\\)\\r/g, "\\\\r") // Replace \r with \\r if not already escaped
-            .replace(/(?<!\\)\\t/g, "\\\\t") // Replace \t with \\t if not already escaped
-            .replace(/(?<!\\)\\f/g, "\\\\f") // Replace \f with \\f if not already escaped
-            .replace(/(?<!\\)\\v/g, "\\\\v") // Replace \v with \\v if not already escaped);
+            .replace(/(?<!\\)\\n/g, '\\\\n') // Replace \n with \\n if not already escaped
+            .replace(/(?<!\\)\\r/g, '\\\\r') // Replace \r with \\r if not already escaped
+            .replace(/(?<!\\)\\t/g, '\\\\t') // Replace \t with \\t if not already escaped
+            .replace(/(?<!\\)\\f/g, '\\\\f') // Replace \f with \\f if not already escaped
+            .replace(/(?<!\\)\\v/g, '\\\\v') // Replace \v with \\v if not already escaped);
         );
         extractedContent = jsonMatch[1].trim();
       } catch {
@@ -148,9 +148,9 @@ function cleanAndFormatJson(content: string): string {
     const parsed = JSON.parse(cleaned);
     return JSON.stringify(parsed, null, 2);
   } catch (error) {
-    console.error("Error cleaning JSON:", error, content);
+    console.error('Error cleaning JSON:', error, content);
     // If we can't parse it as JSON, return the original content with just newline replacement
-    return content.replace(/\\n/g, "\n");
+    return content.replace(/\\n/g, '\n');
   }
 }
 
@@ -169,28 +169,28 @@ export async function callLLMAPI(
   if (!apiConfig.isChatCompletionCompatible) {
     try {
       const apiUrl = import.meta.env.PROD
-        ? "https://form-generator-worker.maikel-f16.workers.dev"
-        : "http://localhost:8787/";
+        ? 'https://form-generator-worker.maikel-f16.workers.dev'
+        : 'http://localhost:8787/';
       // For Gemini, we'll use a direct API call rather than the structured output
       // const url =
       //   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
       const response = await fetch(`${apiUrl}`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "api-url": `${apiConfig.baseUrl}${apiConfig.apiKey}`,
-          "api-path": "-",
-          "system-key": apiConfig.systemKey ?? "",
+          'Content-Type': 'application/json',
+          'api-url': `${apiConfig.baseUrl}${apiConfig.apiKey}`,
+          'api-path': '-',
+          'system-key': apiConfig.systemKey ?? '',
         },
         body: JSON.stringify({
           contents: [
             {
-              role: "user",
+              role: 'user',
               parts: [{ text: `${systemMessage}\n\n${prompt}` }],
             },
           ],
           generationConfig: {
-            temperature: 0.2,
+            temperature: apiConfig.supportsTemperature ? 0.2 : 1.0,
           },
         }),
       });
@@ -206,12 +206,12 @@ export async function callLLMAPI(
       const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
       if (!content) {
-        throw new Error("No content returned from Gemini API");
+        throw new Error('No content returned from Gemini API');
       }
 
       return cleanAndFormatJson(content);
     } catch (error) {
-      console.error("Error with Gemini API call:", error);
+      console.error('Error with Gemini API call:', error);
       throw error;
     }
   } else {
@@ -222,9 +222,9 @@ export async function callLLMAPI(
       // OpenAI abd compatible LLM api's requires specific response_format values
       responseFormat = {
         response_format: {
-          type: "json_schema",
+          type: 'json_schema',
           json_schema: {
-            name: "Form_schema",
+            name: 'Form_schema',
             schema: jsonSchema,
           },
         },
@@ -236,29 +236,29 @@ export async function callLLMAPI(
     // }
 
     const apiUrl = import.meta.env.PROD
-      ? "https://form-generator-worker.maikel-f16.workers.dev"
-      : "http://localhost:8787/";
+      ? 'https://form-generator-worker.maikel-f16.workers.dev'
+      : 'http://localhost:8787/';
 
     const response = await fetch(apiUrl, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${apiConfig.apiKey}`,
         //"anthropic-dangerous-direct-browser-access": "true",
-        "api-url": apiConfig.baseUrl,
-        "api-path": "/chat/completions",
-        "system-key": apiConfig.systemKey ?? "",
+        'api-url': apiConfig.baseUrl,
+        'api-path': '/chat/completions',
+        'system-key': apiConfig.systemKey ?? '',
       },
       body: JSON.stringify({
         model: apiConfig.model,
         messages: [
-          { role: "system", content: systemMessage },
-          { role: "user", content: prompt },
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: prompt },
         ],
-        temperature: 0.2,
+        temperature: apiConfig.supportsTemperature ? 0.2 : 1.0,
         ...(responseFormat && { ...responseFormat }),
       }),
-      mode: "cors",
+      mode: 'cors',
     });
 
     if (!response.ok) {
@@ -274,7 +274,7 @@ export async function callLLMAPI(
     const content = data.choices[0]?.message?.content;
 
     if (!content) {
-      throw new Error("No content returned from API");
+      throw new Error('No content returned from API');
     }
 
     try {
@@ -283,8 +283,8 @@ export async function callLLMAPI(
     } catch {
       // Not all responses need to be JSON
       // If we're expecting JSON but got back non-JSON, that's probably an error
-      if (jsonSchema && jsonSchema.type === "json_object") {
-        throw new Error("The response is not valid JSON");
+      if (jsonSchema && jsonSchema.type === 'json_object') {
+        throw new Error('The response is not valid JSON');
       }
       return content;
     }
