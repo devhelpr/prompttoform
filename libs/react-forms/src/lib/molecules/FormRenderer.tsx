@@ -8,6 +8,7 @@ import {
   FormSelectField,
   FormDateField,
   FormSectionField,
+  FormConfirmationField,
 } from '../atoms';
 import {
   FormRendererProps,
@@ -311,7 +312,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     if (validateForm()) {
       const currentPage = formJson.app.pages[currentStepIndex];
 
-      if (currentPage && currentPage.isEndPage === true) {
+      // Handle end pages or confirmation pages
+      if (
+        currentPage &&
+        (currentPage.isEndPage === true ||
+          currentPage.isConfirmationPage === true)
+      ) {
         handleFormSubmit('multistep-form');
         return;
       }
@@ -470,6 +476,25 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     const currentPage = formJson.app.pages[currentStep - 1];
     const isEndPage = currentPage && currentPage.isEndPage === true;
+    const isConfirmationPage =
+      currentPage && currentPage.isConfirmationPage === true;
+
+    // Determine button text based on page type
+    let nextButtonText = 'Next';
+    if (isEndPage || currentStep === totalSteps) {
+      nextButtonText = 'Submit';
+    } else if (isConfirmationPage) {
+      nextButtonText = 'Confirm & Submit';
+    } else {
+      // Check if next page is a confirmation page
+      const nextPageIndex = currentStep;
+      if (nextPageIndex < totalSteps) {
+        const nextPage = formJson.app.pages[nextPageIndex];
+        if (nextPage && nextPage.isConfirmationPage) {
+          nextButtonText = 'Review & Confirm';
+        }
+      }
+    }
 
     return (
       <div className="mt-6 flex justify-between">
@@ -490,7 +515,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           onClick={handleNext}
         >
-          {isEndPage || currentStep === totalSteps ? 'Submit' : 'Next'}
+          {nextButtonText}
         </button>
       </div>
     );
@@ -547,6 +572,37 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   const getPrefixedId = (id: string): string => {
     return prefixId ? `${prefixId}-${id}` : id;
+  };
+
+  // Helper function to get all form components from all pages (for confirmation display)
+  const getAllFormComponents = (): FormComponentFieldProps[] => {
+    if (!formJson?.app?.pages) return [];
+
+    const allComponents: FormComponentFieldProps[] = [];
+
+    const extractComponents = (components: FormComponentFieldProps[]) => {
+      components.forEach((component) => {
+        allComponents.push(component);
+        if (component.children) {
+          extractComponents(component.children);
+        }
+        if (component.arrayItems) {
+          component.arrayItems.forEach((arrayItem) => {
+            if (arrayItem.components) {
+              extractComponents(arrayItem.components);
+            }
+          });
+        }
+      });
+    };
+
+    formJson.app.pages.forEach((page) => {
+      if (page.components) {
+        extractComponents(page.components);
+      }
+    });
+
+    return allComponents;
   };
 
   const renderComponent = (
@@ -799,6 +855,17 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
       case 'array':
         return renderArrayField(component, fieldId);
+
+      case 'confirmation':
+        return (
+          <FormConfirmationField
+            fieldId={prefixedFieldId}
+            label={label}
+            formValues={formValues}
+            formComponents={getAllFormComponents()}
+            props={props}
+          />
+        );
 
       default:
         return (

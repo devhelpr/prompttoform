@@ -1,4 +1,5 @@
 export * from './form-checkbox-field';
+export * from './form-confirmation-field';
 export * from './form-date-field';
 export * from './form-input-field';
 export * from './form-radio-field';

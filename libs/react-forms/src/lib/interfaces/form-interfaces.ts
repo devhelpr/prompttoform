@@ -20,6 +20,13 @@ export interface FormComponentFieldProps {
     rows?: number;
     buttonType?: string;
     onClick?: string;
+    confirmationSettings?: {
+      showSummary?: boolean;
+      groupBySection?: boolean;
+      excludeFields?: string[];
+      customTitle?: string;
+      customMessage?: string;
+    };
   } & DateRange;
   children?: FormComponentFieldProps[];
   visibilityConditions?: VisibilityCondition[];
@@ -48,6 +55,7 @@ export interface PageProps {
   layout?: string;
   components: FormComponentFieldProps[];
   isEndPage?: boolean;
+  isConfirmationPage?: boolean;
   branches?: Array<{
     condition: {
       field: string;

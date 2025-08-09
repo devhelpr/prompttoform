@@ -11,7 +11,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
   {
     name: 'Simple Contact Form',
     description:
-      'Basic contact form with name, email, message, and thank you page',
+      'Basic contact form with name, email, message, confirmation step, and thank you page',
     prompt:
       'A simple contact form with name, email, subject, message fields, and a thank you page after submission',
     json: {
@@ -84,7 +84,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                   {
                     id: 'submit-btn',
                     type: 'button',
-                    label: 'Send Message',
+                    label: 'Review Message',
                     props: {
                       className: 'primary',
                     },
@@ -92,7 +92,31 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                 ],
               },
             ],
+            nextPage: 'confirmation',
+          },
+          {
+            id: 'confirmation',
+            title: 'Review Your Message',
+            route: '/confirmation',
+            layout: 'vertical',
+            isConfirmationPage: true,
             isEndPage: true,
+            components: [
+              {
+                type: 'confirmation',
+                id: 'message-summary',
+                label: 'Message Summary',
+                props: {
+                  confirmationSettings: {
+                    showSummary: true,
+                    groupBySection: false,
+                    customTitle: 'Please Review Your Message',
+                    customMessage:
+                      'Please review your message below before sending. You can go back to make any changes.',
+                  },
+                },
+              },
+            ],
           },
         ],
         dataSources: [
@@ -129,7 +153,8 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
   },
   {
     name: 'User Registration Form',
-    description: 'Multi-step registration with validation',
+    description:
+      'Multi-step registration with validation and confirmation step',
     prompt:
       'A user registration form with name, email, password, confirm password, and terms acceptance',
     json: {
@@ -291,7 +316,32 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                 },
               },
             ],
+            nextPage: 'confirmation',
+          },
+          {
+            id: 'confirmation',
+            title: 'Review Your Registration',
+            route: '/confirmation',
+            layout: 'vertical',
+            isConfirmationPage: true,
             isEndPage: true,
+            components: [
+              {
+                type: 'confirmation',
+                id: 'registration-summary',
+                label: 'Registration Summary',
+                props: {
+                  confirmationSettings: {
+                    showSummary: true,
+                    groupBySection: false,
+                    excludeFields: ['password', 'confirmPassword'],
+                    customTitle: 'Please Review Your Registration Details',
+                    customMessage:
+                      'Please verify that all information is correct. Your password will not be shown for security reasons.',
+                  },
+                },
+              },
+            ],
           },
         ],
         dataSources: [
@@ -304,6 +354,21 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
             responseMapping: {},
           },
         ],
+        thankYouPage: {
+          title: 'Registration Successful!',
+          message:
+            'Your account has been created successfully. Welcome to our platform!',
+          showRestartButton: false,
+          showBackButton: false,
+          customActions: [
+            {
+              label: 'Login to Your Account',
+              action: 'custom',
+              customAction: 'login',
+              className: 'bg-green-600 text-white hover:bg-green-700',
+            },
+          ],
+        },
       },
     },
   },
@@ -520,7 +585,8 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
   },
   {
     name: 'Job Application Form',
-    description: 'Professional job application with multiple sections',
+    description:
+      'Professional job application with multiple sections and confirmation step',
     prompt:
       'A 3-step job application form with personal details, work experience, and references',
     json: {
@@ -718,15 +784,59 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 id: 'submitBtn',
                 type: 'button',
-                label: 'Submit Application',
+                label: 'Next',
                 props: {
                   className: 'primary',
                 },
               },
             ],
+            nextPage: 'confirmation',
+          },
+          {
+            id: 'confirmation',
+            title: 'Review Your Application',
+            route: '/confirmation',
+            layout: 'vertical',
+            isConfirmationPage: true,
             isEndPage: true,
+            components: [
+              {
+                type: 'confirmation',
+                id: 'application-summary',
+                label: 'Application Summary',
+                props: {
+                  confirmationSettings: {
+                    showSummary: true,
+                    groupBySection: true,
+                    customTitle: 'Please Review Your Job Application',
+                    customMessage:
+                      'Please review all the information below carefully before submitting your application. You can go back to make changes if needed.',
+                  },
+                },
+              },
+            ],
           },
         ],
+        thankYouPage: {
+          title: 'Application Submitted Successfully!',
+          message:
+            'Thank you for your interest in our position. We have received your application and will review it carefully. You will hear from us within the next few business days.',
+          showRestartButton: false,
+          showBackButton: false,
+          customActions: [
+            {
+              label: 'View Open Positions',
+              action: 'custom',
+              customAction: 'viewJobs',
+              className: 'bg-blue-600 text-white hover:bg-blue-700',
+            },
+            {
+              label: 'Apply for Another Position',
+              action: 'restart',
+              className: 'bg-green-600 text-white hover:bg-green-700',
+            },
+          ],
+        },
       },
     },
   },
@@ -1727,7 +1837,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
   {
     name: 'Customer Feedback Form with Thank You Page',
     description:
-      'Feedback form with customizable thank you page after submission',
+      'Feedback form with confirmation step and customizable thank you page after submission',
     prompt:
       'A customer feedback form with name, email, service type, satisfaction rating, and a thank you page that shows after submission',
     json: {
@@ -1739,7 +1849,6 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
             title: 'Share Your Experience',
             route: '/feedback',
             layout: 'vertical',
-            isEndPage: true,
             components: [
               {
                 type: 'text',
@@ -1846,7 +1955,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                       {
                         type: 'button',
                         id: 'submit-feedback',
-                        label: 'Submit Feedback',
+                        label: 'Review Feedback',
                         props: {
                           className: 'primary',
                         },
@@ -1854,6 +1963,31 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                     ],
                   },
                 ],
+              },
+            ],
+            nextPage: 'confirmation',
+          },
+          {
+            id: 'confirmation',
+            title: 'Review Your Feedback',
+            route: '/confirmation',
+            layout: 'vertical',
+            isConfirmationPage: true,
+            isEndPage: true,
+            components: [
+              {
+                type: 'confirmation',
+                id: 'feedback-summary',
+                label: 'Feedback Summary',
+                props: {
+                  confirmationSettings: {
+                    showSummary: true,
+                    groupBySection: true,
+                    customTitle: 'Please Review Your Feedback',
+                    customMessage:
+                      'Please review your feedback below. Your input helps us improve our services.',
+                  },
+                },
               },
             ],
           },
