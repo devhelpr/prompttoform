@@ -133,7 +133,6 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
           message:
             'Your message has been sent successfully. We will get back to you as soon as possible.',
           showRestartButton: true,
-          showBackButton: false,
           customActions: [
             {
               label: 'Back to Homepage',
@@ -359,7 +358,6 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
           message:
             'Your account has been created successfully. Welcome to our platform!',
           showRestartButton: false,
-          showBackButton: false,
           customActions: [
             {
               label: 'Login to Your Account',
@@ -822,7 +820,6 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
           message:
             'Thank you for your interest in our position. We have received your application and will review it carefully. You will hear from us within the next few business days.',
           showRestartButton: false,
-          showBackButton: false,
           customActions: [
             {
               label: 'View Open Positions',
@@ -1997,7 +1994,6 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
           message:
             'Your feedback has been submitted successfully. We appreciate you taking the time to help us improve our services.',
           showRestartButton: true,
-          showBackButton: false,
           customActions: [
             {
               label: 'Visit Our Website',

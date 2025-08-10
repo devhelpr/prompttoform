@@ -577,10 +577,6 @@
           "type": "boolean",
           "description": "Whether to show a restart button to start a new form"
         },
-        "showBackButton": {
-          "type": "boolean",
-          "description": "Whether to show a back button to return to the form"
-        },
         "customActions": {
           "type": "array",
           "items": {
@@ -592,7 +588,7 @@
               },
               "action": {
                 "type": "string",
-                "enum": ["restart", "back", "custom"],
+                "enum": ["restart", "custom"],
                 "description": "Type of action the button performs"
               },
               "customAction": {

@@ -130,10 +130,9 @@ export interface ThankYouPage {
   message?: string;
   components?: FormComponentFieldProps[];
   showRestartButton?: boolean;
-  showBackButton?: boolean;
   customActions?: Array<{
     label: string;
-    action: 'restart' | 'back' | 'custom';
+    action: 'restart' | 'custom';
     customAction?: string;
     className?: string;
   }>;

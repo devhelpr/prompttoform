@@ -93,14 +93,12 @@ Important rules for UI/Form schema:
       - title: A welcoming title (e.g., "Thank You!", "Submission Confirmed")
       - message: A clear message confirming successful submission
       - showRestartButton: Set to true if users should be able to start a new form
-      - showBackButton: Set to true if users should be able to return to the form
       - customActions: Array of custom buttons for additional actions
     - Example thank you page structure:
       "thankYouPage": {
         "title": "Thank You for Your Submission!",
         "message": "Your form has been submitted successfully. We will process your request shortly.",
         "showRestartButton": true,
-        "showBackButton": false,
         "customActions": [
           {
             "label": "Visit Our Website",

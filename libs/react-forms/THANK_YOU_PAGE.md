@@ -17,7 +17,6 @@ const formWithThankYou: FormDefinition = {
       title: "Thank You!",
       message: "Your form has been submitted successfully.",
       showRestartButton: true,
-      showBackButton: false,
       customActions: [
         {
           label: "Visit Our Website",
@@ -49,8 +48,6 @@ Optional array of form components to display on the thank you page. This can inc
 ### `showRestartButton?: boolean`
 If `true`, displays a "Start New Form" button that resets the form and allows users to fill it out again.
 
-### `showBackButton?: boolean`
-If `true`, displays a "Go Back" button that returns users to the form with their previous values intact.
 
 ### `customActions?: Array<CustomAction>`
 Array of custom action buttons with the following properties:
@@ -58,7 +55,7 @@ Array of custom action buttons with the following properties:
 ```typescript
 interface CustomAction {
   label: string;                    // Button text
-  action: 'restart' | 'back' | 'custom';
+  action: 'restart' | 'custom';
   customAction?: string;            // Custom action identifier
   className?: string;               // Custom CSS classes
 }
@@ -92,7 +89,6 @@ function MyForm() {
 
 2. **Navigation Options**:
    - **Restart**: Clears all form data and returns to the first page
-   - **Back**: Returns to the form with previous values preserved
    - **Custom Actions**: Can be handled in your application logic
 
 3. **No Thank You Page**: If no thank you page is configured, the form behaves as before - it resets and returns to the first page.
@@ -110,7 +106,6 @@ The thank you page uses Tailwind CSS classes and follows the same design pattern
 The feature includes comprehensive tests in `FormRenderer.thank-you.test.tsx` that cover:
 - Thank you page display after submission
 - Restart functionality
-- Back navigation
 - Behavior when no thank you page is configured
 
 ## Migration

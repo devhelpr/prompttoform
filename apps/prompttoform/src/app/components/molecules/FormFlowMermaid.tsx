@@ -31,7 +31,6 @@ interface ThankYouPage {
   title?: string;
   message?: string;
   showRestartButton?: boolean;
-  showBackButton?: boolean;
   customActions?: Array<{
     label: string;
     action: 'restart' | 'back' | 'custom';

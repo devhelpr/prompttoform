@@ -153,7 +153,6 @@ export const thankYouFormExample: FormDefinition = {
         },
       ],
       showRestartButton: true,
-      showBackButton: false,
       customActions: [
         {
           label: 'Visit Our Website',

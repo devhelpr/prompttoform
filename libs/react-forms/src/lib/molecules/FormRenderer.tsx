@@ -369,15 +369,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   };
 
   const handleThankYouAction = (
-    action: 'restart' | 'back' | 'custom',
+    action: 'restart' | 'custom',
     customAction?: string
   ) => {
     switch (action) {
       case 'restart':
         handleReset();
-        break;
-      case 'back':
-        setShowThankYouPage(false);
         break;
       case 'custom':
         if (customAction) {
@@ -1111,16 +1108,6 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
               >
                 Start New Form
-              </button>
-            )}
-
-            {thankYouPage.showBackButton && (
-              <button
-                type="button"
-                onClick={() => handleThankYouAction('back')}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
-              >
-                Go Back
               </button>
             )}
 
