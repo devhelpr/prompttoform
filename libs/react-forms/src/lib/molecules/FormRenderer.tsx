@@ -45,6 +45,59 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   >({});
   const [showThankYouPage, setShowThankYouPage] = useState(false);
 
+  // Helper function to get field label for error messages
+  const getFieldLabel = (component: FormComponentFieldProps): string => {
+    if (typeof component.label === 'string' && component.label) {
+      return component.label;
+    }
+    // Fallback to ID if no label
+    return component.id
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str) => str.toUpperCase());
+  };
+
+  // Helper function to get WCAG-compatible error message with fallbacks
+  const getErrorMessage = (
+    component: FormComponentFieldProps,
+    errorType: string,
+    params: Record<string, string | number> = {}
+  ): string => {
+    const customMessage =
+      component.validation?.errorMessages?.[
+        errorType as keyof typeof component.validation.errorMessages
+      ];
+
+    if (customMessage) {
+      // Replace placeholders in custom message
+      return customMessage.replace(/\{(\w+)\}/g, (match, key) => {
+        return String(params[key] || match);
+      });
+    }
+
+    // Get field label for context-specific messages
+    const fieldLabel = getFieldLabel(component);
+
+    // Default WCAG-compatible error messages with field context
+    const defaultMessages: Record<string, string> = {
+      required: `${fieldLabel} is required`,
+      minLength: `${fieldLabel} must be at least ${params.minLength} characters long`,
+      maxLength: `${fieldLabel} cannot exceed ${params.maxLength} characters`,
+      pattern: `${fieldLabel} format is invalid`,
+      minItems: `Please select at least ${params.minItems} items for ${fieldLabel}`,
+      maxItems: `Please select no more than ${params.maxItems} items for ${fieldLabel}`,
+      minDate: `${fieldLabel} must be on or after ${params.minDate}`,
+      maxDate: `${fieldLabel} must be before ${params.maxDate}`,
+      min: `${fieldLabel} must be at least ${params.min}`,
+      max: `${fieldLabel} cannot exceed ${params.max}`,
+      invalidFormat: `${fieldLabel} format is invalid`,
+      invalidEmail: `Please enter a valid email address for ${fieldLabel}`,
+      invalidNumber: `Please enter a valid number for ${fieldLabel}`,
+      invalidDate: `Please enter a valid date for ${fieldLabel}`,
+    };
+
+    return defaultMessages[errorType] || `${fieldLabel} is invalid`;
+  };
+
   const validateComponent = useMemo(
     () =>
       (
@@ -75,7 +128,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             component.validation?.required &&
             (!arrayValue || arrayValue.length === 0)
           ) {
-            errors.push({ fieldId, message: 'This field is required' });
+            errors.push({
+              fieldId,
+              message: getErrorMessage(component, 'required'),
+            });
           }
           if (arrayValue) {
             if (
@@ -84,7 +140,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             ) {
               errors.push({
                 fieldId,
-                message: `Minimum ${component.validation.minItems} items required`,
+                message: getErrorMessage(component, 'minItems', {
+                  minItems: component.validation.minItems,
+                }),
               });
             }
             if (
@@ -93,7 +151,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             ) {
               errors.push({
                 fieldId,
-                message: `Maximum ${component.validation.maxItems} items allowed`,
+                message: getErrorMessage(component, 'maxItems', {
+                  maxItems: component.validation.maxItems,
+                }),
               });
             }
             // Validate each array item
@@ -125,15 +185,21 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         }
 
         // Handle basic validation for other component types
-        if (component.validation?.required && !value) {
-          errors.push({ fieldId, message: 'This field is required' });
+        if (component.validation?.required && isEmptyValue(value)) {
+          errors.push({
+            fieldId,
+            message: getErrorMessage(component, 'required'),
+          });
         }
 
-        if (value) {
+        if (!isEmptyValue(value)) {
           if (component.type === 'date') {
             const dateValue = new Date(value as string);
             if (isNaN(dateValue.getTime())) {
-              errors.push({ fieldId, message: 'Invalid date format' });
+              errors.push({
+                fieldId,
+                message: getErrorMessage(component, 'invalidDate'),
+              });
             } else {
               if (
                 component.validation?.minDate &&
@@ -141,7 +207,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               ) {
                 errors.push({
                   fieldId,
-                  message: `Date must be after ${component.validation.minDate}`,
+                  message: getErrorMessage(component, 'minDate', {
+                    minDate: component.validation.minDate,
+                  }),
                 });
               }
               if (
@@ -150,19 +218,69 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               ) {
                 errors.push({
                   fieldId,
-                  message: `Date must be before ${component.validation.maxDate}`,
+                  message: getErrorMessage(component, 'maxDate', {
+                    maxDate: component.validation.maxDate,
+                  }),
                 });
               }
             }
           } else if (['input', 'textarea'].includes(component.type)) {
             const stringValue = String(value);
+
+            // Email validation for email input type
+            if (component.props?.inputType === 'email' && stringValue) {
+              const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (!emailPattern.test(stringValue)) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'invalidEmail'),
+                });
+              }
+            }
+
+            // Number validation for number input type
+            if (component.props?.inputType === 'number' && stringValue) {
+              const numValue = Number(stringValue);
+              if (isNaN(numValue)) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'invalidNumber'),
+                });
+              } else {
+                if (
+                  component.validation?.min !== undefined &&
+                  numValue < component.validation.min
+                ) {
+                  errors.push({
+                    fieldId,
+                    message: getErrorMessage(component, 'min', {
+                      min: component.validation.min,
+                    }),
+                  });
+                }
+                if (
+                  component.validation?.max !== undefined &&
+                  numValue > component.validation.max
+                ) {
+                  errors.push({
+                    fieldId,
+                    message: getErrorMessage(component, 'max', {
+                      max: component.validation.max,
+                    }),
+                  });
+                }
+              }
+            }
+
             if (
               component.validation?.minLength &&
               stringValue.length < component.validation.minLength
             ) {
               errors.push({
                 fieldId,
-                message: `Minimum length is ${component.validation.minLength} characters`,
+                message: getErrorMessage(component, 'minLength', {
+                  minLength: component.validation.minLength,
+                }),
               });
             }
             if (
@@ -171,14 +289,19 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             ) {
               errors.push({
                 fieldId,
-                message: `Maximum length is ${component.validation.maxLength} characters`,
+                message: getErrorMessage(component, 'maxLength', {
+                  maxLength: component.validation.maxLength,
+                }),
               });
             }
             if (
               component.validation?.pattern &&
               !new RegExp(component.validation.pattern).test(stringValue)
             ) {
-              errors.push({ fieldId, message: 'Invalid format' });
+              errors.push({
+                fieldId,
+                message: getErrorMessage(component, 'pattern'),
+              });
             }
           }
         }

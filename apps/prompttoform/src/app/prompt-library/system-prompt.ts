@@ -43,7 +43,45 @@ Important rules for UI/Form schema:
 7. For form validation:
    - Include appropriate validation rules for input fields
    - Specify required fields, minimum/maximum lengths, and regex patterns as needed
-   - Add custom validation messages when appropriate
+   - Add custom WCAG-compatible error messages for better accessibility
+   - Use errorMessages object to provide user-friendly, descriptive error messages
+   - Follow WCAG guidelines: be clear, descriptive, and actionable
+   - Use placeholders like {minLength}, {max}, {minDate} for dynamic values
+   - Example error message configuration:
+     "validation": {
+       "required": true,
+       "minLength": 3,
+       "maxLength": 50,
+       "errorMessages": {
+         "required": "Please enter your name",
+         "minLength": "Name must be at least {minLength} characters long",
+         "maxLength": "Name cannot exceed {maxLength} characters"
+       }
+     }
+   
+   - For email validation, include inputType: "email" and custom error messages:
+     "props": { "inputType": "email" },
+     "validation": {
+       "required": true,
+       "errorMessages": {
+         "required": "Please provide your email address",
+         "invalidEmail": "Please enter a valid email address (e.g., user@domain.com)"
+       }
+     }
+   
+   - For number validation, include inputType: "number" and range validation:
+     "props": { "inputType": "number" },
+     "validation": {
+       "required": true,
+       "min": 18,
+       "max": 120,
+       "errorMessages": {
+         "required": "Please enter your age",
+         "invalidNumber": "Please enter a valid number",
+         "min": "You must be at least {min} years old",
+         "max": "Please enter a realistic age (maximum {max} years)"
+       }
+     }
 
 8. For data binding:
    - IMPORTANT: Do NOT generate bindings objects for form components

@@ -45,6 +45,22 @@ export interface FormComponentFieldProps {
     maxItems?: number;
     min?: number;
     max?: number;
+    errorMessages?: {
+      required?: string;
+      minLength?: string;
+      maxLength?: string;
+      pattern?: string;
+      minItems?: string;
+      maxItems?: string;
+      minDate?: string;
+      maxDate?: string;
+      min?: string;
+      max?: string;
+      invalidFormat?: string;
+      invalidEmail?: string;
+      invalidNumber?: string;
+      invalidDate?: string;
+    };
   } & DateRange;
 }
 

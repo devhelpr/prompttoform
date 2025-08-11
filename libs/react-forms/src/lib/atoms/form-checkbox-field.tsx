@@ -29,6 +29,14 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
   validationErrors,
   disabled = false,
 }) => {
+  const errorId = `${fieldId}-error`;
+  const helperId = `${fieldId}-helper`;
+  const describedBy = showError
+    ? errorId
+    : typeof props?.helperText === 'string'
+    ? helperId
+    : undefined;
+
   // Handle single checkbox without options
   if (!props?.options) {
     return (
@@ -44,21 +52,36 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
             onChange={(e) => onChange(e.target.checked)}
             onBlur={onBlur}
             required={!!validation?.required}
+            aria-required={!!validation?.required}
+            aria-invalid={showError}
+            aria-describedby={describedBy}
             disabled={disabled}
           />
           <label htmlFor={fieldId} className="ml-2 text-sm text-gray-700">
             {typeof label === 'string' ? label : ''}
             {!!validation?.required && (
-              <span className="text-red-500 ml-1">*</span>
+              <span className="text-red-500 ml-1" aria-hidden="true">
+                *
+              </span>
             )}
           </label>
         </div>
         {showError && (
-          <div className="mt-1 text-sm text-red-500">
+          <div
+            id={errorId}
+            className="mt-1 text-sm text-red-500"
+            role="alert"
+            aria-live="polite"
+          >
             {validationErrors.map((error, index) => (
               <p key={index}>{error}</p>
             ))}
           </div>
+        )}
+        {typeof props?.helperText === 'string' && !showError && (
+          <p id={helperId} className="mt-1 text-sm text-gray-500">
+            {props.helperText}
+          </p>
         )}
       </div>
     );
@@ -71,9 +94,18 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
     <div className="mb-4">
       <label className="block text-sm font-medium text-gray-700 mb-1">
         {typeof label === 'string' ? label : ''}
-        {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
+        {!!validation?.required && (
+          <span className="text-red-500 ml-1" aria-hidden="true">
+            *
+          </span>
+        )}
       </label>
-      <div className="space-y-2">
+      <div
+        className="space-y-2"
+        role="group"
+        aria-describedby={describedBy}
+        aria-invalid={showError}
+      >
         {Array.isArray(options) &&
           options.map((option: Option, index: number) => {
             const optionLabel =
@@ -118,11 +150,21 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
           })}
       </div>
       {showError && (
-        <div className="mt-1 text-sm text-red-500">
+        <div
+          id={errorId}
+          className="mt-1 text-sm text-red-500"
+          role="alert"
+          aria-live="polite"
+        >
           {validationErrors.map((error, index) => (
             <p key={index}>{error}</p>
           ))}
         </div>
+      )}
+      {typeof props?.helperText === 'string' && !showError && (
+        <p id={helperId} className="mt-1 text-sm text-gray-500">
+          {props.helperText}
+        </p>
       )}
     </div>
   );

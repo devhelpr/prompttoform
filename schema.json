@@ -239,6 +239,67 @@
             "maxDate": {
               "type": "string",
               "format": "date"
+            },
+            "errorMessages": {
+              "type": "object",
+              "properties": {
+                "required": {
+                  "type": "string",
+                  "description": "Custom error message for required field validation"
+                },
+                "minLength": {
+                  "type": "string",
+                  "description": "Custom error message for minimum length validation. Use {minLength} placeholder."
+                },
+                "maxLength": {
+                  "type": "string",
+                  "description": "Custom error message for maximum length validation. Use {maxLength} placeholder."
+                },
+                "pattern": {
+                  "type": "string",
+                  "description": "Custom error message for pattern validation"
+                },
+                "minItems": {
+                  "type": "string",
+                  "description": "Custom error message for minimum items validation. Use {minItems} placeholder."
+                },
+                "maxItems": {
+                  "type": "string",
+                  "description": "Custom error message for maximum items validation. Use {maxItems} placeholder."
+                },
+                "minDate": {
+                  "type": "string",
+                  "description": "Custom error message for minimum date validation. Use {minDate} placeholder."
+                },
+                "maxDate": {
+                  "type": "string",
+                  "description": "Custom error message for maximum date validation. Use {maxDate} placeholder."
+                },
+                "min": {
+                  "type": "string",
+                  "description": "Custom error message for minimum value validation. Use {min} placeholder."
+                },
+                "max": {
+                  "type": "string",
+                  "description": "Custom error message for maximum value validation. Use {max} placeholder."
+                },
+                "invalidFormat": {
+                  "type": "string",
+                  "description": "Custom error message for invalid format validation"
+                },
+                "invalidEmail": {
+                  "type": "string",
+                  "description": "Custom error message for invalid email format"
+                },
+                "invalidNumber": {
+                  "type": "string",
+                  "description": "Custom error message for invalid number format"
+                },
+                "invalidDate": {
+                  "type": "string",
+                  "description": "Custom error message for invalid date format"
+                }
+              }
             }
           }
         },

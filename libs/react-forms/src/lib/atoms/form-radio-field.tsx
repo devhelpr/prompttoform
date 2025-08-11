@@ -29,13 +29,31 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
   validationErrors,
   disabled = false,
 }) => {
+  const errorId = `${fieldId}-error`;
+  const helperId = `${fieldId}-helper`;
+  const describedBy = showError
+    ? errorId
+    : typeof props?.helperText === 'string'
+    ? helperId
+    : undefined;
+
   return (
     <div className="mb-4">
       <label className="block text-sm font-medium text-gray-700 mb-1">
         {typeof label === 'string' ? label : ''}
-        {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
+        {!!validation?.required && (
+          <span className="text-red-500 ml-1" aria-hidden="true">
+            *
+          </span>
+        )}
       </label>
-      <div className="space-y-2">
+      <div
+        className="space-y-2"
+        role="radiogroup"
+        aria-describedby={describedBy}
+        aria-invalid={showError}
+        aria-required={!!validation?.required}
+      >
         {Array.isArray(props?.options) &&
           props.options.map((option: Option, index: number) => {
             const optionLabel =
@@ -69,11 +87,21 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
           })}
       </div>
       {showError && (
-        <div className="mt-1 text-sm text-red-500">
+        <div
+          id={errorId}
+          className="mt-1 text-sm text-red-500"
+          role="alert"
+          aria-live="polite"
+        >
           {validationErrors.map((error, index) => (
             <p key={index}>{error}</p>
           ))}
         </div>
+      )}
+      {typeof props?.helperText === 'string' && !showError && (
+        <p id={helperId} className="mt-1 text-sm text-gray-500">
+          {props.helperText}
+        </p>
       )}
     </div>
   );

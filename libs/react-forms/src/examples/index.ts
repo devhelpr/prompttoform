@@ -5,3 +5,5 @@ export { AIGeneratedSummaryExample } from './ai-generated-summary-example';
 export { HealthQuestionnaireExample } from './health-questionnaire-example';
 export { TemplateVariablesMissingFieldsExample } from './template-variables-missing-fields-example';
 export { EmptyValuesTestExample } from './empty-values-test-example';
+export { ErrorMessagesExample } from './error-messages-example';
+export { WCAGErrorMessagesExample } from './wcag-error-messages-example';

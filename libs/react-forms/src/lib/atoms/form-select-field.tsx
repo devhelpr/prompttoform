@@ -32,6 +32,14 @@ export const FormSelectField: React.FC<FormSelectFieldProps> = ({
   validationErrors,
   disabled = false,
 }) => {
+  const errorId = `${fieldId}-error`;
+  const helperId = `${fieldId}-helper`;
+  const describedBy = showError
+    ? errorId
+    : typeof props?.helperText === 'string'
+    ? helperId
+    : undefined;
+
   return (
     <div className="mb-4">
       <label
@@ -39,7 +47,11 @@ export const FormSelectField: React.FC<FormSelectFieldProps> = ({
         className="block text-sm font-medium text-gray-700 mb-1"
       >
         {typeof label === 'string' ? label : ''}
-        {!!validation?.required && <span className="text-red-500 ml-1">*</span>}
+        {!!validation?.required && (
+          <span className="text-red-500 ml-1" aria-hidden="true">
+            *
+          </span>
+        )}
       </label>
       <select
         id={fieldId}
@@ -52,6 +64,9 @@ export const FormSelectField: React.FC<FormSelectFieldProps> = ({
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         required={!!validation?.required}
+        aria-required={!!validation?.required}
+        aria-invalid={showError}
+        aria-describedby={describedBy}
         disabled={disabled}
       >
         <option value="">Select an option</option>
@@ -70,14 +85,21 @@ export const FormSelectField: React.FC<FormSelectFieldProps> = ({
           })}
       </select>
       {showError && (
-        <div className="mt-1 text-sm text-red-500">
+        <div
+          id={errorId}
+          className="mt-1 text-sm text-red-500"
+          role="alert"
+          aria-live="polite"
+        >
           {validationErrors.map((error, index) => (
             <p key={index}>{error}</p>
           ))}
         </div>
       )}
       {typeof props?.helperText === 'string' && !showError && (
-        <p className="mt-1 text-sm text-gray-500">{props.helperText}</p>
+        <p id={helperId} className="mt-1 text-sm text-gray-500">
+          {props.helperText}
+        </p>
       )}
     </div>
   );
