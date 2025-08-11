@@ -10,9 +10,10 @@ export interface ReadyMadeForm {
 export const READY_MADE_FORMS: ReadyMadeForm[] = [
   {
     name: 'Simple Contact Form',
-    description: 'Basic contact form with name, email, and message',
+    description:
+      'Basic contact form with name, email, message, confirmation step, and thank you page',
     prompt:
-      'A simple contact form with name, email, subject, and message fields',
+      'A simple contact form with name, email, subject, message fields, and a thank you page after submission',
     json: {
       app: {
         title: 'Contact Us',
@@ -83,7 +84,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                   {
                     id: 'submit-btn',
                     type: 'button',
-                    label: 'Send Message',
+                    label: 'Review Message',
                     props: {
                       className: 'primary',
                     },
@@ -91,7 +92,31 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                 ],
               },
             ],
+            nextPage: 'confirmation',
+          },
+          {
+            id: 'confirmation',
+            title: 'Review Your Message',
+            route: '/confirmation',
+            layout: 'vertical',
+            isConfirmationPage: true,
             isEndPage: true,
+            components: [
+              {
+                type: 'confirmation',
+                id: 'message-summary',
+                label: 'Message Summary',
+                props: {
+                  confirmationSettings: {
+                    showSummary: true,
+                    groupBySection: false,
+                    customTitle: 'Please Review Your Message',
+                    customMessage:
+                      'Please review your message below before sending. You can go back to make any changes.',
+                  },
+                },
+              },
+            ],
           },
         ],
         dataSources: [
@@ -103,12 +128,32 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
             responseMapping: {},
           },
         ],
+        thankYouPage: {
+          title: 'Thank You for Contacting Us!',
+          message:
+            'Your message has been sent successfully. We will get back to you as soon as possible.',
+          showRestartButton: true,
+          customActions: [
+            {
+              label: 'Back to Homepage',
+              action: 'custom',
+              customAction: 'goHome',
+              className: 'bg-blue-600 text-white hover:bg-blue-700',
+            },
+            {
+              label: 'Send Another Message',
+              action: 'restart',
+              className: 'bg-green-600 text-white hover:bg-green-700',
+            },
+          ],
+        },
       },
     },
   },
   {
     name: 'User Registration Form',
-    description: 'Multi-step registration with validation',
+    description:
+      'Multi-step registration with validation and confirmation step',
     prompt:
       'A user registration form with name, email, password, confirm password, and terms acceptance',
     json: {
@@ -270,7 +315,32 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                 },
               },
             ],
+            nextPage: 'confirmation',
+          },
+          {
+            id: 'confirmation',
+            title: 'Review Your Registration',
+            route: '/confirmation',
+            layout: 'vertical',
+            isConfirmationPage: true,
             isEndPage: true,
+            components: [
+              {
+                type: 'confirmation',
+                id: 'registration-summary',
+                label: 'Registration Summary',
+                props: {
+                  confirmationSettings: {
+                    showSummary: true,
+                    groupBySection: false,
+                    excludeFields: ['password', 'confirmPassword'],
+                    customTitle: 'Please Review Your Registration Details',
+                    customMessage:
+                      'Please verify that all information is correct. Your password will not be shown for security reasons.',
+                  },
+                },
+              },
+            ],
           },
         ],
         dataSources: [
@@ -283,6 +353,20 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
             responseMapping: {},
           },
         ],
+        thankYouPage: {
+          title: 'Registration Successful!',
+          message:
+            'Your account has been created successfully. Welcome to our platform!',
+          showRestartButton: false,
+          customActions: [
+            {
+              label: 'Login to Your Account',
+              action: 'custom',
+              customAction: 'login',
+              className: 'bg-green-600 text-white hover:bg-green-700',
+            },
+          ],
+        },
       },
     },
   },
@@ -499,7 +583,8 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
   },
   {
     name: 'Job Application Form',
-    description: 'Professional job application with multiple sections',
+    description:
+      'Professional job application with multiple sections and confirmation step',
     prompt:
       'A 3-step job application form with personal details, work experience, and references',
     json: {
@@ -697,15 +782,58 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               {
                 id: 'submitBtn',
                 type: 'button',
-                label: 'Submit Application',
+                label: 'Next',
                 props: {
                   className: 'primary',
                 },
               },
             ],
+            nextPage: 'confirmation',
+          },
+          {
+            id: 'confirmation',
+            title: 'Review Your Application',
+            route: '/confirmation',
+            layout: 'vertical',
+            isConfirmationPage: true,
             isEndPage: true,
+            components: [
+              {
+                type: 'confirmation',
+                id: 'application-summary',
+                label: 'Application Summary',
+                props: {
+                  confirmationSettings: {
+                    showSummary: true,
+                    groupBySection: true,
+                    customTitle: 'Please Review Your Job Application',
+                    customMessage:
+                      'Please review all the information below carefully before submitting your application. You can go back to make changes if needed.',
+                  },
+                },
+              },
+            ],
           },
         ],
+        thankYouPage: {
+          title: 'Application Submitted Successfully!',
+          message:
+            'Thank you for your interest in our position. We have received your application and will review it carefully. You will hear from us within the next few business days.',
+          showRestartButton: false,
+          customActions: [
+            {
+              label: 'View Open Positions',
+              action: 'custom',
+              customAction: 'viewJobs',
+              className: 'bg-blue-600 text-white hover:bg-blue-700',
+            },
+            {
+              label: 'Apply for Another Position',
+              action: 'restart',
+              className: 'bg-green-600 text-white hover:bg-green-700',
+            },
+          ],
+        },
       },
     },
   },
@@ -1700,6 +1828,187 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
             isEndPage: true,
           },
         ],
+      },
+    },
+  },
+  {
+    name: 'Customer Feedback Form with Thank You Page',
+    description:
+      'Feedback form with confirmation step and customizable thank you page after submission',
+    prompt:
+      'A customer feedback form with name, email, service type, satisfaction rating, and a thank you page that shows after submission',
+    json: {
+      app: {
+        title: 'Customer Feedback Form',
+        pages: [
+          {
+            id: 'feedback-page',
+            title: 'Share Your Experience',
+            route: '/feedback',
+            layout: 'vertical',
+            components: [
+              {
+                type: 'text',
+                id: 'intro-text',
+                props: {
+                  content:
+                    'We value your feedback. Please take a moment to complete this form and help us improve our services.',
+                },
+              },
+              {
+                type: 'form',
+                id: 'feedback-form',
+                label: 'Feedback Form',
+                children: [
+                  {
+                    type: 'section',
+                    id: 'personal-info',
+                    label: 'Personal Information',
+                    children: [
+                      {
+                        type: 'input',
+                        id: 'name',
+                        label: 'Full Name',
+                        props: {
+                          placeholder: 'John Doe',
+                        },
+                        validation: {
+                          required: true,
+                          minLength: 2,
+                        },
+                      },
+                      {
+                        type: 'input',
+                        id: 'email',
+                        label: 'Email Address',
+                        props: {
+                          inputType: 'email',
+                          placeholder: 'john.doe@example.com',
+                          helperText:
+                            "We'll never share your email with anyone else.",
+                        },
+                        validation: {
+                          required: true,
+                          pattern:
+                            '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    type: 'section',
+                    id: 'feedback-details',
+                    label: 'Your Feedback',
+                    children: [
+                      {
+                        type: 'select',
+                        id: 'service-type',
+                        label: 'Which service are you providing feedback for?',
+                        props: {
+                          options: [
+                            { label: 'Customer Support', value: 'support' },
+                            { label: 'Product Quality', value: 'product' },
+                            { label: 'Website Experience', value: 'website' },
+                            { label: 'Billing & Payments', value: 'billing' },
+                            { label: 'Other', value: 'other' },
+                          ],
+                        },
+                        validation: {
+                          required: true,
+                        },
+                      },
+                      {
+                        type: 'radio',
+                        id: 'satisfaction',
+                        label: 'How satisfied are you with our service?',
+                        props: {
+                          options: [
+                            { label: 'Very Satisfied', value: '5' },
+                            { label: 'Satisfied', value: '4' },
+                            { label: 'Neutral', value: '3' },
+                            { label: 'Dissatisfied', value: '2' },
+                            { label: 'Very Dissatisfied', value: '1' },
+                          ],
+                        },
+                        validation: {
+                          required: true,
+                        },
+                      },
+                      {
+                        type: 'textarea',
+                        id: 'comments',
+                        label: 'Additional Comments',
+                        props: {
+                          placeholder:
+                            'Please share any additional comments or suggestions...',
+                          rows: 4,
+                        },
+                      },
+                      {
+                        type: 'checkbox',
+                        id: 'contact-permission',
+                        label: 'I would like to be contacted for follow-up',
+                      },
+                      {
+                        type: 'button',
+                        id: 'submit-feedback',
+                        label: 'Review Feedback',
+                        props: {
+                          className: 'primary',
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+            nextPage: 'confirmation',
+          },
+          {
+            id: 'confirmation',
+            title: 'Review Your Feedback',
+            route: '/confirmation',
+            layout: 'vertical',
+            isConfirmationPage: true,
+            isEndPage: true,
+            components: [
+              {
+                type: 'confirmation',
+                id: 'feedback-summary',
+                label: 'Feedback Summary',
+                props: {
+                  confirmationSettings: {
+                    showSummary: true,
+                    groupBySection: true,
+                    customTitle: 'Please Review Your Feedback',
+                    customMessage:
+                      'Please review your feedback below. Your input helps us improve our services.',
+                  },
+                },
+              },
+            ],
+          },
+        ],
+        thankYouPage: {
+          title: 'Thank You for Your Feedback!',
+          message:
+            'Your feedback has been submitted successfully. We appreciate you taking the time to help us improve our services.',
+          showRestartButton: true,
+          customActions: [
+            {
+              label: 'Visit Our Website',
+              action: 'custom',
+              customAction: 'openWebsite',
+              className: 'bg-blue-600 text-white hover:bg-blue-700',
+            },
+            {
+              label: 'Contact Support',
+              action: 'custom',
+              customAction: 'contactSupport',
+              className: 'bg-green-600 text-white hover:bg-green-700',
+            },
+          ],
+        },
       },
     },
   },

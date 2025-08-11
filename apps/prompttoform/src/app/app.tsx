@@ -360,7 +360,7 @@ function AppContent() {
     setIsZipDownloading(true);
     try {
       const zip = await createFormZip(state.generatedJson);
-      downloadZip(zip, 'react-form.zip');
+      downloadZip(zip, `react-form.zip?v=${Date.now()}`);
     } catch (err) {
       setError('Failed to create zip file');
       console.error(err);

@@ -27,10 +27,23 @@ interface Page {
   isEndPage?: boolean;
 }
 
+interface ThankYouPage {
+  title?: string;
+  message?: string;
+  showRestartButton?: boolean;
+  customActions?: Array<{
+    label: string;
+    action: 'restart' | 'back' | 'custom';
+    customAction?: string;
+    className?: string;
+  }>;
+}
+
 interface FormFlowMermaidProps {
   formJson: {
     app: {
       pages: Page[];
+      thankYouPage?: ThankYouPage;
     };
   };
 }
@@ -57,13 +70,20 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
 
   const mermaidDiagram = useMemo(() => {
     const pages = formJson.app.pages;
+    const thankYouPage = formJson.app.thankYouPage;
     let diagram = 'graph TD\n';
 
-    // Add nodes
+    // Add nodes for pages
     pages.forEach((page) => {
       const nodeId = page.id.replace(/[^a-zA-Z0-9]/g, '_');
       diagram += `    ${nodeId}["${page.title}"]\n`;
     });
+
+    // Add thank you page node if it exists
+    if (thankYouPage) {
+      const thankYouTitle = thankYouPage.title || 'Thank You Page';
+      diagram += `    thank_you_page["${thankYouTitle}"]\n`;
+    }
 
     // Add edges
     pages.forEach((page) => {
@@ -82,6 +102,11 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
           const condition = `${branch.condition.field} ${branch.condition.operator} ${branch.condition.value}`;
           diagram += `    ${sourceId} -->|${condition}| ${targetId}\n`;
         });
+      }
+
+      // Add edge from end pages to thank you page
+      if (page.isEndPage && thankYouPage) {
+        diagram += `    ${sourceId} -->|Submit| thank_you_page\n`;
       }
     });
 

@@ -8,6 +8,7 @@ import {
   FormSelectField,
   FormDateField,
   FormSectionField,
+  FormConfirmationField,
 } from '../atoms';
 import {
   FormRendererProps,
@@ -17,6 +18,7 @@ import {
   FormComponentFieldProps,
   ValidationError,
   VisibilityCondition,
+  ThankYouPage,
 } from '../interfaces/form-interfaces';
 
 export const FormRenderer: React.FC<FormRendererProps> = ({
@@ -41,6 +43,60 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const [arrayItems, setArrayItems] = useState<
     Record<string, Record<string, unknown>[]>
   >({});
+  const [showThankYouPage, setShowThankYouPage] = useState(false);
+
+  // Helper function to get field label for error messages
+  const getFieldLabel = (component: FormComponentFieldProps): string => {
+    if (typeof component.label === 'string' && component.label) {
+      return component.label;
+    }
+    // Fallback to ID if no label
+    return component.id
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str) => str.toUpperCase());
+  };
+
+  // Helper function to get WCAG-compatible error message with fallbacks
+  const getErrorMessage = (
+    component: FormComponentFieldProps,
+    errorType: string,
+    params: Record<string, string | number> = {}
+  ): string => {
+    const customMessage =
+      component.validation?.errorMessages?.[
+        errorType as keyof typeof component.validation.errorMessages
+      ];
+
+    if (customMessage) {
+      // Replace placeholders in custom message
+      return customMessage.replace(/\{(\w+)\}/g, (match, key) => {
+        return String(params[key] || match);
+      });
+    }
+
+    // Get field label for context-specific messages
+    const fieldLabel = getFieldLabel(component);
+
+    // Default WCAG-compatible error messages with field context
+    const defaultMessages: Record<string, string> = {
+      required: `${fieldLabel} is required`,
+      minLength: `${fieldLabel} must be at least ${params.minLength} characters long`,
+      maxLength: `${fieldLabel} cannot exceed ${params.maxLength} characters`,
+      pattern: `${fieldLabel} format is invalid`,
+      minItems: `Please select at least ${params.minItems} items for ${fieldLabel}`,
+      maxItems: `Please select no more than ${params.maxItems} items for ${fieldLabel}`,
+      minDate: `${fieldLabel} must be on or after ${params.minDate}`,
+      maxDate: `${fieldLabel} must be before ${params.maxDate}`,
+      min: `${fieldLabel} must be at least ${params.min}`,
+      max: `${fieldLabel} cannot exceed ${params.max}`,
+      invalidFormat: `${fieldLabel} format is invalid`,
+      invalidEmail: `Please enter a valid email address for ${fieldLabel}`,
+      invalidNumber: `Please enter a valid number for ${fieldLabel}`,
+      invalidDate: `Please enter a valid date for ${fieldLabel}`,
+    };
+
+    return defaultMessages[errorType] || `${fieldLabel} is invalid`;
+  };
 
   const validateComponent = useMemo(
     () =>
@@ -72,7 +128,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             component.validation?.required &&
             (!arrayValue || arrayValue.length === 0)
           ) {
-            errors.push({ fieldId, message: 'This field is required' });
+            errors.push({
+              fieldId,
+              message: getErrorMessage(component, 'required'),
+            });
           }
           if (arrayValue) {
             if (
@@ -81,7 +140,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             ) {
               errors.push({
                 fieldId,
-                message: `Minimum ${component.validation.minItems} items required`,
+                message: getErrorMessage(component, 'minItems', {
+                  minItems: component.validation.minItems,
+                }),
               });
             }
             if (
@@ -90,7 +151,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             ) {
               errors.push({
                 fieldId,
-                message: `Maximum ${component.validation.maxItems} items allowed`,
+                message: getErrorMessage(component, 'maxItems', {
+                  maxItems: component.validation.maxItems,
+                }),
               });
             }
             // Validate each array item
@@ -122,15 +185,21 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         }
 
         // Handle basic validation for other component types
-        if (component.validation?.required && !value) {
-          errors.push({ fieldId, message: 'This field is required' });
+        if (component.validation?.required && isEmptyValue(value)) {
+          errors.push({
+            fieldId,
+            message: getErrorMessage(component, 'required'),
+          });
         }
 
-        if (value) {
+        if (!isEmptyValue(value)) {
           if (component.type === 'date') {
             const dateValue = new Date(value as string);
             if (isNaN(dateValue.getTime())) {
-              errors.push({ fieldId, message: 'Invalid date format' });
+              errors.push({
+                fieldId,
+                message: getErrorMessage(component, 'invalidDate'),
+              });
             } else {
               if (
                 component.validation?.minDate &&
@@ -138,7 +207,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               ) {
                 errors.push({
                   fieldId,
-                  message: `Date must be after ${component.validation.minDate}`,
+                  message: getErrorMessage(component, 'minDate', {
+                    minDate: component.validation.minDate,
+                  }),
                 });
               }
               if (
@@ -147,19 +218,69 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               ) {
                 errors.push({
                   fieldId,
-                  message: `Date must be before ${component.validation.maxDate}`,
+                  message: getErrorMessage(component, 'maxDate', {
+                    maxDate: component.validation.maxDate,
+                  }),
                 });
               }
             }
           } else if (['input', 'textarea'].includes(component.type)) {
             const stringValue = String(value);
+
+            // Email validation for email input type
+            if (component.props?.inputType === 'email' && stringValue) {
+              const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (!emailPattern.test(stringValue)) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'invalidEmail'),
+                });
+              }
+            }
+
+            // Number validation for number input type
+            if (component.props?.inputType === 'number' && stringValue) {
+              const numValue = Number(stringValue);
+              if (isNaN(numValue)) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'invalidNumber'),
+                });
+              } else {
+                if (
+                  component.validation?.min !== undefined &&
+                  numValue < component.validation.min
+                ) {
+                  errors.push({
+                    fieldId,
+                    message: getErrorMessage(component, 'min', {
+                      min: component.validation.min,
+                    }),
+                  });
+                }
+                if (
+                  component.validation?.max !== undefined &&
+                  numValue > component.validation.max
+                ) {
+                  errors.push({
+                    fieldId,
+                    message: getErrorMessage(component, 'max', {
+                      max: component.validation.max,
+                    }),
+                  });
+                }
+              }
+            }
+
             if (
               component.validation?.minLength &&
               stringValue.length < component.validation.minLength
             ) {
               errors.push({
                 fieldId,
-                message: `Minimum length is ${component.validation.minLength} characters`,
+                message: getErrorMessage(component, 'minLength', {
+                  minLength: component.validation.minLength,
+                }),
               });
             }
             if (
@@ -168,14 +289,19 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             ) {
               errors.push({
                 fieldId,
-                message: `Maximum length is ${component.validation.maxLength} characters`,
+                message: getErrorMessage(component, 'maxLength', {
+                  maxLength: component.validation.maxLength,
+                }),
               });
             }
             if (
               component.validation?.pattern &&
               !new RegExp(component.validation.pattern).test(stringValue)
             ) {
-              errors.push({ fieldId, message: 'Invalid format' });
+              errors.push({
+                fieldId,
+                message: getErrorMessage(component, 'pattern'),
+              });
             }
           }
         }
@@ -248,13 +374,18 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       onSubmit(formValues);
     }
 
-    // Reset form values and validation errors
-    setFormValues({});
-    setValidationErrors({});
-    setBlurredFields({});
-    setIsSubmitted(false);
-    setCurrentStepIndex(0);
-    setStepHistory([0]);
+    // Check if thank you page is configured
+    if (formJson.app.thankYouPage) {
+      setShowThankYouPage(true);
+    } else {
+      // Reset form values and validation errors
+      setFormValues({});
+      setValidationErrors({});
+      setBlurredFields({});
+      setIsSubmitted(false);
+      setCurrentStepIndex(0);
+      setStepHistory([0]);
+    }
   };
 
   const getNextPage = useCallback((): string | null => {
@@ -304,7 +435,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     if (validateForm()) {
       const currentPage = formJson.app.pages[currentStepIndex];
 
-      if (currentPage && currentPage.isEndPage === true) {
+      // Handle end pages or confirmation pages
+      if (
+        currentPage &&
+        (currentPage.isEndPage === true ||
+          currentPage.isConfirmationPage === true)
+      ) {
         handleFormSubmit('multistep-form');
         return;
       }
@@ -352,6 +488,24 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     setIsSubmitted(false);
     setCurrentStepIndex(0);
     setStepHistory([0]);
+    setShowThankYouPage(false);
+  };
+
+  const handleThankYouAction = (
+    action: 'restart' | 'custom',
+    customAction?: string
+  ) => {
+    switch (action) {
+      case 'restart':
+        handleReset();
+        break;
+      case 'custom':
+        if (customAction) {
+          console.log('Custom action:', customAction);
+          // Handle custom actions here
+        }
+        break;
+    }
   };
 
   const handleButtonClick = (action: string) => {
@@ -442,6 +596,25 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     const currentPage = formJson.app.pages[currentStep - 1];
     const isEndPage = currentPage && currentPage.isEndPage === true;
+    const isConfirmationPage =
+      currentPage && currentPage.isConfirmationPage === true;
+
+    // Determine button text based on page type
+    let nextButtonText = 'Next';
+    if (isEndPage || currentStep === totalSteps) {
+      nextButtonText = 'Submit';
+    } else if (isConfirmationPage) {
+      nextButtonText = 'Confirm & Submit';
+    } else {
+      // Check if next page is a confirmation page
+      const nextPageIndex = currentStep;
+      if (nextPageIndex < totalSteps) {
+        const nextPage = formJson.app.pages[nextPageIndex];
+        if (nextPage && nextPage.isConfirmationPage) {
+          nextButtonText = 'Review & Confirm';
+        }
+      }
+    }
 
     return (
       <div className="mt-6 flex justify-between">
@@ -462,7 +635,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           onClick={handleNext}
         >
-          {isEndPage || currentStep === totalSteps ? 'Submit' : 'Next'}
+          {nextButtonText}
         </button>
       </div>
     );
@@ -521,6 +694,129 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     return prefixId ? `${prefixId}-${id}` : id;
   };
 
+  // Helper function to get all form components from all pages (for confirmation display)
+  const getAllFormComponents = (): FormComponentFieldProps[] => {
+    if (!formJson?.app?.pages) return [];
+
+    const allComponents: FormComponentFieldProps[] = [];
+
+    const extractComponents = (components: FormComponentFieldProps[]) => {
+      components.forEach((component) => {
+        allComponents.push(component);
+        if (component.children) {
+          extractComponents(component.children);
+        }
+        if (component.arrayItems) {
+          component.arrayItems.forEach((arrayItem) => {
+            if (arrayItem.components) {
+              extractComponents(arrayItem.components);
+            }
+          });
+        }
+      });
+    };
+
+    formJson.app.pages.forEach((page) => {
+      if (page.components) {
+        extractComponents(page.components);
+      }
+    });
+
+    return allComponents;
+  };
+
+  // Helper function to check if a value is empty/should show as dash
+  const isEmptyValue = (value: unknown): boolean => {
+    if (value === undefined || value === null) return true;
+    if (typeof value === 'string' && value.trim() === '') return true;
+    if (typeof value === 'boolean') return false; // booleans are never "empty"
+    if (typeof value === 'number') return false; // numbers are never "empty" (even 0)
+    return false;
+  };
+
+  // Helper function to replace template variables in text
+  const replaceTemplateVariables = (
+    text: string,
+    values: FormValues
+  ): string => {
+    return text.replace(/\{\{([^}]+)\}\}/g, (match, variable) => {
+      const varName = variable.trim();
+
+      // Handle nested variable paths like "applicant.fullName"
+      if (varName.includes('.')) {
+        const keys = varName.split('.');
+        let value: unknown = values;
+
+        for (const key of keys) {
+          if (value && typeof value === 'object' && key in value) {
+            value = (value as Record<string, unknown>)[key];
+          } else {
+            value = undefined;
+            break;
+          }
+        }
+
+        if (!isEmptyValue(value)) {
+          return String(value);
+        }
+      }
+
+      // Try direct field name match
+      let directValue = values[varName];
+      if (!isEmptyValue(directValue)) {
+        return String(directValue);
+      }
+
+      // Try common field name variations
+      const variations = [
+        varName.toLowerCase(),
+        varName.replace(/([A-Z])/g, '_$1').toLowerCase(), // camelCase to snake_case
+        varName.replace(/_/g, ''), // remove underscores
+        varName.replace(/[._]/g, ''), // remove dots and underscores
+      ];
+
+      for (const variation of variations) {
+        const value = values[variation];
+        if (!isEmptyValue(value)) {
+          return String(value);
+        }
+      }
+
+      // Try to find partial matches in field names
+      const matchingKey = Object.keys(values).find(
+        (key) =>
+          key.toLowerCase().includes(varName.toLowerCase()) ||
+          varName.toLowerCase().includes(key.toLowerCase())
+      );
+
+      if (matchingKey && !isEmptyValue(values[matchingKey])) {
+        return String(values[matchingKey]);
+      }
+
+      // Return a dash for missing/empty fields
+      return '-';
+    });
+  };
+
+  // Helper function to process props and replace template variables in helperText
+  const processPropsWithTemplates = (props: any): any => {
+    if (!props) return props;
+
+    const processedProps = { ...props };
+
+    if (
+      typeof props.helperText === 'string' &&
+      /\{\{[^}]+\}\}/.test(props.helperText)
+    ) {
+      processedProps.helperText = replaceTemplateVariables(
+        props.helperText,
+        formValues
+      );
+    }
+
+    return processedProps;
+  };
+
   const renderComponent = (
     component: FormComponentFieldProps,
     parentId?: string
@@ -538,7 +834,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     switch (type) {
       case 'text':
-        return <TextFormField label={label} props={props} />;
+        return (
+          <TextFormField
+            label={label}
+            props={processPropsWithTemplates(props)}
+          />
+        );
 
       case 'input':
         return (
@@ -553,7 +854,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             onChange={(value) => handleInputChange(id, value)}
             onBlur={() => handleBlur(id)}
             validation={validation}
-            props={props}
+            props={processPropsWithTemplates(props)}
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
@@ -573,7 +874,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             onChange={(value) => handleInputChange(id, value)}
             onBlur={() => handleBlur(id)}
             validation={validation}
-            props={props}
+            props={processPropsWithTemplates(props)}
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
@@ -592,7 +893,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             }
             onChange={(value) => handleInputChange(id, value)}
             validation={validation}
-            props={props}
+            props={processPropsWithTemplates(props)}
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
@@ -608,7 +909,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             onChange={(value) => handleInputChange(id, value)}
             onBlur={() => handleBlur(id)}
             validation={validation}
-            props={props}
+            props={processPropsWithTemplates(props)}
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
@@ -628,7 +929,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             onChange={(value) => handleInputChange(id, value)}
             onBlur={() => handleBlur(id)}
             validation={validation}
-            props={props}
+            props={processPropsWithTemplates(props)}
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
@@ -648,7 +949,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             onChange={(value) => handleInputChange(id, value)}
             onBlur={() => handleBlur(id)}
             validation={validation}
-            props={props}
+            props={processPropsWithTemplates(props)}
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
@@ -772,6 +1073,17 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       case 'array':
         return renderArrayField(component, fieldId);
 
+      case 'confirmation':
+        return (
+          <FormConfirmationField
+            fieldId={prefixedFieldId}
+            label={label}
+            formValues={formValues}
+            formComponents={getAllFormComponents()}
+            props={processPropsWithTemplates(props)}
+          />
+        );
+
       default:
         return (
           <div className="text-sm text-gray-500">
@@ -878,6 +1190,70 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     );
   };
 
+  const renderThankYouPage = (): React.ReactElement => {
+    const thankYouPage = formJson.app.thankYouPage;
+    if (!thankYouPage) {
+      return (
+        <div className="p-4 text-red-500">Thank you page not configured</div>
+      );
+    }
+
+    return (
+      <div className="w-full">
+        <div className="mb-4 bg-green-50 p-4 rounded-md">
+          <h1 className="text-2xl font-bold text-green-700">
+            {thankYouPage.title || 'Thank You!'}
+          </h1>
+        </div>
+
+        <div className="bg-white rounded-md shadow-sm p-6">
+          {thankYouPage.message && (
+            <div className="mb-6">
+              <p className="text-lg text-gray-700 leading-relaxed">
+                {thankYouPage.message}
+              </p>
+            </div>
+          )}
+
+          {thankYouPage.components && thankYouPage.components.length > 0 && (
+            <div className="mb-6">
+              {thankYouPage.components.map((component, index) => (
+                <div key={index}>{renderComponent(component)}</div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-4 justify-center">
+            {thankYouPage.showRestartButton && (
+              <button
+                type="button"
+                onClick={() => handleThankYouAction('restart')}
+                className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              >
+                Start New Form
+              </button>
+            )}
+
+            {thankYouPage.customActions?.map((action, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() =>
+                  handleThankYouAction(action.action, action.customAction)
+                }
+                className={`px-6 py-2 rounded-md transition-colors ${
+                  action.className || 'bg-gray-600 text-white hover:bg-gray-700'
+                }`}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderPage = (page: PageProps): React.ReactElement | null => {
     if (!page || !page.components) return null;
 
@@ -915,6 +1291,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   if (!formJson || !formJson.app) {
     return <div className="p-4 text-red-500">Invalid form data</div>;
+  }
+
+  // Show thank you page if form is submitted and thank you page is configured
+  if (showThankYouPage) {
+    return renderThankYouPage();
   }
 
   return (

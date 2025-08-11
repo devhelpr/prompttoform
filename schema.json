@@ -22,6 +22,9 @@
           "items": {
             "$ref": "#/$defs/dataSource"
           }
+        },
+        "thankYouPage": {
+          "$ref": "#/$defs/thankYouPage"
         }
       },
       "required": ["title", "pages"]
@@ -236,6 +239,67 @@
             "maxDate": {
               "type": "string",
               "format": "date"
+            },
+            "errorMessages": {
+              "type": "object",
+              "properties": {
+                "required": {
+                  "type": "string",
+                  "description": "Custom error message for required field validation"
+                },
+                "minLength": {
+                  "type": "string",
+                  "description": "Custom error message for minimum length validation. Use {minLength} placeholder."
+                },
+                "maxLength": {
+                  "type": "string",
+                  "description": "Custom error message for maximum length validation. Use {maxLength} placeholder."
+                },
+                "pattern": {
+                  "type": "string",
+                  "description": "Custom error message for pattern validation"
+                },
+                "minItems": {
+                  "type": "string",
+                  "description": "Custom error message for minimum items validation. Use {minItems} placeholder."
+                },
+                "maxItems": {
+                  "type": "string",
+                  "description": "Custom error message for maximum items validation. Use {maxItems} placeholder."
+                },
+                "minDate": {
+                  "type": "string",
+                  "description": "Custom error message for minimum date validation. Use {minDate} placeholder."
+                },
+                "maxDate": {
+                  "type": "string",
+                  "description": "Custom error message for maximum date validation. Use {maxDate} placeholder."
+                },
+                "min": {
+                  "type": "string",
+                  "description": "Custom error message for minimum value validation. Use {min} placeholder."
+                },
+                "max": {
+                  "type": "string",
+                  "description": "Custom error message for maximum value validation. Use {max} placeholder."
+                },
+                "invalidFormat": {
+                  "type": "string",
+                  "description": "Custom error message for invalid format validation"
+                },
+                "invalidEmail": {
+                  "type": "string",
+                  "description": "Custom error message for invalid email format"
+                },
+                "invalidNumber": {
+                  "type": "string",
+                  "description": "Custom error message for invalid number format"
+                },
+                "invalidDate": {
+                  "type": "string",
+                  "description": "Custom error message for invalid date format"
+                }
+              }
             }
           }
         },
@@ -551,6 +615,58 @@
         }
       },
       "additionalProperties": true
+    },
+    "thankYouPage": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title displayed on the thank you page"
+        },
+        "message": {
+          "type": "string",
+          "description": "Main message displayed on the thank you page"
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          },
+          "description": "Optional form components to display on the thank you page"
+        },
+        "showRestartButton": {
+          "type": "boolean",
+          "description": "Whether to show a restart button to start a new form"
+        },
+        "customActions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "Text displayed on the button"
+              },
+              "action": {
+                "type": "string",
+                "enum": ["restart", "custom"],
+                "description": "Type of action the button performs"
+              },
+              "customAction": {
+                "type": "string",
+                "description": "Custom action identifier (used when action is 'custom')"
+              },
+              "className": {
+                "type": "string",
+                "description": "CSS classes for styling the button"
+              }
+            },
+            "required": ["label", "action"]
+          },
+          "description": "Array of custom action buttons"
+        }
+      },
+      "description": "Configuration for the thank you page shown after form submission"
     }
   }
 }

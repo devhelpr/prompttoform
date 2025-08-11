@@ -20,6 +20,13 @@ export interface FormComponentFieldProps {
     rows?: number;
     buttonType?: string;
     onClick?: string;
+    confirmationSettings?: {
+      showSummary?: boolean;
+      groupBySection?: boolean;
+      excludeFields?: string[];
+      customTitle?: string;
+      customMessage?: string;
+    };
   } & DateRange;
   children?: FormComponentFieldProps[];
   visibilityConditions?: VisibilityCondition[];
@@ -38,6 +45,22 @@ export interface FormComponentFieldProps {
     maxItems?: number;
     min?: number;
     max?: number;
+    errorMessages?: {
+      required?: string;
+      minLength?: string;
+      maxLength?: string;
+      pattern?: string;
+      minItems?: string;
+      maxItems?: string;
+      minDate?: string;
+      maxDate?: string;
+      min?: string;
+      max?: string;
+      invalidFormat?: string;
+      invalidEmail?: string;
+      invalidNumber?: string;
+      invalidDate?: string;
+    };
   } & DateRange;
 }
 
@@ -48,6 +71,7 @@ export interface PageProps {
   layout?: string;
   components: FormComponentFieldProps[];
   isEndPage?: boolean;
+  isConfirmationPage?: boolean;
   branches?: Array<{
     condition: {
       field: string;
@@ -64,6 +88,7 @@ export interface FormDefinition {
     title: string;
     pages: PageProps[];
     dataSources?: Record<string, unknown>[];
+    thankYouPage?: ThankYouPage;
   };
 }
 
@@ -114,6 +139,19 @@ export interface ArrayItem {
 export interface ValidationError {
   fieldId: string;
   message: string;
+}
+
+export interface ThankYouPage {
+  title?: string;
+  message?: string;
+  components?: FormComponentFieldProps[];
+  showRestartButton?: boolean;
+  customActions?: Array<{
+    label: string;
+    action: 'restart' | 'custom';
+    customAction?: string;
+    className?: string;
+  }>;
 }
 
 export type Option =
