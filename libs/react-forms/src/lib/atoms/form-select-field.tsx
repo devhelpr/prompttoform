@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { getClassNames } from '../utils/class-utils';
 import { Option } from '../interfaces/form-interfaces';
 
 interface FormSelectFieldProps {
@@ -18,6 +18,13 @@ interface FormSelectFieldProps {
   showError: boolean;
   validationErrors: string[];
   disabled?: boolean;
+  classes?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldSelect?: string;
+    fieldError?: string;
+    fieldHelperText?: string;
+  };
 }
 
 export const FormSelectField: React.FC<FormSelectFieldProps> = ({
@@ -31,6 +38,7 @@ export const FormSelectField: React.FC<FormSelectFieldProps> = ({
   showError,
   validationErrors,
   disabled = false,
+  classes,
 }) => {
   const errorId = `${fieldId}-error`;
   const helperId = `${fieldId}-helper`;
@@ -41,10 +49,13 @@ export const FormSelectField: React.FC<FormSelectFieldProps> = ({
     : undefined;
 
   return (
-    <div className="mb-4">
+    <div className={getClassNames('mb-4', classes?.field)}>
       <label
         htmlFor={fieldId}
-        className="block text-sm font-medium text-gray-700 mb-1"
+        className={getClassNames(
+          'block text-sm font-medium text-gray-700 mb-1',
+          classes?.fieldLabel
+        )}
       >
         {typeof label === 'string' ? label : ''}
         {!!validation?.required && (
@@ -55,11 +66,14 @@ export const FormSelectField: React.FC<FormSelectFieldProps> = ({
       </label>
       <select
         id={fieldId}
-        className={`w-full p-2 border ${
-          showError ? 'border-red-500' : 'border-gray-300'
-        } rounded-md bg-white ${
-          disabled ? 'bg-gray-100 cursor-not-allowed' : ''
-        }`}
+        className={getClassNames(
+          `w-full p-2 border ${
+            showError ? 'border-red-500' : 'border-gray-300'
+          } rounded-md bg-white ${
+            disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+          }`,
+          classes?.fieldSelect
+        )}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
@@ -87,7 +101,10 @@ export const FormSelectField: React.FC<FormSelectFieldProps> = ({
       {showError && (
         <div
           id={errorId}
-          className="mt-1 text-sm text-red-500"
+          className={getClassNames(
+            'mt-1 text-sm text-red-500',
+            classes?.fieldError
+          )}
           role="alert"
           aria-live="polite"
         >
@@ -97,7 +114,13 @@ export const FormSelectField: React.FC<FormSelectFieldProps> = ({
         </div>
       )}
       {typeof props?.helperText === 'string' && !showError && (
-        <p id={helperId} className="mt-1 text-sm text-gray-500">
+        <p
+          id={helperId}
+          className={getClassNames(
+            'mt-1 text-sm text-gray-500',
+            classes?.fieldHelperText
+          )}
+        >
           {props.helperText}
         </p>
       )}

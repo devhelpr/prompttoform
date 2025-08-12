@@ -8,3 +8,4 @@ export { EmptyValuesTestExample } from './empty-values-test-example';
 export { ErrorMessagesExample } from './error-messages-example';
 export { WCAGErrorMessagesExample } from './wcag-error-messages-example';
 export { SubmittedValuesExample } from './submitted-values-example';
+export { CustomStylingExample } from './custom-styling-example';

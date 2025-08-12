@@ -92,8 +92,74 @@ export interface FormDefinition {
   };
 }
 
+export interface FormRendererTheme {
+  colors?: {
+    primary?: string;
+    secondary?: string;
+    error?: string;
+    success?: string;
+    background?: string;
+    text?: string;
+    border?: string;
+  };
+  spacing?: {
+    xs?: string;
+    sm?: string;
+    md?: string;
+    lg?: string;
+  };
+}
+
+export interface FormRendererClasses {
+  // Layout
+  container?: string;
+  header?: string;
+  page?: string;
+
+  // Navigation
+  stepIndicator?: string;
+  stepIndicatorItem?: string;
+  stepIndicatorActive?: string;
+  navigationButtons?: string;
+  nextButton?: string;
+  previousButton?: string;
+
+  // Form Fields
+  field?: string;
+  fieldLabel?: string;
+  fieldInput?: string;
+  fieldTextarea?: string;
+  fieldSelect?: string;
+  fieldCheckbox?: string;
+  fieldRadio?: string;
+  fieldDate?: string;
+  fieldText?: string;
+  fieldError?: string;
+  fieldHelperText?: string;
+
+  // Special Components
+  confirmationField?: string;
+  arrayField?: string;
+  arrayItem?: string;
+  arrayAddButton?: string;
+  arrayRemoveButton?: string;
+
+  // Submissions
+  submissionsContainer?: string;
+  submissionsTitle?: string;
+  submissionsData?: string;
+
+  // Thank You Page
+  thankYouContainer?: string;
+  thankYouTitle?: string;
+  thankYouMessage?: string;
+  thankYouButton?: string;
+}
+
 export interface FormRendererSettings {
   showFormSubmissions?: boolean;
+  classes?: FormRendererClasses;
+  theme?: FormRendererTheme;
 }
 
 export interface FormRendererProps {

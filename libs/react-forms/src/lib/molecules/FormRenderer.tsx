@@ -20,6 +20,7 @@ import {
   VisibilityCondition,
   ThankYouPage,
 } from '../interfaces/form-interfaces';
+import { getClassNames, mergeClassNames } from '../utils/class-utils';
 
 export const FormRenderer: React.FC<FormRendererProps> = ({
   formJson,
@@ -573,13 +574,31 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
 
     return (
-      <div className="mb-4 flex items-center justify-between">
-        <div className="text-sm font-medium text-gray-700">
+      <div
+        className={getClassNames(
+          'mb-4 flex items-center justify-between',
+          settings.classes?.stepIndicator
+        )}
+      >
+        <div
+          className={getClassNames(
+            'text-sm font-medium text-gray-700',
+            settings.classes?.stepIndicatorItem
+          )}
+        >
           Step {currentStep} of {totalSteps}
         </div>
-        <div className="w-2/3 bg-gray-200 rounded-full h-2.5">
+        <div
+          className={getClassNames(
+            'w-2/3 bg-gray-200 rounded-full h-2.5',
+            settings.classes?.stepIndicator
+          )}
+        >
           <div
-            className="bg-indigo-600 h-2.5 rounded-full"
+            className={getClassNames(
+              'bg-indigo-600 h-2.5 rounded-full',
+              settings.classes?.stepIndicatorActive
+            )}
             style={{ width: `${(currentStep / totalSteps) * 100}%` }}
           ></div>
         </div>
@@ -618,14 +637,22 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
 
     return (
-      <div className="mt-6 flex justify-between">
+      <div
+        className={getClassNames(
+          'mt-6 flex justify-between',
+          settings.classes?.navigationButtons
+        )}
+      >
         <button
           type="button"
-          className={`px-4 py-2 border border-indigo-300 text-indigo-700 rounded-md ${
-            currentStep === 1
-              ? 'opacity-50 cursor-not-allowed'
-              : 'hover:bg-indigo-50'
-          }`}
+          className={getClassNames(
+            `px-4 py-2 border border-indigo-300 text-indigo-700 rounded-md ${
+              currentStep === 1
+                ? 'opacity-50 cursor-not-allowed'
+                : 'hover:bg-indigo-50'
+            }`,
+            settings.classes?.previousButton
+          )}
           disabled={currentStep === 1}
           onClick={handlePrevious}
         >
@@ -633,7 +660,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         </button>
         <button
           type="button"
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          className={getClassNames(
+            'px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700',
+            settings.classes?.nextButton
+          )}
           onClick={handleNext}
         >
           {nextButtonText}
@@ -839,6 +869,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           <TextFormField
             label={label}
             props={processPropsWithTemplates(props)}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldText: settings.classes?.fieldText,
+            }}
           />
         );
 
@@ -859,6 +894,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldInput: settings.classes?.fieldInput,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
           />
         );
 
@@ -879,6 +921,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldTextarea: settings.classes?.fieldTextarea,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
           />
         );
 
@@ -898,6 +947,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldRadio: settings.classes?.fieldRadio,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
           />
         );
 
@@ -914,6 +970,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldCheckbox: settings.classes?.fieldCheckbox,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
           />
         );
 
@@ -934,6 +997,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldSelect: settings.classes?.fieldSelect,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
           />
         );
 
@@ -954,6 +1024,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldDate: settings.classes?.fieldDate,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
           />
         );
 
@@ -992,6 +1069,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             label={label}
             children={component.children}
             renderComponent={renderComponent}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+            }}
           />
         );
 
@@ -1278,8 +1359,21 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
 
     return (
-      <div key={page.id} className="bg-white rounded-md shadow-sm p-6">
-        <h2 className="text-xl font-bold mb-6">{page.title}</h2>
+      <div
+        key={page.id}
+        className={getClassNames(
+          'bg-white rounded-md shadow-sm p-6',
+          settings.classes?.page
+        )}
+      >
+        <h2
+          className={getClassNames(
+            'text-xl font-bold mb-6',
+            settings.classes?.page
+          )}
+        >
+          {page.title}
+        </h2>
         <div className={`${page.layout ? `grid ${layoutClass}` : ''}`}>
           {Array.isArray(page.components) &&
             page.components.map((component, index) => (
@@ -1299,16 +1393,71 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     return renderThankYouPage();
   }
 
+  // Generate theme styles object
+  const themeStyles = useMemo(() => {
+    if (!settings.theme) return {};
+
+    const styles: Record<string, string> = {};
+
+    if (settings.theme.colors) {
+      if (settings.theme.colors.primary)
+        styles['--color-primary'] = settings.theme.colors.primary;
+      if (settings.theme.colors.secondary)
+        styles['--color-secondary'] = settings.theme.colors.secondary;
+      if (settings.theme.colors.error)
+        styles['--color-error'] = settings.theme.colors.error;
+      if (settings.theme.colors.success)
+        styles['--color-success'] = settings.theme.colors.success;
+      if (settings.theme.colors.background)
+        styles['--color-background'] = settings.theme.colors.background;
+      if (settings.theme.colors.text)
+        styles['--color-text'] = settings.theme.colors.text;
+      if (settings.theme.colors.border)
+        styles['--color-border'] = settings.theme.colors.border;
+    }
+
+    if (settings.theme.spacing) {
+      if (settings.theme.spacing.xs)
+        styles['--spacing-xs'] = settings.theme.spacing.xs;
+      if (settings.theme.spacing.sm)
+        styles['--spacing-sm'] = settings.theme.spacing.sm;
+      if (settings.theme.spacing.md)
+        styles['--spacing-md'] = settings.theme.spacing.md;
+      if (settings.theme.spacing.lg)
+        styles['--spacing-lg'] = settings.theme.spacing.lg;
+    }
+
+    return styles;
+  }, [settings.theme]);
+
   return (
-    <div className="w-full">
-      <div className="mb-4 bg-indigo-50 p-4 rounded-md">
-        <h1 className="text-2xl font-bold text-indigo-700">
+    <div
+      className={getClassNames('w-full', settings.classes?.container)}
+      style={themeStyles}
+    >
+      <div
+        className={getClassNames(
+          'mb-4 bg-indigo-50 p-4 rounded-md',
+          settings.classes?.header
+        )}
+      >
+        <h1
+          className={getClassNames(
+            'text-2xl font-bold text-indigo-700',
+            settings.classes?.header
+          )}
+        >
           {formJson.app.title}
         </h1>
         {Array.isArray(formJson.app.pages) &&
           formJson.app.pages.length > 1 &&
           !disabled && (
-            <div className="mt-2 text-sm text-indigo-500">
+            <div
+              className={getClassNames(
+                'mt-2 text-sm text-indigo-500',
+                settings.classes?.header
+              )}
+            >
               This application has {formJson.app.pages.length} pages
             </div>
           )}
@@ -1317,9 +1466,26 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       <div className="space-y-8">{renderMultiStepForm()}</div>
 
       {hasSubmissions && !disabled && settings.showFormSubmissions && (
-        <div className="mt-8 border-t pt-6">
-          <h3 className="text-lg font-medium mb-4">Form Submissions</h3>
-          <div className="bg-gray-50 p-4 rounded-md">
+        <div
+          className={getClassNames(
+            'mt-8 border-t pt-6',
+            settings.classes?.submissionsContainer
+          )}
+        >
+          <h3
+            className={getClassNames(
+              'text-lg font-medium mb-4',
+              settings.classes?.submissionsTitle
+            )}
+          >
+            Form Submissions
+          </h3>
+          <div
+            className={getClassNames(
+              'bg-gray-50 p-4 rounded-md',
+              settings.classes?.submissionsData
+            )}
+          >
             {renderSubmissionData()}
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { getClassNames } from '../utils/class-utils';
 import { Option } from '../interfaces/form-interfaces';
 
 interface FormRadioFieldProps {
@@ -16,6 +16,13 @@ interface FormRadioFieldProps {
   showError: boolean;
   validationErrors: string[];
   disabled?: boolean;
+  classes?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldRadio?: string;
+    fieldError?: string;
+    fieldHelperText?: string;
+  };
 }
 
 export const FormRadioField: React.FC<FormRadioFieldProps> = ({
@@ -28,6 +35,7 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
   showError,
   validationErrors,
   disabled = false,
+  classes,
 }) => {
   const errorId = `${fieldId}-error`;
   const helperId = `${fieldId}-helper`;
@@ -38,8 +46,13 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
     : undefined;
 
   return (
-    <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+    <div className={getClassNames('mb-4', classes?.field)}>
+      <label
+        className={getClassNames(
+          'block text-sm font-medium text-gray-700 mb-1',
+          classes?.fieldLabel
+        )}
+      >
         {typeof label === 'string' ? label : ''}
         {!!validation?.required && (
           <span className="text-red-500 ml-1" aria-hidden="true">
@@ -70,15 +83,21 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
                   value={optionValue}
                   checked={value === optionValue}
                   onChange={(e) => onChange(e.target.value)}
-                  className={`h-4 w-4 text-indigo-600 focus:ring-indigo-500 ${
-                    disabled ? 'cursor-not-allowed opacity-50' : ''
-                  }`}
+                  className={getClassNames(
+                    `h-4 w-4 text-indigo-600 focus:ring-indigo-500 ${
+                      disabled ? 'cursor-not-allowed opacity-50' : ''
+                    }`,
+                    classes?.fieldRadio
+                  )}
                   required={!!validation?.required}
                   disabled={disabled}
                 />
                 <label
                   htmlFor={`${fieldId}-${index}`}
-                  className="ml-2 text-sm text-gray-700"
+                  className={getClassNames(
+                    'ml-2 text-sm text-gray-700',
+                    classes?.fieldLabel
+                  )}
                 >
                   {optionLabel}
                 </label>
@@ -89,7 +108,10 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
       {showError && (
         <div
           id={errorId}
-          className="mt-1 text-sm text-red-500"
+          className={getClassNames(
+            'mt-1 text-sm text-red-500',
+            classes?.fieldError
+          )}
           role="alert"
           aria-live="polite"
         >
@@ -99,7 +121,13 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
         </div>
       )}
       {typeof props?.helperText === 'string' && !showError && (
-        <p id={helperId} className="mt-1 text-sm text-gray-500">
+        <p
+          id={helperId}
+          className={getClassNames(
+            'mt-1 text-sm text-gray-500',
+            classes?.fieldHelperText
+          )}
+        >
           {props.helperText}
         </p>
       )}
