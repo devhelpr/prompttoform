@@ -92,11 +92,16 @@ export interface FormDefinition {
   };
 }
 
+export interface FormRendererSettings {
+  showFormSubmissions?: boolean;
+}
+
 export interface FormRendererProps {
   formJson: FormDefinition;
   onSubmit?: (formValues: FormValues) => void;
   disabled?: boolean;
   prefixId?: string;
+  settings?: FormRendererSettings;
 }
 
 export interface FormValues {

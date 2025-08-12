@@ -26,6 +26,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   onSubmit,
   disabled = false,
   prefixId,
+  settings = {},
 }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
@@ -1315,7 +1316,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
       <div className="space-y-8">{renderMultiStepForm()}</div>
 
-      {hasSubmissions && !disabled && (
+      {hasSubmissions && !disabled && settings.showFormSubmissions && (
         <div className="mt-8 border-t pt-6">
           <h3 className="text-lg font-medium mb-4">Form Submissions</h3>
           <div className="bg-gray-50 p-4 rounded-md">

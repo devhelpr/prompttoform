@@ -113,6 +113,10 @@ make a form that is complex , has branches at least 4 layers deep... so a real d
 
 - [x] poc "flow"-editor with code-flow-canvas and react-flow
 - [x] add "complex-flow"-example
+- [ ] optional debug mode that shows the submitted form values
+- [ ] "styling"-map for the form-renderer which contains all the tailwind classes for each component type
+- [ ] "step 1 of x" indicator should be configurable (same for other texts like next , back , submit , etc)
+
 - [ ] "agent"-mode
 - [ ] different "system"-prompts for different form-types
 - [ ] show system-prompt in the UI (and evaluate prompts as well)
@@ -120,7 +124,7 @@ make a form that is complex , has branches at least 4 layers deep... so a real d
 
 ## react-forms library
 
-- [ ] "summary" component type
+- [x] "summary" component type
 - [x] "single-form"-mode
 - [ ] info-icons with popovers/tooltips
 - [ ] "crud"-mode

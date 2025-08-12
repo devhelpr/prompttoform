@@ -119,7 +119,10 @@ export function FormPreviewPanel({
       case 'form':
         return parsedJson && parsedJson.app ? (
           <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-230px)]">
-            <FormRenderer formJson={parsedJson} />
+            <FormRenderer
+              formJson={parsedJson}
+              settings={{ showFormSubmissions: true }}
+            />
           </div>
         ) : (
           <div className="flex items-center justify-center h-64 text-zinc-500">
