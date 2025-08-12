@@ -140,6 +140,49 @@ The `theme` object allows you to customize colors and spacing using CSS variable
 />
 ```
 
+#### texts
+
+The `texts` object allows you to customize all static text in the form:
+
+```tsx
+<FormRenderer 
+  formJson={formDefinition}
+  settings={{
+    texts: {
+      // Navigation
+      stepIndicator: 'Page {currentStep} of {totalSteps}',
+      nextButton: 'Continue',
+      previousButton: 'Go Back',
+      submitButton: 'Send Form',
+      confirmSubmitButton: 'Confirm & Send',
+      reviewConfirmButton: 'Review & Confirm',
+      
+      // Form Submissions
+      submissionsTitle: 'Submitted Data',
+      noSubmissionsText: 'No data submitted yet',
+      
+      // Thank You Page
+      thankYouTitle: '🎉 Success!',
+      thankYouMessage: 'Your form has been submitted successfully.',
+      restartButton: 'Submit Another Response',
+      
+      // Form Info
+      multiPageInfo: 'This form contains {pageCount} pages',
+      
+      // Error Messages
+      invalidFormData: 'Invalid form data',
+      noPagesDefined: 'No pages defined in form',
+      invalidPageIndex: 'Invalid page index',
+      noContentInSection: 'No content in this section',
+    }
+  }}
+/>
+```
+
+**Template Variables**: Some text fields support template variables using `{variableName}` syntax:
+- `stepIndicator`: `{currentStep}`, `{totalSteps}`
+- `multiPageInfo`: `{pageCount}`
+
 ### Styling Examples
 
 #### Simple Override (just change colors)
@@ -187,6 +230,30 @@ The `theme` object allows you to customize colors and spacing using CSS variable
     classes: {
       header: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white p-6 rounded-lg',
       nextButton: 'bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg',
+    },
+    texts: {
+      nextButton: 'Continue →',
+      previousButton: '← Back',
+      stepIndicator: 'Step {currentStep} / {totalSteps}',
+      thankYouTitle: '🎉 Success!',
+    }
+  }}
+/>
+```
+
+#### Internationalization Example
+```tsx
+<FormRenderer 
+  formJson={formDefinition}
+  settings={{
+    texts: {
+      stepIndicator: 'Página {currentStep} de {totalSteps}',
+      nextButton: 'Siguiente',
+      previousButton: 'Anterior',
+      submitButton: 'Enviar',
+      submissionsTitle: 'Datos Enviados',
+      thankYouTitle: '¡Gracias!',
+      restartButton: 'Enviar Otra Respuesta',
     }
   }}
 />

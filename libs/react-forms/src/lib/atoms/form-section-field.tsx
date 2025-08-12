@@ -13,6 +13,7 @@ interface FormSectionFieldProps {
   classes?: {
     field?: string;
     fieldLabel?: string;
+    noContentText?: string;
   };
 }
 
@@ -47,7 +48,7 @@ export const FormSectionField: React.FC<FormSectionFieldProps> = ({
           ))
         ) : (
           <div className="text-sm text-gray-500">
-            No content in this section
+            {classes?.noContentText || 'No content in this section'}
           </div>
         )}
       </div>

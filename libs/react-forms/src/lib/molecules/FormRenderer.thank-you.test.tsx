@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
 import { FormRenderer } from './FormRenderer';
 import { FormDefinition } from '../interfaces/form-interfaces';
 
@@ -35,7 +36,7 @@ const mockThankYouForm: FormDefinition = {
 
 describe('FormRenderer Thank You Page', () => {
   it('should show thank you page after successful form submission', async () => {
-    const mockOnSubmit = jest.fn();
+    const mockOnSubmit = vi.fn();
 
     render(
       <FormRenderer formJson={mockThankYouForm} onSubmit={mockOnSubmit} />
@@ -51,17 +52,17 @@ describe('FormRenderer Thank You Page', () => {
 
     // Wait for thank you page to appear
     await waitFor(() => {
-      expect(screen.getByText('Thank You!')).toBeInTheDocument();
+      expect(screen.getByText('Thank You!')).toBeDefined();
     });
 
     expect(
       screen.getByText('Your form has been submitted successfully.')
-    ).toBeInTheDocument();
-    expect(screen.getByText('Start New Form')).toBeInTheDocument();
+    ).toBeDefined();
+    expect(screen.getByText('Submit Another Response')).toBeDefined();
   });
 
   it('should restart form when restart button is clicked', async () => {
-    const mockOnSubmit = jest.fn();
+    const mockOnSubmit = vi.fn();
 
     render(
       <FormRenderer formJson={mockThankYouForm} onSubmit={mockOnSubmit} />
@@ -76,20 +77,21 @@ describe('FormRenderer Thank You Page', () => {
 
     // Wait for thank you page
     await waitFor(() => {
-      expect(screen.getByText('Thank You!')).toBeInTheDocument();
+      expect(screen.getByText('Thank You!')).toBeDefined();
     });
 
     // Click restart button
-    const restartButton = screen.getByText('Start New Form');
+    const restartButton = screen.getByText('Submit Another Response');
     fireEvent.click(restartButton);
 
     // Should be back to form
     await waitFor(() => {
-      expect(screen.getByText('Test Page')).toBeInTheDocument();
+      expect(screen.getByText('Test Page')).toBeDefined();
     });
 
     // Form should be reset
-    expect(screen.getByLabelText('Name')).toHaveValue('');
+    const resetNameInput = screen.getByLabelText('Name') as HTMLInputElement;
+    expect(resetNameInput.value).toBe('');
   });
 
   it('should not show thank you page if not configured', async () => {
@@ -118,7 +120,7 @@ describe('FormRenderer Thank You Page', () => {
       },
     };
 
-    const mockOnSubmit = jest.fn();
+    const mockOnSubmit = vi.fn();
 
     render(
       <FormRenderer formJson={formWithoutThankYou} onSubmit={mockOnSubmit} />
@@ -133,9 +135,10 @@ describe('FormRenderer Thank You Page', () => {
 
     // Should not show thank you page, form should be reset
     await waitFor(() => {
-      expect(screen.getByText('Test Page')).toBeInTheDocument();
+      expect(screen.getByText('Test Page')).toBeDefined();
     });
 
-    expect(screen.getByLabelText('Name')).toHaveValue('');
+    const finalNameInput = screen.getByLabelText('Name') as HTMLInputElement;
+    expect(finalNameInput.value).toBe('');
   });
 });

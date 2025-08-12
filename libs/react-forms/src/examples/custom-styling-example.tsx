@@ -83,6 +83,12 @@ const simpleOverrideSettings = {
     previousButton:
       'bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-md',
   },
+  texts: {
+    nextButton: 'Continue',
+    previousButton: 'Go Back',
+    submitButton: 'Send Form',
+    stepIndicator: 'Page {currentStep} of {totalSteps}',
+  },
 };
 
 // Example 2: Bootstrap-style classes
@@ -101,6 +107,14 @@ const bootstrapSettings = {
     previousButton: 'btn btn-secondary',
     stepIndicator: 'progress',
     stepIndicatorActive: 'progress-bar',
+  },
+  texts: {
+    nextButton: 'Next',
+    previousButton: 'Previous',
+    submitButton: 'Submit Form',
+    stepIndicator: 'Step {currentStep} of {totalSteps}',
+    submissionsTitle: 'Submitted Data',
+    multiPageInfo: 'This form contains {pageCount} pages',
   },
 };
 
@@ -132,6 +146,15 @@ const themeSettings = {
       'bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold',
     previousButton:
       'bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold',
+  },
+  texts: {
+    nextButton: 'Continue →',
+    previousButton: '← Back',
+    submitButton: 'Submit ✨',
+    stepIndicator: 'Step {currentStep} / {totalSteps}',
+    thankYouTitle: '🎉 Success!',
+    restartButton: 'Submit Another Response',
+    submissionsTitle: '📋 Form Data',
   },
 };
 
@@ -166,7 +189,7 @@ export const CustomStylingExample: React.FC = () => {
         </h3>
         <p className="text-blue-700 text-sm mb-3">
           This form demonstrates the new custom styling system with class
-          overrides and theme support.
+          overrides, theme support, and configurable text labels.
         </p>
         <div className="text-blue-700 text-sm space-y-1">
           <p>
@@ -175,6 +198,7 @@ export const CustomStylingExample: React.FC = () => {
           <ul className="list-disc list-inside ml-2 space-y-1">
             <li>Class-based styling overrides</li>
             <li>Theme-based CSS variable customization</li>
+            <li>Configurable text labels and messages</li>
             <li>Complete style replacement (Bootstrap example)</li>
             <li>Partial style customization</li>
             <li>Responsive design preservation</li>

@@ -39,3 +39,24 @@ export const conditionalClassNames = (
 ): string => {
   return condition ? `${baseClasses} ${conditionalClasses}` : baseClasses;
 };
+
+/**
+ * Utility function to get text with optional override and template variable replacement
+ * @param defaultText - Default text
+ * @param overrideText - Optional override text
+ * @param variables - Variables to replace in the text
+ * @returns The override text if provided, otherwise the default text with variables replaced
+ */
+export const getText = (
+  defaultText: string,
+  overrideText?: string,
+  variables?: Record<string, string | number>
+): string => {
+  const text = overrideText || defaultText;
+
+  if (!variables) return text;
+
+  return text.replace(/\{(\w+)\}/g, (match, key) => {
+    return variables[key]?.toString() || match;
+  });
+};

@@ -110,6 +110,34 @@ export interface FormRendererTheme {
   };
 }
 
+export interface FormRendererTexts {
+  // Navigation
+  stepIndicator?: string; // Default: "Step {currentStep} of {totalSteps}"
+  nextButton?: string; // Default: "Next"
+  previousButton?: string; // Default: "Previous"
+  submitButton?: string; // Default: "Submit"
+  confirmSubmitButton?: string; // Default: "Confirm & Submit"
+  reviewConfirmButton?: string; // Default: "Review & Confirm"
+
+  // Form Submissions
+  submissionsTitle?: string; // Default: "Form Submissions"
+  noSubmissionsText?: string; // Default: "No submissions yet"
+
+  // Thank You Page
+  thankYouTitle?: string; // Default: "Thank You!"
+  thankYouMessage?: string; // Default: "Your form has been submitted successfully."
+  restartButton?: string; // Default: "Submit Another Response"
+
+  // Form Info
+  multiPageInfo?: string; // Default: "This application has {pageCount} pages"
+
+  // Error Messages
+  invalidFormData?: string; // Default: "Invalid form data"
+  noPagesDefined?: string; // Default: "No pages defined in form"
+  invalidPageIndex?: string; // Default: "Invalid page index"
+  noContentInSection?: string; // Default: "No content in this section"
+}
+
 export interface FormRendererClasses {
   // Layout
   container?: string;
@@ -160,6 +188,7 @@ export interface FormRendererSettings {
   showFormSubmissions?: boolean;
   classes?: FormRendererClasses;
   theme?: FormRendererTheme;
+  texts?: FormRendererTexts;
 }
 
 export interface FormRendererProps {

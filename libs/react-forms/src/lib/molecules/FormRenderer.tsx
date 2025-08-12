@@ -20,7 +20,7 @@ import {
   VisibilityCondition,
   ThankYouPage,
 } from '../interfaces/form-interfaces';
-import { getClassNames, mergeClassNames } from '../utils/class-utils';
+import { getClassNames, mergeClassNames, getText } from '../utils/class-utils';
 
 export const FormRenderer: React.FC<FormRendererProps> = ({
   formJson,
@@ -586,7 +586,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             settings.classes?.stepIndicatorItem
           )}
         >
-          Step {currentStep} of {totalSteps}
+          {getText(
+            'Step {currentStep} of {totalSteps}',
+            settings.texts?.stepIndicator,
+            { currentStep, totalSteps }
+          )}
         </div>
         <div
           className={getClassNames(
@@ -620,18 +624,20 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       currentPage && currentPage.isConfirmationPage === true;
 
     // Determine button text based on page type
-    let nextButtonText = 'Next';
+    let nextButtonText = settings.texts?.nextButton || 'Next';
     if (isEndPage || currentStep === totalSteps) {
-      nextButtonText = 'Submit';
+      nextButtonText = settings.texts?.submitButton || 'Submit';
     } else if (isConfirmationPage) {
-      nextButtonText = 'Confirm & Submit';
+      nextButtonText =
+        settings.texts?.confirmSubmitButton || 'Confirm & Submit';
     } else {
       // Check if next page is a confirmation page
       const nextPageIndex = currentStep;
       if (nextPageIndex < totalSteps) {
         const nextPage = formJson.app.pages[nextPageIndex];
         if (nextPage && nextPage.isConfirmationPage) {
-          nextButtonText = 'Review & Confirm';
+          nextButtonText =
+            settings.texts?.reviewConfirmButton || 'Review & Confirm';
         }
       }
     }
@@ -656,7 +662,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           disabled={currentStep === 1}
           onClick={handlePrevious}
         >
-          Previous
+          {settings.texts?.previousButton || 'Previous'}
         </button>
         <button
           type="button"
@@ -674,14 +680,22 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   const renderMultiStepForm = (): React.ReactElement => {
     if (!formJson.app.pages || formJson.app.pages.length === 0) {
-      return <div className="p-4 text-red-500">No pages defined in form</div>;
+      return (
+        <div className="p-4 text-red-500">
+          {settings.texts?.noPagesDefined || 'No pages defined in form'}
+        </div>
+      );
     }
 
     const { currentStep, totalSteps } = getCurrentStep();
     const currentPageIndex = currentStep - 1;
 
     if (currentPageIndex < 0 || currentPageIndex >= formJson.app.pages.length) {
-      return <div className="p-4 text-red-500">Invalid page index</div>;
+      return (
+        <div className="p-4 text-red-500">
+          {settings.texts?.invalidPageIndex || 'Invalid page index'}
+        </div>
+      );
     }
 
     const currentPage = formJson.app.pages[currentPageIndex];
@@ -697,7 +711,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   const renderSubmissionData = (): React.ReactElement => {
     if (Object.keys(formSubmissions).length === 0) {
-      return <div className="text-gray-500 italic">No submissions yet</div>;
+      return (
+        <div className="text-gray-500 italic">
+          {settings.texts?.noSubmissionsText || 'No submissions yet'}
+        </div>
+      );
     }
 
     return (
@@ -1072,6 +1090,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             classes={{
               field: settings.classes?.field,
               fieldLabel: settings.classes?.fieldLabel,
+              noContentText: settings.texts?.noContentInSection,
             }}
           />
         );
@@ -1282,16 +1301,38 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     return (
       <div className="w-full">
-        <div className="mb-4 bg-green-50 p-4 rounded-md">
-          <h1 className="text-2xl font-bold text-green-700">
-            {thankYouPage.title || 'Thank You!'}
+        <div
+          className={getClassNames(
+            'mb-4 bg-green-50 p-4 rounded-md',
+            settings.classes?.thankYouContainer
+          )}
+        >
+          <h1
+            className={getClassNames(
+              'text-2xl font-bold text-green-700',
+              settings.classes?.thankYouTitle
+            )}
+          >
+            {thankYouPage.title ||
+              settings.texts?.thankYouTitle ||
+              'Thank You!'}
           </h1>
         </div>
 
-        <div className="bg-white rounded-md shadow-sm p-6">
+        <div
+          className={getClassNames(
+            'bg-white rounded-md shadow-sm p-6',
+            settings.classes?.thankYouContainer
+          )}
+        >
           {thankYouPage.message && (
             <div className="mb-6">
-              <p className="text-lg text-gray-700 leading-relaxed">
+              <p
+                className={getClassNames(
+                  'text-lg text-gray-700 leading-relaxed',
+                  settings.classes?.thankYouMessage
+                )}
+              >
                 {thankYouPage.message}
               </p>
             </div>
@@ -1310,9 +1351,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               <button
                 type="button"
                 onClick={() => handleThankYouAction('restart')}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                className={getClassNames(
+                  'px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
+                  settings.classes?.thankYouButton
+                )}
               >
-                Start New Form
+                {settings.texts?.restartButton || 'Submit Another Response'}
               </button>
             )}
 
@@ -1384,15 +1428,6 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     );
   };
 
-  if (!formJson || !formJson.app) {
-    return <div className="p-4 text-red-500">Invalid form data</div>;
-  }
-
-  // Show thank you page if form is submitted and thank you page is configured
-  if (showThankYouPage) {
-    return renderThankYouPage();
-  }
-
   // Generate theme styles object
   const themeStyles = useMemo(() => {
     if (!settings.theme) return {};
@@ -1435,60 +1470,75 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       className={getClassNames('w-full', settings.classes?.container)}
       style={themeStyles}
     >
-      <div
-        className={getClassNames(
-          'mb-4 bg-indigo-50 p-4 rounded-md',
-          settings.classes?.header
-        )}
-      >
-        <h1
-          className={getClassNames(
-            'text-2xl font-bold text-indigo-700',
-            settings.classes?.header
-          )}
-        >
-          {formJson.app.title}
-        </h1>
-        {Array.isArray(formJson.app.pages) &&
-          formJson.app.pages.length > 1 &&
-          !disabled && (
-            <div
+      {/* Check for invalid form data */}
+      {!formJson || !formJson.app ? (
+        <div className="p-4 text-red-500">
+          {settings.texts?.invalidFormData || 'Invalid form data'}
+        </div>
+      ) : showThankYouPage ? (
+        renderThankYouPage()
+      ) : (
+        <>
+          <div
+            className={getClassNames(
+              'mb-4 bg-indigo-50 p-4 rounded-md',
+              settings.classes?.header
+            )}
+          >
+            <h1
               className={getClassNames(
-                'mt-2 text-sm text-indigo-500',
+                'text-2xl font-bold text-indigo-700',
                 settings.classes?.header
               )}
             >
-              This application has {formJson.app.pages.length} pages
+              {formJson.app.title}
+            </h1>
+            {Array.isArray(formJson.app.pages) &&
+              formJson.app.pages.length > 1 &&
+              !disabled && (
+                <div
+                  className={getClassNames(
+                    'mt-2 text-sm text-indigo-500',
+                    settings.classes?.header
+                  )}
+                >
+                  {getText(
+                    'This application has {pageCount} pages',
+                    settings.texts?.multiPageInfo,
+                    { pageCount: formJson.app.pages.length }
+                  )}
+                </div>
+              )}
+          </div>
+
+          <div className="space-y-8">{renderMultiStepForm()}</div>
+
+          {hasSubmissions && !disabled && settings.showFormSubmissions && (
+            <div
+              className={getClassNames(
+                'mt-8 border-t pt-6',
+                settings.classes?.submissionsContainer
+              )}
+            >
+              <h3
+                className={getClassNames(
+                  'text-lg font-medium mb-4',
+                  settings.classes?.submissionsTitle
+                )}
+              >
+                {settings.texts?.submissionsTitle || 'Form Submissions'}
+              </h3>
+              <div
+                className={getClassNames(
+                  'bg-gray-50 p-4 rounded-md',
+                  settings.classes?.submissionsData
+                )}
+              >
+                {renderSubmissionData()}
+              </div>
             </div>
           )}
-      </div>
-
-      <div className="space-y-8">{renderMultiStepForm()}</div>
-
-      {hasSubmissions && !disabled && settings.showFormSubmissions && (
-        <div
-          className={getClassNames(
-            'mt-8 border-t pt-6',
-            settings.classes?.submissionsContainer
-          )}
-        >
-          <h3
-            className={getClassNames(
-              'text-lg font-medium mb-4',
-              settings.classes?.submissionsTitle
-            )}
-          >
-            Form Submissions
-          </h3>
-          <div
-            className={getClassNames(
-              'bg-gray-50 p-4 rounded-md',
-              settings.classes?.submissionsData
-            )}
-          >
-            {renderSubmissionData()}
-          </div>
-        </div>
+        </>
       )}
     </div>
   );
