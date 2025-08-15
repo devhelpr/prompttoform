@@ -191,9 +191,23 @@ export interface FormRendererSettings {
   texts?: FormRendererTexts;
 }
 
+export interface PageChangeEvent {
+  pageId: string;
+  pageIndex: number;
+  pageTitle: string;
+  totalPages: number;
+  isFirstPage: boolean;
+  isLastPage: boolean;
+  isEndPage: boolean;
+  isConfirmationPage: boolean;
+  previousPageId?: string;
+  previousPageIndex?: number;
+}
+
 export interface FormRendererProps {
   formJson: FormDefinition;
   onSubmit?: (formValues: FormValues) => void;
+  onPageChange?: (event: PageChangeEvent) => void;
   disabled?: boolean;
   prefixId?: string;
   settings?: FormRendererSettings;

@@ -19,12 +19,14 @@ import {
   ValidationError,
   VisibilityCondition,
   ThankYouPage,
+  PageChangeEvent,
 } from '../interfaces/form-interfaces';
 import { getClassNames, mergeClassNames, getText } from '../utils/class-utils';
 
 export const FormRenderer: React.FC<FormRendererProps> = ({
   formJson,
   onSubmit,
+  onPageChange,
   disabled = false,
   prefixId,
   settings = {},
@@ -46,6 +48,36 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     Record<string, Record<string, unknown>[]>
   >({});
   const [showThankYouPage, setShowThankYouPage] = useState(false);
+
+  // Helper function to trigger page change event
+  const triggerPageChangeEvent = useCallback(
+    (newPageIndex: number, previousPageIndex?: number) => {
+      if (!onPageChange || !formJson?.app?.pages) return;
+
+      const newPage = formJson.app.pages[newPageIndex];
+      const previousPage =
+        previousPageIndex !== undefined
+          ? formJson.app.pages[previousPageIndex]
+          : undefined;
+      const totalPages = formJson.app.pages.length;
+
+      const event: PageChangeEvent = {
+        pageId: newPage.id,
+        pageIndex: newPageIndex,
+        pageTitle: newPage.title,
+        totalPages,
+        isFirstPage: newPageIndex === 0,
+        isLastPage: newPageIndex === totalPages - 1,
+        isEndPage: newPage.isEndPage === true,
+        isConfirmationPage: newPage.isConfirmationPage === true,
+        previousPageId: previousPage?.id,
+        previousPageIndex: previousPageIndex,
+      };
+
+      onPageChange(event);
+    },
+    [onPageChange, formJson]
+  );
 
   // Helper function to get field label for error messages
   const getFieldLabel = (component: FormComponentFieldProps): string => {
@@ -348,6 +380,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     validateForm();
   }, [validateForm]);
 
+  // Trigger initial page change event when component mounts
+  useEffect(() => {
+    if (formJson?.app?.pages && formJson.app.pages.length > 0) {
+      triggerPageChangeEvent(0);
+    }
+  }, [triggerPageChangeEvent]);
+
   const handleInputChange = (id: string, value: unknown) => {
     setFormValues((prev) => ({
       ...prev,
@@ -386,6 +425,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       setBlurredFields({});
       setIsSubmitted(false);
       setCurrentStepIndex(0);
+      triggerPageChangeEvent(0);
       setStepHistory([0]);
     }
   };
@@ -455,6 +495,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         if (nextPageIndex !== -1) {
           setStepHistory((prev) => [...prev, nextPageIndex]);
           setCurrentStepIndex(nextPageIndex);
+          triggerPageChangeEvent(nextPageIndex, currentStepIndex);
           setIsSubmitted(false);
           return;
         }
@@ -463,8 +504,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       // If no specific next page is defined, move to the next page in sequence
       const totalSteps = formJson.app.pages?.length || 0;
       if (currentStepIndex < totalSteps - 1) {
-        setStepHistory((prev) => [...prev, currentStepIndex + 1]);
-        setCurrentStepIndex((prev) => prev + 1);
+        const nextIndex = currentStepIndex + 1;
+        setStepHistory((prev) => [...prev, nextIndex]);
+        setCurrentStepIndex(nextIndex);
+        triggerPageChangeEvent(nextIndex, currentStepIndex);
         setIsSubmitted(false);
       } else {
         handleFormSubmit('multistep-form');
@@ -474,12 +517,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   const handlePrevious = () => {
     if (stepHistory.length > 1) {
+      const previousIndex = stepHistory[stepHistory.length - 2];
       setStepHistory((prev) => {
         const newHistory = [...prev];
         newHistory.pop(); // Remove current step
         return newHistory;
       });
-      setCurrentStepIndex(stepHistory[stepHistory.length - 2]);
+      setCurrentStepIndex(previousIndex);
+      triggerPageChangeEvent(previousIndex, currentStepIndex);
     }
   };
 
@@ -489,6 +534,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     setBlurredFields({});
     setIsSubmitted(false);
     setCurrentStepIndex(0);
+    triggerPageChangeEvent(0);
     setStepHistory([0]);
     setShowThankYouPage(false);
   };
