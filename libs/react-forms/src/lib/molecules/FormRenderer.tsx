@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import {
   TextFormField,
   FormInputField,
@@ -48,6 +54,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     Record<string, Record<string, unknown>[]>
   >({});
   const [showThankYouPage, setShowThankYouPage] = useState(false);
+  const initialEventTriggeredRef = useRef(false);
 
   // Helper function to trigger page change event
   const triggerPageChangeEvent = useCallback(
@@ -380,12 +387,39 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     validateForm();
   }, [validateForm]);
 
+  // Reset initial event trigger when form changes
+  useEffect(() => {
+    initialEventTriggeredRef.current = false;
+  }, [formJson?.app?.pages]);
+
   // Trigger initial page change event when component mounts
   useEffect(() => {
-    if (formJson?.app?.pages && formJson.app.pages.length > 0) {
-      triggerPageChangeEvent(0);
+    if (
+      onPageChange &&
+      formJson?.app?.pages &&
+      formJson.app.pages.length > 0 &&
+      !initialEventTriggeredRef.current
+    ) {
+      const initialPage = formJson.app.pages[0];
+      const totalPages = formJson.app.pages.length;
+
+      const event: PageChangeEvent = {
+        pageId: initialPage.id,
+        pageIndex: 0,
+        pageTitle: initialPage.title,
+        totalPages,
+        isFirstPage: true,
+        isLastPage: totalPages === 1,
+        isEndPage: initialPage.isEndPage === true,
+        isConfirmationPage: initialPage.isConfirmationPage === true,
+        previousPageId: undefined,
+        previousPageIndex: undefined,
+      };
+
+      onPageChange(event);
+      initialEventTriggeredRef.current = true;
     }
-  }, [triggerPageChangeEvent]);
+  }, [onPageChange, formJson?.app?.pages]);
 
   const handleInputChange = (id: string, value: unknown) => {
     setFormValues((prev) => ({

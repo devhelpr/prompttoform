@@ -1,6 +1,6 @@
 import { UIJson } from '../../types/form-generator.types';
 import { ViewMode } from './AppStateManager';
-import { FormRenderer } from '@devhelpr/react-forms';
+import { FormRenderer, PageChangeEvent } from '@devhelpr/react-forms';
 import FormFlowMermaid from './FormFlowMermaid';
 import { JsonValidator } from './JsonValidator';
 import { useEffect, useMemo, useState } from 'react';
@@ -33,6 +33,11 @@ export function FormPreviewPanel({
 }: FormPreviewPanelProps) {
   const [jsonErrors, setJsonErrors] = useState<string[]>([]);
   const [isJsonValid, setIsJsonValid] = useState(true);
+  const [pageChangeEvents, setPageChangeEvents] = useState<PageChangeEvent[]>(
+    []
+  );
+  const [currentPageEvent, setCurrentPageEvent] =
+    useState<PageChangeEvent | null>(null);
 
   const tabs = useMemo(
     () => [
@@ -92,6 +97,17 @@ export function FormPreviewPanel({
     setJsonErrors(errors);
   };
 
+  const handlePageChange = (event: PageChangeEvent) => {
+    console.log('Page change event in preview:', event);
+    setCurrentPageEvent(event);
+    setPageChangeEvents((prev) => [...prev, event]);
+  };
+
+  const clearPageChangeEvents = () => {
+    setPageChangeEvents([]);
+    setCurrentPageEvent(null);
+  };
+
   const handleUpdatePreview = () => {
     if (!isJsonValid) {
       return;
@@ -118,11 +134,113 @@ export function FormPreviewPanel({
     switch (activeTab) {
       case 'form':
         return parsedJson && parsedJson.app ? (
-          <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-230px)]">
-            <FormRenderer
-              formJson={parsedJson}
-              settings={{ showFormSubmissions: true }}
-            />
+          <div className="space-y-4">
+            {/* Page Change Event Display */}
+            {currentPageEvent ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-sm font-semibold text-blue-800">
+                    Current Page Change Event
+                  </h3>
+                  <button
+                    onClick={clearPageChangeEvents}
+                    className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                  >
+                    Clear Events
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p>
+                      <strong>Page ID:</strong> {currentPageEvent.pageId}
+                    </p>
+                    <p>
+                      <strong>Page Title:</strong> {currentPageEvent.pageTitle}
+                    </p>
+                    <p>
+                      <strong>Page Index:</strong>{' '}
+                      {currentPageEvent.pageIndex + 1} of{' '}
+                      {currentPageEvent.totalPages}
+                    </p>
+                    <p>
+                      <strong>Type:</strong>
+                      {currentPageEvent.isFirstPage && ' (First Page)'}
+                      {currentPageEvent.isLastPage && ' (Last Page)'}
+                      {currentPageEvent.isEndPage && ' (End Page)'}
+                      {currentPageEvent.isConfirmationPage &&
+                        ' (Confirmation Page)'}
+                    </p>
+                  </div>
+                  <div>
+                    {currentPageEvent.previousPageId && (
+                      <p>
+                        <strong>Previous Page ID:</strong>{' '}
+                        {currentPageEvent.previousPageId}
+                      </p>
+                    )}
+                    {currentPageEvent.previousPageIndex !== undefined && (
+                      <p>
+                        <strong>Previous Page Index:</strong>{' '}
+                        {currentPageEvent.previousPageIndex + 1}
+                      </p>
+                    )}
+                    <p>
+                      <strong>Total Pages:</strong>{' '}
+                      {currentPageEvent.totalPages}
+                    </p>
+                    <p>
+                      <strong>Event Count:</strong> {pageChangeEvents.length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-semibold text-gray-800">
+                    Page Change Events
+                  </h3>
+                  <span className="text-xs text-gray-500">
+                    Navigate through the form to see page change events
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Form Renderer */}
+            <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto max-h-[calc(100vh-400px)]">
+              <FormRenderer
+                formJson={parsedJson}
+                settings={{ showFormSubmissions: true }}
+                onPageChange={handlePageChange}
+              />
+            </div>
+
+            {/* Page Change Event History */}
+            {pageChangeEvents.length > 0 && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-gray-800 mb-2">
+                  Page Change Event History ({pageChangeEvents.length} events)
+                </h3>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {pageChangeEvents.map((event, index) => (
+                    <div
+                      key={index}
+                      className="text-xs bg-white p-2 rounded border"
+                    >
+                      <div className="font-medium">
+                        {event.pageTitle} (Step {event.pageIndex + 1})
+                      </div>
+                      <div className="text-gray-600">
+                        {event.previousPageId
+                          ? `From: ${event.previousPageId}`
+                          : 'Initial page'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex items-center justify-center h-64 text-zinc-500">
