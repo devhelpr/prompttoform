@@ -6,7 +6,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 p-4 sm:p-8 md:p-12">
+    <div className="h-full min-h-0 bg-gradient-to-br from-zinc-50 to-zinc-100 p-4 sm:p-8 md:p-12">
       <div className="container mx-auto max-w-4xl">
         <div className="bg-white rounded-3xl shadow-xl shadow-zinc-200/50 backdrop-blur-sm animate-fade-in">
           <div className="px-6 py-8 sm:px-8 sm:py-10">
