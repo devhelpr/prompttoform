@@ -52,7 +52,7 @@ export function FormEditorLayout({
   };
 
   return (
-    <div className="grid grid-cols-[1fr] md:grid-cols-[auto_1fr] relative">
+    <div className="grid grid-cols-[1fr] md:grid-cols-[auto_1fr] relative h-full min-h-0">
       {/* Mobile Overlay */}
       {isMobile && showMobileOverlay && (
         <div
@@ -63,7 +63,7 @@ export function FormEditorLayout({
 
       {/* Sidebar */}
       <div
-        className={`grid grid-rows-[auto_1fr] overflow-clip  bg-white border-r border-zinc-200 transition-all duration-300 ease-in-out ${
+        className={`grid grid-rows-[auto_1fr] h-full min-h-0 overflow-clip  bg-white border-r border-zinc-200 transition-all duration-300 ease-in-out ${
           isMobile
             ? showMobileOverlay
               ? 'fixed left-0 top-0 h-full w-80 z-50 shadow-xl'
@@ -101,7 +101,7 @@ export function FormEditorLayout({
         </div>
 
         {/* Fixed-width content container with clip-path animation */}
-        <div className="relative">
+        <div className="relative h-full min-h-0">
           {/* Sidebar Content - Fixed width, clipped during animation */}
           <div
             className={`absolute __overflow-y-auto overflow-clip inset-0 w-80 lg:w-96 transition-all duration-300 ease-in-out ${
@@ -143,7 +143,7 @@ export function FormEditorLayout({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="grid grid-rows-[1fr] h-full min-h-0">
         {/* Menu Bar - Show when sidebar is collapsed or on mobile */}
         {showNavbar && (sidebarCollapsed || isMobile) && (
           <ResponsiveNavbar
@@ -179,8 +179,10 @@ export function FormEditorLayout({
         )}
 
         {/* Main Content */}
-        <div className="grid flex-1 overflow-hidden bg-zinc-50 min-w-0">
-          <div className="grid grid-rows-[1fr]">{mainContent}</div>
+        <div className="grid flex-1 overflow-hidden bg-zinc-50 min-w-0 h-full min-h-0">
+          <div className="grid grid-rows-[1fr] h-full min-h-0">
+            {mainContent}
+          </div>
         </div>
       </div>
     </div>

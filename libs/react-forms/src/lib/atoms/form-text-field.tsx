@@ -1,4 +1,5 @@
-import React from "react";
+import React from 'react';
+import { getClassNames } from '../utils/class-utils';
 
 interface TextFormFieldProps {
   label?: string;
@@ -7,27 +8,44 @@ interface TextFormFieldProps {
     text?: string;
     helperText?: string;
   };
+  classes?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldText?: string;
+  };
 }
 
 export const TextFormField: React.FC<TextFormFieldProps> = ({
   label,
   props,
+  classes,
 }) => {
   return (
-    <div className="mb-4">
+    <div className={getClassNames('mb-4', classes?.field)}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          className={getClassNames(
+            'block text-sm font-medium text-gray-700 mb-1',
+            classes?.fieldLabel
+          )}
+        >
           {label}
         </label>
       )}
-      {typeof props?.content === "string" && (
-        <p className="text-gray-700">{props.content}</p>
+      {typeof props?.content === 'string' && (
+        <p className={getClassNames('text-gray-700', classes?.fieldText)}>
+          {props.content}
+        </p>
       )}
-      {typeof props?.text === "string" && (
-        <p className="text-gray-700">{props.text}</p>
+      {typeof props?.text === 'string' && (
+        <p className={getClassNames('text-gray-700', classes?.fieldText)}>
+          {props.text}
+        </p>
       )}
-      {typeof props?.helperText === "string" && (
-        <p className="text-gray-700">{props.helperText}</p>
+      {typeof props?.helperText === 'string' && (
+        <p className={getClassNames('text-gray-700', classes?.fieldText)}>
+          {props.helperText}
+        </p>
       )}
     </div>
   );

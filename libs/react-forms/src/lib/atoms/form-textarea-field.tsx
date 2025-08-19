@@ -1,4 +1,5 @@
 import React from 'react';
+import { getClassNames } from '../utils/class-utils';
 
 interface FormTextareaFieldProps {
   fieldId: string;
@@ -16,6 +17,13 @@ interface FormTextareaFieldProps {
   showError: boolean;
   validationErrors: string[];
   disabled?: boolean;
+  classes?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldTextarea?: string;
+    fieldError?: string;
+    fieldHelperText?: string;
+  };
 }
 
 export const FormTextareaField: React.FC<FormTextareaFieldProps> = ({
@@ -29,6 +37,7 @@ export const FormTextareaField: React.FC<FormTextareaFieldProps> = ({
   showError,
   validationErrors,
   disabled = false,
+  classes,
 }) => {
   const errorId = `${fieldId}-error`;
   const helperId = `${fieldId}-helper`;
@@ -39,10 +48,13 @@ export const FormTextareaField: React.FC<FormTextareaFieldProps> = ({
     : undefined;
 
   return (
-    <div className="mb-4">
+    <div className={getClassNames('mb-4', classes?.field)}>
       <label
         htmlFor={fieldId}
-        className="block text-sm font-medium text-gray-700 mb-1"
+        className={getClassNames(
+          'block text-sm font-medium text-gray-700 mb-1',
+          classes?.fieldLabel
+        )}
       >
         {typeof label === 'string' ? label : ''}
         {!!validation?.required && (
@@ -53,9 +65,12 @@ export const FormTextareaField: React.FC<FormTextareaFieldProps> = ({
       </label>
       <textarea
         id={fieldId}
-        className={`w-full p-2 border ${
-          showError ? 'border-red-500' : 'border-gray-300'
-        } rounded-md ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+        className={getClassNames(
+          `w-full p-2 border ${
+            showError ? 'border-red-500' : 'border-gray-300'
+          } rounded-md ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`,
+          classes?.fieldTextarea
+        )}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
@@ -69,7 +84,10 @@ export const FormTextareaField: React.FC<FormTextareaFieldProps> = ({
       {showError && (
         <div
           id={errorId}
-          className="mt-1 text-sm text-red-500"
+          className={getClassNames(
+            'mt-1 text-sm text-red-500',
+            classes?.fieldError
+          )}
           role="alert"
           aria-live="polite"
         >
@@ -79,7 +97,13 @@ export const FormTextareaField: React.FC<FormTextareaFieldProps> = ({
         </div>
       )}
       {typeof props?.helperText === 'string' && !showError && (
-        <p id={helperId} className="mt-1 text-sm text-gray-500">
+        <p
+          id={helperId}
+          className={getClassNames(
+            'mt-1 text-sm text-gray-500',
+            classes?.fieldHelperText
+          )}
+        >
           {props.helperText}
         </p>
       )}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { getClassNames } from '../utils/class-utils';
 import { FormComponentFieldProps } from '../interfaces/form-interfaces';
 
 interface FormSectionFieldProps {
@@ -9,6 +10,11 @@ interface FormSectionFieldProps {
     component: FormComponentFieldProps,
     parentId?: string
   ) => React.ReactElement;
+  classes?: {
+    field?: string;
+    fieldLabel?: string;
+    noContentText?: string;
+  };
 }
 
 export const FormSectionField: React.FC<FormSectionFieldProps> = ({
@@ -16,11 +22,24 @@ export const FormSectionField: React.FC<FormSectionFieldProps> = ({
   label,
   children,
   renderComponent,
+  classes,
 }) => {
   return (
-    <div className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
+    <div
+      className={getClassNames(
+        'mb-6 p-4 border border-gray-200 rounded-md bg-gray-50',
+        classes?.field
+      )}
+    >
       {label && (
-        <h3 className="text-lg font-medium mb-4 text-indigo-700">{label}</h3>
+        <h3
+          className={getClassNames(
+            'text-lg font-medium mb-4 text-indigo-700',
+            classes?.fieldLabel
+          )}
+        >
+          {label}
+        </h3>
       )}
       <div className="space-y-3">
         {Array.isArray(children) && children.length > 0 ? (
@@ -29,7 +48,7 @@ export const FormSectionField: React.FC<FormSectionFieldProps> = ({
           ))
         ) : (
           <div className="text-sm text-gray-500">
-            No content in this section
+            {classes?.noContentText || 'No content in this section'}
           </div>
         )}
       </div>

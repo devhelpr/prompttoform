@@ -92,11 +92,125 @@ export interface FormDefinition {
   };
 }
 
+export interface FormRendererTheme {
+  colors?: {
+    primary?: string;
+    secondary?: string;
+    error?: string;
+    success?: string;
+    background?: string;
+    text?: string;
+    border?: string;
+  };
+  spacing?: {
+    xs?: string;
+    sm?: string;
+    md?: string;
+    lg?: string;
+  };
+}
+
+export interface FormRendererTexts {
+  // Navigation
+  stepIndicator?: string; // Default: "Step {currentStep} of {totalSteps}"
+  nextButton?: string; // Default: "Next"
+  previousButton?: string; // Default: "Previous"
+  submitButton?: string; // Default: "Submit"
+  confirmSubmitButton?: string; // Default: "Confirm & Submit"
+  reviewConfirmButton?: string; // Default: "Review & Confirm"
+
+  // Form Submissions
+  submissionsTitle?: string; // Default: "Form Submissions"
+  noSubmissionsText?: string; // Default: "No submissions yet"
+
+  // Thank You Page
+  thankYouTitle?: string; // Default: "Thank You!"
+  thankYouMessage?: string; // Default: "Your form has been submitted successfully."
+  restartButton?: string; // Default: "Submit Another Response"
+
+  // Form Info
+  multiPageInfo?: string; // Default: "This application has {pageCount} pages"
+
+  // Error Messages
+  invalidFormData?: string; // Default: "Invalid form data"
+  noPagesDefined?: string; // Default: "No pages defined in form"
+  invalidPageIndex?: string; // Default: "Invalid page index"
+  noContentInSection?: string; // Default: "No content in this section"
+}
+
+export interface FormRendererClasses {
+  // Layout
+  container?: string;
+  header?: string;
+  page?: string;
+
+  // Navigation
+  stepIndicator?: string;
+  stepIndicatorItem?: string;
+  stepIndicatorActive?: string;
+  navigationButtons?: string;
+  nextButton?: string;
+  previousButton?: string;
+
+  // Form Fields
+  field?: string;
+  fieldLabel?: string;
+  fieldInput?: string;
+  fieldTextarea?: string;
+  fieldSelect?: string;
+  fieldCheckbox?: string;
+  fieldRadio?: string;
+  fieldDate?: string;
+  fieldText?: string;
+  fieldError?: string;
+  fieldHelperText?: string;
+
+  // Special Components
+  confirmationField?: string;
+  arrayField?: string;
+  arrayItem?: string;
+  arrayAddButton?: string;
+  arrayRemoveButton?: string;
+
+  // Submissions
+  submissionsContainer?: string;
+  submissionsTitle?: string;
+  submissionsData?: string;
+
+  // Thank You Page
+  thankYouContainer?: string;
+  thankYouTitle?: string;
+  thankYouMessage?: string;
+  thankYouButton?: string;
+}
+
+export interface FormRendererSettings {
+  showFormSubmissions?: boolean;
+  classes?: FormRendererClasses;
+  theme?: FormRendererTheme;
+  texts?: FormRendererTexts;
+}
+
+export interface PageChangeEvent {
+  pageId: string;
+  pageIndex: number;
+  pageTitle: string;
+  totalPages: number;
+  isFirstPage: boolean;
+  isLastPage: boolean;
+  isEndPage: boolean;
+  isConfirmationPage: boolean;
+  previousPageId?: string;
+  previousPageIndex?: number;
+}
+
 export interface FormRendererProps {
   formJson: FormDefinition;
   onSubmit?: (formValues: FormValues) => void;
+  onPageChange?: (event: PageChangeEvent) => void;
   disabled?: boolean;
   prefixId?: string;
+  settings?: FormRendererSettings;
 }
 
 export interface FormValues {

@@ -58,7 +58,7 @@ describe('FormRenderer Thank You Page', () => {
     expect(
       screen.getByText('Your form has been submitted successfully.')
     ).toBeDefined();
-    expect(screen.getByText('Start New Form')).toBeDefined();
+    expect(screen.getByText('Submit Another Response')).toBeDefined();
   });
 
   it('should restart form when restart button is clicked', async () => {
@@ -81,7 +81,7 @@ describe('FormRenderer Thank You Page', () => {
     });
 
     // Click restart button
-    const restartButton = screen.getByText('Start New Form');
+    const restartButton = screen.getByText('Submit Another Response');
     fireEvent.click(restartButton);
 
     // Should be back to form

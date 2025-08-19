@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { getClassNames } from '../utils/class-utils';
 import { Option } from '../interfaces/form-interfaces';
 
 interface FormCheckboxFieldProps {
@@ -15,6 +15,13 @@ interface FormCheckboxFieldProps {
   showError: boolean;
   validationErrors: string[];
   disabled?: boolean;
+  classes?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldCheckbox?: string;
+    fieldError?: string;
+    fieldHelperText?: string;
+  };
 }
 
 export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
@@ -28,6 +35,7 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
   showError,
   validationErrors,
   disabled = false,
+  classes,
 }) => {
   const errorId = `${fieldId}-error`;
   const helperId = `${fieldId}-helper`;
@@ -40,14 +48,17 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
   // Handle single checkbox without options
   if (!props?.options) {
     return (
-      <div className="mb-4">
+      <div className={getClassNames('mb-4', classes?.field)}>
         <div className="flex items-center">
           <input
             type="checkbox"
             id={fieldId}
-            className={`h-4 w-4 text-indigo-600 focus:ring-indigo-500 ${
-              disabled ? 'cursor-not-allowed opacity-50' : ''
-            }`}
+            className={getClassNames(
+              `h-4 w-4 text-indigo-600 focus:ring-indigo-500 ${
+                disabled ? 'cursor-not-allowed opacity-50' : ''
+              }`,
+              classes?.fieldCheckbox
+            )}
             checked={value === true}
             onChange={(e) => onChange(e.target.checked)}
             onBlur={onBlur}
@@ -57,7 +68,13 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
             aria-describedby={describedBy}
             disabled={disabled}
           />
-          <label htmlFor={fieldId} className="ml-2 text-sm text-gray-700">
+          <label
+            htmlFor={fieldId}
+            className={getClassNames(
+              'ml-2 text-sm text-gray-700',
+              classes?.fieldLabel
+            )}
+          >
             {typeof label === 'string' ? label : ''}
             {!!validation?.required && (
               <span className="text-red-500 ml-1" aria-hidden="true">
@@ -69,7 +86,10 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
         {showError && (
           <div
             id={errorId}
-            className="mt-1 text-sm text-red-500"
+            className={getClassNames(
+              'mt-1 text-sm text-red-500',
+              classes?.fieldError
+            )}
             role="alert"
             aria-live="polite"
           >
@@ -79,7 +99,13 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
           </div>
         )}
         {typeof props?.helperText === 'string' && !showError && (
-          <p id={helperId} className="mt-1 text-sm text-gray-500">
+          <p
+            id={helperId}
+            className={getClassNames(
+              'mt-1 text-sm text-gray-500',
+              classes?.fieldHelperText
+            )}
+          >
             {props.helperText}
           </p>
         )}
@@ -91,8 +117,13 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
   const options = props.options as Option[];
 
   return (
-    <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+    <div className={getClassNames('mb-4', classes?.field)}>
+      <label
+        className={getClassNames(
+          'block text-sm font-medium text-gray-700 mb-1',
+          classes?.fieldLabel
+        )}
+      >
         {typeof label === 'string' ? label : ''}
         {!!validation?.required && (
           <span className="text-red-500 ml-1" aria-hidden="true">
@@ -133,15 +164,21 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
                     onChange(newValues);
                   }}
                   onBlur={onBlur}
-                  className={`h-4 w-4 text-indigo-600 focus:ring-indigo-500 ${
-                    disabled ? 'cursor-not-allowed opacity-50' : ''
-                  }`}
+                  className={getClassNames(
+                    `h-4 w-4 text-indigo-600 focus:ring-indigo-500 ${
+                      disabled ? 'cursor-not-allowed opacity-50' : ''
+                    }`,
+                    classes?.fieldCheckbox
+                  )}
                   required={!!validation?.required}
                   disabled={disabled}
                 />
                 <label
                   htmlFor={`${fieldId}-${index}`}
-                  className="ml-2 text-sm text-gray-700"
+                  className={getClassNames(
+                    'ml-2 text-sm text-gray-700',
+                    classes?.fieldLabel
+                  )}
                 >
                   {optionLabel}
                 </label>
@@ -152,7 +189,10 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
       {showError && (
         <div
           id={errorId}
-          className="mt-1 text-sm text-red-500"
+          className={getClassNames(
+            'mt-1 text-sm text-red-500',
+            classes?.fieldError
+          )}
           role="alert"
           aria-live="polite"
         >
@@ -162,7 +202,13 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
         </div>
       )}
       {typeof props?.helperText === 'string' && !showError && (
-        <p id={helperId} className="mt-1 text-sm text-gray-500">
+        <p
+          id={helperId}
+          className={getClassNames(
+            'mt-1 text-sm text-gray-500',
+            classes?.fieldHelperText
+          )}
+        >
           {props.helperText}
         </p>
       )}

@@ -15,8 +15,8 @@ export function MainLayout({
   onImportJsonClick,
 }: MainLayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100">
-      <div className="grid grid-rows-[auto_1fr] min-h-screen">
+    <div className="h-full min-h-0 bg-gradient-to-br from-zinc-50 to-zinc-100">
+      <div className="grid grid-rows-[auto_1fr] h-full min-h-0">
         {/* Top Navigation Bar */}
         <ResponsiveNavbar
           onSettingsClick={onSettingsClick}
@@ -25,7 +25,7 @@ export function MainLayout({
         />
 
         {/* Main Content Area */}
-        <main className="grid grid-rows-[1fr]">{children}</main>
+        <main className="grid grid-rows-[1fr] h-full min-h-0">{children}</main>
       </div>
     </div>
   );

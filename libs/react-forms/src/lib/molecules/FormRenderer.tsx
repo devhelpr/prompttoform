@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import {
   TextFormField,
   FormInputField,
@@ -19,13 +25,17 @@ import {
   ValidationError,
   VisibilityCondition,
   ThankYouPage,
+  PageChangeEvent,
 } from '../interfaces/form-interfaces';
+import { getClassNames, mergeClassNames, getText } from '../utils/class-utils';
 
 export const FormRenderer: React.FC<FormRendererProps> = ({
   formJson,
   onSubmit,
+  onPageChange,
   disabled = false,
   prefixId,
+  settings = {},
 }) => {
   const [formValues, setFormValues] = useState<FormValues>({});
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
@@ -44,6 +54,37 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     Record<string, Record<string, unknown>[]>
   >({});
   const [showThankYouPage, setShowThankYouPage] = useState(false);
+  const initialEventTriggeredRef = useRef(false);
+
+  // Helper function to trigger page change event
+  const triggerPageChangeEvent = useCallback(
+    (newPageIndex: number, previousPageIndex?: number) => {
+      if (!onPageChange || !formJson?.app?.pages) return;
+
+      const newPage = formJson.app.pages[newPageIndex];
+      const previousPage =
+        previousPageIndex !== undefined
+          ? formJson.app.pages[previousPageIndex]
+          : undefined;
+      const totalPages = formJson.app.pages.length;
+
+      const event: PageChangeEvent = {
+        pageId: newPage.id,
+        pageIndex: newPageIndex,
+        pageTitle: newPage.title,
+        totalPages,
+        isFirstPage: newPageIndex === 0,
+        isLastPage: newPageIndex === totalPages - 1,
+        isEndPage: newPage.isEndPage === true,
+        isConfirmationPage: newPage.isConfirmationPage === true,
+        previousPageId: previousPage?.id,
+        previousPageIndex: previousPageIndex,
+      };
+
+      onPageChange(event);
+    },
+    [onPageChange, formJson]
+  );
 
   // Helper function to get field label for error messages
   const getFieldLabel = (component: FormComponentFieldProps): string => {
@@ -346,6 +387,40 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     validateForm();
   }, [validateForm]);
 
+  // Reset initial event trigger when form changes
+  useEffect(() => {
+    initialEventTriggeredRef.current = false;
+  }, [formJson?.app?.pages]);
+
+  // Trigger initial page change event when component mounts
+  useEffect(() => {
+    if (
+      onPageChange &&
+      formJson?.app?.pages &&
+      formJson.app.pages.length > 0 &&
+      !initialEventTriggeredRef.current
+    ) {
+      const initialPage = formJson.app.pages[0];
+      const totalPages = formJson.app.pages.length;
+
+      const event: PageChangeEvent = {
+        pageId: initialPage.id,
+        pageIndex: 0,
+        pageTitle: initialPage.title,
+        totalPages,
+        isFirstPage: true,
+        isLastPage: totalPages === 1,
+        isEndPage: initialPage.isEndPage === true,
+        isConfirmationPage: initialPage.isConfirmationPage === true,
+        previousPageId: undefined,
+        previousPageIndex: undefined,
+      };
+
+      onPageChange(event);
+      initialEventTriggeredRef.current = true;
+    }
+  }, [onPageChange, formJson?.app?.pages]);
+
   const handleInputChange = (id: string, value: unknown) => {
     setFormValues((prev) => ({
       ...prev,
@@ -384,6 +459,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       setBlurredFields({});
       setIsSubmitted(false);
       setCurrentStepIndex(0);
+      triggerPageChangeEvent(0);
       setStepHistory([0]);
     }
   };
@@ -453,6 +529,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         if (nextPageIndex !== -1) {
           setStepHistory((prev) => [...prev, nextPageIndex]);
           setCurrentStepIndex(nextPageIndex);
+          triggerPageChangeEvent(nextPageIndex, currentStepIndex);
           setIsSubmitted(false);
           return;
         }
@@ -461,8 +538,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       // If no specific next page is defined, move to the next page in sequence
       const totalSteps = formJson.app.pages?.length || 0;
       if (currentStepIndex < totalSteps - 1) {
-        setStepHistory((prev) => [...prev, currentStepIndex + 1]);
-        setCurrentStepIndex((prev) => prev + 1);
+        const nextIndex = currentStepIndex + 1;
+        setStepHistory((prev) => [...prev, nextIndex]);
+        setCurrentStepIndex(nextIndex);
+        triggerPageChangeEvent(nextIndex, currentStepIndex);
         setIsSubmitted(false);
       } else {
         handleFormSubmit('multistep-form');
@@ -472,12 +551,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   const handlePrevious = () => {
     if (stepHistory.length > 1) {
+      const previousIndex = stepHistory[stepHistory.length - 2];
       setStepHistory((prev) => {
         const newHistory = [...prev];
         newHistory.pop(); // Remove current step
         return newHistory;
       });
-      setCurrentStepIndex(stepHistory[stepHistory.length - 2]);
+      setCurrentStepIndex(previousIndex);
+      triggerPageChangeEvent(previousIndex, currentStepIndex);
     }
   };
 
@@ -487,6 +568,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     setBlurredFields({});
     setIsSubmitted(false);
     setCurrentStepIndex(0);
+    triggerPageChangeEvent(0);
     setStepHistory([0]);
     setShowThankYouPage(false);
   };
@@ -572,13 +654,35 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
 
     return (
-      <div className="mb-4 flex items-center justify-between">
-        <div className="text-sm font-medium text-gray-700">
-          Step {currentStep} of {totalSteps}
+      <div
+        className={getClassNames(
+          'mb-4 flex items-center justify-between',
+          settings.classes?.stepIndicator
+        )}
+      >
+        <div
+          className={getClassNames(
+            'text-sm font-medium text-gray-700',
+            settings.classes?.stepIndicatorItem
+          )}
+        >
+          {getText(
+            'Step {currentStep} of {totalSteps}',
+            settings.texts?.stepIndicator,
+            { currentStep, totalSteps }
+          )}
         </div>
-        <div className="w-2/3 bg-gray-200 rounded-full h-2.5">
+        <div
+          className={getClassNames(
+            'w-2/3 bg-gray-200 rounded-full h-2.5',
+            settings.classes?.stepIndicator
+          )}
+        >
           <div
-            className="bg-indigo-600 h-2.5 rounded-full"
+            className={getClassNames(
+              'bg-indigo-600 h-2.5 rounded-full',
+              settings.classes?.stepIndicatorActive
+            )}
             style={{ width: `${(currentStep / totalSteps) * 100}%` }}
           ></div>
         </div>
@@ -600,39 +704,52 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       currentPage && currentPage.isConfirmationPage === true;
 
     // Determine button text based on page type
-    let nextButtonText = 'Next';
+    let nextButtonText = settings.texts?.nextButton || 'Next';
     if (isEndPage || currentStep === totalSteps) {
-      nextButtonText = 'Submit';
+      nextButtonText = settings.texts?.submitButton || 'Submit';
     } else if (isConfirmationPage) {
-      nextButtonText = 'Confirm & Submit';
+      nextButtonText =
+        settings.texts?.confirmSubmitButton || 'Confirm & Submit';
     } else {
       // Check if next page is a confirmation page
       const nextPageIndex = currentStep;
       if (nextPageIndex < totalSteps) {
         const nextPage = formJson.app.pages[nextPageIndex];
         if (nextPage && nextPage.isConfirmationPage) {
-          nextButtonText = 'Review & Confirm';
+          nextButtonText =
+            settings.texts?.reviewConfirmButton || 'Review & Confirm';
         }
       }
     }
 
     return (
-      <div className="mt-6 flex justify-between">
+      <div
+        className={getClassNames(
+          'mt-6 flex justify-between',
+          settings.classes?.navigationButtons
+        )}
+      >
         <button
           type="button"
-          className={`px-4 py-2 border border-indigo-300 text-indigo-700 rounded-md ${
-            currentStep === 1
-              ? 'opacity-50 cursor-not-allowed'
-              : 'hover:bg-indigo-50'
-          }`}
+          className={getClassNames(
+            `px-4 py-2 border border-indigo-300 text-indigo-700 rounded-md ${
+              currentStep === 1
+                ? 'opacity-50 cursor-not-allowed'
+                : 'hover:bg-indigo-50'
+            }`,
+            settings.classes?.previousButton
+          )}
           disabled={currentStep === 1}
           onClick={handlePrevious}
         >
-          Previous
+          {settings.texts?.previousButton || 'Previous'}
         </button>
         <button
           type="button"
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          className={getClassNames(
+            'px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700',
+            settings.classes?.nextButton
+          )}
           onClick={handleNext}
         >
           {nextButtonText}
@@ -643,14 +760,22 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   const renderMultiStepForm = (): React.ReactElement => {
     if (!formJson.app.pages || formJson.app.pages.length === 0) {
-      return <div className="p-4 text-red-500">No pages defined in form</div>;
+      return (
+        <div className="p-4 text-red-500">
+          {settings.texts?.noPagesDefined || 'No pages defined in form'}
+        </div>
+      );
     }
 
     const { currentStep, totalSteps } = getCurrentStep();
     const currentPageIndex = currentStep - 1;
 
     if (currentPageIndex < 0 || currentPageIndex >= formJson.app.pages.length) {
-      return <div className="p-4 text-red-500">Invalid page index</div>;
+      return (
+        <div className="p-4 text-red-500">
+          {settings.texts?.invalidPageIndex || 'Invalid page index'}
+        </div>
+      );
     }
 
     const currentPage = formJson.app.pages[currentPageIndex];
@@ -666,7 +791,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   const renderSubmissionData = (): React.ReactElement => {
     if (Object.keys(formSubmissions).length === 0) {
-      return <div className="text-gray-500 italic">No submissions yet</div>;
+      return (
+        <div className="text-gray-500 italic">
+          {settings.texts?.noSubmissionsText || 'No submissions yet'}
+        </div>
+      );
     }
 
     return (
@@ -838,6 +967,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           <TextFormField
             label={label}
             props={processPropsWithTemplates(props)}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldText: settings.classes?.fieldText,
+            }}
           />
         );
 
@@ -858,6 +992,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldInput: settings.classes?.fieldInput,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
           />
         );
 
@@ -878,6 +1019,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldTextarea: settings.classes?.fieldTextarea,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
           />
         );
 
@@ -897,6 +1045,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldRadio: settings.classes?.fieldRadio,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
           />
         );
 
@@ -913,6 +1068,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldCheckbox: settings.classes?.fieldCheckbox,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
           />
         );
 
@@ -933,6 +1095,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldSelect: settings.classes?.fieldSelect,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
           />
         );
 
@@ -953,6 +1122,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldDate: settings.classes?.fieldDate,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
           />
         );
 
@@ -991,6 +1167,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             label={label}
             children={component.children}
             renderComponent={renderComponent}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              noContentText: settings.texts?.noContentInSection,
+            }}
           />
         );
 
@@ -1200,16 +1381,38 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     return (
       <div className="w-full">
-        <div className="mb-4 bg-green-50 p-4 rounded-md">
-          <h1 className="text-2xl font-bold text-green-700">
-            {thankYouPage.title || 'Thank You!'}
+        <div
+          className={getClassNames(
+            'mb-4 bg-green-50 p-4 rounded-md',
+            settings.classes?.thankYouContainer
+          )}
+        >
+          <h1
+            className={getClassNames(
+              'text-2xl font-bold text-green-700',
+              settings.classes?.thankYouTitle
+            )}
+          >
+            {thankYouPage.title ||
+              settings.texts?.thankYouTitle ||
+              'Thank You!'}
           </h1>
         </div>
 
-        <div className="bg-white rounded-md shadow-sm p-6">
+        <div
+          className={getClassNames(
+            'bg-white rounded-md shadow-sm p-6',
+            settings.classes?.thankYouContainer
+          )}
+        >
           {thankYouPage.message && (
             <div className="mb-6">
-              <p className="text-lg text-gray-700 leading-relaxed">
+              <p
+                className={getClassNames(
+                  'text-lg text-gray-700 leading-relaxed',
+                  settings.classes?.thankYouMessage
+                )}
+              >
                 {thankYouPage.message}
               </p>
             </div>
@@ -1228,9 +1431,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               <button
                 type="button"
                 onClick={() => handleThankYouAction('restart')}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                className={getClassNames(
+                  'px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
+                  settings.classes?.thankYouButton
+                )}
               >
-                Start New Form
+                {settings.texts?.restartButton || 'Submit Another Response'}
               </button>
             )}
 
@@ -1277,8 +1483,21 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
 
     return (
-      <div key={page.id} className="bg-white rounded-md shadow-sm p-6">
-        <h2 className="text-xl font-bold mb-6">{page.title}</h2>
+      <div
+        key={page.id}
+        className={getClassNames(
+          'bg-white rounded-md shadow-sm p-6',
+          settings.classes?.page
+        )}
+      >
+        <h2
+          className={getClassNames(
+            'text-xl font-bold mb-6',
+            settings.classes?.page
+          )}
+        >
+          {page.title}
+        </h2>
         <div className={`${page.layout ? `grid ${layoutClass}` : ''}`}>
           {Array.isArray(page.components) &&
             page.components.map((component, index) => (
@@ -1289,39 +1508,117 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     );
   };
 
-  if (!formJson || !formJson.app) {
-    return <div className="p-4 text-red-500">Invalid form data</div>;
-  }
+  // Generate theme styles object
+  const themeStyles = useMemo(() => {
+    if (!settings.theme) return {};
 
-  // Show thank you page if form is submitted and thank you page is configured
-  if (showThankYouPage) {
-    return renderThankYouPage();
-  }
+    const styles: Record<string, string> = {};
+
+    if (settings.theme.colors) {
+      if (settings.theme.colors.primary)
+        styles['--color-primary'] = settings.theme.colors.primary;
+      if (settings.theme.colors.secondary)
+        styles['--color-secondary'] = settings.theme.colors.secondary;
+      if (settings.theme.colors.error)
+        styles['--color-error'] = settings.theme.colors.error;
+      if (settings.theme.colors.success)
+        styles['--color-success'] = settings.theme.colors.success;
+      if (settings.theme.colors.background)
+        styles['--color-background'] = settings.theme.colors.background;
+      if (settings.theme.colors.text)
+        styles['--color-text'] = settings.theme.colors.text;
+      if (settings.theme.colors.border)
+        styles['--color-border'] = settings.theme.colors.border;
+    }
+
+    if (settings.theme.spacing) {
+      if (settings.theme.spacing.xs)
+        styles['--spacing-xs'] = settings.theme.spacing.xs;
+      if (settings.theme.spacing.sm)
+        styles['--spacing-sm'] = settings.theme.spacing.sm;
+      if (settings.theme.spacing.md)
+        styles['--spacing-md'] = settings.theme.spacing.md;
+      if (settings.theme.spacing.lg)
+        styles['--spacing-lg'] = settings.theme.spacing.lg;
+    }
+
+    return styles;
+  }, [settings.theme]);
 
   return (
-    <div className="w-full">
-      <div className="mb-4 bg-indigo-50 p-4 rounded-md">
-        <h1 className="text-2xl font-bold text-indigo-700">
-          {formJson.app.title}
-        </h1>
-        {Array.isArray(formJson.app.pages) &&
-          formJson.app.pages.length > 1 &&
-          !disabled && (
-            <div className="mt-2 text-sm text-indigo-500">
-              This application has {formJson.app.pages.length} pages
+    <div
+      className={getClassNames('w-full', settings.classes?.container)}
+      style={themeStyles}
+    >
+      {/* Check for invalid form data */}
+      {!formJson || !formJson.app ? (
+        <div className="p-4 text-red-500">
+          {settings.texts?.invalidFormData || 'Invalid form data'}
+        </div>
+      ) : showThankYouPage ? (
+        renderThankYouPage()
+      ) : (
+        <>
+          <div
+            className={getClassNames(
+              'mb-4 bg-indigo-50 p-4 rounded-md',
+              settings.classes?.header
+            )}
+          >
+            <h1
+              className={getClassNames(
+                'text-2xl font-bold text-indigo-700',
+                settings.classes?.header
+              )}
+            >
+              {formJson.app.title}
+            </h1>
+            {Array.isArray(formJson.app.pages) &&
+              formJson.app.pages.length > 1 &&
+              !disabled && (
+                <div
+                  className={getClassNames(
+                    'mt-2 text-sm text-indigo-500',
+                    settings.classes?.header
+                  )}
+                >
+                  {getText(
+                    'This application has {pageCount} pages',
+                    settings.texts?.multiPageInfo,
+                    { pageCount: formJson.app.pages.length }
+                  )}
+                </div>
+              )}
+          </div>
+
+          <div className="space-y-8">{renderMultiStepForm()}</div>
+
+          {hasSubmissions && !disabled && settings.showFormSubmissions && (
+            <div
+              className={getClassNames(
+                'mt-8 border-t pt-6',
+                settings.classes?.submissionsContainer
+              )}
+            >
+              <h3
+                className={getClassNames(
+                  'text-lg font-medium mb-4',
+                  settings.classes?.submissionsTitle
+                )}
+              >
+                {settings.texts?.submissionsTitle || 'Form Submissions'}
+              </h3>
+              <div
+                className={getClassNames(
+                  'bg-gray-50 p-4 rounded-md',
+                  settings.classes?.submissionsData
+                )}
+              >
+                {renderSubmissionData()}
+              </div>
             </div>
           )}
-      </div>
-
-      <div className="space-y-8">{renderMultiStepForm()}</div>
-
-      {hasSubmissions && !disabled && (
-        <div className="mt-8 border-t pt-6">
-          <h3 className="text-lg font-medium mb-4">Form Submissions</h3>
-          <div className="bg-gray-50 p-4 rounded-md">
-            {renderSubmissionData()}
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

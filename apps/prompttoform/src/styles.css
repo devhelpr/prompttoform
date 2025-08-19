@@ -2,6 +2,14 @@
 
 @source '../../../libs/react-forms/src/';
 
+html,
+body,
+#root {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
 button:not(:disabled) {
   cursor: pointer;
 }
