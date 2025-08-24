@@ -33,6 +33,10 @@ import { evaluateAndRerunIfNeeded } from './services/prompt-eval';
 import { deployWithNetlify } from './utils/netlify-deploy';
 import { createFormZip, downloadZip } from './utils/zip-utils';
 import { blobToBase64 } from './utils/blob-to-base64';
+import {
+  generateJsonSchema,
+  downloadJsonSchema,
+} from './utils/schema-generator';
 import { getSystemPrompt } from './prompt-library/system-prompt';
 import { getCurrentAPIConfig } from './services/llm-api';
 
@@ -369,6 +373,24 @@ function AppContent() {
     }
   };
 
+  const handleExportSchema = () => {
+    if (!state.generatedJson || !state.parsedJson) {
+      setError('No form generated to export schema');
+      return;
+    }
+
+    try {
+      const schema = generateJsonSchema(state.parsedJson);
+      const filename = `${state.parsedJson.app.title
+        .toLowerCase()
+        .replace(/\s+/g, '-')}-schema.json`;
+      downloadJsonSchema(schema, filename);
+    } catch (error) {
+      console.error('Error generating JSON schema:', error);
+      setError('Failed to generate JSON schema');
+    }
+  };
+
   const handleLoadSession = async (session: FormSession) => {
     try {
       setPrompt(session.prompt);
@@ -577,6 +599,7 @@ function AppContent() {
                     onCopyToClipboard={handleCopyToClipboard}
                     onDownload={handleDownload}
                     onDownloadZip={handleDownloadZip}
+                    onExportSchema={handleExportSchema}
                     isZipDownloading={isZipDownloading}
                     siteUrl={siteUrl}
                   />
@@ -708,6 +731,7 @@ function AppContent() {
                   onCopyToClipboard={handleCopyToClipboard}
                   onDownload={handleDownload}
                   onDownloadZip={handleDownloadZip}
+                  onExportSchema={handleExportSchema}
                   isZipDownloading={isZipDownloading}
                   siteUrl={siteUrl}
                 />
