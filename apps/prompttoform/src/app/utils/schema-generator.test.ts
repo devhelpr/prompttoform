@@ -310,7 +310,7 @@ describe('Enhanced Schema Generator', () => {
     expect(schema.properties.firstName).toEqual({
       title: 'First Name',
       description:
-        'Please provide your legal first name Field from page: Personal Information',
+        'Please provide your legal first name Field from page: Personal Information Text input field.',
       type: 'string',
       minLength: 2,
       maxLength: 50,
@@ -318,14 +318,16 @@ describe('Enhanced Schema Generator', () => {
 
     expect(schema.properties.email).toEqual({
       title: 'Email Address',
-      description: 'Field from page: Personal Information',
+      description:
+        'Field from page: Personal Information Must be a valid email address.',
       type: 'string',
       format: 'email',
     });
 
     expect(schema.properties.country).toEqual({
       title: 'Country',
-      description: 'Field from page: Personal Information',
+      description:
+        'Field from page: Personal Information Must be one of the available options: United States, Canada, United Kingdom, Germany',
       type: 'string',
       enum: ['us', 'ca', 'uk', 'de'],
       enumNames: ['United States', 'Canada', 'United Kingdom', 'Germany'],
@@ -333,7 +335,7 @@ describe('Enhanced Schema Generator', () => {
 
     expect(schema.properties.newsletter).toEqual({
       title: 'Subscribe to newsletter',
-      description: 'Field from page: Preferences',
+      description: 'Field from page: Preferences Boolean checkbox field.',
       type: 'boolean',
     });
 
@@ -347,12 +349,13 @@ describe('Enhanced Schema Generator', () => {
         properties: {
           interestName: {
             title: 'Interest Name',
-            description: 'Field from page: Preferences',
+            description: 'Field from page: Preferences Text input field.',
             type: 'string',
           },
           interestLevel: {
             title: 'Interest Level',
-            description: 'Field from page: Preferences',
+            description:
+              'Field from page: Preferences Must be one of the available options: Low, Medium, High',
             type: 'string',
             enum: ['low', 'medium', 'high'],
             enumNames: ['Low', 'Medium', 'High'],
@@ -369,7 +372,7 @@ describe('Enhanced Schema Generator', () => {
     expect(schema.properties.password).toEqual({
       title: 'Password',
       description:
-        'Must contain uppercase, lowercase, and number Field from page: Account Setup',
+        'Must contain uppercase, lowercase, and number Field from page: Account Setup Password field with specific requirements.',
       type: 'string',
       format: 'password',
       minLength: 8,
@@ -379,7 +382,8 @@ describe('Enhanced Schema Generator', () => {
     // Check date field
     expect(schema.properties.birthDate).toEqual({
       title: 'Date of Birth',
-      description: 'Field from page: Account Setup',
+      description:
+        'Field from page: Account Setup Date field (max: 2005-12-31).',
       type: 'string',
       format: 'date',
       maximum: '2005-12-31',

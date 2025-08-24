@@ -198,15 +198,9 @@ function processComponents(
 }
 
 function isDataField(type: FieldType): boolean {
-  return [
-    'text',
-    'input',
-    'textarea',
-    'checkbox',
-    'radio',
-    'select',
-    'date',
-  ].includes(type);
+  return ['input', 'textarea', 'checkbox', 'radio', 'select', 'date'].includes(
+    type
+  );
 }
 
 function generateFieldSchema(
@@ -231,7 +225,6 @@ function generateFieldSchema(
   }
 
   switch (component.type) {
-    case 'text':
     case 'input':
       return generateInputSchema(component, baseSchema);
     case 'textarea':
@@ -285,6 +278,9 @@ function generateInputSchema(
         minLength: component.validation?.minLength,
         maxLength: component.validation?.maxLength,
         pattern: component.validation?.pattern,
+        description: `${
+          baseSchema.description || ''
+        } Must be a valid email address.`,
       };
     case 'number':
       return {
@@ -292,6 +288,15 @@ function generateInputSchema(
         type: 'number',
         minimum: component.validation?.min,
         maximum: component.validation?.max,
+        description: `${baseSchema.description || ''} Numeric value${
+          component.validation?.min !== undefined
+            ? ` (min: ${component.validation.min})`
+            : ''
+        }${
+          component.validation?.max !== undefined
+            ? ` (max: ${component.validation.max})`
+            : ''
+        }.`,
       };
     case 'url':
       return {
@@ -301,6 +306,7 @@ function generateInputSchema(
         minLength: component.validation?.minLength,
         maxLength: component.validation?.maxLength,
         pattern: component.validation?.pattern,
+        description: `${baseSchema.description || ''} Must be a valid URL.`,
       };
     case 'tel':
       return {
@@ -309,6 +315,9 @@ function generateInputSchema(
         pattern: '^[+]?[0-9\\s\\-\\(\\)]+$',
         minLength: component.validation?.minLength,
         maxLength: component.validation?.maxLength,
+        description: `${
+          baseSchema.description || ''
+        } Must be a valid phone number.`,
       };
     case 'password':
       return {
@@ -318,6 +327,9 @@ function generateInputSchema(
         minLength: component.validation?.minLength,
         maxLength: component.validation?.maxLength,
         pattern: component.validation?.pattern,
+        description: `${baseSchema.description || ''} Password field${
+          component.validation?.pattern ? ' with specific requirements' : ''
+        }.`,
       };
     default:
       return {
@@ -326,6 +338,7 @@ function generateInputSchema(
         minLength: component.validation?.minLength,
         maxLength: component.validation?.maxLength,
         pattern: component.validation?.pattern,
+        description: `${baseSchema.description || ''} Text input field.`,
       };
   }
 }
@@ -339,6 +352,11 @@ function generateTextareaSchema(
     type: 'string',
     minLength: component.validation?.minLength,
     maxLength: component.validation?.maxLength,
+    description: `${baseSchema.description || ''} Multi-line text area${
+      component.validation?.maxLength
+        ? ` (max ${component.validation.maxLength} characters)`
+        : ''
+    }.`,
   };
 }
 
@@ -349,6 +367,7 @@ function generateCheckboxSchema(
   return {
     ...baseSchema,
     type: 'boolean',
+    description: `${baseSchema.description || ''} Boolean checkbox field.`,
   };
 }
 
@@ -356,18 +375,39 @@ function generateSelectSchema(
   component: FormComponentFieldProps,
   baseSchema: SchemaField
 ): SchemaField {
-  if (component.options && component.options.length > 0) {
+  if (
+    (component.props as any)?.options &&
+    (component.props as any).options.length > 0
+  ) {
+    const enumValues = (component.props as any).options.map(
+      (opt: any) => opt.value
+    );
+    const enumNames = (component.props as any).options.map(
+      (opt: any) => opt.label
+    );
+
     return {
       ...baseSchema,
       type: 'string',
-      enum: component.options.map((opt) => opt.value),
-      enumNames: component.options.map((opt) => opt.label),
+      enum: enumValues,
+      enumNames: enumNames,
+      description: `${
+        baseSchema.description || ''
+      } Must be one of the available options: ${enumNames.join(', ')}`,
+      // Ensure strict validation by removing any conflicting properties
+      minLength: undefined,
+      maxLength: undefined,
+      pattern: undefined,
     };
   }
 
+  // If no options are defined, still create a string field but warn in description
   return {
     ...baseSchema,
     type: 'string',
+    description: `${
+      baseSchema.description || ''
+    } No predefined options available.`,
   };
 }
 
@@ -381,6 +421,15 @@ function generateDateSchema(
     format: 'date',
     minimum: component.validation?.minDate,
     maximum: component.validation?.maxDate,
+    description: `${baseSchema.description || ''} Date field${
+      component.validation?.minDate
+        ? ` (min: ${component.validation.minDate})`
+        : ''
+    }${
+      component.validation?.maxDate
+        ? ` (max: ${component.validation.maxDate})`
+        : ''
+    }.`,
   };
 }
 
