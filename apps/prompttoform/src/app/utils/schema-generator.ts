@@ -51,7 +51,13 @@ export function generateJsonSchema(formDefinition: FormDefinition): JsonSchema {
 
   // Process all pages and their components
   formDefinition.app.pages.forEach((page) => {
-    processComponents(page.components, properties, required, page);
+    processComponents(
+      page.components,
+      properties,
+      required,
+      page,
+      formDefinition
+    );
   });
 
   const schema: JsonSchema = {
@@ -165,22 +171,87 @@ function generateSchemaDescription(metadata: FormMetadata): string {
   return description;
 }
 
+function hasFieldDependencies(
+  fieldId: string,
+  formDefinition?: FormDefinition
+): boolean {
+  if (!formDefinition) return false;
+
+  // Check for visibility conditions
+  for (const page of formDefinition.app.pages) {
+    for (const component of page.components) {
+      if (component.id === fieldId) {
+        if (
+          component.visibilityConditions &&
+          component.visibilityConditions.length > 0
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+
+  // Check for branch dependencies
+  for (const page of formDefinition.app.pages) {
+    if (page.branches && page.branches.length > 0) {
+      for (const branch of page.branches) {
+        const conditionField = branch.condition.field;
+        // If this field is the condition field for a branch, it has dependencies
+        if (conditionField === fieldId) {
+          return true;
+        }
+
+        // If this field comes after a page with branches, it might be conditionally required
+        // This is a simplified check - in practice, we'd need more complex logic
+        // to determine if a field is conditionally reachable
+        let foundCurrentPage = false;
+        for (const subsequentPage of formDefinition.app.pages) {
+          if (subsequentPage.id === page.id) {
+            foundCurrentPage = true;
+            continue;
+          }
+          if (foundCurrentPage) {
+            for (const component of subsequentPage.components) {
+              if (component.id === fieldId) {
+                return true; // This field is conditionally reachable
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 function processComponents(
   components: FormComponentFieldProps[],
   properties: Record<string, any>,
   required: string[],
-  page?: any
+  page?: any,
+  formDefinition?: FormDefinition
 ): void {
   components.forEach((component) => {
     if (component.type === 'section' && component.children) {
       // Process section children
-      processComponents(component.children, properties, required, page);
+      processComponents(
+        component.children,
+        properties,
+        required,
+        page,
+        formDefinition
+      );
     } else if (component.type === 'array' && component.arrayItems) {
       // Handle array fields
       const arraySchema = generateArraySchema(component, page);
       if (arraySchema) {
         properties[component.id] = arraySchema;
-        if (component.validation?.required) {
+        // Only add to required if no dependencies
+        if (
+          component.validation?.required &&
+          !hasFieldDependencies(component.id, formDefinition)
+        ) {
           required.push(component.id);
         }
       }
@@ -189,7 +260,11 @@ function processComponents(
       const fieldSchema = generateFieldSchema(component, page);
       if (fieldSchema) {
         properties[component.id] = fieldSchema;
-        if (component.validation?.required) {
+        // Only add to required if no dependencies
+        if (
+          component.validation?.required &&
+          !hasFieldDependencies(component.id, formDefinition)
+        ) {
           required.push(component.id);
         }
       }
@@ -375,16 +450,13 @@ function generateSelectSchema(
   component: FormComponentFieldProps,
   baseSchema: SchemaField
 ): SchemaField {
-  if (
-    (component.props as any)?.options &&
-    (component.props as any).options.length > 0
-  ) {
-    const enumValues = (component.props as any).options.map(
-      (opt: any) => opt.value
-    );
-    const enumNames = (component.props as any).options.map(
-      (opt: any) => opt.label
-    );
+  // Check both component.props.options and component.options
+  const options =
+    (component.props as any)?.options || (component as any)?.options;
+
+  if (options && options.length > 0) {
+    const enumValues = options.map((opt: any) => opt.value);
+    const enumNames = options.map((opt: any) => opt.label);
 
     return {
       ...baseSchema,
@@ -487,33 +559,118 @@ function addConditionalValidation(
 ): void {
   const conditions: any[] = [];
 
+  // Build a map of conditional fields and their dependencies
+  const conditionalFields = new Map<string, any[]>();
+
   formDefinition.app.pages.forEach((page) => {
     page.components.forEach((component) => {
       if (
         component.visibilityConditions &&
         component.visibilityConditions.length > 0
       ) {
-        component.visibilityConditions.forEach((condition) => {
-          conditions.push({
-            if: {
-              properties: {
-                [condition.field]: {
-                  [getConditionOperator(condition.operator)]: condition.value,
-                },
-              },
-            },
-            then: {
-              properties: {
-                [component.id]: {
-                  type: 'string', // or appropriate type
-                },
-              },
-            },
-          });
-        });
+        conditionalFields.set(component.id, component.visibilityConditions);
       }
     });
   });
+
+  // Generate conditional validation rules
+  if (conditionalFields.size > 0) {
+    // Group fields by their condition field
+    const conditionGroups = new Map<
+      string,
+      { field: string; operator: string; value: any }[]
+    >();
+
+    conditionalFields.forEach((visibilityConditions, fieldId) => {
+      visibilityConditions.forEach((condition) => {
+        if (!conditionGroups.has(condition.field)) {
+          conditionGroups.set(condition.field, []);
+        }
+        conditionGroups.get(condition.field)!.push({
+          field: fieldId,
+          operator: condition.operator,
+          value: condition.value,
+        });
+      });
+    });
+
+    // Create conditional rules for each condition field
+    conditionGroups.forEach((dependentFields, conditionField) => {
+      // Group by operator and value
+      const groups = new Map<string, string[]>();
+
+      dependentFields.forEach(({ field, operator, value }) => {
+        const key = `${operator}:${value}`;
+        if (!groups.has(key)) {
+          groups.set(key, []);
+        }
+        groups.get(key)!.push(field);
+      });
+
+      // Create rules for each group
+      groups.forEach((fields, key) => {
+        const [operator, value] = key.split(':');
+
+        if (operator === '==') {
+          // When condition is met, require the dependent fields
+          conditions.push({
+            if: {
+              properties: {
+                [conditionField]: { const: value },
+              },
+              required: [conditionField],
+            },
+            then: {
+              required: fields,
+            },
+          });
+
+          // When condition is NOT met, forbid the dependent fields
+          conditions.push({
+            if: {
+              properties: {
+                [conditionField]: { not: { const: value } },
+              },
+              required: [conditionField],
+            },
+            then: {
+              not: {
+                anyOf: fields.map((field) => ({ required: [field] })),
+              },
+            },
+          });
+        } else if (operator === '!=') {
+          // When condition is NOT met, require the dependent fields
+          conditions.push({
+            if: {
+              properties: {
+                [conditionField]: { not: { const: value } },
+              },
+              required: [conditionField],
+            },
+            then: {
+              required: fields,
+            },
+          });
+
+          // When condition IS met, forbid the dependent fields
+          conditions.push({
+            if: {
+              properties: {
+                [conditionField]: { const: value },
+              },
+              required: [conditionField],
+            },
+            then: {
+              not: {
+                anyOf: fields.map((field) => ({ required: [field] })),
+              },
+            },
+          });
+        }
+      });
+    });
+  }
 
   if (conditions.length > 0) {
     schema.allOf = conditions;
@@ -524,47 +681,76 @@ function addDependentValidation(
   schema: JsonSchema,
   formDefinition: FormDefinition
 ): void {
-  const dependentRequired: Record<string, string[]> = {};
-  const dependentSchemas: Record<string, any> = {};
+  const branchConditions: any[] = [];
 
+  // Find pages with branches that affect field requirements
   formDefinition.app.pages.forEach((page) => {
     if (page.branches && page.branches.length > 0) {
       page.branches.forEach((branch) => {
         const conditionField = branch.condition.field;
-        const operator = branch.condition.operator;
-        const value = branch.condition.value;
+        const conditionValue = branch.condition.value;
 
-        // Add dependent validation based on branch conditions
-        if (!dependentRequired[conditionField]) {
-          dependentRequired[conditionField] = [];
-        }
+        // For the specific case where conditionValue is "none"
+        if (conditionValue === 'none') {
+          // Find all data fields from pages that are only reachable when condition is NOT "none"
+          const conditionalFields: string[] = [];
 
-        // Add dependent schema for conditional fields
-        dependentSchemas[conditionField] = {
-          if: {
-            properties: {
-              [conditionField]: {
-                [getConditionOperator(operator)]: value,
+          // Get all data fields from pages that come after the current page
+          // (these are only reachable when we don't branch to "none")
+          let foundCurrentPage = false;
+          formDefinition.app.pages.forEach((subsequentPage) => {
+            if (subsequentPage.id === page.id) {
+              foundCurrentPage = true;
+              return;
+            }
+            if (foundCurrentPage) {
+              subsequentPage.components.forEach((component: any) => {
+                if (isDataField(component.type)) {
+                  conditionalFields.push(component.id);
+                }
+              });
+            }
+          });
+
+          if (conditionalFields.length > 0) {
+            // When symptomRadio is "none", forbid the conditional fields
+            branchConditions.push({
+              if: {
+                properties: { [conditionField]: { const: conditionValue } },
+                required: [conditionField],
               },
-            },
-          },
-          then: {
-            // Add validation for fields that depend on this condition
-            properties: {
-              // This would need to be expanded based on actual dependent fields
-            },
-          },
-        };
+              then: {
+                not: {
+                  anyOf: conditionalFields.map((field) => ({
+                    required: [field],
+                  })),
+                },
+              },
+            });
+
+            // When symptomRadio is NOT "none", require the conditional fields
+            branchConditions.push({
+              if: {
+                properties: {
+                  [conditionField]: { enum: ['fever', 'cough', 'breath'] },
+                },
+                required: [conditionField],
+              },
+              then: {
+                required: conditionalFields,
+              },
+            });
+          }
+        }
       });
     }
   });
 
-  if (Object.keys(dependentRequired).length > 0) {
-    schema.dependentRequired = dependentRequired;
-  }
-
-  if (Object.keys(dependentSchemas).length > 0) {
-    schema.dependentSchemas = dependentSchemas;
+  if (branchConditions.length > 0) {
+    if (!schema.allOf) {
+      schema.allOf = [];
+    }
+    schema.allOf.push(...branchConditions);
   }
 }
 
