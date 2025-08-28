@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Form</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .section {
+        margin-bottom: 30px;
+        border: 1px solid #ccc;
+        padding: 20px;
+      }
+      .field {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      .required {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>EMPLOYMENT APPLICATION FORM</h1>
+
+    <div class="section">
+      <h2>PERSONAL INFORMATION</h2>
+
+      <div class="field">
+        <label>First Name: <span class="required">*</span></label>
+        <input type="text" placeholder="Enter your first name" />
+      </div>
+
+      <div class="field">
+        <label>Last Name: <span class="required">*</span></label>
+        <input type="text" placeholder="Enter your last name" />
+      </div>
+
+      <div class="field">
+        <label>Email Address: <span class="required">*</span></label>
+        <input type="email" placeholder="Enter your email" />
+      </div>
+
+      <div class="field">
+        <label>Phone Number:</label>
+        <input type="tel" placeholder="Enter your phone number" />
+      </div>
+
+      <div class="field">
+        <label>Date of Birth:</label>
+        <input type="date" />
+      </div>
+
+      <div class="field">
+        <label>Address:</label>
+        <textarea rows="3" placeholder="Enter your full address"></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>EMPLOYMENT INFORMATION</h2>
+
+      <div class="field">
+        <label>Current Position:</label>
+        <input type="text" placeholder="Enter your current job title" />
+      </div>
+
+      <div class="field">
+        <label>Company:</label>
+        <input type="text" placeholder="Enter your company name" />
+      </div>
+
+      <div class="field">
+        <label>Years of Experience:</label>
+        <input type="number" placeholder="Enter years of experience" />
+      </div>
+
+      <div class="field">
+        <label>Salary Range:</label>
+        <select>
+          <option value="">Select salary range</option>
+          <option value="30k-50k">$30,000 - $50,000</option>
+          <option value="50k-75k">$50,000 - $75,000</option>
+          <option value="75k-100k">$75,000 - $100,000</option>
+          <option value="100k+">$100,000+</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>EDUCATION</h2>
+
+      <div class="field">
+        <label>Highest Degree:</label>
+        <select>
+          <option value="">Select degree</option>
+          <option value="high-school">High School</option>
+          <option value="associate">Associate's Degree</option>
+          <option value="bachelor">Bachelor's Degree</option>
+          <option value="master">Master's Degree</option>
+          <option value="phd">PhD</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>University/College:</label>
+        <input type="text" placeholder="Enter institution name" />
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>REFERENCES</h2>
+
+      <div class="field">
+        <label>Reference Name:</label>
+        <input type="text" placeholder="Enter reference name" />
+      </div>
+
+      <div class="field">
+        <label>Reference Phone:</label>
+        <input type="tel" placeholder="Enter reference phone" />
+      </div>
+
+      <div class="field">
+        <label>Relationship:</label>
+        <input type="text" placeholder="Enter relationship" />
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>AGREEMENT</h2>
+
+      <div class="field">
+        <label>
+          <input type="checkbox" /> I agree to the terms and conditions
+          <span class="required">*</span>
+        </label>
+      </div>
+
+      <div class="field">
+        <label>
+          <input type="checkbox" /> I consent to background check
+          <span class="required">*</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>ADDITIONAL COMMENTS</h2>
+
+      <div class="field">
+        <label>Comments:</label>
+        <textarea
+          rows="4"
+          placeholder="Any additional information you'd like to share"
+        ></textarea>
+      </div>
+    </div>
+  </body>
+</html>
