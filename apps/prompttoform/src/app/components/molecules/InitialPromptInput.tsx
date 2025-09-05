@@ -2,11 +2,11 @@ import { useState, useRef } from 'react';
 import { Menu } from '@headlessui/react';
 import { READY_MADE_FORMS } from './example-form-definitions/ready-made-forms';
 import { PdfUploadButton } from '../atoms/PdfUploadButton';
-import { PDFParseResult } from '../../services/pdf-parser.service';
 
 interface InitialPromptInputProps {
   onGenerate: (prompt: string) => void;
   onLoadJson: (json: string, prompt?: string) => void;
+  onError?: (error: string) => void;
   isLoading: boolean;
   error?: string | null;
 }
@@ -51,6 +51,7 @@ const EXAMPLE_PROMPTS = [
 export function InitialPromptInput({
   onGenerate,
   onLoadJson,
+  onError,
   isLoading,
   error,
 }: InitialPromptInputProps) {
@@ -102,10 +103,14 @@ export function InitialPromptInput({
     setPrompt(example);
   };
 
-  const handlePdfParsed = (pdfPrompt: string, parseResult: PDFParseResult) => {
+  const handlePdfParsed = (pdfPrompt: string) => {
     // Append the PDF-generated prompt to the existing prompt
     const newPrompt = prompt ? `${prompt}\n\n${pdfPrompt}` : pdfPrompt;
     setPrompt(newPrompt);
+  };
+
+  const handlePdfError = (error: string) => {
+    onError?.(error);
   };
 
   // const calculateDropdownPosition = () => {
@@ -172,7 +177,11 @@ export function InitialPromptInput({
       {/* Action buttons */}
       <div className="flex flex-col sm:flex-row gap-3">
         {/* PDF Upload button */}
-        <PdfUploadButton onPdfParsed={handlePdfParsed} disabled={isLoading} />
+        <PdfUploadButton
+          onPdfParsed={handlePdfParsed}
+          onError={handlePdfError}
+          disabled={isLoading}
+        />
 
         {/* Examples dropdown */}
         <div className="relative">

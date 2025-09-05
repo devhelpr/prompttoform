@@ -660,6 +660,7 @@ function AppContent() {
           <InitialPromptInput
             onGenerate={handleGenerate}
             onLoadJson={handleImportJson}
+            onError={setError}
             isLoading={state.isLoading}
             error={state.error}
           />

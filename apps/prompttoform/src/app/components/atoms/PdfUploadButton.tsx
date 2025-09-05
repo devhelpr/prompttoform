@@ -1,16 +1,15 @@
 import { useState, useRef } from 'react';
-import {
-  PDFParserService,
-  PDFParseResult,
-} from '../../services/pdf-parser.service';
+import { getCurrentAPIConfig } from '../../services/llm-api';
 
 interface PdfUploadButtonProps {
-  onPdfParsed: (prompt: string, parseResult: PDFParseResult) => void;
+  onPdfParsed: (prompt: string) => void;
+  onError?: (error: string) => void;
   disabled?: boolean;
 }
 
 export function PdfUploadButton({
   onPdfParsed,
+  onError,
   disabled = false,
 }: PdfUploadButtonProps) {
   const [isParsing, setIsParsing] = useState(false);
@@ -25,13 +24,17 @@ export function PdfUploadButton({
 
     // Validate file type
     if (file.type !== 'application/pdf') {
-      setError('Please select a valid PDF file');
+      const errorMessage = 'Please select a valid PDF file';
+      setError(errorMessage);
+      onError?.(errorMessage);
       return;
     }
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      setError('File size must be less than 10MB');
+      const errorMessage = 'File size must be less than 10MB';
+      setError(errorMessage);
+      onError?.(errorMessage);
       return;
     }
 
@@ -39,12 +42,60 @@ export function PdfUploadButton({
     setError(null);
 
     try {
-      const parseResult = await PDFParserService.parsePDF(file);
-      const prompt = PDFParserService.generatePromptFromPDF(parseResult);
-      onPdfParsed(prompt, parseResult);
+      // Get API configuration
+      const apiConfig = getCurrentAPIConfig();
+      if (!apiConfig.apiKey && !apiConfig.systemKey) {
+        throw new Error(
+          `No API key set for ${apiConfig.name}. Please configure it in the Settings.`
+        );
+      }
+
+      // Create FormData for multipart upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append(
+        'prompt',
+        'Analyze this document and create a form based on its content'
+      );
+
+      // Determine the API URL
+      const apiUrl = import.meta.env.PROD
+        ? 'https://form-generator-worker.maikel-f16.workers.dev'
+        : 'http://localhost:8787/';
+
+      // Make the API call with multipart/form-data
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'api-url': apiConfig.baseUrl,
+          'api-path': '/chat/completions',
+          'system-key': apiConfig.systemKey ?? '',
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          `API error: ${errorData.error?.message || response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+
+      if (!content) {
+        throw new Error('No content returned from API');
+      }
+
+      // Use the API response as the prompt
+      onPdfParsed(content);
     } catch (err) {
-      console.error('Error parsing PDF:', err);
-      setError(err instanceof Error ? err.message : 'Failed to parse PDF file');
+      console.error('Error processing PDF:', err);
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to process PDF file';
+      setError(errorMessage);
+      onError?.(errorMessage);
     } finally {
       setIsParsing(false);
       // Reset file input
@@ -97,7 +148,7 @@ export function PdfUploadButton({
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
-            Parsing PDF...
+            Processing PDF...
           </>
         ) : (
           <>
@@ -119,11 +170,7 @@ export function PdfUploadButton({
         )}
       </button>
 
-      {error && (
-        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-800">{error}</p>
-        </div>
-      )}
+      {/* Error display removed - errors are now handled by parent component */}
     </div>
   );
 }

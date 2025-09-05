@@ -301,7 +301,7 @@ export function testFinalSchemaGeneration() {
   const hasCorrectAllOf = schema.allOf && schema.allOf.length === 2;
   console.log(`✅ Has correct allOf structure: ${hasCorrectAllOf}`);
 
-  if (hasCorrectAllOf) {
+  if (hasCorrectAllOf && schema.allOf) {
     const firstRule = schema.allOf[0];
     const secondRule = schema.allOf[1];
 

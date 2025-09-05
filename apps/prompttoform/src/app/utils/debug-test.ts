@@ -11,21 +11,21 @@ const simpleTestForm = {
         route: '/main',
         components: [
           {
-            type: 'input',
+            type: 'text' as const,
             id: 'firstName',
             label: 'First Name',
             validation: { required: true },
             props: { inputType: 'text' },
           },
           {
-            type: 'input',
+            type: 'text' as const,
             id: 'lastName',
             label: 'Last Name',
             validation: { required: true },
             props: { inputType: 'text' },
           },
           {
-            type: 'input',
+            type: 'text' as const,
             id: 'email',
             label: 'Email',
             validation: { required: true },
@@ -62,4 +62,3 @@ export function debugSchemaGeneration() {
 if (typeof window !== 'undefined') {
   (window as any).debugSchemaGeneration = debugSchemaGeneration;
 }
-

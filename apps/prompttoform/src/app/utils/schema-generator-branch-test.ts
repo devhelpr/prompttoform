@@ -284,7 +284,7 @@ export function testBranchBasedConditionalValidation() {
   console.log(`✅ Correct required fields: ${hasCorrectRequired}`);
   console.log(`✅ Has conditional rules: ${hasConditionalRules}`);
 
-  if (hasConditionalRules) {
+  if (hasConditionalRules && schema.allOf) {
     const hasRequireRule = schema.allOf.some(
       (rule) =>
         rule.then &&
@@ -297,7 +297,7 @@ export function testBranchBasedConditionalValidation() {
         rule.then.not &&
         rule.then.not.anyOf &&
         rule.then.not.anyOf.some(
-          (condition) =>
+          (condition: any) =>
             condition.required && condition.required.includes('durationSelect')
         )
     );

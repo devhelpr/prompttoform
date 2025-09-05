@@ -21,7 +21,7 @@ describe('Simple Schema Generator Test', () => {
             route: '/main',
             components: [
               {
-                type: 'input',
+                type: 'text' as const,
                 id: 'firstName',
                 label: 'First Name',
                 validation: { required: true },
@@ -42,4 +42,3 @@ describe('Simple Schema Generator Test', () => {
     expect(schema.required).toContain('firstName');
   });
 });
-

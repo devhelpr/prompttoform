@@ -126,6 +126,9 @@ make a form that is complex , has branches at least 4 layers deep... so a real d
 
 - [x] "summary" component type
 - [x] "single-form"-mode
+- [ ] "readonly"-field type
+- [ ] autocomplete-field type
+- [ ] send data to prefill the form
 - [ ] info-icons with popovers/tooltips
 - [ ] "crud"-mode
 - [ ] "search"-mode
@@ -134,7 +137,7 @@ make a form that is complex , has branches at least 4 layers deep... so a real d
 - [ ] "color" field type (single color , single color from palette)
 - [ ] multi-language support
 - [ ] support for custom field types
-- [ ] all elements now have tailwind classes, put all this in a "element-class"-map and make it configurable from the outside so that other styling libraries are also supported (custom css, bootstrap etc)
-- [ ] support for themes
+- [x] all elements now have tailwind classes, put all this in a "element-class"-map and make it configurable from the outside so that other styling libraries are also supported (custom css, bootstrap etc)
+- [x] support for themes
 - [ ] support for custom wrapper elements for each component type : page , form , section , field ?
   

@@ -78,7 +78,7 @@ export function testConditionalValidation() {
   const hasAllOf = schema.allOf && schema.allOf.length > 0;
   console.log(`Has allOf conditional validation: ${hasAllOf}`);
 
-  if (hasAllOf) {
+  if (hasAllOf && schema.allOf) {
     console.log(`Number of conditional rules: ${schema.allOf.length}`);
 
     schema.allOf.forEach((rule, index) => {

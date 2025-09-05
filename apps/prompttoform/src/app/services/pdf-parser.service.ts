@@ -1,14 +1,12 @@
-// Import PDF.js with dynamic import to avoid worker issues
-let pdfjsLib: any = null;
+// Import unpdf for browser-compatible PDF parsing
+let unpdfLib: any = null;
 
-// Initialize PDF.js dynamically
-async function initPDFJS() {
-  if (!pdfjsLib) {
-    pdfjsLib = await import('pdfjs-dist');
-    // Disable worker completely
-    pdfjsLib.GlobalWorkerOptions.workerSrc = false;
+// Initialize unpdf dynamically
+async function initUnpdf() {
+  if (!unpdfLib) {
+    unpdfLib = await import('unpdf');
   }
-  return pdfjsLib;
+  return unpdfLib;
 }
 
 export interface PDFFormField {
@@ -21,11 +19,37 @@ export interface PDFFormField {
     | 'textarea'
     | 'date'
     | 'email'
-    | 'number';
+    | 'number'
+    | 'file'
+    | 'password'
+    | 'tel'
+    | 'url';
   label?: string;
   required?: boolean;
   options?: string[];
   placeholder?: string;
+  validation?: {
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string;
+    min?: number;
+    max?: number;
+    step?: number;
+    format?: string;
+  };
+  conditional?: {
+    dependsOn?: string;
+    showWhen?: string;
+    hideWhen?: string;
+  };
+  group?: string;
+  order?: number;
+  description?: string;
+  helpText?: string;
+  defaultValue?: string;
+  readonly?: boolean;
+  disabled?: boolean;
+  autocomplete?: string;
 }
 
 export interface PDFFormSection {
@@ -48,7 +72,7 @@ export interface PDFParseResult {
 
 export class PDFParserService {
   /**
-   * Parse a PDF file and extract form fields and sections
+   * Parse a PDF file and extract form fields and sections using afpp
    */
   static async parsePDF(file: File): Promise<PDFParseResult> {
     try {
@@ -59,1077 +83,930 @@ export class PDFParserService {
         file.size
       );
 
-      // Initialize PDF.js dynamically
-      const pdfjs = await initPDFJS();
+      // Initialize afpp dynamically
+      const unpdf = await initUnpdf();
 
+      // Convert File to Uint8Array for unpdf
       const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
 
-      // Add more detailed error handling
-      if (!arrayBuffer || arrayBuffer.byteLength === 0) {
-        throw new Error('PDF file is empty or corrupted');
-      }
+      // Load PDF document using unpdf
+      const pdf = await unpdf.getDocumentProxy(uint8Array);
 
-      console.log('ArrayBuffer created, size:', arrayBuffer.byteLength);
+      // Extract text from PDF
+      const textResult = await unpdf.extractText(pdf, { mergePages: true });
 
-      const pdf = await pdfjs.getDocument({
-        data: arrayBuffer,
-        useWorkerFetch: false,
-        isEvalSupported: false,
-        useSystemFonts: true,
-      }).promise;
+      console.log('Unpdf parsing successful, pages:', textResult.totalPages);
 
-      console.log('PDF document loaded, pages:', pdf.numPages);
+      // Extract text content (already merged)
+      const fullText = textResult.text;
 
+      // Get PDF metadata for better form title detection
+      const metadata = await unpdf.getMeta(pdf);
+      console.log('PDF metadata:', metadata);
+
+      // Try to extract title from metadata first
+      const metadataTitle =
+        metadata.info?.Title || metadata.info?.Subject || metadata.info?.Author;
+
+      // Split text into lines for analysis
+      const lines = fullText
+        .split('\n')
+        .filter((line: string) => line.trim().length > 0);
+
+      // Extract fields and sections from text
       const sections: PDFFormSection[] = [];
       const allFields: PDFFormField[] = [];
-      let fullText = '';
 
-      // Extract text and analyze structure
-      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        console.log(`Processing page ${pageNum}/${pdf.numPages}`);
+      let currentSection: PDFFormSection | null = null;
 
-        const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(' ');
+      for (const line of lines) {
+        const trimmedLine = line.trim();
 
-        console.log(`Page ${pageNum} text length:`, pageText.length);
-
-        fullText += pageText + '\n';
-
-        // Analyze page for form fields and sections
-        const pageFields = this.extractFormFields(textContent);
-        const pageSections = this.extractSections(textContent);
-
-        console.log(`Page ${pageNum} fields found:`, pageFields.length);
-        console.log(`Page ${pageNum} sections found:`, pageSections.length);
-
-        allFields.push(...pageFields);
-        sections.push(...pageSections);
+        // Check if line looks like a section header
+        if (this.isSectionHeader(trimmedLine, { str: trimmedLine })) {
+          if (currentSection) {
+            sections.push(currentSection);
+          }
+          currentSection = {
+            title: trimmedLine,
+            fields: [],
+          };
+        }
+        // Check if line looks like a form field
+        else if (this.isFormField(trimmedLine, lines, lines.indexOf(line))) {
+          const field = this.createFormField(
+            trimmedLine,
+            lines,
+            lines.indexOf(line)
+          );
+          if (field) {
+            allFields.push(field);
+            if (currentSection) {
+              currentSection.fields.push(field);
+            }
+          }
+        }
       }
 
-      // Get PDF metadata
-      const metadata = await pdf.getMetadata();
+      // Add the last section if it exists
+      if (currentSection) {
+        sections.push(currentSection);
+      }
+
+      // If no sections were found, create a default one
+      if (sections.length === 0) {
+        sections.push({
+          title: 'Form Content',
+          fields: allFields,
+        });
+      }
+
+      // Extract title from first few lines
+      const title =
+        metadataTitle ||
+        this.extractFormTitle(lines.map((line: string) => ({ str: line })));
 
       return {
         sections,
         fields: allFields,
         text: fullText,
         metadata: {
-          title: (metadata?.info as any)?.Title,
-          author: (metadata?.info as any)?.Author,
-          subject: (metadata?.info as any)?.Subject,
-          pages: pdf.numPages,
+          title: title || file.name,
+          pages: textResult.totalPages || 1,
         },
       };
     } catch (error) {
-      console.error('Error parsing PDF:', error);
-
-      // Try a simpler approach if the main parsing fails
-      try {
-        console.log('Falling back to simple PDF parsing');
-        const result = await this.parsePDFSimple(file);
-        console.log('Simple parsing result:', result);
-        return result;
-      } catch (simpleError) {
-        console.error('Simple PDF parsing also failed:', simpleError);
-        throw new Error(
-          'Failed to parse PDF file. Please ensure the file is a valid PDF and try again.'
-        );
-      }
+      console.error('Error parsing PDF with unpdf:', error);
+      throw new Error(
+        'Failed to parse PDF file. Please ensure the file is a valid PDF and try again.'
+      );
     }
   }
 
   /**
-   * Simple PDF parsing fallback method
+   * Check if a line looks like a section header
    */
-  private static async parsePDFSimple(file: File): Promise<PDFParseResult> {
-    // Create a comprehensive fallback result when PDF.js fails
-    const basicFields: PDFFormField[] = [
-      {
-        name: 'name',
-        type: 'text',
-        label: 'Full Name',
-        required: true,
-        placeholder: 'Enter your full name',
-      },
-      {
-        name: 'email',
-        type: 'email',
-        label: 'Email Address',
-        required: true,
-        placeholder: 'Enter your email address',
-      },
-      {
-        name: 'phone',
-        type: 'text',
-        label: 'Phone Number',
-        required: false,
-        placeholder: 'Enter your phone number',
-      },
-      {
-        name: 'address',
-        type: 'textarea',
-        label: 'Address',
-        required: false,
-        placeholder: 'Enter your full address',
-      },
-      {
-        name: 'date_of_birth',
-        type: 'date',
-        label: 'Date of Birth',
-        required: false,
-      },
-      {
-        name: 'gender',
-        type: 'select',
-        label: 'Gender',
-        required: false,
-        options: ['Male', 'Female', 'Other', 'Prefer not to say'],
-      },
-      {
-        name: 'marital_status',
-        type: 'select',
-        label: 'Marital Status',
-        required: false,
-        options: ['Single', 'Married', 'Divorced', 'Widowed'],
-      },
-      {
-        name: 'company',
-        type: 'text',
-        label: 'Company/Organization',
-        required: false,
-        placeholder: 'Enter your company name',
-      },
-      {
-        name: 'position',
-        type: 'text',
-        label: 'Job Title/Position',
-        required: false,
-        placeholder: 'Enter your job title',
-      },
-      {
-        name: 'education',
-        type: 'select',
-        label: 'Highest Education Level',
-        required: false,
-        options: [
-          'High School',
-          'Associate Degree',
-          'Bachelor Degree',
-          'Master Degree',
-          'PhD',
-        ],
-      },
-      {
-        name: 'experience',
-        type: 'number',
-        label: 'Years of Experience',
-        required: false,
-        placeholder: 'Enter years of experience',
-      },
-      {
-        name: 'salary_range',
-        type: 'select',
-        label: 'Salary Range',
-        required: false,
-        options: [
-          '$30,000 - $50,000',
-          '$50,000 - $75,000',
-          '$75,000 - $100,000',
-          '$100,000+',
-        ],
-      },
-      {
-        name: 'emergency_contact',
-        type: 'text',
-        label: 'Emergency Contact Name',
-        required: false,
-        placeholder: 'Enter emergency contact name',
-      },
-      {
-        name: 'emergency_phone',
-        type: 'text',
-        label: 'Emergency Contact Phone',
-        required: false,
-        placeholder: 'Enter emergency contact phone',
-      },
-      {
-        name: 'agree_terms',
-        type: 'checkbox',
-        label: 'I agree to the terms and conditions',
-        required: true,
-      },
-      {
-        name: 'agree_background_check',
-        type: 'checkbox',
-        label: 'I consent to background check',
-        required: false,
-      },
-      {
-        name: 'comments',
-        type: 'textarea',
-        label: 'Additional Comments',
-        required: false,
-        placeholder: 'Any additional information you would like to share',
-      },
+  private static isSectionHeader(text: string, item: any): boolean {
+    const trimmedText = text.trim();
+
+    // Check for common section header patterns
+    const sectionPatterns = [
+      /^[A-Z\s]+$/, // ALL CAPS
+      /^[A-Z][a-z\s]+:$/, // Title Case with colon
+      /^[A-Z][a-z\s]+$/, // Title Case
+      /^[0-9]+\.\s+[A-Z]/, // Numbered sections
+      /^[A-Z][A-Z\s]+[A-Z]$/, // ALL CAPS section
     ];
 
-    return {
-      sections: [
-        {
-          title: 'Personal Information',
-          fields: basicFields.slice(0, 7), // name, email, phone, address, dob, gender, marital_status
-        },
-        {
-          title: 'Employment Information',
-          fields: basicFields.slice(7, 12), // company, position, education, experience, salary_range
-        },
-        {
-          title: 'Emergency Contact',
-          fields: basicFields.slice(12, 14), // emergency_contact, emergency_phone
-        },
-        {
-          title: 'Agreements',
-          fields: basicFields.slice(14, 16), // agree_terms, agree_background_check
-        },
-        {
-          title: 'Additional Information',
-          fields: basicFields.slice(16), // comments
-        },
-      ],
-      fields: basicFields,
-      text: `PDF file: ${file.name} (${file.size} bytes) - Comprehensive form structure detected with personal information, employment details, emergency contacts, agreements, and additional comments sections.`,
-      metadata: {
-        title: file.name,
-        pages: 1,
-      },
-    };
+    return sectionPatterns.some((pattern) => pattern.test(trimmedText));
   }
 
   /**
-   * Extract form fields from PDF text content
-   */
-  private static extractFormFields(textContent: any): PDFFormField[] {
-    const fields: PDFFormField[] = [];
-    const items = textContent.items || [];
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      const text = item.str?.toLowerCase() || '';
-
-      // Look for common form field indicators
-      if (this.isFormField(text, items, i)) {
-        const field = this.createFormField(text, items, i);
-        if (field) {
-          fields.push(field);
-        }
-      }
-    }
-
-    return fields;
-  }
-
-  /**
-   * Check if text represents a form field
+   * Check if a line looks like a form field
    */
   private static isFormField(
     text: string,
     items: any[],
     index: number
   ): boolean {
-    const fieldIndicators = [
-      // Personal Information
-      'name:',
-      'first name:',
-      'last name:',
-      'full name:',
-      'given name:',
-      'surname:',
-      'email:',
-      'e-mail:',
-      'email address:',
-      'e-mail address:',
-      'phone:',
-      'telephone:',
-      'mobile:',
-      'cell:',
-      'phone number:',
-      'tel:',
-      'address:',
-      'street address:',
-      'mailing address:',
-      'home address:',
-      'work address:',
-      'city:',
-      'state:',
-      'province:',
-      'zip:',
-      'postal code:',
-      'zip code:',
-      'country:',
-      'nationality:',
-      'citizenship:',
-      'date of birth:',
-      'birth date:',
-      'dob:',
-      'birthday:',
-      'age:',
-      'gender:',
-      'sex:',
-      'male/female:',
-      'm/f:',
-      'marital status:',
-      'married:',
-      'single:',
-      'divorced:',
-      'widowed:',
+    const trimmedText = text.trim().toLowerCase();
 
-      // Employment & Professional
-      'company:',
-      'organization:',
-      'employer:',
-      'business:',
-      'firm:',
-      'job title:',
-      'position:',
-      'title:',
-      'role:',
-      'occupation:',
-      'profession:',
-      'department:',
-      'division:',
-      'team:',
-      'unit:',
-      'branch:',
-      'salary:',
-      'wage:',
-      'income:',
-      'compensation:',
-      'pay rate:',
-      'hourly rate:',
-      'years of experience:',
-      'experience:',
-      'work experience:',
-      'employment history:',
-      'start date:',
-      'hire date:',
-      'employment date:',
-      'date hired:',
-      'end date:',
-      'termination date:',
-      'last day:',
-      'supervisor:',
-      'manager:',
-      'boss:',
-      'reporting to:',
-      'direct supervisor:',
-      'employee id:',
-      'employee number:',
-      'staff id:',
-      'worker id:',
+    // Enhanced form field patterns
+    const fieldPatterns = [
+      // Personal Information
+      /name/i,
+      /first\s*name/i,
+      /last\s*name/i,
+      /full\s*name/i,
+      /email/i,
+      /e-mail/i,
+      /email\s*address/i,
+      /phone/i,
+      /telephone/i,
+      /mobile/i,
+      /cell/i,
+      /contact\s*number/i,
+      /address/i,
+      /street\s*address/i,
+      /city/i,
+      /state/i,
+      /zip/i,
+      /postal\s*code/i,
+      /date\s*of\s*birth/i,
+      /birth\s*date/i,
+      /dob/i,
+      /age/i,
+
+      // Professional Information
+      /company/i,
+      /organization/i,
+      /employer/i,
+      /business/i,
+      /position/i,
+      /job\s*title/i,
+      /role/i,
+      /department/i,
+      /salary/i,
+      /income/i,
+      /annual\s*salary/i,
+      /hourly\s*rate/i,
+      /experience/i,
+      /years\s*of\s*experience/i,
+      /work\s*history/i,
 
       // Education
-      'education:',
-      'educational background:',
-      'academic background:',
-      'degree:',
-      'highest degree:',
-      'academic degree:',
-      'qualification:',
-      'university:',
-      'college:',
-      'school:',
-      'institution:',
-      'academy:',
-      'major:',
-      'field of study:',
-      'concentration:',
-      'specialization:',
-      'graduation date:',
-      'year graduated:',
-      'completion date:',
-      'gpa:',
-      'grade point average:',
-      'academic standing:',
-      'certification:',
-      'license:',
-      'credential:',
-      'qualification:',
+      /education/i,
+      /degree/i,
+      /university/i,
+      /college/i,
+      /school/i,
+      /graduation/i,
+      /gpa/i,
+      /grade\s*point\s*average/i,
 
-      // Financial & Legal
-      'ssn:',
-      'social security:',
-      'social security number:',
-      'tax id:',
-      'tax identification:',
-      'ein:',
-      'employer identification:',
-      'bank account:',
-      'account number:',
-      'routing number:',
-      'swift code:',
-      'credit card:',
-      'card number:',
-      'expiration date:',
-      'cvv:',
-      'cvc:',
-      'income:',
-      'annual income:',
-      'monthly income:',
-      'gross income:',
-      'net income:',
-      'assets:',
-      'liabilities:',
-      'net worth:',
-      'financial statement:',
+      // Medical/Health
+      /medical/i,
+      /health/i,
+      /condition/i,
+      /diagnosis/i,
+      /symptoms/i,
+      /medication/i,
+      /prescription/i,
+      /allergies/i,
+      /blood\s*type/i,
 
-      // Health & Medical
-      'medical history:',
-      'health history:',
-      'medical conditions:',
-      'allergies:',
-      'medications:',
-      'current medications:',
-      'prescriptions:',
-      'emergency contact:',
-      'emergency contact name:',
-      'emergency phone:',
-      'insurance:',
-      'health insurance:',
-      'policy number:',
-      'group number:',
-      'primary care physician:',
-      'doctor:',
-      'physician:',
-      'healthcare provider:',
+      // Financial
+      /account/i,
+      /bank/i,
+      /credit/i,
+      /debit/i,
+      /card\s*number/i,
+      /ssn/i,
+      /social\s*security/i,
+      /tax\s*id/i,
+      /ein/i,
 
-      // References & Contacts
-      'reference:',
-      'references:',
-      'personal reference:',
-      'professional reference:',
-      'reference name:',
-      'reference phone:',
-      'reference email:',
-      'reference relationship:',
-      'contact person:',
-      'next of kin:',
-      'spouse:',
-      'parent:',
-      'guardian:',
-
-      // Agreements & Consents
-      'agree',
-      'accept',
-      'consent',
-      'acknowledge',
-      'confirm',
-      'verify',
-      'terms and conditions:',
-      'terms of service:',
-      'privacy policy:',
-      'waiver:',
-      'release:',
-      'authorization:',
-      'permission:',
-      'background check:',
-      'drug test:',
-      'criminal record:',
-      'credit check:',
+      // Legal/Consent
+      /agree/i,
+      /consent/i,
+      /signature/i,
+      /date\s*signed/i,
+      /terms/i,
+      /conditions/i,
+      /policy/i,
+      /waiver/i,
 
       // Form Controls
-      'check',
-      'select',
-      'choose',
-      'option',
-      'preference',
-      'choice',
-      'yes/no',
-      'true/false',
-      'agree/disagree',
-      'satisfied/unsatisfied',
-      'rate:',
-      'scale:',
-      'rating:',
-      'satisfaction:',
-      'feedback:',
-      'comment:',
-      'comments:',
-      'description:',
-      'details:',
-      'explanation:',
-      'additional information:',
-      'other:',
-      'please specify:',
-      'if other:',
+      /checkbox/i,
+      /radio/i,
+      /select/i,
+      /option/i,
+      /dropdown/i,
+      /text\s*box/i,
+      /input/i,
+      /field/i,
+      /area/i,
 
-      // Dates & Time
-      'date:',
-      'time:',
-      'schedule:',
-      'appointment:',
-      'meeting:',
-      'deadline:',
-      'due date:',
-      'expiration:',
-      'valid until:',
+      // Validation
+      /required/i,
+      /optional/i,
+      /mandatory/i,
+      /must\s*complete/i,
 
-      // Numbers & Quantities
-      'number:',
-      'amount:',
-      'quantity:',
-      'count:',
-      'total:',
-      'sum:',
-      'percentage:',
-      'percent:',
-      'ratio:',
-      'proportion:',
+      // Common Form Words
+      /please\s*provide/i,
+      /enter\s*your/i,
+      /fill\s*in/i,
+      /complete\s*the/i,
+      /select\s*one/i,
+      /choose/i,
+      /indicate/i,
+      /specify/i,
 
-      // File & Document
-      'upload:',
-      'attach:',
-      'file:',
-      'document:',
-      'resume:',
-      'cv:',
-      'photo:',
-      'picture:',
-      'image:',
-      'scan:',
-      'copy:',
-
-      // Signature & Verification
-      'signature:',
-      'sign:',
-      'signed by:',
-      'date signed:',
-      'witness:',
-      'notary:',
-      'notarized:',
-      'certified:',
-      'verified:',
-      'approved:',
+      // Special Fields
+      /emergency\s*contact/i,
+      /reference/i,
+      /witness/i,
+      /sponsor/i,
+      /guarantor/i,
+      /co-signer/i,
+      /authorized\s*representative/i,
     ];
 
     // Check for field indicators
-    const hasFieldIndicator = fieldIndicators.some((indicator) =>
-      text.toLowerCase().includes(indicator.toLowerCase())
-    );
-
-    // Check for common field patterns (like "Name: ___________")
-    const hasFieldPattern = /^[A-Za-z\s]+:\s*[_\-\s]*$/.test(text.trim());
-
-    // Check for form control words
-    const formControlWords = [
-      'checkbox',
-      'radio',
-      'select',
-      'dropdown',
-      'textbox',
-      'textarea',
-    ];
-    const hasFormControl = formControlWords.some((word) =>
-      text.toLowerCase().includes(word)
-    );
-
-    // Check for required field indicators
-    const hasRequiredIndicator =
-      text.includes('*') ||
-      text.toLowerCase().includes('required') ||
-      text.toLowerCase().includes('mandatory');
+    const hasFieldIndicator =
+      /[□☐☑☒✓✔✗✘_]{1,3}\s*$/.test(trimmedText) || // Checkboxes, radio buttons
+      /\[.*\]/.test(trimmedText) || // Brackets indicating input fields
+      /_{3,}/.test(trimmedText) || // Underscores indicating text fields
+      /:/.test(trimmedText); // Colons often indicate form fields
 
     return (
-      hasFieldIndicator ||
-      hasFieldPattern ||
-      hasFormControl ||
-      hasRequiredIndicator
+      fieldPatterns.some((pattern) => pattern.test(trimmedText)) ||
+      hasFieldIndicator
     );
   }
 
   /**
-   * Create a form field object from text
+   * Create a form field from text
    */
   private static createFormField(
     text: string,
     items: any[],
     index: number
   ): PDFFormField | null {
-    // Determine field type based on text content
-    let type: PDFFormField['type'] = 'text';
-    const name = text.replace(/[:*]/g, '').trim();
-    const lowerText = text.toLowerCase();
+    const trimmedText = text.trim();
+    const lowerText = trimmedText.toLowerCase();
 
-    // Email fields
-    if (lowerText.includes('email') || lowerText.includes('e-mail')) {
-      type = 'email';
-    }
-    // Phone fields
-    else if (
+    // Determine field type based on content and visual indicators
+    let fieldType: PDFFormField['type'] = 'text';
+    let required = false;
+    let placeholder = '';
+    let options: string[] = [];
+    let validation: PDFFormField['validation'] = {};
+    let conditional: PDFFormField['conditional'] = {};
+    let description = '';
+    let helpText = '';
+    let defaultValue = '';
+    let readonly = false;
+    let disabled = false;
+    let autocomplete = '';
+    let group = '';
+
+    // Check for visual field indicators
+    const hasCheckbox = /[□☐☑☒✓✔✗✘]/.test(trimmedText);
+    const hasRadio = /[○●]/.test(trimmedText);
+    const hasTextArea =
+      /_{5,}/.test(trimmedText) ||
+      lowerText.includes('address') ||
+      lowerText.includes('description');
+    const hasDropdown =
+      /\[.*\]/.test(trimmedText) ||
+      lowerText.includes('select') ||
+      lowerText.includes('choose');
+
+    // Enhanced field type detection with more types
+    if (
+      hasCheckbox ||
+      lowerText.includes('checkbox') ||
+      lowerText.includes('agree') ||
+      lowerText.includes('accept')
+    ) {
+      fieldType = 'checkbox';
+      required = true;
+      autocomplete = 'off';
+    } else if (
+      hasRadio ||
+      lowerText.includes('radio') ||
+      lowerText.includes('select one') ||
+      lowerText.includes('choose one')
+    ) {
+      fieldType = 'radio';
+      options = this.extractSelectOptions(items, index);
+      autocomplete = 'off';
+    } else if (lowerText.includes('email') || lowerText.includes('e-mail')) {
+      fieldType = 'email';
+      placeholder = 'Enter your email address';
+      autocomplete = 'email';
+      validation.pattern = '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$';
+    } else if (
       lowerText.includes('phone') ||
-      lowerText.includes('tel') ||
+      lowerText.includes('telephone') ||
       lowerText.includes('mobile') ||
       lowerText.includes('cell')
     ) {
-      type = 'text';
-    }
-    // Date fields
-    else if (
-      lowerText.includes('date') ||
-      lowerText.includes('dob') ||
-      lowerText.includes('birth') ||
-      lowerText.includes('graduation') ||
-      lowerText.includes('hire') ||
-      lowerText.includes('termination') ||
-      lowerText.includes('expiration') ||
-      lowerText.includes('deadline') ||
-      lowerText.includes('appointment') ||
-      lowerText.includes('meeting')
+      fieldType = 'tel';
+      placeholder = 'Enter your phone number';
+      autocomplete = 'tel';
+      validation.pattern = '^[+]?[0-9\\s\\-\\(\\)]{10,}$';
+    } else if (
+      lowerText.includes('password') ||
+      lowerText.includes('pass') ||
+      lowerText.includes('pwd')
     ) {
-      type = 'date';
-    }
-    // Checkbox fields
-    else if (
-      lowerText.includes('agree') ||
-      lowerText.includes('accept') ||
-      lowerText.includes('consent') ||
-      lowerText.includes('acknowledge') ||
-      lowerText.includes('confirm') ||
-      lowerText.includes('verify') ||
-      lowerText.includes('checkbox') ||
-      lowerText.includes('background check') ||
-      lowerText.includes('drug test') ||
-      lowerText.includes('credit check')
+      fieldType = 'password';
+      placeholder = 'Enter your password';
+      autocomplete = 'current-password';
+      validation.minLength = 8;
+    } else if (
+      lowerText.includes('url') ||
+      lowerText.includes('website') ||
+      lowerText.includes('link')
     ) {
-      type = 'checkbox';
-    }
-    // Radio fields
-    else if (
-      lowerText.includes('yes/no') ||
-      lowerText.includes('male/female') ||
-      lowerText.includes('married/single') ||
-      lowerText.includes('true/false') ||
-      lowerText.includes('agree/disagree') ||
-      lowerText.includes('satisfied/unsatisfied') ||
-      lowerText.includes('employed/unemployed') ||
-      lowerText.includes('full-time/part-time') ||
-      lowerText.includes('radio')
-    ) {
-      type = 'radio';
-    }
-    // Select fields
-    else if (
-      lowerText.includes('select') ||
-      lowerText.includes('choose') ||
-      lowerText.includes('option') ||
-      lowerText.includes('dropdown') ||
-      lowerText.includes('preference') ||
-      lowerText.includes('choice') ||
-      lowerText.includes('gender') ||
-      lowerText.includes('marital status') ||
-      lowerText.includes('education') ||
-      lowerText.includes('degree') ||
-      lowerText.includes('salary range') ||
-      lowerText.includes('state') ||
-      lowerText.includes('country') ||
-      lowerText.includes('department')
-    ) {
-      type = 'select';
-    }
-    // Textarea fields
-    else if (
-      lowerText.includes('comment') ||
-      lowerText.includes('description') ||
-      lowerText.includes('details') ||
-      lowerText.includes('explanation') ||
-      lowerText.includes('additional information') ||
-      lowerText.includes('other') ||
-      lowerText.includes('please specify') ||
+      fieldType = 'url';
+      placeholder = 'https://example.com';
+      autocomplete = 'url';
+      validation.pattern = '^https?://.+';
+    } else if (
+      hasTextArea ||
       lowerText.includes('address') ||
-      lowerText.includes('textarea') ||
-      lowerText.includes('medical history') ||
-      lowerText.includes('work experience')
+      lowerText.includes('description') ||
+      lowerText.includes('comments') ||
+      lowerText.includes('notes')
     ) {
-      type = 'textarea';
-    }
-    // Number fields
-    else if (
+      fieldType = 'textarea';
+      placeholder = 'Enter your response';
+      validation.maxLength = 1000;
+    } else if (
+      lowerText.includes('date') ||
+      lowerText.includes('birth') ||
+      lowerText.includes('dob')
+    ) {
+      fieldType = 'date';
+      placeholder = 'MM/DD/YYYY';
+      validation.format = 'MM/DD/YYYY';
+    } else if (
       lowerText.includes('salary') ||
+      lowerText.includes('income') ||
       lowerText.includes('amount') ||
       lowerText.includes('number') ||
-      lowerText.includes('quantity') ||
-      lowerText.includes('count') ||
-      lowerText.includes('total') ||
-      lowerText.includes('sum') ||
-      lowerText.includes('percentage') ||
-      lowerText.includes('percent') ||
-      lowerText.includes('gpa') ||
-      lowerText.includes('grade point average') ||
-      lowerText.includes('years of experience') ||
-      lowerText.includes('age') ||
-      lowerText.includes('income') ||
-      lowerText.includes('assets') ||
-      lowerText.includes('liabilities')
+      lowerText.includes('quantity')
     ) {
-      type = 'number';
+      fieldType = 'number';
+      placeholder = 'Enter amount';
+      validation.min = 0;
+      validation.step = 0.01;
+    } else if (
+      hasDropdown ||
+      lowerText.includes('select') ||
+      lowerText.includes('choose') ||
+      lowerText.includes('pick')
+    ) {
+      fieldType = 'select';
+      options = this.extractSelectOptions(items, index);
+      autocomplete = 'off';
+    } else if (
+      lowerText.includes('file') ||
+      lowerText.includes('upload') ||
+      lowerText.includes('attachment')
+    ) {
+      fieldType = 'file';
+      placeholder = 'Choose file';
+      autocomplete = 'off';
+    } else if (lowerText.includes('signature') || lowerText.includes('sign')) {
+      fieldType = 'text';
+      placeholder = 'Type your name to sign';
+      autocomplete = 'name';
     }
 
-    // Check if field is required (look for asterisk or required text)
-    const isRequired =
-      text.includes('*') ||
+    // Extract validation rules
+    validation = this.extractValidationRules(trimmedText, validation);
+
+    // Extract conditional logic
+    conditional = this.extractConditionalLogic(trimmedText, items, index);
+
+    // Extract help text and description
+    const helpInfo = this.extractHelpText(items, index);
+    description = helpInfo.description;
+    helpText = helpInfo.helpText;
+
+    // Extract default value
+    defaultValue = this.extractDefaultValue(trimmedText);
+
+    // Extract field group
+    group = this.extractFieldGroup(trimmedText, items, index);
+
+    // Check if field is required
+    if (
+      lowerText.includes('*') ||
       lowerText.includes('required') ||
-      lowerText.includes('mandatory');
-
-    // Extract options for select fields
-    let options: string[] | undefined;
-    if (type === 'select') {
-      options = this.extractSelectOptions(text, items, index);
+      lowerText.includes('mandatory') ||
+      lowerText.includes('must')
+    ) {
+      required = true;
     }
 
-    return {
-      name: this.cleanFieldName(name),
-      type,
-      label: name,
-      required: isRequired,
-      options,
-    };
-  }
-
-  /**
-   * Extract select options from text and surrounding context
-   */
-  private static extractSelectOptions(
-    text: string,
-    items: any[],
-    index: number
-  ): string[] | undefined {
-    const options: string[] = [];
-
-    // Look for common option patterns in the text
-    const optionPatterns = [
-      /(\$[\d,]+)/g, // Salary ranges like $30,000 - $50,000
-      /(High School|Associate|Bachelor|Master|PhD)/gi, // Education levels
-      /(Male|Female)/gi, // Gender options
-      /(Single|Married|Divorced|Widowed)/gi, // Marital status
-      /(Full-time|Part-time|Contract|Temporary)/gi, // Employment types
-      /(Yes|No)/gi, // Yes/No options
-      /(Agree|Disagree)/gi, // Agreement options
-    ];
-
-    // Extract options from the current text
-    optionPatterns.forEach((pattern) => {
-      const matches = text.match(pattern);
-      if (matches) {
-        options.push(...matches);
-      }
-    });
-
-    // Look for options in nearby text items
-    const nearbyItems = items.slice(Math.max(0, index - 5), index + 6);
-    nearbyItems.forEach((item) => {
-      const itemText = item.str || '';
-      if (
-        itemText.includes('$') ||
-        itemText.includes('option') ||
-        itemText.includes('select')
-      ) {
-        // Extract potential options from nearby text
-        const potentialOptions = itemText
-          .split(/[,;|]/)
-          .map((s: string) => s.trim())
-          .filter((s: string) => s.length > 0);
-        options.push(...potentialOptions);
-      }
-    });
-
-    // Remove duplicates and return
-    return options.length > 0 ? [...new Set(options)] : undefined;
-  }
-
-  /**
-   * Extract sections from PDF text content
-   */
-  private static extractSections(textContent: any): PDFFormSection[] {
-    const sections: PDFFormSection[] = [];
-    const items = textContent.items || [];
-
-    let currentSection: PDFFormSection | null = null;
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      const text = item.str || '';
-
-      // Look for section headers (usually in larger font or all caps)
-      if (this.isSectionHeader(text, item)) {
-        // Save previous section if exists
-        if (currentSection) {
-          sections.push(currentSection);
-        }
-
-        // Start new section
-        currentSection = {
-          title: text.trim(),
-          fields: [],
-        };
-      } else if (
-        currentSection &&
-        this.isFormField(text.toLowerCase(), items, i)
-      ) {
-        // Add field to current section
-        const field = this.createFormField(text.toLowerCase(), items, i);
-        if (field) {
-          currentSection.fields.push(field);
-        }
-      }
+    // Check if field is readonly or disabled
+    if (
+      lowerText.includes('read only') ||
+      lowerText.includes('readonly') ||
+      lowerText.includes('display only')
+    ) {
+      readonly = true;
     }
 
-    // Add the last section
-    if (currentSection) {
-      sections.push(currentSection);
+    if (
+      lowerText.includes('disabled') ||
+      lowerText.includes('not applicable') ||
+      lowerText.includes('n/a')
+    ) {
+      disabled = true;
     }
 
-    return sections;
-  }
-
-  /**
-   * Check if text represents a section header
-   */
-  private static isSectionHeader(text: string, item: any): boolean {
-    // Section headers are usually:
-    // 1. All uppercase
-    // 2. End with numbers (like "SECTION 1")
-    // 3. Have larger font size
-    // 4. Common section keywords
-
-    const sectionKeywords = [
-      // Form structure
-      'section',
-      'part',
-      'chapter',
-      'form',
-      'application',
-      'questionnaire',
-
-      // Personal & Contact
-      'personal information',
-      'personal details',
-      'contact information',
-      'contact details',
-      'basic information',
-      'general information',
-      'demographics',
-
-      // Employment & Professional
-      'employment',
-      'employment information',
-      'work information',
-      'professional background',
-      'job information',
-      'career information',
-      'work experience',
-      'employment history',
-      'professional experience',
-      'work background',
-      'employment background',
-
-      // Education
-      'education',
-      'educational background',
-      'academic background',
-      'academic information',
-      'educational history',
-      'academic history',
-      'qualifications',
-      'credentials',
-
-      // References & Contacts
-      'references',
-      'reference information',
-      'emergency contact',
-      'emergency contacts',
-      'personal references',
-      'professional references',
-      'character references',
-
-      // Health & Medical
-      'medical',
-      'medical information',
-      'health',
-      'health information',
-      'medical history',
-      'health history',
-      'medical background',
-      'health background',
-      'medical conditions',
-      'health conditions',
-      'allergies',
-      'medications',
-      'insurance information',
-
-      // Financial & Legal
-      'financial',
-      'financial information',
-      'financial background',
-      'income information',
-      'legal',
-      'legal information',
-      'legal background',
-      'legal requirements',
-
-      // Agreements & Consents
-      'consent',
-      'agreement',
-      'agreements',
-      'consents',
-      'authorization',
-      'authorizations',
-      'declaration',
-      'declarations',
-      'certification',
-      'certifications',
-      'waiver',
-      'terms and conditions',
-      'privacy policy',
-      'terms of service',
-
-      // Additional Information
-      'additional information',
-      'other information',
-      'supplementary information',
-      'comments',
-      'notes',
-      'remarks',
-      'special instructions',
-      'additional details',
-
-      // Verification & Signature
-      'verification',
-      'verification information',
-      'signature',
-      'signatures',
-      'certification',
-      'notarization',
-      'witness',
-      'approval',
-    ];
-
-    const isUpperCase = text === text.toUpperCase() && text.length > 2;
-    const hasSectionKeyword = sectionKeywords.some((keyword) =>
-      text.toLowerCase().includes(keyword)
-    );
-    const hasNumbering = /\b\d+\.?\s*[A-Z]/.test(text);
-
-    // Check for common section patterns
-    const hasSectionPattern = /^(SECTION|PART|CHAPTER)\s*\d+/i.test(text);
-    const hasFormPattern = /^(FORM|APPLICATION|QUESTIONNAIRE)/i.test(text);
-
-    // Check if text is likely a header (short, all caps, or contains section keywords)
-    const isLikelyHeader =
-      text.length < 50 &&
-      (isUpperCase ||
-        hasSectionKeyword ||
-        hasNumbering ||
-        hasSectionPattern ||
-        hasFormPattern);
-
-    return isLikelyHeader;
-  }
-
-  /**
-   * Clean field name for use as identifier
-   */
-  private static cleanFieldName(name: string): string {
-    return name
+    // Generate field name
+    const name = trimmedText
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
       .replace(/\s+/g, '_')
       .trim();
+
+    return {
+      name: name || 'field_' + index,
+      type: fieldType,
+      label: trimmedText,
+      required,
+      placeholder: placeholder || undefined,
+      options: options.length > 0 ? options : undefined,
+      validation:
+        validation && Object.keys(validation).length > 0
+          ? validation
+          : undefined,
+      conditional:
+        conditional && Object.keys(conditional).length > 0
+          ? conditional
+          : undefined,
+      group: group || undefined,
+      order: index,
+      description: description || undefined,
+      helpText: helpText || undefined,
+      defaultValue: defaultValue || undefined,
+      readonly: readonly || undefined,
+      disabled: disabled || undefined,
+      autocomplete: autocomplete || undefined,
+    };
   }
 
   /**
-   * Convert parsed PDF data to a prompt for the LLM
+   * Extract select options from surrounding text
+   */
+  private static extractSelectOptions(
+    items: any[],
+    currentIndex: number
+  ): string[] {
+    const options: string[] = [];
+
+    // Look for options in the next few lines
+    for (
+      let i = currentIndex + 1;
+      i < Math.min(currentIndex + 10, items.length);
+      i++
+    ) {
+      const item = items[i];
+      const text = item.str?.trim();
+      if (!text) continue;
+
+      // Check for common option patterns
+      if (
+        /^[a-z]\)\s/i.test(text) || // a) option
+        /^[0-9]+\.\s/i.test(text) || // 1. option
+        /^•\s/i.test(text) || // • option
+        /^-\s/i.test(text) || // - option
+        /^○\s/i.test(text) || // ○ option
+        /^□\s/i.test(text)
+      ) {
+        // □ option
+        const optionText = text.replace(/^[a-z0-9•\-○□]\)?\.?\s*/i, '').trim();
+        if (optionText && optionText.length > 0) {
+          options.push(optionText);
+        }
+      }
+
+      // Stop if we hit another field or section
+      if (
+        this.isFormField(text, items, i) ||
+        this.isSectionHeader(text, item)
+      ) {
+        break;
+      }
+    }
+
+    return options;
+  }
+
+  /**
+   * Extract validation rules from field text
+   */
+  private static extractValidationRules(
+    text: string,
+    existingValidation: PDFFormField['validation']
+  ): PDFFormField['validation'] {
+    const validation = { ...existingValidation };
+    const lowerText = text.toLowerCase();
+
+    // Extract length constraints
+    const minLengthMatch = lowerText.match(
+      /(?:min|minimum)\s*(?:length)?\s*:?\s*(\d+)/
+    );
+    if (minLengthMatch) {
+      validation.minLength = parseInt(minLengthMatch[1]);
+    }
+
+    const maxLengthMatch = lowerText.match(
+      /(?:max|maximum)\s*(?:length)?\s*:?\s*(\d+)/
+    );
+    if (maxLengthMatch) {
+      validation.maxLength = parseInt(maxLengthMatch[1]);
+    }
+
+    // Extract numeric constraints
+    const minMatch = lowerText.match(/(?:min|minimum)\s*:?\s*(\d+(?:\.\d+)?)/);
+    if (minMatch) {
+      validation.min = parseFloat(minMatch[1]);
+    }
+
+    const maxMatch = lowerText.match(/(?:max|maximum)\s*:?\s*(\d+(?:\.\d+)?)/);
+    if (maxMatch) {
+      validation.max = parseFloat(maxMatch[1]);
+    }
+
+    // Extract step value
+    const stepMatch = lowerText.match(
+      /(?:step|increment)\s*:?\s*(\d+(?:\.\d+)?)/
+    );
+    if (stepMatch) {
+      validation.step = parseFloat(stepMatch[1]);
+    }
+
+    // Extract format patterns
+    if (lowerText.includes('format') || lowerText.includes('pattern')) {
+      const formatMatch = text.match(/(?:format|pattern)\s*:?\s*([^\s,]+)/i);
+      if (formatMatch) {
+        validation.format = formatMatch[1];
+      }
+    }
+
+    return validation;
+  }
+
+  /**
+   * Extract conditional logic from field text
+   */
+  private static extractConditionalLogic(
+    text: string,
+    items: any[],
+    currentIndex: number
+  ): PDFFormField['conditional'] {
+    const conditional: PDFFormField['conditional'] = {};
+    const lowerText = text.toLowerCase();
+
+    // Look for conditional keywords in surrounding text
+    for (
+      let i = Math.max(0, currentIndex - 5);
+      i < Math.min(currentIndex + 5, items.length);
+      i++
+    ) {
+      const item = items[i];
+      const itemText = item.str?.toLowerCase() || '';
+
+      // Check for dependency patterns
+      if (
+        itemText.includes('if') ||
+        itemText.includes('when') ||
+        itemText.includes('depending on')
+      ) {
+        const dependsMatch = itemText.match(
+          /(?:if|when|depending on)\s+([^,\.]+)/
+        );
+        if (dependsMatch) {
+          conditional.dependsOn = dependsMatch[1].trim();
+        }
+      }
+
+      // Check for show/hide conditions
+      if (itemText.includes('show') || itemText.includes('display')) {
+        const showMatch = itemText.match(
+          /(?:show|display)\s+(?:when|if)\s+([^,\.]+)/
+        );
+        if (showMatch) {
+          conditional.showWhen = showMatch[1].trim();
+        }
+      }
+
+      if (itemText.includes('hide') || itemText.includes('skip')) {
+        const hideMatch = itemText.match(
+          /(?:hide|skip)\s+(?:when|if)\s+([^,\.]+)/
+        );
+        if (hideMatch) {
+          conditional.hideWhen = hideMatch[1].trim();
+        }
+      }
+    }
+
+    return conditional;
+  }
+
+  /**
+   * Extract help text and description from surrounding text
+   */
+  private static extractHelpText(
+    items: any[],
+    currentIndex: number
+  ): { description: string; helpText: string } {
+    let description = '';
+    let helpText = '';
+
+    // Look for help text in surrounding lines
+    for (
+      let i = Math.max(0, currentIndex - 3);
+      i < Math.min(currentIndex + 5, items.length);
+      i++
+    ) {
+      const item = items[i];
+      const text = item.str?.trim() || '';
+
+      // Skip the current field text
+      if (i === currentIndex) continue;
+
+      // Look for description patterns
+      if (text.includes('(') && text.includes(')')) {
+        const descMatch = text.match(/\(([^)]+)\)/);
+        if (descMatch) {
+          description = descMatch[1].trim();
+        }
+      }
+
+      // Look for help text patterns
+      if (
+        text.includes('help') ||
+        text.includes('note') ||
+        text.includes('tip')
+      ) {
+        helpText = text.replace(/(?:help|note|tip)\s*:?\s*/i, '').trim();
+      }
+
+      // Look for italicized or smaller text (often help text)
+      if (
+        text.length > 0 &&
+        text.length < 100 &&
+        !this.isFormField(text, items, i)
+      ) {
+        if (!helpText) {
+          helpText = text;
+        }
+      }
+    }
+
+    return { description, helpText };
+  }
+
+  /**
+   * Extract default value from field text
+   */
+  private static extractDefaultValue(text: string): string {
+    const defaultValueMatch = text.match(
+      /(?:default|pre-filled|example)\s*:?\s*([^\s,\.]+)/i
+    );
+    if (defaultValueMatch) {
+      return defaultValueMatch[1].trim();
+    }
+
+    // Look for values in brackets or parentheses
+    const bracketMatch = text.match(/[\[\(]([^\]\)]+)[\]\)]/);
+    if (bracketMatch) {
+      return bracketMatch[1].trim();
+    }
+
+    return '';
+  }
+
+  /**
+   * Extract field group from surrounding context
+   */
+  private static extractFieldGroup(
+    text: string,
+    items: any[],
+    currentIndex: number
+  ): string {
+    // Look backwards for section headers or group indicators
+    for (let i = currentIndex - 1; i >= Math.max(0, currentIndex - 10); i--) {
+      const item = items[i];
+      const itemText = item.str?.trim() || '';
+
+      // Check if this is a section header
+      if (this.isSectionHeader(itemText, item)) {
+        return itemText;
+      }
+
+      // Look for group indicators
+      if (
+        itemText.includes('group') ||
+        itemText.includes('section') ||
+        itemText.includes('part')
+      ) {
+        return itemText;
+      }
+    }
+
+    return '';
+  }
+
+  /**
+   * Extract form title from text items
+   */
+  private static extractFormTitle(textItems: any[]): string | null {
+    // Look for title in first few items
+    const firstItems = textItems.slice(0, 10);
+
+    for (const item of firstItems) {
+      const text = item.str?.trim();
+      if (!text) continue;
+
+      // Check for title patterns
+      const titlePatterns = [
+        /^[A-Z][a-z\s]+Form$/i,
+        /^[A-Z][a-z\s]+Application$/i,
+        /^[A-Z][a-z\s]+Questionnaire$/i,
+        /^[A-Z][a-z\s]+Survey$/i,
+        /^[A-Z][a-z\s]+Registration$/i,
+      ];
+
+      if (titlePatterns.some((pattern) => pattern.test(text))) {
+        return text;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Generate a prompt from parsed PDF data
    */
   static generatePromptFromPDF(parseResult: PDFParseResult): string {
-    let prompt = 'Create a form based on the following PDF form structure:\n\n';
+    let prompt =
+      'Create a comprehensive form based on the following detailed PDF form analysis:\n\n';
 
-    // Add metadata
+    // Add form title
     if (parseResult.metadata.title) {
       prompt += `Form Title: ${parseResult.metadata.title}\n`;
     }
-    if (parseResult.metadata.subject) {
-      prompt += `Subject: ${parseResult.metadata.subject}\n`;
-    }
-    prompt += `Pages: ${parseResult.metadata.pages}\n\n`;
 
-    // Add sections with detailed field information
+    // Add sections and fields with enhanced details
     if (parseResult.sections.length > 0) {
-      prompt += 'Sections found in the PDF:\n';
+      prompt += '\nForm Sections:\n';
       parseResult.sections.forEach((section, index) => {
-        prompt += `\n${index + 1}. ${section.title}`;
+        prompt += `${index + 1}. ${section.title}\n`;
         if (section.fields.length > 0) {
-          prompt += '\n   Fields:';
           section.fields.forEach((field) => {
-            let fieldInfo = `\n   - ${field.label} (${field.type})`;
-            if (field.required) {
-              fieldInfo += ' *required';
-            }
-            if (field.options && field.options.length > 0) {
-              fieldInfo += ` [options: ${field.options.join(', ')}]`;
-            }
-            if (field.placeholder) {
-              fieldInfo += ` [placeholder: ${field.placeholder}]`;
-            }
-            prompt += fieldInfo;
+            prompt += this.generateFieldDescription(field, '   ');
           });
         }
       });
     }
 
-    // Add individual fields if no sections
+    // Add standalone fields
     if (parseResult.sections.length === 0 && parseResult.fields.length > 0) {
-      prompt += '\nForm fields found:\n';
+      prompt += '\nForm Fields:\n';
       parseResult.fields.forEach((field) => {
-        let fieldInfo = `- ${field.label} (${field.type})`;
-        if (field.required) {
-          fieldInfo += ' *required';
-        }
-        if (field.options && field.options.length > 0) {
-          fieldInfo += ` [options: ${field.options.join(', ')}]`;
-        }
-        if (field.placeholder) {
-          fieldInfo += ` [placeholder: ${field.placeholder}]`;
-        }
-        prompt += fieldInfo + '\n';
+        prompt += this.generateFieldDescription(field, '');
       });
     }
 
-    // Add field type summary
-    const fieldTypeCounts = parseResult.fields.reduce((acc, field) => {
-      acc[field.type] = (acc[field.type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    if (Object.keys(fieldTypeCounts).length > 0) {
-      prompt += '\nField type summary:\n';
-      Object.entries(fieldTypeCounts).forEach(([type, count]) => {
-        prompt += `- ${type}: ${count} field(s)\n`;
-      });
-    }
-
-    // Add extracted text for context (limited to avoid token limits)
+    // Add extracted text for context
     if (parseResult.text) {
-      prompt += '\n\nExtracted text from PDF (first 800 characters):\n';
-      prompt += parseResult.text.substring(0, 800);
-      if (parseResult.text.length > 800) {
-        prompt += '\n... (truncated)';
+      prompt += '\nExtracted Text:\n';
+      prompt +=
+        parseResult.text.substring(0, 500) +
+        (parseResult.text.length > 500 ? '...' : '');
+    }
+
+    prompt += '\n\nPlease create a form that:';
+    prompt += '\n- Matches this exact structure and field types';
+    prompt += '\n- Includes all specified validation rules';
+    prompt += '\n- Implements conditional logic where indicated';
+    prompt += '\n- Uses appropriate HTML5 input types and attributes';
+    prompt += '\n- Includes proper accessibility features';
+    prompt += '\n- Has responsive design for mobile devices';
+    prompt += '\n- Includes helpful placeholder text and descriptions';
+
+    return prompt;
+  }
+
+  /**
+   * Generate detailed field description for prompt
+   */
+  private static generateFieldDescription(
+    field: PDFFormField,
+    indent: string
+  ): string {
+    let description = `${indent}- ${field.label || field.name} (${field.type})`;
+
+    // Add required indicator
+    if (field.required) {
+      description += ' *required';
+    }
+
+    // Add placeholder
+    if (field.placeholder) {
+      description += ` - placeholder: "${field.placeholder}"`;
+    }
+
+    // Add options for select/radio fields
+    if (field.options && field.options.length > 0) {
+      description += ` - options: [${field.options.join(', ')}]`;
+    }
+
+    // Add validation rules
+    if (field.validation) {
+      const validationRules: string[] = [];
+      if (field.validation.minLength)
+        validationRules.push(`min length: ${field.validation.minLength}`);
+      if (field.validation.maxLength)
+        validationRules.push(`max length: ${field.validation.maxLength}`);
+      if (field.validation.min !== undefined)
+        validationRules.push(`min: ${field.validation.min}`);
+      if (field.validation.max !== undefined)
+        validationRules.push(`max: ${field.validation.max}`);
+      if (field.validation.step)
+        validationRules.push(`step: ${field.validation.step}`);
+      if (field.validation.pattern)
+        validationRules.push(`pattern: ${field.validation.pattern}`);
+      if (field.validation.format)
+        validationRules.push(`format: ${field.validation.format}`);
+
+      if (validationRules.length > 0) {
+        description += ` - validation: [${validationRules.join(', ')}]`;
       }
     }
 
-    prompt +=
-      '\n\nPlease create a well-structured form with appropriate validation, field types, and user-friendly labels based on this PDF structure. Include proper form sections, validation rules, and ensure the form follows best practices for user experience.';
+    // Add conditional logic
+    if (field.conditional) {
+      const conditions: string[] = [];
+      if (field.conditional.dependsOn)
+        conditions.push(`depends on: ${field.conditional.dependsOn}`);
+      if (field.conditional.showWhen)
+        conditions.push(`show when: ${field.conditional.showWhen}`);
+      if (field.conditional.hideWhen)
+        conditions.push(`hide when: ${field.conditional.hideWhen}`);
 
-    return prompt;
+      if (conditions.length > 0) {
+        description += ` - conditional: [${conditions.join(', ')}]`;
+      }
+    }
+
+    // Add group information
+    if (field.group) {
+      description += ` - group: "${field.group}"`;
+    }
+
+    // Add description and help text
+    if (field.description) {
+      description += ` - description: "${field.description}"`;
+    }
+
+    if (field.helpText) {
+      description += ` - help: "${field.helpText}"`;
+    }
+
+    // Add default value
+    if (field.defaultValue) {
+      description += ` - default: "${field.defaultValue}"`;
+    }
+
+    // Add field state
+    if (field.readonly) {
+      description += ' - readonly';
+    }
+
+    if (field.disabled) {
+      description += ' - disabled';
+    }
+
+    // Add autocomplete
+    if (field.autocomplete) {
+      description += ` - autocomplete: ${field.autocomplete}`;
+    }
+
+    description += '\n';
+    return description;
   }
 }
