@@ -57,6 +57,7 @@ export function PdfUploadButton({
         'prompt',
         'Analyze this document and create a form based on its content'
       );
+      formData.append('model', apiConfig.model);
 
       // Determine the API URL
       const apiUrl = import.meta.env.PROD
@@ -67,6 +68,7 @@ export function PdfUploadButton({
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
+          Authorization: `Bearer ${apiConfig.apiKey}`,
           'api-url': apiConfig.baseUrl,
           'api-path': '/chat/completions',
           'system-key': apiConfig.systemKey ?? '',
