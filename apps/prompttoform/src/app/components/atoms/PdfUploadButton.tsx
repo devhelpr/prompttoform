@@ -1,5 +1,8 @@
 import { useState, useRef } from 'react';
 import { getCurrentAPIConfig } from '../../services/llm-api';
+import { getSystemPrompt } from '../../prompt-library/system-prompt';
+import { UISchema } from '../../types/ui-schema';
+import schemaJson from '@schema';
 
 interface PdfUploadButtonProps {
   onPdfParsed: (prompt: string) => void;
@@ -50,14 +53,23 @@ export function PdfUploadButton({
         );
       }
 
+      // Get system prompt and UI schema
+      const uiSchema = schemaJson as unknown as UISchema;
+      const systemMessage = getSystemPrompt(uiSchema);
+      const userPrompt =
+        'Analyze this PDF document and create a form based on its content. Extract all form fields, sections, and structure from the document.';
+
       // Create FormData for multipart upload
       const formData = new FormData();
       formData.append('file', file);
-      formData.append(
-        'prompt',
-        'Analyze this document and create a form based on its content'
-      );
       formData.append('model', apiConfig.model);
+      formData.append('systemMessage', systemMessage);
+      formData.append('userPrompt', userPrompt);
+      formData.append(
+        'temperature',
+        (apiConfig.supportsTemperature ? 0.2 : 1.0).toString()
+      );
+      formData.append('jsonSchema', JSON.stringify(uiSchema));
 
       // Determine the API URL
       const apiUrl = import.meta.env.PROD
