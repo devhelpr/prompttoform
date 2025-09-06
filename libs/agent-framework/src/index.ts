@@ -15,3 +15,8 @@ export * from './lib/utils/agent-cache';
 
 // Example agents
 export * from './lib/agents/example-agent';
+
+// Standard agents
+export * from './lib/agents/standard-agent';
+export * from './lib/agents/standard-agent/form-quality-assessor';
+export * from './lib/agents/standard-agent/prompt-templates';

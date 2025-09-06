@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { AgentService } from '@devhelpr/agent-framework';
-import { AgentTaskPanel } from '../molecules/AgentTaskPanel';
+import { AgentTaskPanelV2 } from '../molecules/AgentTaskPanelV2';
 import { AgentHistory } from '../molecules/AgentHistory';
+import { AgentEnhancedFormEditor } from '../molecules/AgentEnhancedFormEditor';
 import { AgentResult, AgentHealthCheck } from '@devhelpr/agent-framework';
+import { useAgentService } from '../../hooks/use-agent-service';
 
 interface AgentDashboardProps {
   agentService: AgentService;

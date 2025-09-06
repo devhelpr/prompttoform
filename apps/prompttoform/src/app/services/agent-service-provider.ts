@@ -4,6 +4,7 @@ import {
   MemoryAgentMetrics,
   MemoryAgentCache,
   ExampleAgent,
+  StandardAgent,
 } from '@devhelpr/agent-framework';
 
 /**
@@ -44,21 +45,22 @@ export class AgentServiceProvider {
       logLevel: 'info',
     });
 
-    // Register example agent for demonstration
-    this.registerExampleAgent(agentService, logger, metrics);
+    // Register agents for demonstration
+    this.registerAgents(agentService, logger, metrics);
 
     return agentService;
   }
 
   /**
-   * Register the example agent
+   * Register all available agents
    */
-  private static async registerExampleAgent(
+  private static async registerAgents(
     agentService: AgentService,
     logger: ConsoleAgentLogger,
     metrics: MemoryAgentMetrics
   ): Promise<void> {
     try {
+      // Register example agent
       const exampleAgent = new ExampleAgent(
         'example-agent',
         'Example Agent',
@@ -67,10 +69,23 @@ export class AgentServiceProvider {
         metrics
       );
 
+      // Register standard agent
+      const standardAgent = new StandardAgent(
+        'standard-agent',
+        'Standard Form Agent',
+        '1.0.0',
+        logger,
+        metrics
+      );
+
       await agentService.registerAgent(exampleAgent);
-      console.log('Example agent registered successfully');
+      await agentService.registerAgent(standardAgent);
+
+      console.log(
+        'Agents registered successfully: example-agent, standard-agent'
+      );
     } catch (error) {
-      console.error('Failed to register example agent:', error);
+      console.error('Failed to register agents:', error);
     }
   }
 

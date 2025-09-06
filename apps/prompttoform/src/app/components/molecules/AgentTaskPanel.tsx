@@ -5,6 +5,7 @@ import {
   AgentResult,
   AgentSuggestion,
 } from '@devhelpr/agent-framework';
+import { useAgentService } from '../../hooks/use-agent-service';
 
 interface AgentTaskPanelProps {
   agentService: AgentService;
