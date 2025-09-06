@@ -96,7 +96,6 @@ async function flateInflate(input: Uint8Array): Promise<Uint8Array> {
     console.log(
       `[PDF Parser] Attempting Node.js zlib for ${input.length} bytes`
     );
-    // @ts-expect-error - dynamic import to avoid bundlers complaining in browser builds
     const zlib = await import('node:zlib');
     const out = zlib.inflateSync(input);
     const result = new Uint8Array(out.buffer, out.byteOffset, out.byteLength);
