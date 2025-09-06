@@ -80,3 +80,129 @@ Object.defineProperty(window, 'getComputedStyle', {
     getPropertyValue: () => '',
   }),
 });
+
+// Mock pdf-lib
+vi.mock('pdf-lib', () => ({
+  PDFDocument: {
+    load: vi.fn().mockResolvedValue({
+      getPageCount: vi.fn().mockReturnValue(1),
+      getTitle: vi.fn().mockReturnValue('Test Document'),
+      getAuthor: vi.fn().mockReturnValue('Test Author'),
+      getSubject: vi.fn().mockReturnValue('Test Subject'),
+      getCreator: vi.fn().mockReturnValue('Test Creator'),
+      getProducer: vi.fn().mockReturnValue('Test Producer'),
+      getCreationDate: vi.fn().mockReturnValue(new Date()),
+      getModificationDate: vi.fn().mockReturnValue(new Date()),
+      getForm: vi.fn().mockReturnValue({
+        getFields: vi.fn().mockReturnValue([]),
+      }),
+    }),
+  },
+  PDFField: class PDFField {
+    getName() {
+      return 'testField';
+    }
+    isRequired() {
+      return false;
+    }
+    isReadOnly() {
+      return false;
+    }
+  },
+  PDFTextField: class PDFTextField {
+    getName() {
+      return 'testTextField';
+    }
+    isRequired() {
+      return false;
+    }
+    isReadOnly() {
+      return false;
+    }
+    getText() {
+      return 'test text';
+    }
+  },
+  PDFCheckBox: class PDFCheckBox {
+    getName() {
+      return 'testCheckBox';
+    }
+    isRequired() {
+      return false;
+    }
+    isReadOnly() {
+      return false;
+    }
+    isChecked() {
+      return false;
+    }
+  },
+  PDFRadioGroup: class PDFRadioGroup {
+    getName() {
+      return 'testRadioGroup';
+    }
+    isRequired() {
+      return false;
+    }
+    isReadOnly() {
+      return false;
+    }
+    getSelected() {
+      return null;
+    }
+    getOptions() {
+      return [];
+    }
+  },
+  PDFDropdown: class PDFDropdown {
+    getName() {
+      return 'testDropdown';
+    }
+    isRequired() {
+      return false;
+    }
+    isReadOnly() {
+      return false;
+    }
+    getSelected() {
+      return null;
+    }
+    getOptions() {
+      return [];
+    }
+  },
+  PDFOptionList: class PDFOptionList {
+    getName() {
+      return 'testOptionList';
+    }
+    isRequired() {
+      return false;
+    }
+    isReadOnly() {
+      return false;
+    }
+    getSelected() {
+      return null;
+    }
+    getOptions() {
+      return [];
+    }
+  },
+}));
+
+// Mock pdfjs-dist
+vi.mock('pdfjs-dist', () => ({
+  getDocument: vi.fn().mockReturnValue({
+    promise: Promise.resolve({
+      numPages: 1,
+      getPage: vi.fn().mockReturnValue({
+        getTextContent: vi.fn().mockResolvedValue({
+          items: [
+            { str: 'Test Document Title' },
+            { str: 'This is test content' },
+          ],
+        }),
+      }),
+    }),
+  }),
+}));

@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
-import { getCurrentAPIConfig } from '../../services/llm-api';
-import { getSystemPrompt } from '../../prompt-library/system-prompt';
-import { UISchema } from '../../types/ui-schema';
-import schemaJson from '@schema';
+import {
+  parsePDFWithLib,
+  toPromptSummary,
+} from '../../services/pdf-lib-parser';
 
 interface PdfUploadButtonProps {
   onPdfParsed: (prompt: string) => void;
@@ -45,65 +45,29 @@ export function PdfUploadButton({
     setError(null);
 
     try {
-      // Get API configuration
-      const apiConfig = getCurrentAPIConfig();
-      if (!apiConfig.apiKey && !apiConfig.systemKey) {
-        throw new Error(
-          `No API key set for ${apiConfig.name}. Please configure it in the Settings.`
-        );
-      }
+      // Read the file as ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
 
-      // Get system prompt and UI schema
-      const uiSchema = schemaJson as unknown as UISchema;
-      const systemMessage = getSystemPrompt(uiSchema);
-      const userPrompt =
-        'Analyze this PDF document and create a form based on its content. Extract all form fields, sections, and structure from the document.';
+      // Parse the PDF using pdf-lib parser
+      const parsedPDF = await parsePDFWithLib(arrayBuffer);
 
-      // Create FormData for multipart upload
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('model', apiConfig.model);
-      formData.append('systemMessage', systemMessage);
-      formData.append('userPrompt', userPrompt);
-      formData.append(
-        'temperature',
-        (apiConfig.supportsTemperature ? 0.2 : 1.0).toString()
-      );
-      formData.append('jsonSchema', JSON.stringify(uiSchema));
+      // Generate a prompt summary from the parsed PDF
+      const pdfSummary = toPromptSummary(parsedPDF);
 
-      // Determine the API URL
-      const apiUrl = import.meta.env.PROD
-        ? 'https://form-generator-worker.maikel-f16.workers.dev'
-        : 'http://localhost:8787/';
+      // Extract title for better prompt context
+      const title =
+        parsedPDF.metadata.title ||
+        parsedPDF.metadata.subject ||
+        (parsedPDF.titles.length > 0 ? parsedPDF.titles[0] : 'Document');
 
-      // Make the API call with multipart/form-data
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiConfig.apiKey}`,
-          'api-url': apiConfig.baseUrl,
-          'api-path': '/chat/completions',
-          'system-key': apiConfig.systemKey ?? '',
-        },
-        body: formData,
-      });
+      // Create a comprehensive prompt that includes the PDF analysis
+      const prompt = `Based on the following PDF document analysis for "${title}", create a form that captures all the necessary information:
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          `API error: ${errorData.error?.message || response.statusText}`
-        );
-      }
+${pdfSummary}
 
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
+Please create a comprehensive form based on this "${title}" document. Include all relevant fields, sections, and validation rules that would be appropriate for collecting the information described in the document. The form should be structured to match the purpose and content of the "${title}" document.`;
 
-      if (!content) {
-        throw new Error('No content returned from API');
-      }
-
-      // Use the API response as the prompt
-      onPdfParsed(content);
+      onPdfParsed(prompt);
     } catch (err) {
       console.error('Error processing PDF:', err);
       const errorMessage =
@@ -162,7 +126,7 @@ export function PdfUploadButton({
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
-            Processing PDF...
+            Parsing PDF...
           </>
         ) : (
           <>
