@@ -3,6 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+      "@devhelpr/agent-framework": ["libs/agent-framework/src/index.ts"],
       "@devhelpr/react-forms": ["libs/react-forms/src/index.ts"],
       "@schema": ["schema.json"]
     },
