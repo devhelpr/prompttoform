@@ -10,6 +10,7 @@ import {
   OrchestrationResult,
   AgentExecutionPlan,
   TaskDependency,
+  AgentPerformanceMetrics,
 } from '../types/agent-types';
 
 /**
@@ -162,11 +163,20 @@ export class AgentService {
   /**
    * Get agent performance metrics
    */
-  getPerformanceMetrics(agentId?: string) {
+  getPerformanceMetrics(
+    agentId?: string
+  ): AgentPerformanceMetrics | Map<string, AgentPerformanceMetrics> | null {
     if (agentId) {
       return this.registry.getPerformanceMetrics(agentId);
     }
     return this.registry.getAllPerformanceMetrics();
+  }
+
+  /**
+   * Get task execution history
+   */
+  getTaskExecutions(agentId?: string) {
+    return this.registry.getTaskExecutions(agentId);
   }
 
   /**

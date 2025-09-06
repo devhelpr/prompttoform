@@ -41,7 +41,11 @@ export function AgentHistory({
   const loadPerformanceMetrics = async () => {
     try {
       const metrics = agentService.getPerformanceMetrics();
-      setPerformanceMetrics(metrics);
+      if (metrics instanceof Map) {
+        setPerformanceMetrics(metrics);
+      } else {
+        setPerformanceMetrics(new Map());
+      }
     } catch (error) {
       console.error('Failed to load performance metrics:', error);
     }
