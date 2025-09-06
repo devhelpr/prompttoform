@@ -3,6 +3,7 @@ import {
   AgentTask,
   AgentResult,
   AgentSuggestion,
+  AgentContext,
 } from '@devhelpr/agent-framework';
 import { useAgentService } from '../../hooks/use-agent-service';
 
@@ -65,10 +66,10 @@ export function AgentTaskPanelV2({
     setShowSuggestions(false);
 
     try {
-      const context = {
+      const context: AgentContext = {
         sessionId: `session-${Date.now()}`,
         userPreferences: {
-          accessibilityLevel: 'AA',
+          accessibilityLevel: 'AA' as const,
         },
       };
 

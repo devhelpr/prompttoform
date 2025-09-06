@@ -195,7 +195,9 @@ export function AgentEnhancedFormEditor({
               { key: 'validation', label: 'Validation' },
               { key: 'structure', label: 'Structure' },
             ].map(({ key, label }) => {
-              const metric = qualityReport[key as keyof QualityReport] as any;
+              const metric = qualityReport[key as keyof QualityReport] as
+                | { score?: number }
+                | undefined;
               const score = metric?.score || 0;
               return (
                 <div key={key} className="text-center">
@@ -330,7 +332,7 @@ export function AgentEnhancedFormEditor({
               const newFormJson = JSON.parse(e.target.value);
               setFormJson(newFormJson);
               onFormUpdate?.(newFormJson);
-            } catch (error) {
+            } catch {
               // Invalid JSON, but keep the text for editing
             }
           }}

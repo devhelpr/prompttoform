@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AgentService } from '@devhelpr/agent-framework';
+import {
+  AgentService,
+  AgentContext,
+  AgentTask,
+} from '@devhelpr/agent-framework';
 import { AgentServiceProvider } from '../services/agent-service-provider';
 
 /**
@@ -18,7 +22,7 @@ export function useAgentService() {
   }, []);
 
   const executeTask = useCallback(
-    async (task: unknown) => {
+    async (task: AgentTask) => {
       try {
         setError(null);
         return await agentService.executeTask(task);
@@ -33,7 +37,7 @@ export function useAgentService() {
   );
 
   const processPrompt = useCallback(
-    async (prompt: string, context: unknown) => {
+    async (prompt: string, context: AgentContext) => {
       try {
         setError(null);
         return await agentService.processPrompt(prompt, context);
