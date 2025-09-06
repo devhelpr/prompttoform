@@ -35,16 +35,6 @@ interface ParsedPDF {
   warnings: string[];
 }
 
-const isBrowser =
-  typeof window !== 'undefined' &&
-  typeof (globalThis as any).DecompressionStream !== 'undefined';
-
-console.log(
-  `[PDF Parser] Environment detection: isBrowser=${isBrowser}, DecompressionStream available=${
-    typeof (globalThis as any).DecompressionStream !== 'undefined'
-  }`
-);
-
 // JavaScript-based inflate fallback using pako library
 async function pakoInflate(input: Uint8Array): Promise<Uint8Array | null> {
   try {
@@ -70,41 +60,23 @@ async function pakoInflate(input: Uint8Array): Promise<Uint8Array | null> {
 
 async function flateInflate(input: Uint8Array): Promise<Uint8Array> {
   // Try Browser DecompressionStream
-  if (isBrowser) {
-    try {
-      console.log(
-        `[PDF Parser] Attempting browser DecompressionStream for ${input.length} bytes`
-      );
-      const ds = new (globalThis as any).DecompressionStream('deflate');
-      const s = new Blob([input]).stream().pipeThrough(ds);
-      const resp = await new Response(s).arrayBuffer();
-      const result = new Uint8Array(resp);
-      console.log(
-        `[PDF Parser] Browser DecompressionStream successful: ${input.length} -> ${result.length} bytes`
-      );
-      return result;
-    } catch (e: any) {
-      console.log(
-        `[PDF Parser] Browser DecompressionStream failed: ${e?.message || e}`
-      );
-      // Fall through to try other methods
-    }
-  }
-
-  // Try Node zlib (built-in) - this will fail in browser but we catch it
   try {
     console.log(
-      `[PDF Parser] Attempting Node.js zlib for ${input.length} bytes`
+      `[PDF Parser] Attempting browser DecompressionStream for ${input.length} bytes`
     );
-    const zlib = await import('node:zlib');
-    const out = zlib.inflateSync(input);
-    const result = new Uint8Array(out.buffer, out.byteOffset, out.byteLength);
+    const ds = new (globalThis as any).DecompressionStream('deflate');
+    const s = new Blob([input]).stream().pipeThrough(ds);
+    const resp = await new Response(s).arrayBuffer();
+    const result = new Uint8Array(resp);
     console.log(
-      `[PDF Parser] Node.js zlib successful: ${input.length} -> ${result.length} bytes`
+      `[PDF Parser] Browser DecompressionStream successful: ${input.length} -> ${result.length} bytes`
     );
     return result;
   } catch (e: any) {
-    console.log(`[PDF Parser] Node.js zlib failed: ${e?.message || e}`);
+    console.log(
+      `[PDF Parser] Browser DecompressionStream failed: ${e?.message || e}`
+    );
+    // Fall through to try pako fallback
   }
 
   // Try pako JavaScript inflate as fallback
@@ -147,7 +119,9 @@ class Tok {
       const c = this.peek();
       if (c === '%') {
         // comment until EOL
-        while (!this.eof() && this.next() !== '\n') {}
+        while (!this.eof() && this.next() !== '\n') {
+          // Skip comment characters
+        }
       } else if (/\s/.test(c)) {
         this.i++;
       } else break;
@@ -695,7 +669,7 @@ function parseContentStreamText(
     t.skipWS();
     if (t.eof()) break;
     const saved = t.i;
-    let token = t.readObject();
+    const token = t.readObject();
     if (typeof token === 'string') {
       // Operators & barewords
       const op = token;
