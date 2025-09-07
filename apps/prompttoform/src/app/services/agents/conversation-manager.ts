@@ -117,6 +117,17 @@ export class ConversationManager {
       // Add initial user message
       this.addMessage('user', initialPrompt);
 
+      // Debug: Log the state after adding the initial message
+      console.log('Conversation state after adding initial message:', {
+        totalMessages: this.state.messages.length,
+        messages: this.state.messages.map((m) => ({
+          id: m.id,
+          type: m.type,
+          content: m.content,
+          timestamp: m.timestamp,
+        })),
+      });
+
       // Analyze the initial prompt
       const analysis = await this.analysisAgent.analyzePrompt(initialPrompt);
       this.state.analysis = analysis;
@@ -163,6 +174,17 @@ export class ConversationManager {
           });
         });
       }
+
+      // Debug: Log the final state before returning
+      console.log('Final conversation state before returning:', {
+        totalMessages: this.state.messages.length,
+        messages: this.state.messages.map((m) => ({
+          id: m.id,
+          type: m.type,
+          content: m.content,
+          timestamp: m.timestamp,
+        })),
+      });
 
       return this.state;
     } catch (error) {
