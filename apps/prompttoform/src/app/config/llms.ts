@@ -12,7 +12,7 @@ export const llmAPIs: APIConfig[] = [
     supportsTemperature: false,
   },
   {
-    name: 'OpenAI-system',
+    name: 'OpenAI-system-v5-nano',
     baseUrl: 'https://api.openai.com/v1',
     apiKey: '',
     model: 'gpt-5-nano',
