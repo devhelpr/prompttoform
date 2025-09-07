@@ -150,6 +150,29 @@ Extend the schema to support a `translations` object at the root level:
       },
       "description": "List of supported language codes",
       "default": ["en"]
+    },
+    "languageDetails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+            "description": "ISO 639-1 language code"
+          },
+          "name": {
+            "type": "string",
+            "description": "English name of the language"
+          },
+          "nativeName": {
+            "type": "string",
+            "description": "How the language is written in its native script"
+          }
+        },
+        "required": ["code", "name", "nativeName"]
+      },
+      "description": "Detailed information about each supported language"
     }
   },
   "required": ["app"]
@@ -279,7 +302,24 @@ Extend the schema to support a `translations` object at the root level:
     }
   },
   "defaultLanguage": "en",
-  "supportedLanguages": ["en", "es", "fr"]
+  "supportedLanguages": ["en", "es", "fr"],
+  "languageDetails": [
+    {
+      "code": "en",
+      "name": "English",
+      "nativeName": "English"
+    },
+    {
+      "code": "es",
+      "name": "Spanish",
+      "nativeName": "Español"
+    },
+    {
+      "code": "fr",
+      "name": "French",
+      "nativeName": "Français"
+    }
+  ]
 }
 ```
 
@@ -840,6 +880,11 @@ interface LanguageSelectorProps {
   availableLanguages: string[];
   onLanguageChange: (language: string) => void;
   className?: string;
+  languageDetails?: Array<{
+    code: string;
+    name: string;
+    nativeName: string;
+  }>;
 }
 
 export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
@@ -847,19 +892,17 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   availableLanguages,
   onLanguageChange,
   className = '',
+  languageDetails,
 }) => {
-  const languageNames: Record<string, string> = {
-    'en': 'English',
-    'es': 'Español',
-    'fr': 'Français',
-    'de': 'Deutsch',
-    'it': 'Italiano',
-    'pt': 'Português',
-    'ru': 'Русский',
-    'zh': '中文',
-    'ja': '日本語',
-    'ko': '한국어',
-    'ar': 'العربية',
+  // Get language display name from provided details or fallback to language code
+  const getLanguageDisplayName = (langCode: string): string => {
+    if (languageDetails) {
+      const langDetail = languageDetails.find(l => l.code === langCode);
+      if (langDetail) {
+        return `${langDetail.nativeName} (${langDetail.name})`;
+      }
+    }
+    return langCode.toUpperCase();
   };
 
   if (availableLanguages.length <= 1) {
@@ -879,7 +922,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
       >
         {availableLanguages.map((lang) => (
           <option key={lang} value={lang}>
-            {languageNames[lang] || lang.toUpperCase()}
+            {getLanguageDisplayName(lang)}
           </option>
         ))}
       </select>
@@ -890,7 +933,30 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 
 ## 3. Prompt Agent System Extensions
 
-### 3.1 Multi-Language Detection Agent
+### 3.1 Dynamic Language Detection System
+
+The multi-language system is designed to be **completely flexible** and adapt to any languages mentioned in the user's prompt. Instead of hardcoded language lists, the system:
+
+1. **Analyzes User Prompts**: Detects any language mentions (e.g., "Spanish", "Français", "中文", "العربية")
+2. **Extracts Language Details**: Gets both English names and native names for each language
+3. **Generates Dynamic Translations**: Creates translations for exactly the languages requested
+4. **Displays Native Names**: Shows languages in their native script in the UI
+
+#### **Example User Prompts and System Response:**
+
+**Prompt**: "Create a registration form in English and Spanish"
+- **Detected Languages**: `["en", "es"]`
+- **Language Details**: `[{code: "en", name: "English", nativeName: "English"}, {code: "es", name: "Spanish", nativeName: "Español"}]`
+
+**Prompt**: "I need a form for French and German users"
+- **Detected Languages**: `["fr", "de"]`
+- **Language Details**: `[{code: "fr", name: "French", nativeName: "Français"}, {code: "de", name: "German", nativeName: "Deutsch"}]`
+
+**Prompt**: "Create a bilingual form for Chinese and Arabic speakers"
+- **Detected Languages**: `["zh", "ar"]`
+- **Language Details**: `[{code: "zh", name: "Chinese", nativeName: "中文"}, {code: "ar", name: "Arabic", nativeName: "العربية"}]`
+
+### 3.2 Multi-Language Detection Agent
 
 Create a new agent to detect multi-language requests:
 
@@ -904,6 +970,11 @@ export interface MultiLanguageAnalysis {
   confidence: number;
   reasoning: string;
   suggestedLanguages?: string[];
+  languageDetails?: Array<{
+    code: string;
+    name: string;
+    nativeName: string;
+  }>;
 }
 
 export class MultiLanguageDetectionAgent {
@@ -914,13 +985,15 @@ Analyze the following prompt and determine:
 2. What specific languages are mentioned or implied
 3. Your confidence level in the analysis
 4. Reasoning for your assessment
+5. Language details including native names
 
 Look for indicators such as:
 - Explicit mentions of multiple languages (e.g., "in English and Spanish", "bilingual", "multi-language")
-- References to specific languages (e.g., "French", "German", "中文")
+- References to specific languages (e.g., "French", "German", "中文", "Español", "العربية")
 - Mentions of internationalization, localization, or i18n
 - References to diverse audiences or global users
 - Mentions of language switching or selection
+- Regional or cultural references that imply specific languages
 
 Respond with a JSON object:
 {
@@ -928,8 +1001,20 @@ Respond with a JSON object:
   "requestedLanguages": string[] (ISO 639-1 language codes),
   "confidence": number (0-1),
   "reasoning": string,
-  "suggestedLanguages": string[] (if no specific languages mentioned)
+  "suggestedLanguages": string[] (if no specific languages mentioned),
+  "languageDetails": [
+    {
+      "code": "en",
+      "name": "English",
+      "nativeName": "English"
+    }
+  ]
 }
+
+For languageDetails, provide:
+- code: ISO 639-1 language code
+- name: English name of the language
+- nativeName: How the language is written in its native script
 
 Be conservative - only return true for isMultiLanguageRequested if there are clear indicators.`;
 
@@ -965,6 +1050,7 @@ Be conservative - only return true for isMultiLanguageRequested if there are cle
         confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0,
         reasoning: typeof parsed.reasoning === 'string' ? parsed.reasoning : '',
         suggestedLanguages: Array.isArray(parsed.suggestedLanguages) ? parsed.suggestedLanguages : undefined,
+        languageDetails: Array.isArray(parsed.languageDetails) ? parsed.languageDetails : undefined,
       };
     } catch (error) {
       console.error('Error parsing multi-language analysis response:', error);
@@ -992,6 +1078,11 @@ export interface TranslationRequest {
   formJson: UIJson;
   targetLanguages: string[];
   sourceLanguage?: string;
+  languageDetails?: Array<{
+    code: string;
+    name: string;
+    nativeName: string;
+  }>;
 }
 
 export interface TranslationResult {
@@ -1061,7 +1152,12 @@ For each language, provide a complete translation object that includes ALL text 
 
       for (const language of request.targetLanguages) {
         try {
-          const languagePrompt = this.buildComprehensiveLanguagePrompt(request.formJson, language, request.sourceLanguage);
+          const languagePrompt = this.buildComprehensiveLanguagePrompt(
+            request.formJson, 
+            language, 
+            request.sourceLanguage,
+            request.languageDetails
+          );
           const response = await callLLMAPI(languagePrompt, this.translationPrompt, apiConfig);
           
           const translation = this.parseTranslationResponse(response, language);
@@ -1092,22 +1188,28 @@ For each language, provide a complete translation object that includes ALL text 
     }
   }
 
-  private buildComprehensiveLanguagePrompt(formJson: UIJson, targetLanguage: string, sourceLanguage = 'en'): string {
-    const languageNames: Record<string, string> = {
-      'en': 'English',
-      'es': 'Spanish',
-      'fr': 'French',
-      'de': 'German',
-      'it': 'Italian',
-      'pt': 'Portuguese',
-      'ru': 'Russian',
-      'zh': 'Chinese',
-      'ja': 'Japanese',
-      'ko': 'Korean',
-      'ar': 'Arabic',
+  private buildComprehensiveLanguagePrompt(
+    formJson: UIJson, 
+    targetLanguage: string, 
+    sourceLanguage = 'en',
+    languageDetails?: Array<{code: string; name: string; nativeName: string}>
+  ): string {
+    // Get language names from provided details or fallback to language code
+    const getLanguageName = (langCode: string, useNative = false): string => {
+      if (languageDetails) {
+        const langDetail = languageDetails.find(l => l.code === langCode);
+        if (langDetail) {
+          return useNative ? langDetail.nativeName : langDetail.name;
+        }
+      }
+      return langCode.toUpperCase();
     };
 
-    return `Translate the following form content from ${languageNames[sourceLanguage] || sourceLanguage} to ${languageNames[targetLanguage] || targetLanguage}.
+    const sourceLanguageName = getLanguageName(sourceLanguage);
+    const targetLanguageName = getLanguageName(targetLanguage);
+    const targetLanguageNativeName = getLanguageName(targetLanguage, true);
+
+    return `Translate the following form content from ${sourceLanguageName} to ${targetLanguageName} (${targetLanguageNativeName}).
 
 **CRITICAL**: You must translate ALL text content including:
 1. Form content (titles, labels, placeholders, helper text, options)
@@ -1299,6 +1401,7 @@ export class ConversationManager {
         formJson,
         targetLanguages: multiLangAnalysis.requestedLanguages,
         sourceLanguage: 'en',
+        languageDetails: multiLangAnalysis.languageDetails,
       });
 
       if (translationResult.success) {
@@ -1307,6 +1410,7 @@ export class ConversationManager {
           translations: translationResult.translations,
           defaultLanguage: 'en',
           supportedLanguages: ['en', ...multiLangAnalysis.requestedLanguages],
+          languageDetails: multiLangAnalysis.languageDetails,
         };
       } else {
         console.warn('Translation generation failed:', translationResult.errors);
@@ -1344,6 +1448,7 @@ export function FormPreviewPanel({
   const availableLanguages = hasTranslations 
     ? ['en', ...Object.keys(multiLangForm.translations)]
     : ['en'];
+  const languageDetails = multiLangForm?.languageDetails;
 
   const handleLanguageChange = (language: string) => {
     setCurrentLanguage(language);
@@ -1362,6 +1467,7 @@ export function FormPreviewPanel({
                   availableLanguages={availableLanguages}
                   onLanguageChange={handleLanguageChange}
                   className="justify-end"
+                  languageDetails={languageDetails}
                 />
               </div>
             )}
@@ -1533,6 +1639,9 @@ This enhanced multi-language support implementation provides **complete text tra
 - **Template Variables**: Dynamic content with proper placeholder replacement
 
 ### 🎯 **Key Features**
+- **Dynamic Language Detection**: Automatically detects any languages mentioned in user prompts
+- **Flexible Language Support**: No hardcoded language lists - supports any language combination
+- **Native Language Display**: Shows languages in their native script (e.g., "中文", "العربية", "Español")
 - **Comprehensive Translation Service**: Handles all text types with intelligent fallbacks
 - **Enhanced Agent System**: AI-powered detection and generation of complete translations
 - **Real-time Language Switching**: Instant language changes with full text coverage
