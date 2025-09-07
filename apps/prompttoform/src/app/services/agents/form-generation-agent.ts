@@ -129,20 +129,29 @@ export class FormGenerationAgent {
   }
 
   private getOriginalPrompt(conversationState: ConversationState): string {
-    const firstUserMessage = conversationState.messages.find(
+    // Get all user messages and sort by timestamp to find the earliest one
+    const userMessages = conversationState.messages.filter(
       (m) => m.type === 'user'
     );
+    const firstUserMessage = userMessages.sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    )[0];
 
     // Debug logging to see what's in the conversation state
     console.log('getOriginalPrompt debug:', {
       totalMessages: conversationState.messages.length,
-      userMessages: conversationState.messages
-        .filter((m) => m.type === 'user')
-        .map((m) => ({
-          id: m.id,
-          content: m.content,
-          timestamp: m.timestamp,
-        })),
+      allMessages: conversationState.messages.map((m) => ({
+        id: m.id,
+        type: m.type,
+        content: m.content,
+        timestamp: m.timestamp,
+      })),
+      userMessages: userMessages.map((m) => ({
+        id: m.id,
+        content: m.content,
+        timestamp: m.timestamp,
+      })),
       firstUserMessage: firstUserMessage
         ? {
             id: firstUserMessage.id,
