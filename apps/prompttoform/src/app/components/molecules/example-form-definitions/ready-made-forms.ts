@@ -1,13 +1,274 @@
 import { FormDefinition } from '@devhelpr/react-forms';
+import { MultiLanguageFormDefinition } from '@devhelpr/react-forms';
 
 export interface ReadyMadeForm {
   name: string;
   description: string;
-  json: FormDefinition;
+  json: FormDefinition | MultiLanguageFormDefinition;
   prompt?: string;
 }
 
 export const READY_MADE_FORMS: ReadyMadeForm[] = [
+  {
+    name: 'Multi-Language Contact Form',
+    description:
+      'Simple contact form with Dutch, English, and Swedish language support',
+    prompt:
+      'Create a contact form with name, email, and message fields in Dutch, English, and Swedish languages',
+    json: {
+      app: {
+        title: 'Contact Us',
+        pages: [
+          {
+            id: 'contact-page',
+            title: 'Contact Us',
+            route: '/contact',
+            layout: 'vertical',
+            components: [
+              {
+                id: 'name',
+                type: 'input',
+                label: 'Full Name',
+                props: {
+                  placeholder: 'Enter your full name',
+                  inputType: 'text',
+                },
+                validation: {
+                  required: true,
+                  minLength: 2,
+                },
+              },
+              {
+                id: 'email',
+                type: 'input',
+                label: 'Email Address',
+                props: {
+                  placeholder: 'Enter your email address',
+                  inputType: 'email',
+                },
+                validation: {
+                  required: true,
+                },
+              },
+              {
+                id: 'message',
+                type: 'textarea',
+                label: 'Message',
+                props: {
+                  placeholder: 'Enter your message',
+                  rows: 4,
+                },
+                validation: {
+                  required: true,
+                  minLength: 10,
+                },
+              },
+            ],
+          },
+        ],
+        thankYouPage: {
+          title: 'Thank You!',
+          message:
+            'Your message has been sent successfully. We will get back to you soon.',
+        },
+      },
+      translations: {
+        en: {
+          app: {
+            title: 'Contact Us',
+          },
+          pages: [
+            {
+              id: 'contact-page',
+              title: 'Contact Us',
+              components: [
+                {
+                  id: 'name',
+                  label: 'Full Name',
+                  props: {
+                    placeholder: 'Enter your full name',
+                  },
+                  validation: {
+                    errorMessages: {
+                      required: 'Full name is required',
+                      minLength: 'Name must be at least 2 characters long',
+                    },
+                  },
+                },
+                {
+                  id: 'email',
+                  label: 'Email Address',
+                  props: {
+                    placeholder: 'Enter your email address',
+                  },
+                  validation: {
+                    errorMessages: {
+                      required: 'Email address is required',
+                      invalidEmail: 'Please enter a valid email address',
+                    },
+                  },
+                },
+                {
+                  id: 'message',
+                  label: 'Message',
+                  props: {
+                    placeholder: 'Enter your message',
+                  },
+                  validation: {
+                    errorMessages: {
+                      required: 'Message is required',
+                      minLength: 'Message must be at least 10 characters long',
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+          ui: {
+            submitButton: 'Send Message',
+            thankYouTitle: 'Thank You!',
+            thankYouMessage:
+              'Your message has been sent successfully. We will get back to you soon.',
+          },
+        },
+        nl: {
+          app: {
+            title: 'Neem Contact Op',
+          },
+          pages: [
+            {
+              id: 'contact-page',
+              title: 'Neem Contact Op',
+              components: [
+                {
+                  id: 'name',
+                  label: 'Volledige Naam',
+                  props: {
+                    placeholder: 'Voer uw volledige naam in',
+                  },
+                  validation: {
+                    errorMessages: {
+                      required: 'Volledige naam is verplicht',
+                      minLength: 'Naam moet minimaal 2 karakters lang zijn',
+                    },
+                  },
+                },
+                {
+                  id: 'email',
+                  label: 'E-mailadres',
+                  props: {
+                    placeholder: 'Voer uw e-mailadres in',
+                  },
+                  validation: {
+                    errorMessages: {
+                      required: 'E-mailadres is verplicht',
+                      invalidEmail: 'Voer een geldig e-mailadres in',
+                    },
+                  },
+                },
+                {
+                  id: 'message',
+                  label: 'Bericht',
+                  props: {
+                    placeholder: 'Voer uw bericht in',
+                  },
+                  validation: {
+                    errorMessages: {
+                      required: 'Bericht is verplicht',
+                      minLength: 'Bericht moet minimaal 10 karakters lang zijn',
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+          ui: {
+            submitButton: 'Verstuur Bericht',
+            thankYouTitle: 'Bedankt!',
+            thankYouMessage:
+              'Uw bericht is succesvol verzonden. We nemen zo snel mogelijk contact met u op.',
+          },
+        },
+        sv: {
+          app: {
+            title: 'Kontakta Oss',
+          },
+          pages: [
+            {
+              id: 'contact-page',
+              title: 'Kontakta Oss',
+              components: [
+                {
+                  id: 'name',
+                  label: 'Fullständigt Namn',
+                  props: {
+                    placeholder: 'Ange ditt fullständiga namn',
+                  },
+                  validation: {
+                    errorMessages: {
+                      required: 'Fullständigt namn krävs',
+                      minLength: 'Namnet måste vara minst 2 tecken långt',
+                    },
+                  },
+                },
+                {
+                  id: 'email',
+                  label: 'E-postadress',
+                  props: {
+                    placeholder: 'Ange din e-postadress',
+                  },
+                  validation: {
+                    errorMessages: {
+                      required: 'E-postadress krävs',
+                      invalidEmail: 'Ange en giltig e-postadress',
+                    },
+                  },
+                },
+                {
+                  id: 'message',
+                  label: 'Meddelande',
+                  props: {
+                    placeholder: 'Ange ditt meddelande',
+                  },
+                  validation: {
+                    errorMessages: {
+                      required: 'Meddelande krävs',
+                      minLength: 'Meddelandet måste vara minst 10 tecken långt',
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+          ui: {
+            submitButton: 'Skicka Meddelande',
+            thankYouTitle: 'Tack!',
+            thankYouMessage:
+              'Ditt meddelande har skickats framgångsrikt. Vi återkommer till dig så snart som möjligt.',
+          },
+        },
+      },
+      defaultLanguage: 'en',
+      supportedLanguages: ['en', 'nl', 'sv'],
+      languageDetails: [
+        {
+          code: 'en',
+          name: 'English',
+          nativeName: 'English',
+        },
+        {
+          code: 'nl',
+          name: 'Dutch',
+          nativeName: 'Nederlands',
+        },
+        {
+          code: 'sv',
+          name: 'Swedish',
+          nativeName: 'Svenska',
+        },
+      ],
+    },
+  },
   {
     name: 'Simple Contact Form',
     description:
