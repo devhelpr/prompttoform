@@ -3,6 +3,8 @@ import { MainLayout } from './components/templates/MainLayout';
 import { InitialStateLayout } from './components/templates/InitialStateLayout';
 import { FormEditorLayout } from './components/templates/FormEditorLayout';
 import { InitialPromptInput } from './components/molecules/InitialPromptInput';
+import { AgentPromptInput } from './components/molecules/AgentPromptInput';
+import { AgentStateProvider } from './components/molecules/AgentStateManager';
 import { FormEditorSidebar } from './components/molecules/FormEditorSidebar';
 import { FormPreviewPanel } from './components/molecules/FormPreviewPanel';
 import { ErrorBoundary } from './components/molecules/ErrorBoundary';
@@ -657,13 +659,46 @@ function AppContent() {
           onHistoryClick={() => setIsSessionHistoryOpen(true)}
           onImportJsonClick={() => setIsImportJsonOpen(true)}
         >
-          <InitialPromptInput
-            onGenerate={handleGenerate}
-            onLoadJson={handleImportJson}
+          <AgentStateProvider
+            onFormGenerated={(result) => {
+              if (result.success && result.parsedJson) {
+                const formattedJson = formatJsonForDisplay(result.parsedJson);
+                setGeneratedJson(formattedJson, result.parsedJson);
+
+                if (result.sessionId) {
+                  setCurrentSessionId(result.sessionId);
+                }
+
+                transitionToEditor();
+              } else {
+                setError(result.error || 'Failed to generate form');
+              }
+            }}
             onError={setError}
-            isLoading={state.isLoading}
-            error={state.error}
-          />
+          >
+            <AgentPromptInput
+              onGenerate={handleGenerate}
+              onLoadJson={handleImportJson}
+              onFormGenerated={(result) => {
+                if (result.success && result.parsedJson) {
+                  const formattedJson = formatJsonForDisplay(result.parsedJson);
+                  setGeneratedJson(formattedJson, result.parsedJson);
+
+                  if (result.sessionId) {
+                    setCurrentSessionId(result.sessionId);
+                  }
+
+                  transitionToEditor();
+                } else {
+                  setError(result.error || 'Failed to generate form');
+                }
+              }}
+              onError={setError}
+              isLoading={state.isLoading}
+              error={state.error}
+              enableAgent={true}
+            />
+          </AgentStateProvider>
         </InitialStateLayout>
 
         <Settings

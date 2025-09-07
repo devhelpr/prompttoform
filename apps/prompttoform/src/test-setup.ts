@@ -1,5 +1,6 @@
 // Test setup file for mocking browser APIs that are not available in jsdom
 import { vi } from 'vitest';
+import '@testing-library/jest-dom';
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
