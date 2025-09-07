@@ -289,28 +289,195 @@ export function AgentPromptInput({
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          {/* PDF Upload button */}
+          <PdfUploadButton
+            onPdfParsed={handlePdfParsed}
+            onError={handlePdfError}
+            disabled={isLoading || agentState.isLoading}
+          />
+
+          {/* Examples dropdown */}
+          <div className="relative">
+            <Menu as="div" className="relative inline-block text-left">
+              {({ open }) => {
+                return (
+                  <>
+                    <Menu.Button
+                      ref={buttonRef}
+                      disabled={isLoading || agentState.isLoading}
+                      className="inline-flex items-center justify-center px-4 py-3 border border-zinc-300 shadow-sm text-sm font-medium rounded-lg text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                      Examples
+                    </Menu.Button>
+
+                    <Menu.Items
+                      className={`absolute z-50 w-96 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 max-h-96 overflow-y-auto focus:outline-none ${
+                        dropdownPosition === 'top'
+                          ? 'bottom-full mb-1'
+                          : 'top-full mt-1'
+                      }`}
+                    >
+                      {/* Ready-made Forms Section */}
+                      <div className="px-4 py-2 bg-zinc-50 border-b border-zinc-200">
+                        <h3 className="text-sm font-semibold text-zinc-700">
+                          Ready-made Forms
+                        </h3>
+                        <p className="text-xs text-zinc-500">
+                          Load complete form definitions
+                        </p>
+                      </div>
+                      {READY_MADE_FORMS.map((form, index) => (
+                        <Menu.Item key={`form-${index}`}>
+                          {({ active }) => (
+                            <button
+                              onClick={() => {
+                                onLoadJson(
+                                  JSON.stringify(form.json, null, 2),
+                                  form.prompt
+                                );
+                              }}
+                              className={`${
+                                active ? 'bg-zinc-50' : ''
+                              } w-full text-left px-4 py-3 focus:bg-zinc-50 focus:outline-none transition-colors border-b border-zinc-100`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="font-medium text-zinc-900 flex items-center">
+                                    <svg
+                                      className="w-4 h-4 mr-2 text-green-600"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                      />
+                                    </svg>
+                                    {form.name}
+                                  </div>
+                                  <div className="text-sm text-zinc-600 mt-1 whitespace-normal">
+                                    {form.description}
+                                  </div>
+                                </div>
+                                <div className="text-xs text-zinc-400 bg-zinc-100 px-2 py-1 rounded">
+                                  Load JSON
+                                </div>
+                              </div>
+                            </button>
+                          )}
+                        </Menu.Item>
+                      ))}
+
+                      {/* Prompts Section */}
+                      <div className="px-4 py-2 bg-zinc-50 border-b border-zinc-200">
+                        <h3 className="text-sm font-semibold text-zinc-700">
+                          Example Prompts
+                        </h3>
+                        <p className="text-xs text-zinc-500">
+                          Generate forms with AI
+                        </p>
+                      </div>
+                      {EXAMPLE_PROMPTS.map((example, index) => (
+                        <Menu.Item key={`prompt-${index}`}>
+                          {({ active }) => (
+                            <button
+                              onClick={() =>
+                                handleExampleSelect(example.prompt)
+                              }
+                              className={`${
+                                active ? 'bg-zinc-50' : ''
+                              } w-full text-left px-4 py-3 focus:bg-zinc-50 focus:outline-none transition-colors border-b border-zinc-100`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="font-medium text-zinc-900 flex items-center">
+                                    <svg
+                                      className="w-4 h-4 mr-2 text-blue-600"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                                      />
+                                    </svg>
+                                    {example.name}
+                                  </div>
+                                  <div className="text-sm text-zinc-600 mt-1 truncate whitespace-normal">
+                                    {example.prompt}
+                                  </div>
+                                </div>
+                                <div className="text-xs text-zinc-400 bg-zinc-100 px-2 py-1 rounded">
+                                  Generate
+                                </div>
+                              </div>
+                            </button>
+                          )}
+                        </Menu.Item>
+                      ))}
+                    </Menu.Items>
+                  </>
+                );
+              }}
+            </Menu>
+          </div>
+
+          {/* Generate button */}
           <button
-            ref={buttonRef}
+            type="button"
             onClick={handleGenerate}
-            disabled={!prompt.trim() || isLoading || agentState.isLoading}
-            className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            disabled={isLoading || agentState.isLoading || !prompt.trim()}
+            className={`flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 relative overflow-hidden ${
+              isLoading || agentState.isLoading ? 'cursor-not-allowed' : ''
+            }`}
           >
             {isLoading || agentState.isLoading ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
                 {useAgent ? 'Starting Conversation...' : 'Generating...'}
               </>
             ) : (
-              <>{useAgent ? 'Start AI Conversation' : 'Generate Form'}</>
-            )}
-          </button>
-
-          <div className="relative">
-            <Menu>
-              <Menu.Button className="bg-gray-100 text-gray-700 px-4 py-3 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center">
-                Load Example
+              <>
                 <svg
-                  className="ml-2 h-4 w-4"
+                  className="w-5 h-5 mr-2"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -319,72 +486,13 @@ export function AgentPromptInput({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
                   />
                 </svg>
-              </Menu.Button>
-              <Menu.Items
-                className={`absolute ${
-                  dropdownPosition === 'top'
-                    ? 'bottom-full mb-2'
-                    : 'top-full mt-2'
-                } right-0 w-64 bg-white rounded-md shadow-lg border border-gray-200 z-10 max-h-60 overflow-y-auto`}
-              >
-                {EXAMPLE_PROMPTS.map((example, index) => (
-                  <Menu.Item key={index}>
-                    {({ active }) => (
-                      <button
-                        onClick={() => handleExampleSelect(example.prompt)}
-                        className={`${
-                          active ? 'bg-blue-50 text-blue-900' : 'text-gray-900'
-                        } block w-full text-left px-4 py-2 text-sm hover:bg-blue-50`}
-                      >
-                        <div className="font-medium">{example.name}</div>
-                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                          {example.prompt}
-                        </div>
-                      </button>
-                    )}
-                  </Menu.Item>
-                ))}
-              </Menu.Items>
-            </Menu>
-          </div>
-        </div>
-
-        {/* Additional Actions */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <PdfUploadButton
-            onPdfParsed={handlePdfParsed}
-            onError={handlePdfError}
-            disabled={isLoading || agentState.isLoading}
-          />
-        </div>
-
-        {/* Ready-made Forms */}
-        <div className="mt-6">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">
-            Or start with a ready-made form:
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {READY_MADE_FORMS.map((form, index) => (
-              <button
-                key={index}
-                onClick={() =>
-                  onLoadJson(JSON.stringify(form.json, null, 2), form.name)
-                }
-                disabled={isLoading || agentState.isLoading}
-                className="p-3 text-left border border-gray-200 rounded-md hover:border-blue-300 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="font-medium text-sm text-gray-900">
-                  {form.name}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {form.json.app?.pages?.length || 0} page(s)
-                </div>
-              </button>
-            ))}
-          </div>
+                {useAgent ? 'Start AI Conversation' : 'Generate Form'}
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>
