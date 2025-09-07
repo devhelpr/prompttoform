@@ -202,6 +202,29 @@ export class ConversationManager {
     questionId?: string
   ): Promise<ConversationState> {
     try {
+      // Debug: Log the conversation state before processing user response
+      console.log(
+        'ConversationManager.processUserResponse - Before processing:',
+        {
+          totalMessages: this.state.messages.length,
+          firstMessage: this.state.messages[0]
+            ? {
+                id: this.state.messages[0].id,
+                type: this.state.messages[0].type,
+                content: this.state.messages[0].content,
+                timestamp: this.state.messages[0].timestamp,
+              }
+            : null,
+          userMessages: this.state.messages
+            .filter((m) => m.type === 'user')
+            .map((m) => ({
+              id: m.id,
+              content: m.content,
+              timestamp: m.timestamp,
+            })),
+        }
+      );
+
       // Add user response
       this.addMessage('user', response);
 
@@ -255,6 +278,29 @@ export class ConversationManager {
           }
         }
       }
+
+      // Debug: Log the conversation state after processing user response
+      console.log(
+        'ConversationManager.processUserResponse - After processing:',
+        {
+          totalMessages: this.state.messages.length,
+          firstMessage: this.state.messages[0]
+            ? {
+                id: this.state.messages[0].id,
+                type: this.state.messages[0].type,
+                content: this.state.messages[0].content,
+                timestamp: this.state.messages[0].timestamp,
+              }
+            : null,
+          userMessages: this.state.messages
+            .filter((m) => m.type === 'user')
+            .map((m) => ({
+              id: m.id,
+              content: m.content,
+              timestamp: m.timestamp,
+            })),
+        }
+      );
 
       return this.state;
     } catch (error) {
@@ -323,8 +369,13 @@ export class ConversationManager {
   }
 
   private buildUpdatedPrompt(): string {
+    // Find the original prompt by looking for the first user message that's not a response to a question
+    // The original prompt should be the first message in the conversation
     const originalPrompt =
-      this.state.messages.find((m) => m.type === 'user')?.content || '';
+      this.state.messages.length > 0 && this.state.messages[0].type === 'user'
+        ? this.state.messages[0].content
+        : '';
+
     const gatheredInfo = Object.entries(this.state.context)
       .map(([key, value]) => `${key}: ${value}`)
       .join('\n');
