@@ -20,6 +20,27 @@ export class FormGenerationAgent {
     conversationState: ConversationState
   ): Promise<FormGenerationResult> {
     try {
+      // Debug: Log the conversation state received
+      console.log(
+        'FormGenerationAgent.generateFormFromConversation received:',
+        {
+          totalMessages: conversationState.messages.length,
+          messages: conversationState.messages.map((m) => ({
+            id: m.id,
+            type: m.type,
+            content: m.content,
+            timestamp: m.timestamp,
+          })),
+          userMessages: conversationState.messages
+            .filter((m) => m.type === 'user')
+            .map((m) => ({
+              id: m.id,
+              content: m.content,
+              timestamp: m.timestamp,
+            })),
+        }
+      );
+
       // Build the enhanced prompt from conversation
       const enhancedPrompt = this.buildEnhancedPrompt(conversationState);
 

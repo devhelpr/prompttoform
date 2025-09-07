@@ -155,6 +155,21 @@ export function AgentStateProvider({
           questionId
         );
 
+        // Debug: Log the conversation state after processing user response
+        console.log(
+          'AgentStateManager.processUserResponse - Updated conversation state:',
+          {
+            totalMessages: conversationState.messages.length,
+            userMessages: conversationState.messages
+              .filter((m) => m.type === 'user')
+              .map((m) => ({
+                id: m.id,
+                content: m.content,
+                timestamp: m.timestamp,
+              })),
+          }
+        );
+
         setConversationState(conversationState);
 
         // Check if conversation is complete
@@ -220,6 +235,21 @@ export function AgentStateProvider({
       try {
         setLoading(true);
         setError(null);
+
+        // Debug: Log the conversation state before form generation
+        console.log(
+          'AgentStateManager.generateFormFromConversation - Conversation state before form generation:',
+          {
+            totalMessages: state.conversationState.messages.length,
+            userMessages: state.conversationState.messages
+              .filter((m) => m.type === 'user')
+              .map((m) => ({
+                id: m.id,
+                content: m.content,
+                timestamp: m.timestamp,
+              })),
+          }
+        );
 
         const schemaJson = await import('@schema');
         const formGenerationAgent = new FormGenerationAgent(
