@@ -359,19 +359,6 @@ export function AgentPromptInput({
             onError={handlePdfError}
             disabled={isLoading || agentState.isLoading}
           />
-
-          <button
-            onClick={() => {
-              const jsonInput = window.prompt('Paste your form JSON here:');
-              if (jsonInput) {
-                onLoadJson(jsonInput, prompt);
-              }
-            }}
-            disabled={isLoading || agentState.isLoading}
-            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Load JSON
-          </button>
         </div>
 
         {/* Ready-made Forms */}
