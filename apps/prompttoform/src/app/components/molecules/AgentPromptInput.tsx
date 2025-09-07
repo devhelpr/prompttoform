@@ -74,6 +74,7 @@ export function AgentPromptInput({
     generateFormFromConversation,
     resetAgentState,
     setError: setAgentError,
+    conversationManager,
   } = useAgentState();
 
   const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -178,6 +179,7 @@ export function AgentPromptInput({
           onError={handleAgentError}
           onSkipToForm={skipToFormGeneration}
           isLoading={agentState.isLoading}
+          conversationManager={conversationManager}
         />
       </div>
     );

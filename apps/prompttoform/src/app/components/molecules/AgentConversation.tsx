@@ -9,6 +9,7 @@ interface AgentConversationProps {
   onError: (error: string) => void;
   onSkipToForm: () => void;
   isLoading: boolean;
+  conversationManager: any; // Add the conversation manager as a prop
 }
 
 export const AgentConversation: React.FC<AgentConversationProps> = ({
@@ -17,6 +18,7 @@ export const AgentConversation: React.FC<AgentConversationProps> = ({
   onError,
   onSkipToForm,
   isLoading,
+  conversationManager,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isProcessingResponse, setIsProcessingResponse] = React.useState(false);
@@ -50,9 +52,7 @@ export const AgentConversation: React.FC<AgentConversationProps> = ({
     try {
       setIsProcessingResponse(true);
 
-      // Import the conversation manager dynamically to avoid circular dependencies
-      const { ConversationManager } = await import('../../services/agents');
-      const conversationManager = new ConversationManager();
+      // Use the passed conversation manager instead of creating a new one
 
       // Process all responses sequentially
       let currentState = conversationState;
@@ -88,8 +88,7 @@ export const AgentConversation: React.FC<AgentConversationProps> = ({
     try {
       setIsProcessingResponse(true);
 
-      const { ConversationManager } = await import('../../services/agents');
-      const conversationManager = new ConversationManager();
+      // Use the passed conversation manager instead of creating a new one
 
       const updatedState = await conversationManager.skipToFormGeneration();
 

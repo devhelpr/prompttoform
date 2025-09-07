@@ -43,6 +43,9 @@ interface AgentStateContextType {
   generateFormFromConversation: () => Promise<FormGenerationResult | null>;
   resetAgentState: () => void;
 
+  // Conversation manager instance
+  conversationManager: any;
+
   // Conversation management
   addMessage: (message: ConversationMessage) => void;
   updateQuestions: (questions: AgentQuestion[]) => void;
@@ -394,6 +397,7 @@ export function AgentStateProvider({
     skipToFormGeneration,
     generateFormFromConversation,
     resetAgentState,
+    conversationManager,
     addMessage,
     updateQuestions,
     markConversationComplete,
