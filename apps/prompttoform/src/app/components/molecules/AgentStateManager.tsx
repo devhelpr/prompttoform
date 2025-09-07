@@ -24,6 +24,11 @@ interface AgentState {
   isLoading: boolean;
   error: string | null;
   sessionId: string | null;
+  generationProgress: {
+    step: string;
+    progress: number;
+    message: string;
+  } | null;
 }
 
 interface AgentStateContextType {
@@ -35,6 +40,13 @@ interface AgentStateContextType {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setSessionId: (sessionId: string | null) => void;
+  setGenerationProgress: (
+    progress: {
+      step: string;
+      progress: number;
+      message: string;
+    } | null
+  ) => void;
 
   // Agent actions
   startAgentConversation: (prompt: string) => Promise<void>;
@@ -58,6 +70,7 @@ const initialAgentState: AgentState = {
   isLoading: false,
   error: null,
   sessionId: null,
+  generationProgress: null,
 };
 
 const AgentStateContext = createContext<AgentStateContextType | undefined>(
@@ -125,6 +138,19 @@ export function AgentStateProvider({
       }
     },
     [onError]
+  );
+
+  const setGenerationProgress = useCallback(
+    (
+      progress: {
+        step: string;
+        progress: number;
+        message: string;
+      } | null
+    ) => {
+      setState((prev) => ({ ...prev, generationProgress: progress }));
+    },
+    []
   );
 
   const setSessionId = useCallback((sessionId: string | null) => {
@@ -234,6 +260,10 @@ export function AgentStateProvider({
         // Check if conversation is complete
         if (conversationState.isComplete) {
           setCurrentView('generating');
+          // Automatically start form generation
+          setTimeout(() => {
+            generateFormFromConversation();
+          }, 100);
         }
       } catch (error) {
         const errorMessage =
@@ -316,7 +346,8 @@ export function AgentStateProvider({
           true
         );
         const result = await formGenerationAgent.generateFormFromConversation(
-          state.conversationState
+          state.conversationState,
+          setGenerationProgress
         );
 
         if (result.success && result.parsedJson) {
@@ -401,6 +432,7 @@ export function AgentStateProvider({
     addMessage,
     updateQuestions,
     markConversationComplete,
+    setGenerationProgress,
   };
 
   return (

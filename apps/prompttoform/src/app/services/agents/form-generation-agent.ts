@@ -17,7 +17,8 @@ export class FormGenerationAgent {
   }
 
   async generateFormFromConversation(
-    conversationState: ConversationState
+    conversationState: ConversationState,
+    onProgress?: (progress: any) => void
   ): Promise<FormGenerationResult> {
     try {
       // Debug: Log the conversation state received
@@ -46,7 +47,8 @@ export class FormGenerationAgent {
 
       // Generate the form using the existing service
       const result = await this.formGenerationService.generateForm(
-        enhancedPrompt
+        enhancedPrompt,
+        onProgress
       );
 
       // Add conversation context to the result

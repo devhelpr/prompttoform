@@ -3,6 +3,7 @@ import { Menu } from '@headlessui/react';
 import { READY_MADE_FORMS } from './example-form-definitions/ready-made-forms';
 import { PdfUploadButton } from '../atoms/PdfUploadButton';
 import { AgentConversation } from './AgentConversation';
+import { FormGenerationView } from './FormGenerationView';
 import { useAgentState } from './AgentStateManager';
 import { FormGenerationResult } from '../../services/form-generation.service';
 
@@ -197,23 +198,7 @@ export function AgentPromptInput({
             ← Back to prompt
           </button>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <div className="flex items-center justify-center mb-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Generating Form
-          </h3>
-          <p className="text-gray-600">
-            Creating your form based on the conversation...
-          </p>
-          <button
-            onClick={generateFormFromConversation}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Generate Form Now
-          </button>
-        </div>
+        <FormGenerationView />
       </div>
     );
   }

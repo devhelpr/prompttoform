@@ -20,6 +20,12 @@ export interface FormGenerationResult {
   sessionId?: string;
 }
 
+export interface FormGenerationProgress {
+  step: string;
+  progress: number;
+  message: string;
+}
+
 export interface FormUpdateResult {
   success: boolean;
   updatedJson?: string;
@@ -100,7 +106,10 @@ export class FormGenerationService {
   /**
    * Generate a form from a prompt
    */
-  async generateForm(prompt: string): Promise<FormGenerationResult> {
+  async generateForm(
+    prompt: string,
+    onProgress?: (progress: FormGenerationProgress) => void
+  ): Promise<FormGenerationResult> {
     if (!prompt.trim()) {
       return {
         success: false,
@@ -133,7 +142,16 @@ export class FormGenerationService {
         };
       }
 
-      // Call the UI generation API
+      // Step 1: Multi-language detection (run in parallel with form generation for optimization)
+      const multiLangPromise =
+        this.multiLangAgent.detectMultiLanguageRequest(prompt);
+
+      onProgress?.({
+        step: 'base-form-generation',
+        progress: 20,
+        message: 'Generating base form structure...',
+      });
+
       const response = await generateUIFromPrompt(prompt, this.uiSchema);
 
       // Try to parse the response as JSON
@@ -145,11 +163,31 @@ export class FormGenerationService {
         };
       }
 
+      // Ensure the form doesn't include a language selector (this should be handled by the system)
+      if (parsedResponse.app?.pages) {
+        parsedResponse.app.pages = parsedResponse.app.pages.map(
+          (page: any) => ({
+            ...page,
+            components:
+              page.components?.filter(
+                (component: any) =>
+                  component.type !== 'language-selector' &&
+                  component.id !== 'language-selector'
+              ) || [],
+          })
+        );
+      }
+
       // Detect multi-language requirements and generate translations
       try {
+        onProgress?.({
+          step: 'multi-language-detection',
+          progress: 60,
+          message: 'Detecting multi-language requirements...',
+        });
+
         console.log('Starting multi-language detection for prompt...');
-        const multiLangAnalysis =
-          await this.multiLangAgent.detectMultiLanguageRequest(prompt);
+        const multiLangAnalysis = await multiLangPromise;
 
         console.log('Multi-language analysis result:', multiLangAnalysis);
 
@@ -158,6 +196,12 @@ export class FormGenerationService {
           multiLangAnalysis.requestedLanguages.length > 1
         ) {
           console.log('Multi-language request detected:', multiLangAnalysis);
+
+          onProgress?.({
+            step: 'translation-generation',
+            progress: 70,
+            message: `Generating translations for ${multiLangAnalysis.requestedLanguages.length} languages...`,
+          });
 
           const translationResult =
             await this.translationAgent.generateTranslations({
@@ -168,6 +212,12 @@ export class FormGenerationService {
             });
 
           if (translationResult.success && translationResult.translations) {
+            onProgress?.({
+              step: 'finalizing-form',
+              progress: 90,
+              message: 'Finalizing multi-language form...',
+            });
+
             // Enhance the form with multi-language support
             parsedResponse = {
               ...parsedResponse,
@@ -208,6 +258,12 @@ export class FormGenerationService {
           };
         }
       }
+
+      onProgress?.({
+        step: 'completing',
+        progress: 100,
+        message: 'Form generation complete!',
+      });
 
       // Format JSON for display and storage
       const formattedJson = formatJsonForDisplay(parsedResponse);
