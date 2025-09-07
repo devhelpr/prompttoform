@@ -12,6 +12,16 @@ export const llmAPIs: APIConfig[] = [
     supportsTemperature: false,
   },
   {
+    name: 'OpenAI-system',
+    baseUrl: 'https://api.openai.com/v1',
+    apiKey: '',
+    model: 'gpt-5-nano',
+    description: "OpenAI's gpt-5-nano model via prompttoform.ai",
+    isChatCompletionCompatible: true,
+    systemKey: 'openai',
+    supportsTemperature: false,
+  },
+  {
     name: 'OpenAI-system-v5',
     baseUrl: 'https://api.openai.com/v1',
     apiKey: '',

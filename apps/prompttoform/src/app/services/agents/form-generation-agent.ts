@@ -132,6 +132,26 @@ export class FormGenerationAgent {
     const firstUserMessage = conversationState.messages.find(
       (m) => m.type === 'user'
     );
+
+    // Debug logging to see what's in the conversation state
+    console.log('getOriginalPrompt debug:', {
+      totalMessages: conversationState.messages.length,
+      userMessages: conversationState.messages
+        .filter((m) => m.type === 'user')
+        .map((m) => ({
+          id: m.id,
+          content: m.content,
+          timestamp: m.timestamp,
+        })),
+      firstUserMessage: firstUserMessage
+        ? {
+            id: firstUserMessage.id,
+            content: firstUserMessage.content,
+            timestamp: firstUserMessage.timestamp,
+          }
+        : null,
+    });
+
     return firstUserMessage?.content || '';
   }
 

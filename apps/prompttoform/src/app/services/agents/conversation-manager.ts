@@ -102,6 +102,15 @@ export class ConversationManager {
     initialPrompt: string
   ): Promise<ConversationState & MultiLanguageAgentState> {
     try {
+      // Debug logging to see what prompt is being received
+      console.log('ConversationManager.startConversation called with:', {
+        initialPrompt,
+        promptLength: initialPrompt.length,
+        promptPreview:
+          initialPrompt.substring(0, 100) +
+          (initialPrompt.length > 100 ? '...' : ''),
+      });
+
       // Reset state for new conversation
       this.state = this.initializeState();
 
@@ -277,6 +286,16 @@ export class ConversationManager {
       timestamp: new Date(),
       metadata,
     };
+
+    // Debug logging for user messages
+    if (type === 'user') {
+      console.log('ConversationManager.addMessage storing user message:', {
+        id: message.id,
+        content: message.content,
+        contentLength: message.content.length,
+        timestamp: message.timestamp,
+      });
+    }
 
     this.state.messages.push(message);
   }
