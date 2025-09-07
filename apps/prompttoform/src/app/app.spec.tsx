@@ -32,7 +32,7 @@ describe('App', () => {
       </BrowserRouter>
     );
     expect(
-      getAllByText(new RegExp('Describe your form', 'gi')).length > 0
+      getAllByText(new RegExp('Form Description', 'gi')).length > 0
     ).toBeTruthy();
   });
 });
