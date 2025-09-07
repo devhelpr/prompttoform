@@ -133,10 +133,35 @@ export class FormGenerationAgent {
     const userMessages = conversationState.messages.filter(
       (m) => m.type === 'user'
     );
-    const firstUserMessage = userMessages.sort(
+
+    // Debug: Log the raw timestamps before sorting
+    console.log(
+      'Raw user messages before sorting:',
+      userMessages.map((m) => ({
+        id: m.id,
+        content: m.content,
+        timestamp: m.timestamp,
+        timestampMs: new Date(m.timestamp).getTime(),
+      }))
+    );
+
+    const sortedUserMessages = userMessages.sort(
       (a, b) =>
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    )[0];
+    );
+
+    // Debug: Log the sorted messages
+    console.log(
+      'Sorted user messages:',
+      sortedUserMessages.map((m) => ({
+        id: m.id,
+        content: m.content,
+        timestamp: m.timestamp,
+        timestampMs: new Date(m.timestamp).getTime(),
+      }))
+    );
+
+    const firstUserMessage = sortedUserMessages[0];
 
     // Debug logging to see what's in the conversation state
     console.log('getOriginalPrompt debug:', {
