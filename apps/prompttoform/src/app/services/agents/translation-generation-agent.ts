@@ -47,7 +47,9 @@ export class TranslationGenerationAgent {
             1000
           );
 
-          const parsedResponse = this.parseTranslationResponse(response);
+          const parsedResponse = this.parseTranslationResponse(
+            response as string
+          );
           if (parsedResponse.isValid) {
             translations[language] = parsedResponse.data;
           } else {

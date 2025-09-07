@@ -154,6 +154,11 @@ function cleanAndFormatJson(content: string): string {
   }
 }
 
+export async function generateResponse(prompt: string): Promise<string> {
+  const apiConfig = getCurrentAPIConfig();
+  return callLLMAPI(prompt, '', apiConfig);
+}
+
 export async function callLLMAPI(
   prompt: string,
   systemMessage: string,

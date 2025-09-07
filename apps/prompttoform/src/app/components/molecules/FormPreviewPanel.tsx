@@ -1,6 +1,11 @@
 import { UIJson } from '../../types/form-generator.types';
 import { ViewMode } from './AppStateManager';
-import { FormRenderer, PageChangeEvent } from '@devhelpr/react-forms';
+import {
+  FormRenderer,
+  PageChangeEvent,
+  LanguageSelector,
+  MultiLanguageFormRendererSettings,
+} from '@devhelpr/react-forms';
 import FormFlowMermaid from './FormFlowMermaid';
 import { JsonValidator } from './JsonValidator';
 import { useEffect, useMemo, useState } from 'react';
@@ -62,6 +67,9 @@ interface FormPreviewPanelProps {
   onExportSchema: () => void;
   isZipDownloading: boolean;
   siteUrl?: string;
+  // Multi-language support
+  currentLanguage?: string;
+  onLanguageChange?: (language: string) => void;
 }
 
 export function FormPreviewPanel({
@@ -76,6 +84,8 @@ export function FormPreviewPanel({
   onExportSchema,
   isZipDownloading,
   siteUrl,
+  currentLanguage = 'en',
+  onLanguageChange,
 }: FormPreviewPanelProps) {
   const [jsonErrors, setJsonErrors] = useState<string[]>([]);
   const [isJsonValid, setIsJsonValid] = useState(true);
@@ -84,6 +94,19 @@ export function FormPreviewPanel({
   );
   const [currentPageEvent, setCurrentPageEvent] =
     useState<PageChangeEvent | null>(null);
+
+  // Multi-language support
+  const isMultiLanguage = useMemo(() => {
+    return (
+      parsedJson &&
+      parsedJson.supportedLanguages &&
+      parsedJson.supportedLanguages.length > 1
+    );
+  }, [parsedJson]);
+
+  const languageDetails = useMemo(() => {
+    return parsedJson?.languageDetails || [];
+  }, [parsedJson]);
 
   const tabs = useMemo(
     () => [
@@ -181,11 +204,37 @@ export function FormPreviewPanel({
       case 'form':
         return parsedJson && parsedJson.app ? (
           <div className="space-y-4 h-full min-h-0">
+            {/* Language Selector for Multi-Language Forms */}
+            {isMultiLanguage && (
+              <div className="bg-white p-4 rounded-lg border border-zinc-300">
+                <div className="flex items-center gap-3">
+                  <label
+                    htmlFor="language-selector"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Language:
+                  </label>
+                  <LanguageSelector
+                    availableLanguages={parsedJson.supportedLanguages || []}
+                    languageDetails={languageDetails}
+                    currentLanguage={currentLanguage}
+                    onLanguageChange={onLanguageChange || (() => {})}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Form Renderer */}
             <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto h-full">
               <FormRenderer
                 formJson={parsedJson}
-                settings={{ showFormSubmissions: true }}
+                settings={
+                  {
+                    showFormSubmissions: true,
+                    currentLanguage: currentLanguage,
+                    onLanguageChange: onLanguageChange || (() => {}),
+                  } as MultiLanguageFormRendererSettings
+                }
                 onPageChange={handlePageChange}
               />
               <div className="mt-8">

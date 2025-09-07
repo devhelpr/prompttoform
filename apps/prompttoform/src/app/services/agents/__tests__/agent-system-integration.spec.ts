@@ -222,7 +222,7 @@ describe('Agent System Integration', () => {
       ).mockResolvedValue(mockFormResult);
 
       // Start conversation with incomplete prompt
-      let conversationState = await conversationManager.startConversation(
+      let conversationState: any = await conversationManager.startConversation(
         'I need a form'
       );
 
@@ -322,7 +322,7 @@ describe('Agent System Integration', () => {
       ).mockResolvedValue(mockFormResult);
 
       // Start conversation
-      let conversationState = await conversationManager.startConversation(
+      let conversationState: any = await conversationManager.startConversation(
         'I need a form'
       );
 
@@ -390,7 +390,7 @@ describe('Agent System Integration', () => {
         .mockResolvedValueOnce(questionsResponse);
 
       // Start conversation
-      let conversationState = await conversationManager.startConversation(
+      let conversationState: any = await conversationManager.startConversation(
         'I need a form'
       );
 
@@ -495,7 +495,7 @@ describe('Agent System Integration', () => {
         .mockResolvedValueOnce(analysisResponse3);
 
       // Start conversation
-      let conversationState = await conversationManager.startConversation(
+      let conversationState: any = await conversationManager.startConversation(
         'I need a form'
       );
 

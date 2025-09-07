@@ -83,6 +83,7 @@ function AppContent() {
     setActiveTab,
     transitionToEditor,
     transitionToInitial,
+    setCurrentLanguage,
   } = useAppState();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -604,6 +605,8 @@ function AppContent() {
                     onExportSchema={handleExportSchema}
                     isZipDownloading={isZipDownloading}
                     siteUrl={siteUrl}
+                    currentLanguage={state.currentLanguage}
+                    onLanguageChange={setCurrentLanguage}
                   />
                 </Suspense>
               }
@@ -770,6 +773,8 @@ function AppContent() {
                   onExportSchema={handleExportSchema}
                   isZipDownloading={isZipDownloading}
                   siteUrl={siteUrl}
+                  currentLanguage={state.currentLanguage}
+                  onLanguageChange={setCurrentLanguage}
                 />
               </Suspense>
             }

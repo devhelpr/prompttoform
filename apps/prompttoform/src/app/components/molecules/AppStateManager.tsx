@@ -14,6 +14,8 @@ interface AppState {
   activeTab: ViewMode;
   isLoading: boolean;
   error: string | null;
+  // Multi-language support
+  currentLanguage: string;
 }
 
 interface AppStateContextType {
@@ -28,6 +30,8 @@ interface AppStateContextType {
   transitionToEditor: () => void;
   transitionToInitial: () => void;
   resetState: () => void;
+  // Multi-language support
+  setCurrentLanguage: (language: string) => void;
 }
 
 const initialState: AppState = {
@@ -40,6 +44,7 @@ const initialState: AppState = {
   activeTab: 'form',
   isLoading: false,
   error: null,
+  currentLanguage: 'en',
 };
 
 const AppStateContext = createContext<AppStateContextType | undefined>(
@@ -58,11 +63,27 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
   };
 
   const setGeneratedJson = (json: string, parsed?: UIJson | null) => {
-    setState((prev) => ({
-      ...prev,
-      generatedJson: json,
-      parsedJson: parsed || prev.parsedJson,
-    }));
+    setState((prev) => {
+      const newParsedJson = parsed || prev.parsedJson;
+
+      // Auto-set current language for multi-language forms
+      let newCurrentLanguage = prev.currentLanguage;
+      if (newParsedJson?.defaultLanguage) {
+        newCurrentLanguage = newParsedJson.defaultLanguage;
+      } else if (
+        newParsedJson?.supportedLanguages &&
+        newParsedJson.supportedLanguages.length > 0
+      ) {
+        newCurrentLanguage = newParsedJson.supportedLanguages[0];
+      }
+
+      return {
+        ...prev,
+        generatedJson: json,
+        parsedJson: newParsedJson,
+        currentLanguage: newCurrentLanguage,
+      };
+    });
   };
 
   const setCurrentSessionId = (sessionId: string | null) => {
@@ -115,6 +136,10 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     setState(initialState);
   };
 
+  const setCurrentLanguage = (language: string) => {
+    setState((prev) => ({ ...prev, currentLanguage: language }));
+  };
+
   const contextValue: AppStateContextType = {
     state,
     setPrompt,
@@ -127,6 +152,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     transitionToEditor,
     transitionToInitial,
     resetState,
+    setCurrentLanguage,
   };
 
   return (
