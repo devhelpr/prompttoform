@@ -221,7 +221,11 @@ export function AgentStateProvider({
         setLoading(true);
         setError(null);
 
-        const formGenerationAgent = new FormGenerationAgent({} as any);
+        const schemaJson = await import('@schema');
+        const formGenerationAgent = new FormGenerationAgent(
+          schemaJson.default as any,
+          true
+        );
         const result = await formGenerationAgent.generateFormFromConversation(
           state.conversationState
         );

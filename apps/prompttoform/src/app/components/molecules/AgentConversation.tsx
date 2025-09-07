@@ -94,7 +94,11 @@ export const AgentConversation: React.FC<AgentConversationProps> = ({
       const updatedState = await conversationManager.skipToFormGeneration();
 
       const { FormGenerationAgent } = await import('../../services/agents');
-      const formGenerationAgent = new FormGenerationAgent({} as any);
+      const schemaJson = await import('@schema');
+      const formGenerationAgent = new FormGenerationAgent(
+        schemaJson.default as any,
+        true
+      );
 
       const formResult = await formGenerationAgent.generateFormFromConversation(
         updatedState
@@ -112,7 +116,11 @@ export const AgentConversation: React.FC<AgentConversationProps> = ({
       setIsProcessingResponse(true);
 
       const { FormGenerationAgent } = await import('../../services/agents');
-      const formGenerationAgent = new FormGenerationAgent({} as any);
+      const schemaJson = await import('@schema');
+      const formGenerationAgent = new FormGenerationAgent(
+        schemaJson.default as any,
+        true
+      );
 
       const formResult = await formGenerationAgent.generateFormFromConversation(
         conversationState
