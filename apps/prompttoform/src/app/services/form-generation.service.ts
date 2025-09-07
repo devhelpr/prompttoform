@@ -8,6 +8,8 @@ import {
   getRawJsonForStorage,
 } from '../utils/json-utils';
 import { FormSessionService } from './indexeddb';
+import { MultiLanguageDetectionAgent } from './agents/multi-language-detection-agent';
+import { TranslationGenerationAgent } from './agents/translation-generation-agent';
 
 export interface FormGenerationResult {
   success: boolean;
@@ -27,10 +29,72 @@ export interface FormUpdateResult {
 export class FormGenerationService {
   private uiSchema: UISchema;
   private skipValidation: boolean;
+  private multiLangAgent: MultiLanguageDetectionAgent;
+  private translationAgent: TranslationGenerationAgent;
 
   constructor(uiSchema: UISchema, skipValidation = true) {
     this.uiSchema = uiSchema;
     this.skipValidation = skipValidation;
+
+    // Initialize multi-language agents
+    this.multiLangAgent = new MultiLanguageDetectionAgent({
+      confidenceThreshold: 0.7,
+      enableFallback: true,
+      maxLanguages: 5,
+      supportedLanguageCodes: [
+        'en',
+        'es',
+        'fr',
+        'de',
+        'it',
+        'pt',
+        'zh',
+        'ja',
+        'ko',
+        'ar',
+        'hi',
+        'ru',
+        'nl',
+        'sv',
+        'da',
+        'no',
+        'fi',
+        'pl',
+        'tr',
+        'he',
+        'th',
+        'vi',
+        'id',
+        'ms',
+        'tl',
+        'uk',
+        'cs',
+        'hu',
+        'ro',
+        'bg',
+        'hr',
+        'sk',
+        'sl',
+        'et',
+        'lv',
+        'lt',
+        'el',
+        'is',
+        'mt',
+        'cy',
+        'ga',
+        'eu',
+        'ca',
+        'gl',
+      ],
+    });
+    this.translationAgent = new TranslationGenerationAgent({
+      enableLLMTranslation: true,
+      fallbackToEnglish: true,
+      preserveFormatting: true,
+      maxRetries: 3,
+      timeoutMs: 30000,
+    });
   }
 
   /**
@@ -43,6 +107,21 @@ export class FormGenerationService {
         error: 'Please enter a prompt',
       };
     }
+
+    // Log the prompt being used for form generation
+    console.log('FormGenerationService.generateForm called with prompt:', {
+      promptLength: prompt.length,
+      promptPreview:
+        prompt.substring(0, 200) + (prompt.length > 200 ? '...' : ''),
+      hasAdditionalInfo: prompt.includes(
+        'Additional Requirements and Information:'
+      ),
+      hasMultiLanguage:
+        prompt.toLowerCase().includes('english') &&
+        (prompt.toLowerCase().includes('spanish') ||
+          prompt.toLowerCase().includes('french') ||
+          prompt.toLowerCase().includes('german')),
+    });
 
     try {
       // Check if API key is set
@@ -58,12 +137,65 @@ export class FormGenerationService {
       const response = await generateUIFromPrompt(prompt, this.uiSchema);
 
       // Try to parse the response as JSON
-      const parsedResponse = parseJsonSafely(response);
+      let parsedResponse = parseJsonSafely(response);
       if (!parsedResponse) {
         return {
           success: false,
           error: 'Failed to parse the generated JSON. Please try again.',
         };
+      }
+
+      // Detect multi-language requirements and generate translations
+      try {
+        console.log('Starting multi-language detection for prompt...');
+        const multiLangAnalysis =
+          await this.multiLangAgent.detectMultiLanguageRequest(prompt);
+
+        console.log('Multi-language analysis result:', multiLangAnalysis);
+
+        if (
+          multiLangAnalysis.isMultiLanguageRequested &&
+          multiLangAnalysis.requestedLanguages.length > 1
+        ) {
+          console.log('Multi-language request detected:', multiLangAnalysis);
+
+          const translationResult =
+            await this.translationAgent.generateTranslations({
+              formJson: parsedResponse,
+              targetLanguages: multiLangAnalysis.requestedLanguages,
+              sourceLanguage: 'en',
+              languageDetails: multiLangAnalysis.languageDetails,
+            });
+
+          if (translationResult.success && translationResult.translations) {
+            // Enhance the form with multi-language support
+            parsedResponse = {
+              ...parsedResponse,
+              translations: translationResult.translations,
+              defaultLanguage: 'en',
+              supportedLanguages: [
+                'en',
+                ...multiLangAnalysis.requestedLanguages.filter(
+                  (lang) => lang !== 'en'
+                ),
+              ],
+              languageDetails: multiLangAnalysis.languageDetails,
+            };
+            console.log(
+              'Translations generated successfully:',
+              translationResult.translations
+            );
+          } else {
+            console.warn(
+              'Translation generation failed:',
+              translationResult.errors
+            );
+            // Continue with single-language form
+          }
+        }
+      } catch (error) {
+        console.error('Error in multi-language processing:', error);
+        // Continue with single-language form if multi-language processing fails
       }
 
       // Validate the response if validation is enabled

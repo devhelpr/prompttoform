@@ -100,6 +100,14 @@ export class FormGenerationAgent {
       enhancedPrompt += `\n\nNote: Some information may be incomplete. Please make reasonable assumptions where needed and create a functional form.`;
     }
 
+    // Log the enhanced prompt for debugging
+    console.log('Enhanced prompt for form generation:', {
+      originalPrompt,
+      gatheredInfo,
+      contextKeys: Object.keys(conversationState.context),
+      enhancedPrompt,
+    });
+
     return enhancedPrompt;
   }
 
