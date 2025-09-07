@@ -189,9 +189,11 @@ describe('AgentQuestionInput', () => {
   });
 
   it('should handle skip action', () => {
+    const nonRequiredQuestion = { ...mockQuestion, required: false };
+
     render(
       <AgentQuestionInput
-        question={mockQuestion}
+        question={nonRequiredQuestion}
         onSubmit={mockOnSubmit}
         onSkip={mockOnSkip}
         isLoading={false}
@@ -245,7 +247,7 @@ describe('AgentQuestionInput', () => {
       />
     );
 
-    const submitButton = screen.getByRole('button', { name: /submit/i });
+    const submitButton = screen.getByRole('button', { name: /processing/i });
     expect(submitButton).toBeDisabled();
   });
 
