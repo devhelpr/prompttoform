@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ConversationMessage } from '../atoms/ConversationMessage';
 import { AgentQuestionInput } from '../atoms/AgentQuestionInput';
 import type { ConversationState, AgentQuestion } from '../../types/agent.types';
@@ -20,6 +20,9 @@ export const AgentConversation: React.FC<AgentConversationProps> = ({
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isProcessingResponse, setIsProcessingResponse] = React.useState(false);
+  const [userResponses, setUserResponses] = useState<
+    Record<string, string | string[]>
+  >({});
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
@@ -31,73 +34,55 @@ export const AgentConversation: React.FC<AgentConversationProps> = ({
     }
   }, [conversationState.messages]);
 
-  const handleUserResponse = useCallback(
-    async (value: string | string[], questionId: string) => {
-      try {
-        setIsProcessingResponse(true);
+  // Handle individual question responses (no submit, just store the value)
+  const handleQuestionResponse = useCallback(
+    (value: string | string[], questionId: string) => {
+      setUserResponses((prev) => ({
+        ...prev,
+        [questionId]: value,
+      }));
+    },
+    []
+  );
 
-        // Import the conversation manager dynamically to avoid circular dependencies
-        const { ConversationManager } = await import('../../services/agents');
-        const conversationManager = new ConversationManager();
+  // Submit all responses at once and generate form
+  const handleSubmitAllResponses = useCallback(async () => {
+    try {
+      setIsProcessingResponse(true);
 
-        // Convert array to string if needed
-        const stringValue = Array.isArray(value) ? value.join(', ') : value;
-        const updatedState = await conversationManager.processUserResponse(
+      // Import the conversation manager dynamically to avoid circular dependencies
+      const { ConversationManager } = await import('../../services/agents');
+      const conversationManager = new ConversationManager();
+
+      // Process all responses sequentially
+      let currentState = conversationState;
+
+      for (const question of conversationState.currentQuestions) {
+        const response = userResponses[question.id] || '';
+        const stringValue = Array.isArray(response)
+          ? response.join(', ')
+          : response;
+
+        currentState = await conversationManager.processUserResponse(
           stringValue,
-          questionId
+          question.id
         );
-
-        // If conversation is complete, generate the form
-        if (updatedState.isComplete) {
-          const { FormGenerationAgent } = await import('../../services/agents');
-          const formGenerationAgent = new FormGenerationAgent({} as any);
-
-          const formResult =
-            await formGenerationAgent.generateFormFromConversation(
-              updatedState
-            );
-          onFormGenerated(formResult);
-        }
-      } catch (error) {
-        onError(error instanceof Error ? error.message : 'An error occurred');
-      } finally {
-        setIsProcessingResponse(false);
       }
-    },
-    [onFormGenerated, onError]
-  );
 
-  const handleSkipQuestion = useCallback(
-    async (questionId: string) => {
-      try {
-        setIsProcessingResponse(true);
+      // Generate the form directly
+      const { FormGenerationAgent } = await import('../../services/agents');
+      const formGenerationAgent = new FormGenerationAgent({} as any);
 
-        const { ConversationManager } = await import('../../services/agents');
-        const conversationManager = new ConversationManager();
-
-        const updatedState = await conversationManager.processUserResponse(
-          '',
-          questionId
-        );
-
-        if (updatedState.isComplete) {
-          const { FormGenerationAgent } = await import('../../services/agents');
-          const formGenerationAgent = new FormGenerationAgent({} as any);
-
-          const formResult =
-            await formGenerationAgent.generateFormFromConversation(
-              updatedState
-            );
-          onFormGenerated(formResult);
-        }
-      } catch (error) {
-        onError(error instanceof Error ? error.message : 'An error occurred');
-      } finally {
-        setIsProcessingResponse(false);
-      }
-    },
-    [onFormGenerated, onError]
-  );
+      const formResult = await formGenerationAgent.generateFormFromConversation(
+        currentState
+      );
+      onFormGenerated(formResult);
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'An error occurred');
+    } finally {
+      setIsProcessingResponse(false);
+    }
+  }, [conversationState, userResponses, onFormGenerated, onError]);
 
   const handleSkipToFormGeneration = useCallback(async () => {
     try {
@@ -153,8 +138,8 @@ export const AgentConversation: React.FC<AgentConversationProps> = ({
             </h2>
             <p className="text-sm text-gray-600">
               {conversationState.isComplete
-                ? 'Conversation complete - ready to generate form'
-                : 'Answer the questions below to help create your form'}
+                ? 'Ready to generate form'
+                : 'Answer the questions below, then click "Generate Form" to create your form'}
             </p>
           </div>
           <div className="text-sm text-gray-500">
@@ -178,18 +163,109 @@ export const AgentConversation: React.FC<AgentConversationProps> = ({
         conversationState.currentQuestions.length > 0 && (
           <div className="bg-white p-4 border-t border-gray-200">
             <h3 className="text-md font-medium text-gray-900 mb-3">
-              Current Questions ({conversationState.currentQuestions.length})
+              Answer these questions to help create your form (
+              {conversationState.currentQuestions.length})
             </h3>
             <div className="space-y-4">
               {conversationState.currentQuestions.map((question) => (
-                <AgentQuestionInput
+                <div
                   key={question.id}
-                  question={question}
-                  onSubmit={handleUserResponse}
-                  onSkip={handleSkipQuestion}
-                  isLoading={isProcessing}
-                />
+                  className="border border-gray-200 rounded-lg p-4"
+                >
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {question.question}
+                    {question.required && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
+                  </label>
+                  {question.category && (
+                    <p className="text-xs text-gray-500 mb-2">
+                      Category: {question.category}
+                    </p>
+                  )}
+
+                  {question.inputType === 'text' && (
+                    <input
+                      type="text"
+                      value={(userResponses[question.id] as string) || ''}
+                      onChange={(e) =>
+                        handleQuestionResponse(e.target.value, question.id)
+                      }
+                      placeholder="Enter your answer..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  )}
+
+                  {question.inputType === 'textarea' && (
+                    <textarea
+                      value={(userResponses[question.id] as string) || ''}
+                      onChange={(e) =>
+                        handleQuestionResponse(e.target.value, question.id)
+                      }
+                      placeholder="Enter your answer..."
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
+                    />
+                  )}
+
+                  {question.inputType === 'select' && question.options && (
+                    <select
+                      value={(userResponses[question.id] as string) || ''}
+                      onChange={(e) =>
+                        handleQuestionResponse(e.target.value, question.id)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Select an option...</option>
+                      {question.options.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {question.inputType === 'multiselect' && question.options && (
+                    <div className="space-y-2">
+                      {question.options.map((option) => (
+                        <label key={option} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={(
+                              (userResponses[question.id] as string[]) || []
+                            ).includes(option)}
+                            onChange={(e) => {
+                              const currentValues =
+                                (userResponses[question.id] as string[]) || [];
+                              const newValues = e.target.checked
+                                ? [...currentValues, option]
+                                : currentValues.filter((v) => v !== option);
+                              handleQuestionResponse(newValues, question.id);
+                            }}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">
+                            {option}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
+
+              {/* Single Submit Button */}
+              <div className="pt-4 border-t border-gray-200">
+                <button
+                  onClick={handleSubmitAllResponses}
+                  disabled={isProcessing}
+                  className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isProcessing
+                    ? 'Generating Form...'
+                    : 'Generate Form with These Answers'}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -207,7 +283,7 @@ export const AgentConversation: React.FC<AgentConversationProps> = ({
           </div>
         )}
 
-      {/* Complete State */}
+      {/* Complete State - This should rarely be shown now since we generate forms directly */}
       {conversationState.isComplete && (
         <div className="bg-white p-4 border-t border-gray-200">
           <div className="text-center">
@@ -224,11 +300,11 @@ export const AgentConversation: React.FC<AgentConversationProps> = ({
                     clipRule="evenodd"
                   />
                 </svg>
-                Conversation Complete
+                Ready to Generate Form
               </div>
             </div>
             <p className="text-gray-600 mb-4">
-              Great! I have all the information I need to create your form.
+              All information has been collected. Ready to generate your form.
             </p>
             <button
               onClick={handleGenerateForm}

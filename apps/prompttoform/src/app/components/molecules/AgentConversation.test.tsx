@@ -145,8 +145,9 @@ describe('AgentConversation', () => {
     const textarea = textareas[0]; // Get the first textarea
     fireEvent.change(textarea, { target: { value: 'Customer feedback form' } });
 
-    const submitButtons = screen.getAllByRole('button', { name: /submit/i });
-    const submitButton = submitButtons[0]; // Get the first submit button
+    const submitButton = screen.getByRole('button', {
+      name: /generate form with these answers/i,
+    });
     fireEvent.click(submitButton);
 
     await waitFor(() => {
@@ -206,7 +207,7 @@ describe('AgentConversation', () => {
       />
     );
 
-    expect(screen.getAllByText('Processing...')).toHaveLength(3); // Multiple processing indicators
+    expect(screen.getByText('Generating Form...')).toBeInTheDocument();
   });
 
   it('should handle complete conversation state', () => {
@@ -226,9 +227,7 @@ describe('AgentConversation', () => {
       />
     );
 
-    expect(
-      screen.getByText('Conversation complete - ready to generate form')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Ready to generate form')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /generate form/i })
     ).toBeInTheDocument();
@@ -307,8 +306,9 @@ describe('AgentConversation', () => {
     const textarea = textareas[0]; // Get the first textarea
     fireEvent.change(textarea, { target: { value: 'Test response' } });
 
-    const submitButtons = screen.getAllByRole('button', { name: /submit/i });
-    const submitButton = submitButtons[0]; // Get the first submit button
+    const submitButton = screen.getByRole('button', {
+      name: /generate form with these answers/i,
+    });
     fireEvent.click(submitButton);
 
     await waitFor(() => {
