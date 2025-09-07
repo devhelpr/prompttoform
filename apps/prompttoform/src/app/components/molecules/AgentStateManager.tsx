@@ -82,6 +82,29 @@ export function AgentStateProvider({
 
   const setConversationState = useCallback(
     (conversationState: ConversationState | null) => {
+      console.log(
+        'AgentStateManager.setConversationState - Setting conversation state:',
+        {
+          hasState: !!conversationState,
+          totalMessages: conversationState?.messages?.length || 0,
+          firstMessage: conversationState?.messages?.[0]
+            ? {
+                id: conversationState.messages[0].id,
+                type: conversationState.messages[0].type,
+                content: conversationState.messages[0].content,
+                timestamp: conversationState.messages[0].timestamp,
+              }
+            : null,
+          userMessages:
+            conversationState?.messages
+              ?.filter((m) => m.type === 'user')
+              .map((m) => ({
+                id: m.id,
+                content: m.content,
+                timestamp: m.timestamp,
+              })) || [],
+        }
+      );
       setState((prev) => ({ ...prev, conversationState }));
     },
     []
@@ -108,6 +131,10 @@ export function AgentStateProvider({
   const startAgentConversation = useCallback(
     async (prompt: string) => {
       try {
+        console.log(
+          'AgentStateManager.startAgentConversation - Starting conversation with prompt:',
+          prompt
+        );
         setLoading(true);
         setError(null);
 
@@ -141,6 +168,35 @@ export function AgentStateProvider({
 
   const processUserResponse = useCallback(
     async (response: string, questionId: string) => {
+      // Debug: Log the conversation state before processing
+      console.log(
+        'AgentStateManager.processUserResponse - Before processing:',
+        {
+          hasConversationManager: !!conversationManager,
+          hasConversationState: !!state.conversationState,
+          conversationState: state.conversationState
+            ? {
+                totalMessages: state.conversationState.messages.length,
+                firstMessage: state.conversationState.messages[0]
+                  ? {
+                      id: state.conversationState.messages[0].id,
+                      type: state.conversationState.messages[0].type,
+                      content: state.conversationState.messages[0].content,
+                      timestamp: state.conversationState.messages[0].timestamp,
+                    }
+                  : null,
+                userMessages: state.conversationState.messages
+                  .filter((m) => m.type === 'user')
+                  .map((m) => ({
+                    id: m.id,
+                    content: m.content,
+                    timestamp: m.timestamp,
+                  })),
+              }
+            : null,
+        }
+      );
+
       if (!conversationManager || !state.conversationState) {
         setError('No active conversation');
         return;
