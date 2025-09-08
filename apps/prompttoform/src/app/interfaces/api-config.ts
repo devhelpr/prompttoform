@@ -7,4 +7,5 @@ export interface APIConfig {
   isChatCompletionCompatible: boolean;
   systemKey?: string;
   supportsTemperature: boolean;
+  additionalProperties?: Record<string, any>;
 }

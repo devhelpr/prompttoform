@@ -46,6 +46,7 @@ export function getCurrentAPIConfig(): APIConfig {
         systemKey: llmApi.systemKey,
         model: llmApi.model,
         baseUrl: llmApi.baseUrl,
+        additionalProperties: llmApi.additionalProperties,
       };
     }
   }
@@ -196,6 +197,9 @@ export async function callLLMAPI(
           ],
           generationConfig: {
             temperature: apiConfig.supportsTemperature ? 0.2 : 1.0,
+            ...(apiConfig.additionalProperties && {
+              ...apiConfig.additionalProperties,
+            }),
           },
         }),
       });
@@ -262,6 +266,9 @@ export async function callLLMAPI(
         ],
         temperature: apiConfig.supportsTemperature ? 0.2 : 1.0,
         ...(responseFormat && { ...responseFormat }),
+        ...(apiConfig.additionalProperties && {
+          ...apiConfig.additionalProperties,
+        }),
       }),
       mode: 'cors',
     });

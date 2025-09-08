@@ -10,6 +10,11 @@ export const llmAPIs: APIConfig[] = [
     isChatCompletionCompatible: true,
     systemKey: 'openai',
     supportsTemperature: false,
+    additionalProperties: {
+      reasoning: {
+        effort: 'minimal',
+      },
+    },
   },
   {
     name: 'OpenAI-system-v5-nano',
