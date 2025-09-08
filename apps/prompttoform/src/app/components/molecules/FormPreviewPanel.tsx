@@ -143,7 +143,7 @@ export function FormPreviewPanel({
     switch (activeTab) {
       case 'form':
         return parsedJson && parsedJson.app ? (
-          <div className="space-y-4 h-full min-h-0">
+          <div className="space-y-4 h-full min-h-0 grid grid-rows-[auto_1fr]">
             {/* Language Selector for Multi-Language Forms */}
             {isMultiLanguage && (
               <div className="bg-white p-4 rounded-lg border border-zinc-300">
