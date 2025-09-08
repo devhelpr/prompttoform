@@ -11,9 +11,7 @@ export const llmAPIs: APIConfig[] = [
     systemKey: 'openai',
     supportsTemperature: false,
     additionalProperties: {
-      reasoning: {
-        effort: 'minimal',
-      },
+      reasoning_effort: 'minimal',
     },
   },
   {
@@ -26,9 +24,7 @@ export const llmAPIs: APIConfig[] = [
     systemKey: 'openai',
     supportsTemperature: false,
     additionalProperties: {
-      reasoning: {
-        effort: 'minimal',
-      },
+      reasoning_effort: 'minimal',
     },
   },
   {
