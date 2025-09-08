@@ -108,7 +108,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   // Helper function to get field label for error messages
   const getFieldLabel = (component: FormComponentFieldProps): string => {
     if (typeof component.label === 'string' && component.label) {
-      return component.label;
+      // Try to translate the label using the translation service
+      const translatedLabel = translationService.translateComponent(
+        component.id,
+        0, // Assuming single page form for now
+        'label',
+        component.label
+      );
+      return translatedLabel;
     }
     // Fallback to ID if no label
     return component.id
@@ -402,20 +409,17 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
       // Re-validate form with new language to update error messages
       if (isSubmitted || Object.keys(validationErrors).length > 0) {
-        const isValid = validateForm();
-        if (!isValid) {
-          // Force re-render to show updated error messages
-          setValidationErrors({ ...validationErrors });
-        }
+        // Use setTimeout to avoid infinite loop and ensure validation runs after language change
+        setTimeout(() => {
+          const isValid = validateForm();
+          if (!isValid) {
+            // Force re-render to show updated error messages
+            setValidationErrors((prev) => ({ ...prev }));
+          }
+        }, 0);
       }
     }
-  }, [
-    translationService,
-    settings,
-    isSubmitted,
-    validationErrors,
-    validateForm,
-  ]);
+  }, [translationService, settings, isSubmitted, validateForm]);
 
   // Reset initial event trigger when form changes
   useEffect(() => {

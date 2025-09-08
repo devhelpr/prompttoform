@@ -130,6 +130,26 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
             thankYouMessage:
               'Your message has been sent successfully. We will get back to you soon.',
           },
+          errorMessages: {
+            required: '{fieldLabel} is required',
+            minLength:
+              '{fieldLabel} must be at least {minLength} characters long',
+            maxLength: '{fieldLabel} cannot exceed {maxLength} characters',
+            pattern: '{fieldLabel} format is invalid',
+            minItems:
+              'Please select at least {minItems} items for {fieldLabel}',
+            maxItems:
+              'Please select no more than {maxItems} items for {fieldLabel}',
+            minDate: '{fieldLabel} must be on or after {minDate}',
+            maxDate: '{fieldLabel} must be before {maxDate}',
+            min: '{fieldLabel} must be at least {min}',
+            max: '{fieldLabel} cannot exceed {max}',
+            invalidFormat: '{fieldLabel} format is invalid',
+            invalidEmail: 'Please enter a valid email address for {fieldLabel}',
+            invalidNumber: 'Please enter a valid number for {fieldLabel}',
+            invalidDate: 'Please enter a valid date for {fieldLabel}',
+            generic: '{fieldLabel} is invalid',
+          },
         },
         nl: {
           app: {
@@ -188,6 +208,26 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
             thankYouMessage:
               'Uw bericht is succesvol verzonden. We nemen zo snel mogelijk contact met u op.',
           },
+          errorMessages: {
+            required: '{fieldLabel} is verplicht',
+            minLength:
+              '{fieldLabel} moet minimaal {minLength} karakters lang zijn',
+            maxLength:
+              '{fieldLabel} mag niet meer dan {maxLength} karakters bevatten',
+            pattern: '{fieldLabel} formaat is ongeldig',
+            minItems: 'Selecteer minimaal {minItems} items voor {fieldLabel}',
+            maxItems:
+              'Selecteer niet meer dan {maxItems} items voor {fieldLabel}',
+            minDate: '{fieldLabel} moet op of na {minDate} zijn',
+            maxDate: '{fieldLabel} moet voor {maxDate} zijn',
+            min: '{fieldLabel} moet minimaal {min} zijn',
+            max: '{fieldLabel} mag niet meer dan {max} zijn',
+            invalidFormat: '{fieldLabel} formaat is ongeldig',
+            invalidEmail: 'Voer een geldig e-mailadres in voor {fieldLabel}',
+            invalidNumber: 'Voer een geldig nummer in voor {fieldLabel}',
+            invalidDate: 'Voer een geldige datum in voor {fieldLabel}',
+            generic: '{fieldLabel} is ongeldig',
+          },
         },
         sv: {
           app: {
@@ -245,6 +285,23 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
             thankYouTitle: 'Tack!',
             thankYouMessage:
               'Ditt meddelande har skickats framgångsrikt. Vi återkommer till dig så snart som möjligt.',
+          },
+          errorMessages: {
+            required: '{fieldLabel} krävs',
+            minLength: '{fieldLabel} måste vara minst {minLength} tecken långt',
+            maxLength: '{fieldLabel} får inte överstiga {maxLength} tecken',
+            pattern: '{fieldLabel} format är ogiltigt',
+            minItems: 'Välj minst {minItems} objekt för {fieldLabel}',
+            maxItems: 'Välj inte mer än {maxItems} objekt för {fieldLabel}',
+            minDate: '{fieldLabel} måste vara på eller efter {minDate}',
+            maxDate: '{fieldLabel} måste vara före {maxDate}',
+            min: '{fieldLabel} måste vara minst {min}',
+            max: '{fieldLabel} får inte överstiga {max}',
+            invalidFormat: '{fieldLabel} format är ogiltigt',
+            invalidEmail: 'Ange en giltig e-postadress för {fieldLabel}',
+            invalidNumber: 'Ange ett giltigt nummer för {fieldLabel}',
+            invalidDate: 'Ange ett giltigt datum för {fieldLabel}',
+            generic: '{fieldLabel} är ogiltigt',
           },
         },
       },
