@@ -29,6 +29,10 @@ describe('AgentConversation', () => {
   const mockOnFormGenerated = vi.fn();
   const mockOnError = vi.fn();
   const mockOnSkipToForm = vi.fn();
+  const mockConversationManager = {
+    processUserResponse: vi.fn(),
+    skipToFormGeneration: vi.fn(),
+  };
 
   const mockQuestions: AgentQuestion[] = [
     {
@@ -88,6 +92,7 @@ describe('AgentConversation', () => {
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
         isLoading={false}
+        conversationManager={mockConversationManager}
       />
     );
 
@@ -107,6 +112,7 @@ describe('AgentConversation', () => {
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
         isLoading={false}
+        conversationManager={mockConversationManager}
       />
     );
 
@@ -122,14 +128,9 @@ describe('AgentConversation', () => {
       currentQuestions: [mockQuestions[1]], // Remove first question
     });
 
-    // Mock the ConversationManager constructor and method
-    const { ConversationManager } = await import('../../services/agents');
-    vi.mocked(ConversationManager).mockImplementation(
-      () =>
-        ({
-          processUserResponse: mockProcessUserResponse,
-        } as any)
-    );
+    const mockConversationManager = {
+      processUserResponse: mockProcessUserResponse,
+    };
 
     render(
       <AgentConversation
@@ -138,6 +139,7 @@ describe('AgentConversation', () => {
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
         isLoading={false}
+        conversationManager={mockConversationManager}
       />
     );
 
@@ -166,6 +168,7 @@ describe('AgentConversation', () => {
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
         isLoading={false}
+        conversationManager={mockConversationManager}
       />
     );
 
@@ -183,6 +186,7 @@ describe('AgentConversation', () => {
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
         isLoading={false}
+        conversationManager={mockConversationManager}
       />
     );
 
@@ -204,6 +208,7 @@ describe('AgentConversation', () => {
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
         isLoading={true}
+        conversationManager={mockConversationManager}
       />
     );
 
@@ -224,6 +229,7 @@ describe('AgentConversation', () => {
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
         isLoading={false}
+        conversationManager={mockConversationManager}
       />
     );
 
@@ -264,6 +270,7 @@ describe('AgentConversation', () => {
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
         isLoading={false}
+        conversationManager={mockConversationManager}
       />
     );
 
@@ -283,14 +290,9 @@ describe('AgentConversation', () => {
       .fn()
       .mockRejectedValue(new Error('API Error'));
 
-    // Mock the ConversationManager constructor and method
-    const { ConversationManager } = await import('../../services/agents');
-    vi.mocked(ConversationManager).mockImplementation(
-      () =>
-        ({
-          processUserResponse: mockProcessUserResponse,
-        } as any)
-    );
+    const mockConversationManager = {
+      processUserResponse: mockProcessUserResponse,
+    };
 
     render(
       <AgentConversation
@@ -299,6 +301,7 @@ describe('AgentConversation', () => {
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
         isLoading={false}
+        conversationManager={mockConversationManager}
       />
     );
 
@@ -348,6 +351,7 @@ describe('AgentConversation', () => {
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
         isLoading={false}
+        conversationManager={mockConversationManager}
       />
     );
 
@@ -363,6 +367,7 @@ describe('AgentConversation', () => {
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
         isLoading={false}
+        conversationManager={mockConversationManager}
       />
     );
 
@@ -388,6 +393,7 @@ describe('AgentConversation', () => {
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
         isLoading={false}
+        conversationManager={mockConversationManager}
       />
     );
 

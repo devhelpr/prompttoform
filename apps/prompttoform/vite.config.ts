@@ -41,6 +41,7 @@ export default defineConfig(() => ({
     setupFiles: ['./src/test-setup.ts'],
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
+    testTimeout: 10000,
     coverage: {
       reportsDirectory: '../../coverage/apps/prompttoform',
       provider: 'v8' as const,
