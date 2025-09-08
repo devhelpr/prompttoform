@@ -363,7 +363,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
         return errors;
       },
-    []
+    [getErrorMessage]
   );
 
   const validateForm = useCallback(() => {
@@ -411,11 +411,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       if (isSubmitted || Object.keys(validationErrors).length > 0) {
         // Use setTimeout to avoid infinite loop and ensure validation runs after language change
         setTimeout(() => {
+          // Force a complete re-validation - validateForm will use the updated translation service
           const isValid = validateForm();
-          if (!isValid) {
-            // Force re-render to show updated error messages
-            setValidationErrors((prev) => ({ ...prev }));
-          }
+          // The validateForm function will call setValidationErrors with the new translated messages
         }, 0);
       }
     }
