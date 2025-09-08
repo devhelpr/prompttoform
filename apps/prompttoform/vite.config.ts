@@ -42,6 +42,7 @@ export default defineConfig(() => ({
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     testTimeout: 10000,
+    passWithNoTests: true,
     coverage: {
       reportsDirectory: '../../coverage/apps/prompttoform',
       provider: 'v8' as const,

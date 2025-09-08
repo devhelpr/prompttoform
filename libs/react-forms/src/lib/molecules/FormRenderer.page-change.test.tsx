@@ -2,9 +2,10 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import { FormRenderer } from './FormRenderer';
-import { FormDefinition, PageChangeEvent } from '../interfaces/form-interfaces';
+import { MultiLanguageFormDefinition } from '../interfaces/multi-language-interfaces';
+import { PageChangeEvent } from '../interfaces/form-interfaces';
 
-const mockForm: FormDefinition = {
+const mockForm: MultiLanguageFormDefinition = {
   app: {
     title: 'Test Form',
     pages: [
@@ -55,6 +56,8 @@ const mockForm: FormDefinition = {
       },
     ],
   },
+  defaultLanguage: 'en',
+  translations: {},
 };
 
 describe('FormRenderer Page Change Events', () => {

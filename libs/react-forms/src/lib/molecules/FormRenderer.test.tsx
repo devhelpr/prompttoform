@@ -2,10 +2,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { FormRenderer } from './FormRenderer';
-import { FormDefinition } from '../interfaces/form-interfaces';
+import { MultiLanguageFormDefinition } from '../interfaces/multi-language-interfaces';
 
 // Mock form data for testing
-const singlePageForm: FormDefinition = {
+const singlePageForm: MultiLanguageFormDefinition = {
   app: {
     title: 'Single Page Form',
     pages: [
@@ -24,9 +24,11 @@ const singlePageForm: FormDefinition = {
       },
     ],
   },
+  defaultLanguage: 'en',
+  translations: {},
 };
 
-const multiPageForm: FormDefinition = {
+const multiPageForm: MultiLanguageFormDefinition = {
   app: {
     title: 'Multi Page Form',
     pages: [
@@ -58,6 +60,8 @@ const multiPageForm: FormDefinition = {
       },
     ],
   },
+  defaultLanguage: 'en',
+  translations: {},
 };
 
 describe('FormRenderer', () => {
@@ -112,11 +116,13 @@ describe('FormRenderer', () => {
     });
 
     it('should not render step indicator for form with no pages', () => {
-      const noPagesForm: FormDefinition = {
+      const noPagesForm: MultiLanguageFormDefinition = {
         app: {
           title: 'No Pages Form',
           pages: [],
         },
+        defaultLanguage: 'en',
+        translations: {},
       };
 
       render(<FormRenderer formJson={noPagesForm} />);
@@ -159,7 +165,7 @@ describe('FormRenderer', () => {
     });
 
     it('should prefix field IDs for all field types', () => {
-      const formWithMultipleFields: FormDefinition = {
+      const formWithMultipleFields: MultiLanguageFormDefinition = {
         app: {
           title: 'Multiple Field Types',
           pages: [
@@ -214,6 +220,8 @@ describe('FormRenderer', () => {
             },
           ],
         },
+        defaultLanguage: 'en',
+        translations: {},
       };
 
       render(
@@ -247,7 +255,7 @@ describe('FormRenderer', () => {
     });
 
     it('should prefix section field IDs', () => {
-      const formWithSection: FormDefinition = {
+      const formWithSection: MultiLanguageFormDefinition = {
         app: {
           title: 'Form with Section',
           pages: [
@@ -272,6 +280,8 @@ describe('FormRenderer', () => {
             },
           ],
         },
+        defaultLanguage: 'en',
+        translations: {},
       };
 
       render(
