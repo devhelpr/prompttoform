@@ -1002,19 +1002,27 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       );
       const translatedProps: any = {
         ...props,
-        placeholder: translationService.translateComponent(
+      };
+
+      // Only include placeholder if it exists in the original props
+      if (props?.placeholder !== undefined) {
+        translatedProps.placeholder = translationService.translateComponent(
           id,
           currentStepIndex,
           'props.placeholder',
           props?.placeholder
-        ),
-        helperText: translationService.translateComponent(
+        );
+      }
+
+      // Only include helperText if it exists in the original props
+      if (props?.helperText !== undefined) {
+        translatedProps.helperText = translationService.translateComponent(
           id,
           currentStepIndex,
           'props.helperText',
           props?.helperText
-        ),
-      };
+        );
+      }
 
       // Handle translated options for select/radio components
       if (

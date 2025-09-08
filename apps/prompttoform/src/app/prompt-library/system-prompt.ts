@@ -46,13 +46,22 @@ Important rules for UI/Form schema:
      - section: For grouping related components
      - confirmation: For form summary pages (use sparingly - prefer text components with template variables)
 
-7. For form validation:
+7. For form validation and user guidance:
    - Include appropriate validation rules for input fields
    - Specify required fields, minimum/maximum lengths, and regex patterns as needed
    - Add custom WCAG-compatible error messages for better accessibility
    - Use errorMessages object to provide user-friendly, descriptive error messages
    - Follow WCAG guidelines: be clear, descriptive, and actionable
    - Use placeholders like {minLength}, {max}, {minDate} for dynamic values
+   - IMPORTANT: Include helpful helperText in form fields when it would improve user experience:
+     * For email fields: "We'll never share your email with anyone else"
+     * For password fields: "Must be at least 8 characters with uppercase, lowercase, and number"
+     * For phone fields: "Include country code (e.g., +1 for US)"
+     * For date fields: "Format: MM/DD/YYYY"
+     * For number fields: "Enter your age in years"
+     * For textarea fields: "Please provide detailed information"
+     * For select/radio fields: "Choose the option that best describes your situation"
+     * For complex or unclear fields: Provide context about what information is expected
    - Example error message configuration:
      "validation": {
        "required": true,
@@ -65,8 +74,11 @@ Important rules for UI/Form schema:
        }
      }
    
-   - For email validation, include inputType: "email" and custom error messages:
-     "props": { "inputType": "email" },
+   - For email validation, include inputType: "email", helperText, and custom error messages:
+     "props": { 
+       "inputType": "email",
+       "helperText": "We'll never share your email with anyone else"
+     },
      "validation": {
        "required": true,
        "errorMessages": {
@@ -75,8 +87,11 @@ Important rules for UI/Form schema:
        }
      }
    
-   - For number validation, include inputType: "number" and range validation:
-     "props": { "inputType": "number" },
+   - For number validation, include inputType: "number", helperText, and range validation:
+     "props": { 
+       "inputType": "number",
+       "helperText": "Enter your age in years"
+     },
      "validation": {
        "required": true,
        "min": 18,
@@ -174,7 +189,22 @@ Important rules for UI/Form schema:
       * Multi-line summaries with proper formatting
     - For confirmation/summary pages, use text components with template variables instead of complex confirmation components
 
-15. For confirmation and review pages:
+15. For helperText best practices:
+    - Always include helperText when it would genuinely help users understand what to enter
+    - Use helperText to provide context, examples, or reassurance (e.g., privacy statements)
+    - Keep helperText concise but informative - aim for 1-2 sentences maximum
+    - Use helperText for fields that might be ambiguous or need clarification
+    - Examples of good helperText usage:
+      * Email: "We'll never share your email with anyone else"
+      * Phone: "Include country code (e.g., +1 for US)"
+      * Password: "Must be at least 8 characters with uppercase, lowercase, and number"
+      * Date: "Format: MM/DD/YYYY"
+      * Age: "Enter your age in years"
+      * Comments: "Please provide detailed feedback about your experience"
+    - Don't use helperText for obvious fields like "Full Name" unless there's specific guidance needed
+    - HelperText should complement, not repeat, the field label
+
+16. For confirmation and review pages:
     - Create review/summary pages using text components with template variables
     - Use section components to group related summary information
     - IMPORTANT: Template variables must match the exact field IDs from your form components
@@ -207,7 +237,7 @@ Important rules for UI/Form schema:
         ]
       }
 
-16. For multi-language forms:
+17. For multi-language forms:
     - IMPORTANT: Do NOT add language selector dropdowns or language switching components to the form
     - The system will handle language selection automatically - users don't need to choose languages within the form
     - Do NOT include language lists in form titles (e.g., avoid "Contact Form (English, Spanish, French)")
@@ -215,7 +245,7 @@ Important rules for UI/Form schema:
     - Focus on the form's purpose, not its language capabilities
     - Language selection is handled by the system UI, not within the form content
 
-17. Examples of INCORRECT vs CORRECT patterns:
+18. Examples of INCORRECT vs CORRECT patterns:
     
     INCORRECT - Using bindings:
     {
@@ -227,11 +257,15 @@ Important rules for UI/Form schema:
       }
     }
     
-    CORRECT - Simple field ID:
+    CORRECT - Simple field ID with helpful guidance:
     {
       "id": "fullName", 
       "type": "input",
       "label": "Full Name",
+      "props": {
+        "placeholder": "Enter your full name",
+        "helperText": "Please provide your legal first and last name"
+      },
       "validation": { "required": true }
     }
     
@@ -291,8 +325,8 @@ Important rules for UI/Form schema:
       }
     }
 
-17. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
-18. DONT EMBED The schema itself in the response! BUT it should be valid JSON which follows the schema.
+19. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
+20. DONT EMBED The schema itself in the response! BUT it should be valid JSON which follows the schema.
 `;
 }
 
