@@ -17,15 +17,38 @@ export class FormGenerationAgent {
   }
 
   async generateFormFromConversation(
-    conversationState: ConversationState
+    conversationState: ConversationState,
+    onProgress?: (progress: any) => void
   ): Promise<FormGenerationResult> {
     try {
+      // Debug: Log the conversation state received
+      console.log(
+        'FormGenerationAgent.generateFormFromConversation received:',
+        {
+          totalMessages: conversationState.messages.length,
+          messages: conversationState.messages.map((m) => ({
+            id: m.id,
+            type: m.type,
+            content: m.content,
+            timestamp: m.timestamp,
+          })),
+          userMessages: conversationState.messages
+            .filter((m) => m.type === 'user')
+            .map((m) => ({
+              id: m.id,
+              content: m.content,
+              timestamp: m.timestamp,
+            })),
+        }
+      );
+
       // Build the enhanced prompt from conversation
       const enhancedPrompt = this.buildEnhancedPrompt(conversationState);
 
       // Generate the form using the existing service
       const result = await this.formGenerationService.generateForm(
-        enhancedPrompt
+        enhancedPrompt,
+        onProgress
       );
 
       // Add conversation context to the result
@@ -100,6 +123,14 @@ export class FormGenerationAgent {
       enhancedPrompt += `\n\nNote: Some information may be incomplete. Please make reasonable assumptions where needed and create a functional form.`;
     }
 
+    // Log the enhanced prompt for debugging
+    console.log('Enhanced prompt for form generation:', {
+      originalPrompt,
+      gatheredInfo,
+      contextKeys: Object.keys(conversationState.context),
+      enhancedPrompt,
+    });
+
     return enhancedPrompt;
   }
 
@@ -121,9 +152,63 @@ export class FormGenerationAgent {
   }
 
   private getOriginalPrompt(conversationState: ConversationState): string {
-    const firstUserMessage = conversationState.messages.find(
+    // Get all user messages and sort by timestamp to find the earliest one
+    const userMessages = conversationState.messages.filter(
       (m) => m.type === 'user'
     );
+
+    // Debug: Log the raw timestamps before sorting
+    console.log(
+      'Raw user messages before sorting:',
+      userMessages.map((m) => ({
+        id: m.id,
+        content: m.content,
+        timestamp: m.timestamp,
+        timestampMs: new Date(m.timestamp).getTime(),
+      }))
+    );
+
+    const sortedUserMessages = userMessages.sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    // Debug: Log the sorted messages
+    console.log(
+      'Sorted user messages:',
+      sortedUserMessages.map((m) => ({
+        id: m.id,
+        content: m.content,
+        timestamp: m.timestamp,
+        timestampMs: new Date(m.timestamp).getTime(),
+      }))
+    );
+
+    const firstUserMessage = sortedUserMessages[0];
+
+    // Debug logging to see what's in the conversation state
+    console.log('getOriginalPrompt debug:', {
+      totalMessages: conversationState.messages.length,
+      allMessages: conversationState.messages.map((m) => ({
+        id: m.id,
+        type: m.type,
+        content: m.content,
+        timestamp: m.timestamp,
+      })),
+      userMessages: userMessages.map((m) => ({
+        id: m.id,
+        content: m.content,
+        timestamp: m.timestamp,
+      })),
+      firstUserMessage: firstUserMessage
+        ? {
+            id: firstUserMessage.id,
+            content: firstUserMessage.content,
+            timestamp: firstUserMessage.timestamp,
+          }
+        : null,
+    });
+
     return firstUserMessage?.content || '';
   }
 

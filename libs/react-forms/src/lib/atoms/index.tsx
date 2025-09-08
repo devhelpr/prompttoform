@@ -7,3 +7,4 @@ export * from './form-select-field';
 export * from './form-section-field';
 export * from './form-textarea-field';
 export * from './form-text-field';
+export * from './language-selector';

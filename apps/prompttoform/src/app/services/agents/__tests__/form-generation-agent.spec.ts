@@ -118,7 +118,8 @@ describe('FormGenerationAgent', () => {
       );
 
       expect(mockFormGenerationService.generateForm).toHaveBeenCalledWith(
-        expect.stringContaining('I need a contact form')
+        expect.stringContaining('I need a contact form'),
+        undefined
       );
     });
 

@@ -27,6 +27,11 @@ import {
   ThankYouPage,
   PageChangeEvent,
 } from '../interfaces/form-interfaces';
+import {
+  MultiLanguageFormDefinition,
+  FormRendererSettings as MultiLanguageFormRendererSettings,
+} from '../interfaces/multi-language-interfaces';
+import { TranslationService } from '../services/translation-service';
 import { getClassNames, mergeClassNames, getText } from '../utils/class-utils';
 
 export const FormRenderer: React.FC<FormRendererProps> = ({
@@ -55,6 +60,20 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   >({});
   const [showThankYouPage, setShowThankYouPage] = useState(false);
   const initialEventTriggeredRef = useRef(false);
+
+  // Initialize translation service
+  const translationService = useMemo(() => {
+    const multiLangForm = formJson as MultiLanguageFormDefinition;
+    const multiLangSettings = settings as MultiLanguageFormRendererSettings;
+
+    return new TranslationService(
+      multiLangForm.translations || {},
+      multiLangSettings.currentLanguage ||
+        multiLangForm.defaultLanguage ||
+        'en',
+      multiLangForm.defaultLanguage || 'en'
+    );
+  }, [formJson, settings]);
 
   // Helper function to trigger page change event
   const triggerPageChangeEvent = useCallback(
@@ -89,7 +108,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   // Helper function to get field label for error messages
   const getFieldLabel = (component: FormComponentFieldProps): string => {
     if (typeof component.label === 'string' && component.label) {
-      return component.label;
+      // Try to translate the label using the translation service
+      const translatedLabel = translationService.translateComponent(
+        component.id,
+        0, // Assuming single page form for now
+        'label',
+        component.label
+      );
+      return translatedLabel;
     }
     // Fallback to ID if no label
     return component.id
@@ -98,46 +124,59 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   };
 
   // Helper function to get WCAG-compatible error message with fallbacks
-  const getErrorMessage = (
-    component: FormComponentFieldProps,
-    errorType: string,
-    params: Record<string, string | number> = {}
-  ): string => {
-    const customMessage =
-      component.validation?.errorMessages?.[
-        errorType as keyof typeof component.validation.errorMessages
-      ];
+  const getErrorMessage = useCallback(
+    (
+      component: FormComponentFieldProps,
+      errorType: string,
+      params: Record<string, string | number> = {}
+    ): string => {
+      const fieldLabel = getFieldLabel(component);
 
-    if (customMessage) {
-      // Replace placeholders in custom message
-      return customMessage.replace(/\{(\w+)\}/g, (match, key) => {
-        return String(params[key] || match);
-      });
-    }
+      // First try to get a translated error message
+      const translatedError = translationService.translateError(
+        errorType as keyof (typeof translationService)['defaultTexts']['errorMessages'],
+        fieldLabel,
+        params
+      );
 
-    // Get field label for context-specific messages
-    const fieldLabel = getFieldLabel(component);
+      // Check if we have a custom translation for this error type
+      const hasCustomTranslation =
+        translationService.translate(
+          `errorMessages.${errorType}`,
+          undefined,
+          undefined,
+          { fieldLabel, ...params }
+        ) !== `errorMessages.${errorType}`;
 
-    // Default WCAG-compatible error messages with field context
-    const defaultMessages: Record<string, string> = {
-      required: `${fieldLabel} is required`,
-      minLength: `${fieldLabel} must be at least ${params.minLength} characters long`,
-      maxLength: `${fieldLabel} cannot exceed ${params.maxLength} characters`,
-      pattern: `${fieldLabel} format is invalid`,
-      minItems: `Please select at least ${params.minItems} items for ${fieldLabel}`,
-      maxItems: `Please select no more than ${params.maxItems} items for ${fieldLabel}`,
-      minDate: `${fieldLabel} must be on or after ${params.minDate}`,
-      maxDate: `${fieldLabel} must be before ${params.maxDate}`,
-      min: `${fieldLabel} must be at least ${params.min}`,
-      max: `${fieldLabel} cannot exceed ${params.max}`,
-      invalidFormat: `${fieldLabel} format is invalid`,
-      invalidEmail: `Please enter a valid email address for ${fieldLabel}`,
-      invalidNumber: `Please enter a valid number for ${fieldLabel}`,
-      invalidDate: `Please enter a valid date for ${fieldLabel}`,
-    };
+      // If we have a custom translation, use it
+      if (hasCustomTranslation) {
+        return translatedError;
+      }
 
-    return defaultMessages[errorType] || `${fieldLabel} is invalid`;
-  };
+      // If no custom translation, try component-specific error message
+      const customMessage =
+        component.validation?.errorMessages?.[
+          errorType as keyof typeof component.validation.errorMessages
+        ];
+
+      if (customMessage) {
+        // TODO: Remove this deprecation warning in a future version
+        // Only show warning in development mode, not during tests
+        if (process.env.NODE_ENV === 'development' && !process.env.VITEST) {
+          console.warn(
+            `Field-level errorMessages are deprecated. Please use translations instead. ` +
+              `Field: ${component.id}, ErrorType: ${errorType}. ` +
+              `Add this to your translations: errorMessages.${errorType}`
+          );
+        }
+        return translationService.replacePlaceholders(customMessage, params);
+      }
+
+      // Fall back to default translated error message
+      return translatedError;
+    },
+    [translationService]
+  );
 
   const validateComponent = useMemo(
     () =>
@@ -349,7 +388,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
         return errors;
       },
-    []
+    [getErrorMessage]
   );
 
   const validateForm = useCallback(() => {
@@ -386,6 +425,31 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   useEffect(() => {
     validateForm();
   }, [validateForm]);
+
+  // Update translation service language when settings change
+  useEffect(() => {
+    const multiLangSettings = settings as MultiLanguageFormRendererSettings;
+    if (multiLangSettings.currentLanguage) {
+      translationService.setLanguage(multiLangSettings.currentLanguage);
+
+      // Re-validate form with new language to update error messages
+      if (isSubmitted || Object.keys(validationErrors).length > 0) {
+        // Use setTimeout to avoid infinite loop and ensure validation runs after language change
+        // Skip setTimeout in test environments to avoid timing issues
+        if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
+          // Force a complete re-validation - validateForm will use the updated translation service
+          const isValid = validateForm();
+          // The validateForm function will call setValidationErrors with the new translated messages
+        } else {
+          setTimeout(() => {
+            // Force a complete re-validation - validateForm will use the updated translation service
+            const isValid = validateForm();
+            // The validateForm function will call setValidationErrors with the new translated messages
+          }, 0);
+        }
+      }
+    }
+  }, [translationService, settings, isSubmitted, validateForm]);
 
   // Reset initial event trigger when form changes
   useEffect(() => {
@@ -666,11 +730,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             settings.classes?.stepIndicatorItem
           )}
         >
-          {getText(
-            'Step {currentStep} of {totalSteps}',
-            settings.texts?.stepIndicator,
-            { currentStep, totalSteps }
-          )}
+          {translationService.translateUI('stepIndicator', {
+            currentStep,
+            totalSteps,
+          })}
         </div>
         <div
           className={getClassNames(
@@ -704,20 +767,20 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       currentPage && currentPage.isConfirmationPage === true;
 
     // Determine button text based on page type
-    let nextButtonText = settings.texts?.nextButton || 'Next';
+    let nextButtonText = translationService.translateUI('nextButton');
     if (isEndPage || currentStep === totalSteps) {
-      nextButtonText = settings.texts?.submitButton || 'Submit';
+      nextButtonText = translationService.translateUI('submitButton');
     } else if (isConfirmationPage) {
-      nextButtonText =
-        settings.texts?.confirmSubmitButton || 'Confirm & Submit';
+      nextButtonText = translationService.translateUI('confirmSubmitButton');
     } else {
       // Check if next page is a confirmation page
       const nextPageIndex = currentStep;
       if (nextPageIndex < totalSteps) {
         const nextPage = formJson.app.pages[nextPageIndex];
         if (nextPage && nextPage.isConfirmationPage) {
-          nextButtonText =
-            settings.texts?.reviewConfirmButton || 'Review & Confirm';
+          nextButtonText = translationService.translateUI(
+            'reviewConfirmButton'
+          );
         }
       }
     }
@@ -742,7 +805,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           disabled={currentStep === 1}
           onClick={handlePrevious}
         >
-          {settings.texts?.previousButton || 'Previous'}
+          {translationService.translateUI('previousButton')}
         </button>
         <button
           type="button"
@@ -762,7 +825,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     if (!formJson.app.pages || formJson.app.pages.length === 0) {
       return (
         <div className="p-4 text-red-500">
-          {settings.texts?.noPagesDefined || 'No pages defined in form'}
+          {translationService.translateUI('noPagesDefined')}
         </div>
       );
     }
@@ -773,7 +836,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     if (currentPageIndex < 0 || currentPageIndex >= formJson.app.pages.length) {
       return (
         <div className="p-4 text-red-500">
-          {settings.texts?.invalidPageIndex || 'Invalid page index'}
+          {translationService.translateUI('invalidPageIndex')}
         </div>
       );
     }
@@ -793,7 +856,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     if (Object.keys(formSubmissions).length === 0) {
       return (
         <div className="text-gray-500 italic">
-          {settings.texts?.noSubmissionsText || 'No submissions yet'}
+          {translationService.translateUI('noSubmissionsText')}
         </div>
       );
     }
@@ -946,333 +1009,423 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     return processedProps;
   };
 
-  const renderComponent = (
-    component: FormComponentFieldProps,
-    parentId?: string
-  ): React.ReactElement => {
-    // Check visibility first
-    if (!isComponentVisible(component.visibilityConditions, formValues)) {
-      return <></>;
-    }
-
-    const { id, type, label, props, validation } = component;
-    const fieldId = parentId ? `${parentId}.${id}` : id;
-    const prefixedFieldId = getPrefixedId(fieldId);
-    const hasError = validationErrors[fieldId]?.length > 0;
-    const showError = shouldShowError(fieldId) && hasError;
-
-    switch (type) {
-      case 'text':
-        return (
-          <TextFormField
-            label={label}
-            props={processPropsWithTemplates(props)}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldText: settings.classes?.fieldText,
-            }}
-          />
-        );
-
-      case 'input':
-        return (
-          <FormInputField
-            fieldId={prefixedFieldId}
-            label={label}
-            value={
-              typeof formValues[id] === 'string'
-                ? (formValues[id] as string)
-                : ''
-            }
-            onChange={(value) => handleInputChange(id, value)}
-            onBlur={() => handleBlur(id)}
-            validation={validation}
-            props={processPropsWithTemplates(props)}
-            showError={showError}
-            validationErrors={validationErrors[fieldId] || []}
-            disabled={disabled}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldInput: settings.classes?.fieldInput,
-              fieldError: settings.classes?.fieldError,
-              fieldHelperText: settings.classes?.fieldHelperText,
-            }}
-          />
-        );
-
-      case 'textarea':
-        return (
-          <FormTextareaField
-            fieldId={prefixedFieldId}
-            label={label}
-            value={
-              typeof formValues[id] === 'string'
-                ? (formValues[id] as string)
-                : ''
-            }
-            onChange={(value) => handleInputChange(id, value)}
-            onBlur={() => handleBlur(id)}
-            validation={validation}
-            props={processPropsWithTemplates(props)}
-            showError={showError}
-            validationErrors={validationErrors[fieldId] || []}
-            disabled={disabled}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldTextarea: settings.classes?.fieldTextarea,
-              fieldError: settings.classes?.fieldError,
-              fieldHelperText: settings.classes?.fieldHelperText,
-            }}
-          />
-        );
-
-      case 'radio':
-        return (
-          <FormRadioField
-            fieldId={prefixedFieldId}
-            label={label}
-            value={
-              typeof formValues[id] === 'string'
-                ? (formValues[id] as string)
-                : ''
-            }
-            onChange={(value) => handleInputChange(id, value)}
-            validation={validation}
-            props={processPropsWithTemplates(props)}
-            showError={showError}
-            validationErrors={validationErrors[fieldId] || []}
-            disabled={disabled}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldRadio: settings.classes?.fieldRadio,
-              fieldError: settings.classes?.fieldError,
-              fieldHelperText: settings.classes?.fieldHelperText,
-            }}
-          />
-        );
-
-      case 'checkbox':
-        return (
-          <FormCheckboxField
-            fieldId={prefixedFieldId}
-            label={label}
-            value={formValues[id] as boolean | string[]}
-            onChange={(value) => handleInputChange(id, value)}
-            onBlur={() => handleBlur(id)}
-            validation={validation}
-            props={processPropsWithTemplates(props)}
-            showError={showError}
-            validationErrors={validationErrors[fieldId] || []}
-            disabled={disabled}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldCheckbox: settings.classes?.fieldCheckbox,
-              fieldError: settings.classes?.fieldError,
-              fieldHelperText: settings.classes?.fieldHelperText,
-            }}
-          />
-        );
-
-      case 'select':
-        return (
-          <FormSelectField
-            fieldId={prefixedFieldId}
-            label={label}
-            value={
-              typeof formValues[id] === 'string'
-                ? (formValues[id] as string)
-                : ''
-            }
-            onChange={(value) => handleInputChange(id, value)}
-            onBlur={() => handleBlur(id)}
-            validation={validation}
-            props={processPropsWithTemplates(props)}
-            showError={showError}
-            validationErrors={validationErrors[fieldId] || []}
-            disabled={disabled}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldSelect: settings.classes?.fieldSelect,
-              fieldError: settings.classes?.fieldError,
-              fieldHelperText: settings.classes?.fieldHelperText,
-            }}
-          />
-        );
-
-      case 'date':
-        return (
-          <FormDateField
-            fieldId={prefixedFieldId}
-            label={label}
-            value={
-              typeof formValues[id] === 'string'
-                ? (formValues[id] as string)
-                : ''
-            }
-            onChange={(value) => handleInputChange(id, value)}
-            onBlur={() => handleBlur(id)}
-            validation={validation}
-            props={processPropsWithTemplates(props)}
-            showError={showError}
-            validationErrors={validationErrors[fieldId] || []}
-            disabled={disabled}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldDate: settings.classes?.fieldDate,
-              fieldError: settings.classes?.fieldError,
-              fieldHelperText: settings.classes?.fieldHelperText,
-            }}
-          />
-        );
-
-      case 'button':
-        if (typeof props?.label !== 'string' || props.label === 'Button') {
-          return <></>;
-        }
-
-        return (
-          <button
-            type={
-              (props?.buttonType as
-                | 'button'
-                | 'submit'
-                | 'reset'
-                | undefined) || 'button'
-            }
-            className={`px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 ${
-              disabled ? 'cursor-not-allowed opacity-50' : ''
-            }`}
-            onClick={
-              props?.onClick
-                ? () => handleButtonClick(props.onClick as string)
-                : undefined
-            }
-            disabled={disabled}
-          >
-            {props.label}
-          </button>
-        );
-
-      case 'section':
-        return (
-          <FormSectionField
-            fieldId={prefixedFieldId}
-            label={label}
-            children={component.children}
-            renderComponent={renderComponent}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              noContentText: settings.texts?.noContentInSection,
-            }}
-          />
-        );
-
-      case 'form':
-        return (
-          <div className="mb-6">
-            {label && <h3 className="text-lg font-medium mb-4">{label}</h3>}
-            <form
-              data-netlify="true"
-              onSubmit={(e) => {
-                e.preventDefault();
-                // Don't submit the form directly, the Next button will handle it
-              }}
-            >
-              {Array.isArray(component.children) &&
-                component.children.map((child, index) => (
-                  <div key={index}>{renderComponent(child, fieldId)}</div>
-                ))}
-              {/* Remove Submit and Reset buttons - Next button handles submission */}
-            </form>
-          </div>
-        );
-
-      case 'table':
-        return (
-          <div className="mb-6 overflow-x-auto">
-            {label && <h3 className="text-lg font-medium mb-4">{label}</h3>}
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                {Array.isArray(props?.headers) && props.headers.length > 0 && (
-                  <tr>
-                    {props.headers.map((header, index) => (
-                      <th
-                        key={index}
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        {header}
-                      </th>
-                    ))}
-                  </tr>
-                )}
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {Array.isArray(props?.rows) &&
-                  props.rows.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {Array.isArray(row) &&
-                        row.map((cell, cellIndex) => (
-                          <td
-                            key={cellIndex}
-                            className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
-                          >
-                            {String(cell)}
-                          </td>
-                        ))}
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        );
-
-      case 'html':
-        return (
-          <div
-            className="mb-4"
-            dangerouslySetInnerHTML={{
-              __html: typeof props?.content === 'string' ? props.content : '',
-            }}
-          />
-        );
-
-      case 'decisionTree':
-        console.warn(
-          "'decisionTree' component type is deprecated. Use actions with branches instead."
-        );
+  const renderComponent = useCallback(
+    (
+      component: FormComponentFieldProps,
+      parentId?: string
+    ): React.ReactElement => {
+      // Check visibility first
+      if (!isComponentVisible(component.visibilityConditions, formValues)) {
         return <></>;
+      }
 
-      case 'array':
-        return renderArrayField(component, fieldId);
+      const { id, type, label, props, validation } = component;
+      const fieldId = parentId ? `${parentId}.${id}` : id;
+      const prefixedFieldId = getPrefixedId(fieldId);
+      const hasError = validationErrors[fieldId]?.length > 0;
+      const showError = shouldShowError(fieldId) && hasError;
 
-      case 'confirmation':
-        return (
-          <FormConfirmationField
-            fieldId={prefixedFieldId}
-            label={label}
-            formValues={formValues}
-            formComponents={getAllFormComponents()}
-            props={processPropsWithTemplates(props)}
-          />
+      // Get translated values using specialized methods
+      const translatedLabel = translationService.translateComponent(
+        id,
+        currentStepIndex,
+        'label',
+        label
+      );
+      const translatedProps: any = {
+        ...props,
+      };
+
+      // Only include placeholder if it exists in the original props
+      if (props?.placeholder !== undefined) {
+        translatedProps.placeholder = translationService.translateComponent(
+          id,
+          currentStepIndex,
+          'props.placeholder',
+          props?.placeholder
         );
+      }
 
-      default:
-        return (
-          <div className="text-sm text-gray-500">
-            Unsupported component type: {type}
-          </div>
+      // Only include helperText if it exists in the original props
+      if (props?.helperText !== undefined) {
+        translatedProps.helperText = translationService.translateComponent(
+          id,
+          currentStepIndex,
+          'props.helperText',
+          props?.helperText
         );
-    }
-  };
+      }
+
+      // Handle translated options for select/radio components
+      if (
+        (type === 'select' || type === 'radio') &&
+        props?.options &&
+        Array.isArray(props.options)
+      ) {
+        translatedProps.options = props.options.map(
+          (option: any, index: number) => ({
+            ...option,
+            label: translationService.translateComponent(
+              id,
+              currentStepIndex,
+              `props.options.${index}.label`,
+              option.label
+            ),
+          })
+        );
+      }
+
+      // Handle translated validation messages
+      const translatedValidation = validation
+        ? {
+            ...validation,
+            errorMessages: validation.errorMessages
+              ? Object.fromEntries(
+                  Object.entries(validation.errorMessages).map(
+                    ([key, message]) => [
+                      key,
+                      translationService.translateComponent(
+                        id,
+                        currentStepIndex,
+                        `validation.errorMessages.${key}`,
+                        message as string
+                      ),
+                    ]
+                  )
+                )
+              : undefined,
+          }
+        : undefined;
+
+      switch (type) {
+        case 'text':
+          return (
+            <TextFormField
+              label={translatedLabel}
+              props={processPropsWithTemplates(translatedProps)}
+              classes={{
+                field: settings.classes?.field,
+                fieldLabel: settings.classes?.fieldLabel,
+                fieldText: settings.classes?.fieldText,
+              }}
+            />
+          );
+
+        case 'input':
+          return (
+            <FormInputField
+              fieldId={prefixedFieldId}
+              label={translatedLabel}
+              value={
+                typeof formValues[id] === 'string'
+                  ? (formValues[id] as string)
+                  : ''
+              }
+              onChange={(value) => handleInputChange(id, value)}
+              onBlur={() => handleBlur(id)}
+              validation={translatedValidation}
+              props={processPropsWithTemplates(translatedProps)}
+              showError={showError}
+              validationErrors={validationErrors[fieldId] || []}
+              disabled={disabled}
+              classes={{
+                field: settings.classes?.field,
+                fieldLabel: settings.classes?.fieldLabel,
+                fieldInput: settings.classes?.fieldInput,
+                fieldError: settings.classes?.fieldError,
+                fieldHelperText: settings.classes?.fieldHelperText,
+              }}
+            />
+          );
+
+        case 'textarea':
+          return (
+            <FormTextareaField
+              fieldId={prefixedFieldId}
+              label={translatedLabel}
+              value={
+                typeof formValues[id] === 'string'
+                  ? (formValues[id] as string)
+                  : ''
+              }
+              onChange={(value) => handleInputChange(id, value)}
+              onBlur={() => handleBlur(id)}
+              validation={translatedValidation}
+              props={processPropsWithTemplates(translatedProps)}
+              showError={showError}
+              validationErrors={validationErrors[fieldId] || []}
+              disabled={disabled}
+              classes={{
+                field: settings.classes?.field,
+                fieldLabel: settings.classes?.fieldLabel,
+                fieldTextarea: settings.classes?.fieldTextarea,
+                fieldError: settings.classes?.fieldError,
+                fieldHelperText: settings.classes?.fieldHelperText,
+              }}
+            />
+          );
+
+        case 'radio':
+          return (
+            <FormRadioField
+              fieldId={prefixedFieldId}
+              label={translatedLabel}
+              value={
+                typeof formValues[id] === 'string'
+                  ? (formValues[id] as string)
+                  : ''
+              }
+              onChange={(value) => handleInputChange(id, value)}
+              validation={translatedValidation}
+              props={processPropsWithTemplates(translatedProps)}
+              showError={showError}
+              validationErrors={validationErrors[fieldId] || []}
+              disabled={disabled}
+              classes={{
+                field: settings.classes?.field,
+                fieldLabel: settings.classes?.fieldLabel,
+                fieldRadio: settings.classes?.fieldRadio,
+                fieldError: settings.classes?.fieldError,
+                fieldHelperText: settings.classes?.fieldHelperText,
+              }}
+            />
+          );
+
+        case 'checkbox':
+          return (
+            <FormCheckboxField
+              fieldId={prefixedFieldId}
+              label={translatedLabel}
+              value={formValues[id] as boolean | string[]}
+              onChange={(value) => handleInputChange(id, value)}
+              onBlur={() => handleBlur(id)}
+              validation={translatedValidation}
+              props={processPropsWithTemplates(translatedProps)}
+              showError={showError}
+              validationErrors={validationErrors[fieldId] || []}
+              disabled={disabled}
+              classes={{
+                field: settings.classes?.field,
+                fieldLabel: settings.classes?.fieldLabel,
+                fieldCheckbox: settings.classes?.fieldCheckbox,
+                fieldError: settings.classes?.fieldError,
+                fieldHelperText: settings.classes?.fieldHelperText,
+              }}
+            />
+          );
+
+        case 'select':
+          return (
+            <FormSelectField
+              fieldId={prefixedFieldId}
+              label={translatedLabel}
+              value={
+                typeof formValues[id] === 'string'
+                  ? (formValues[id] as string)
+                  : ''
+              }
+              onChange={(value) => handleInputChange(id, value)}
+              onBlur={() => handleBlur(id)}
+              validation={translatedValidation}
+              props={processPropsWithTemplates(translatedProps)}
+              showError={showError}
+              validationErrors={validationErrors[fieldId] || []}
+              disabled={disabled}
+              classes={{
+                field: settings.classes?.field,
+                fieldLabel: settings.classes?.fieldLabel,
+                fieldSelect: settings.classes?.fieldSelect,
+                fieldError: settings.classes?.fieldError,
+                fieldHelperText: settings.classes?.fieldHelperText,
+              }}
+            />
+          );
+
+        case 'date':
+          return (
+            <FormDateField
+              fieldId={prefixedFieldId}
+              label={translatedLabel}
+              value={
+                typeof formValues[id] === 'string'
+                  ? (formValues[id] as string)
+                  : ''
+              }
+              onChange={(value) => handleInputChange(id, value)}
+              onBlur={() => handleBlur(id)}
+              validation={translatedValidation}
+              props={processPropsWithTemplates(translatedProps)}
+              showError={showError}
+              validationErrors={validationErrors[fieldId] || []}
+              disabled={disabled}
+              classes={{
+                field: settings.classes?.field,
+                fieldLabel: settings.classes?.fieldLabel,
+                fieldDate: settings.classes?.fieldDate,
+                fieldError: settings.classes?.fieldError,
+                fieldHelperText: settings.classes?.fieldHelperText,
+              }}
+            />
+          );
+
+        case 'button':
+          if (typeof props?.label !== 'string' || props.label === 'Button') {
+            return <></>;
+          }
+
+          return (
+            <button
+              type={
+                (props?.buttonType as
+                  | 'button'
+                  | 'submit'
+                  | 'reset'
+                  | undefined) || 'button'
+              }
+              className={`px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 ${
+                disabled ? 'cursor-not-allowed opacity-50' : ''
+              }`}
+              onClick={
+                props?.onClick
+                  ? () => handleButtonClick(props.onClick as string)
+                  : undefined
+              }
+              disabled={disabled}
+            >
+              {props.label}
+            </button>
+          );
+
+        case 'section':
+          return (
+            <FormSectionField
+              fieldId={prefixedFieldId}
+              label={label}
+              children={component.children}
+              renderComponent={renderComponent}
+              classes={{
+                field: settings.classes?.field,
+                fieldLabel: settings.classes?.fieldLabel,
+                noContentText:
+                  translationService.translateUI('noContentInSection'),
+              }}
+            />
+          );
+
+        case 'form':
+          return (
+            <div className="mb-6">
+              {label && <h3 className="text-lg font-medium mb-4">{label}</h3>}
+              <form
+                data-netlify="true"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  // Don't submit the form directly, the Next button will handle it
+                }}
+              >
+                {Array.isArray(component.children) &&
+                  component.children.map((child, index) => (
+                    <div key={index}>{renderComponent(child, fieldId)}</div>
+                  ))}
+                {/* Remove Submit and Reset buttons - Next button handles submission */}
+              </form>
+            </div>
+          );
+
+        case 'table':
+          return (
+            <div className="mb-6 overflow-x-auto">
+              {label && <h3 className="text-lg font-medium mb-4">{label}</h3>}
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  {Array.isArray(props?.headers) &&
+                    props.headers.length > 0 && (
+                      <tr>
+                        {props.headers.map((header, index) => (
+                          <th
+                            key={index}
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            {header}
+                          </th>
+                        ))}
+                      </tr>
+                    )}
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {Array.isArray(props?.rows) &&
+                    props.rows.map((row, rowIndex) => (
+                      <tr key={rowIndex}>
+                        {Array.isArray(row) &&
+                          row.map((cell, cellIndex) => (
+                            <td
+                              key={cellIndex}
+                              className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                            >
+                              {String(cell)}
+                            </td>
+                          ))}
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          );
+
+        case 'html':
+          return (
+            <div
+              className="mb-4"
+              dangerouslySetInnerHTML={{
+                __html: typeof props?.content === 'string' ? props.content : '',
+              }}
+            />
+          );
+
+        case 'decisionTree':
+          console.warn(
+            "'decisionTree' component type is deprecated. Use actions with branches instead."
+          );
+          return <></>;
+
+        case 'array':
+          return renderArrayField(component, fieldId);
+
+        case 'confirmation':
+          return (
+            <FormConfirmationField
+              fieldId={prefixedFieldId}
+              label={label}
+              formValues={formValues}
+              formComponents={getAllFormComponents()}
+              props={processPropsWithTemplates(props)}
+            />
+          );
+
+        default:
+          return (
+            <div className="text-sm text-gray-500">
+              Unsupported component type: {type}
+            </div>
+          );
+      }
+    },
+    [
+      translationService,
+      currentStepIndex,
+      formValues,
+      validationErrors,
+      disabled,
+      settings,
+      prefixId,
+      handleInputChange,
+      handleBlur,
+      processPropsWithTemplates,
+      shouldShowError,
+      getPrefixedId,
+    ]
+  );
 
   const renderArrayField = (
     component: FormComponentFieldProps,
@@ -1393,9 +1546,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               settings.classes?.thankYouTitle
             )}
           >
-            {thankYouPage.title ||
-              settings.texts?.thankYouTitle ||
-              'Thank You!'}
+            {translationService.translateApp('title', thankYouPage.title) ||
+              translationService.translateUI('thankYouTitle')}
           </h1>
         </div>
 
@@ -1436,7 +1588,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                   settings.classes?.thankYouButton
                 )}
               >
-                {settings.texts?.restartButton || 'Submit Another Response'}
+                {translationService.translateUI('restartButton')}
               </button>
             )}
 
@@ -1496,7 +1648,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             settings.classes?.page
           )}
         >
-          {page.title}
+          {translationService.translatePage(
+            currentStepIndex,
+            'title',
+            page.title
+          )}
         </h2>
         <div className={`${page.layout ? `grid ${layoutClass}` : ''}`}>
           {Array.isArray(page.components) &&
@@ -1553,7 +1709,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       {/* Check for invalid form data */}
       {!formJson || !formJson.app ? (
         <div className="p-4 text-red-500">
-          {settings.texts?.invalidFormData || 'Invalid form data'}
+          {translationService.translateUI('invalidFormData')}
         </div>
       ) : showThankYouPage ? (
         renderThankYouPage()
@@ -1571,7 +1727,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 settings.classes?.header
               )}
             >
-              {formJson.app.title}
+              {translationService.translateApp('title', formJson.app.title)}
             </h1>
             {Array.isArray(formJson.app.pages) &&
               formJson.app.pages.length > 1 &&
@@ -1582,11 +1738,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                     settings.classes?.header
                   )}
                 >
-                  {getText(
-                    'This application has {pageCount} pages',
-                    settings.texts?.multiPageInfo,
-                    { pageCount: formJson.app.pages.length }
-                  )}
+                  {translationService.translateUI('multiPageInfo', {
+                    pageCount: formJson.app.pages.length,
+                  })}
                 </div>
               )}
           </div>
@@ -1606,7 +1760,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                   settings.classes?.submissionsTitle
                 )}
               >
-                {settings.texts?.submissionsTitle || 'Form Submissions'}
+                {translationService.translateUI('submissionsTitle')}
               </h3>
               <div
                 className={getClassNames(

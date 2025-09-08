@@ -7,7 +7,8 @@ The form system now supports configurable, WCAG-compatible error messages that p
 ## Features
 
 ### 1. **Configurable Error Messages**
-- Custom error messages for each validation rule
+- **Translation-first approach**: Error messages are primarily managed through the translation system
+- Custom error messages for each validation rule (deprecated - use translations instead)
 - Placeholder replacement for dynamic values
 - Fallback to default WCAG-compatible messages
 
@@ -25,9 +26,47 @@ The form system now supports configurable, WCAG-compatible error messages that p
 
 ## Schema Updates
 
-### New `errorMessages` Object
+### Error Message Priority
 
-The validation object now supports an `errorMessages` property:
+Error messages are now prioritized in the following order:
+
+1. **Translation system** (recommended) - Error messages defined in the `translations` object
+2. **Field-level errorMessages** (deprecated) - Custom messages in the validation object
+3. **Default messages** - Fallback to built-in WCAG-compatible messages
+
+### Recommended Approach: Translation System
+
+Use the translation system for error messages:
+
+```json
+{
+  "translations": {
+    "en": {
+      "errorMessages": {
+        "required": "{fieldLabel} is required",
+        "minLength": "{fieldLabel} must be at least {minLength} characters long",
+        "maxLength": "{fieldLabel} cannot exceed {maxLength} characters"
+      }
+    },
+    "es": {
+      "errorMessages": {
+        "required": "{fieldLabel} es requerido",
+        "minLength": "{fieldLabel} debe tener al menos {minLength} caracteres",
+        "maxLength": "{fieldLabel} no puede exceder {maxLength} caracteres"
+      }
+    }
+  }
+}
+```
+
+### Deprecated: Field-Level Error Messages
+
+⚠️ **Deprecated**: Field-level `errorMessages` are deprecated and will be removed in a future version.
+
+**Deprecation Timeline:**
+- **Current**: Field-level `errorMessages` still work but show deprecation warnings in console
+- **Next Major Version**: Field-level `errorMessages` will be removed from the schema
+- **Migration**: Move all error messages to the translation system
 
 ```json
 {

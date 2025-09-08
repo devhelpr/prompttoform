@@ -17,6 +17,15 @@ vi.mock('./llm-api', () => ({
     name: 'test-api',
     apiKey: 'test-key',
   })),
+  generateResponse: vi.fn().mockResolvedValue(
+    JSON.stringify({
+      isMultiLanguageRequested: false,
+      requestedLanguages: ['en'],
+      confidence: 0.9,
+      reasoning: 'Single language request',
+      languageDetails: [{ code: 'en', name: 'English', nativeName: 'English' }],
+    })
+  ),
 }));
 
 // Mock IndexedDB

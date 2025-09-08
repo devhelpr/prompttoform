@@ -46,6 +46,7 @@ export function getCurrentAPIConfig(): APIConfig {
         systemKey: llmApi.systemKey,
         model: llmApi.model,
         baseUrl: llmApi.baseUrl,
+        additionalProperties: llmApi.additionalProperties,
       };
     }
   }
@@ -154,6 +155,11 @@ function cleanAndFormatJson(content: string): string {
   }
 }
 
+export async function generateResponse(prompt: string): Promise<string> {
+  const apiConfig = getCurrentAPIConfig();
+  return callLLMAPI(prompt, '', apiConfig);
+}
+
 export async function callLLMAPI(
   prompt: string,
   systemMessage: string,
@@ -191,6 +197,9 @@ export async function callLLMAPI(
           ],
           generationConfig: {
             temperature: apiConfig.supportsTemperature ? 0.2 : 1.0,
+            ...(apiConfig.additionalProperties && {
+              ...apiConfig.additionalProperties,
+            }),
           },
         }),
       });
@@ -257,6 +266,9 @@ export async function callLLMAPI(
         ],
         temperature: apiConfig.supportsTemperature ? 0.2 : 1.0,
         ...(responseFormat && { ...responseFormat }),
+        ...(apiConfig.additionalProperties && {
+          ...apiConfig.additionalProperties,
+        }),
       }),
       mode: 'cors',
     });

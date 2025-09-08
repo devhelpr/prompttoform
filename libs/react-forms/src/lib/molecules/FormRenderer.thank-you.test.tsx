@@ -2,9 +2,9 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import { FormRenderer } from './FormRenderer';
-import { FormDefinition } from '../interfaces/form-interfaces';
+import { MultiLanguageFormDefinition } from '../interfaces/multi-language-interfaces';
 
-const mockThankYouForm: FormDefinition = {
+const mockThankYouForm: MultiLanguageFormDefinition = {
   app: {
     title: 'Test Form with Thank You Page',
     pages: [
@@ -32,6 +32,8 @@ const mockThankYouForm: FormDefinition = {
       showRestartButton: true,
     },
   },
+  defaultLanguage: 'en',
+  translations: {},
 };
 
 describe('FormRenderer Thank You Page', () => {
@@ -95,7 +97,7 @@ describe('FormRenderer Thank You Page', () => {
   });
 
   it('should not show thank you page if not configured', async () => {
-    const formWithoutThankYou: FormDefinition = {
+    const formWithoutThankYou: MultiLanguageFormDefinition = {
       app: {
         title: 'Test Form',
         pages: [
@@ -118,6 +120,8 @@ describe('FormRenderer Thank You Page', () => {
           },
         ],
       },
+      defaultLanguage: 'en',
+      translations: {},
     };
 
     const mockOnSubmit = vi.fn();

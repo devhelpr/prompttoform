@@ -83,6 +83,7 @@ function AppContent() {
     setActiveTab,
     transitionToEditor,
     transitionToInitial,
+    setCurrentLanguage,
   } = useAppState();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -395,21 +396,38 @@ function AppContent() {
 
   const handleLoadSession = async (session: FormSession) => {
     try {
+      console.log('Loading session:', session.id);
+
+      // Set the original prompt from the session
       setPrompt(session.prompt);
-      setGeneratedJson(session.generatedJson);
       setCurrentSessionId(session.id);
 
-      // Parse the JSON to update the parsed state
-      const parsedJson = parseJsonSafely(session.generatedJson);
+      // Get the session with the most recent JSON (including updates)
+      const sessionWithLatestJson =
+        await FormSessionService.getSessionWithLatestJson(session.id);
+      if (!sessionWithLatestJson) {
+        throw new Error('Session not found');
+      }
+
+      const { latestJson } = sessionWithLatestJson;
+      console.log('Latest JSON length:', latestJson.length);
+
+      // Parse the latest JSON - it should be valid JSON string
+      const parsedJson = parseJsonSafely(latestJson);
       if (parsedJson) {
-        setGeneratedJson(session.generatedJson, parsedJson);
+        console.log('Successfully parsed JSON:', parsedJson);
+        setGeneratedJson(latestJson, parsedJson);
+      } else {
+        console.log('⚠️ JSON parsing failed, setting string version only');
+        setGeneratedJson(latestJson);
       }
 
       transitionToEditor();
       setIsSessionHistoryOpen(false);
+      console.log('Session loaded successfully with latest updates');
     } catch (err) {
       setError('Failed to load session');
-      console.error(err);
+      console.error('Error loading session:', err);
     }
   };
 
@@ -604,6 +622,8 @@ function AppContent() {
                     onExportSchema={handleExportSchema}
                     isZipDownloading={isZipDownloading}
                     siteUrl={siteUrl}
+                    currentLanguage={state.currentLanguage}
+                    onLanguageChange={setCurrentLanguage}
                   />
                 </Suspense>
               }
@@ -770,6 +790,8 @@ function AppContent() {
                   onExportSchema={handleExportSchema}
                   isZipDownloading={isZipDownloading}
                   siteUrl={siteUrl}
+                  currentLanguage={state.currentLanguage}
+                  onLanguageChange={setCurrentLanguage}
                 />
               </Suspense>
             }

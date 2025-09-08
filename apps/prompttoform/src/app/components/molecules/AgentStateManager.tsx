@@ -24,6 +24,11 @@ interface AgentState {
   isLoading: boolean;
   error: string | null;
   sessionId: string | null;
+  generationProgress: {
+    step: string;
+    progress: number;
+    message: string;
+  } | null;
 }
 
 interface AgentStateContextType {
@@ -35,6 +40,13 @@ interface AgentStateContextType {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setSessionId: (sessionId: string | null) => void;
+  setGenerationProgress: (
+    progress: {
+      step: string;
+      progress: number;
+      message: string;
+    } | null
+  ) => void;
 
   // Agent actions
   startAgentConversation: (prompt: string) => Promise<void>;
@@ -42,6 +54,9 @@ interface AgentStateContextType {
   skipToFormGeneration: () => Promise<void>;
   generateFormFromConversation: () => Promise<FormGenerationResult | null>;
   resetAgentState: () => void;
+
+  // Conversation manager instance
+  conversationManager: any;
 
   // Conversation management
   addMessage: (message: ConversationMessage) => void;
@@ -55,6 +70,7 @@ const initialAgentState: AgentState = {
   isLoading: false,
   error: null,
   sessionId: null,
+  generationProgress: null,
 };
 
 const AgentStateContext = createContext<AgentStateContextType | undefined>(
@@ -82,6 +98,29 @@ export function AgentStateProvider({
 
   const setConversationState = useCallback(
     (conversationState: ConversationState | null) => {
+      console.log(
+        'AgentStateManager.setConversationState - Setting conversation state:',
+        {
+          hasState: !!conversationState,
+          totalMessages: conversationState?.messages?.length || 0,
+          firstMessage: conversationState?.messages?.[0]
+            ? {
+                id: conversationState.messages[0].id,
+                type: conversationState.messages[0].type,
+                content: conversationState.messages[0].content,
+                timestamp: conversationState.messages[0].timestamp,
+              }
+            : null,
+          userMessages:
+            conversationState?.messages
+              ?.filter((m) => m.type === 'user')
+              .map((m) => ({
+                id: m.id,
+                content: m.content,
+                timestamp: m.timestamp,
+              })) || [],
+        }
+      );
       setState((prev) => ({ ...prev, conversationState }));
     },
     []
@@ -101,6 +140,19 @@ export function AgentStateProvider({
     [onError]
   );
 
+  const setGenerationProgress = useCallback(
+    (
+      progress: {
+        step: string;
+        progress: number;
+        message: string;
+      } | null
+    ) => {
+      setState((prev) => ({ ...prev, generationProgress: progress }));
+    },
+    []
+  );
+
   const setSessionId = useCallback((sessionId: string | null) => {
     setState((prev) => ({ ...prev, sessionId }));
   }, []);
@@ -108,6 +160,10 @@ export function AgentStateProvider({
   const startAgentConversation = useCallback(
     async (prompt: string) => {
       try {
+        console.log(
+          'AgentStateManager.startAgentConversation - Starting conversation with prompt:',
+          prompt
+        );
         setLoading(true);
         setError(null);
 
@@ -141,6 +197,35 @@ export function AgentStateProvider({
 
   const processUserResponse = useCallback(
     async (response: string, questionId: string) => {
+      // Debug: Log the conversation state before processing
+      console.log(
+        'AgentStateManager.processUserResponse - Before processing:',
+        {
+          hasConversationManager: !!conversationManager,
+          hasConversationState: !!state.conversationState,
+          conversationState: state.conversationState
+            ? {
+                totalMessages: state.conversationState.messages.length,
+                firstMessage: state.conversationState.messages[0]
+                  ? {
+                      id: state.conversationState.messages[0].id,
+                      type: state.conversationState.messages[0].type,
+                      content: state.conversationState.messages[0].content,
+                      timestamp: state.conversationState.messages[0].timestamp,
+                    }
+                  : null,
+                userMessages: state.conversationState.messages
+                  .filter((m) => m.type === 'user')
+                  .map((m) => ({
+                    id: m.id,
+                    content: m.content,
+                    timestamp: m.timestamp,
+                  })),
+              }
+            : null,
+        }
+      );
+
       if (!conversationManager || !state.conversationState) {
         setError('No active conversation');
         return;
@@ -155,11 +240,30 @@ export function AgentStateProvider({
           questionId
         );
 
+        // Debug: Log the conversation state after processing user response
+        console.log(
+          'AgentStateManager.processUserResponse - Updated conversation state:',
+          {
+            totalMessages: conversationState.messages.length,
+            userMessages: conversationState.messages
+              .filter((m) => m.type === 'user')
+              .map((m) => ({
+                id: m.id,
+                content: m.content,
+                timestamp: m.timestamp,
+              })),
+          }
+        );
+
         setConversationState(conversationState);
 
         // Check if conversation is complete
         if (conversationState.isComplete) {
           setCurrentView('generating');
+          // Automatically start form generation
+          setTimeout(() => {
+            generateFormFromConversation();
+          }, 100);
         }
       } catch (error) {
         const errorMessage =
@@ -221,9 +325,29 @@ export function AgentStateProvider({
         setLoading(true);
         setError(null);
 
-        const formGenerationAgent = new FormGenerationAgent({} as any);
+        // Debug: Log the conversation state before form generation
+        console.log(
+          'AgentStateManager.generateFormFromConversation - Conversation state before form generation:',
+          {
+            totalMessages: state.conversationState.messages.length,
+            userMessages: state.conversationState.messages
+              .filter((m) => m.type === 'user')
+              .map((m) => ({
+                id: m.id,
+                content: m.content,
+                timestamp: m.timestamp,
+              })),
+          }
+        );
+
+        const schemaJson = await import('@schema');
+        const formGenerationAgent = new FormGenerationAgent(
+          schemaJson.default as any,
+          true
+        );
         const result = await formGenerationAgent.generateFormFromConversation(
-          state.conversationState
+          state.conversationState,
+          setGenerationProgress
         );
 
         if (result.success && result.parsedJson) {
@@ -304,9 +428,11 @@ export function AgentStateProvider({
     skipToFormGeneration,
     generateFormFromConversation,
     resetAgentState,
+    conversationManager,
     addMessage,
     updateQuestions,
     markConversationComplete,
+    setGenerationProgress,
   };
 
   return (

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://prompttoform.ai/schema/v0.1/schema.json",
-  "title": "UI Schema",
-  "description": "Schema for describing complex UIs, including websites, forms, decision trees, and CRUD operations.",
+  "$id": "https://prompttoform.ai/schema/v0.2/schema.json",
+  "title": "UI Schema with Multi-Language Support",
+  "description": "Extended schema for describing complex UIs with multi-language capabilities, including websites, forms, decision trees, and CRUD operations.",
   "type": "object",
   "properties": {
     "app": {
@@ -28,8 +28,57 @@
         }
       },
       "required": ["title", "pages"]
+    },
+    "translations": {
+      "type": "object",
+      "description": "Multi-language dictionary for all form texts and UI elements.",
+      "patternProperties": {
+        "^[a-z]{2}(-[A-Z]{2})?$": {
+          "$ref": "#/$defs/translationEntry"
+        }
+      },
+      "additionalProperties": false
+    },
+    "defaultLanguage": {
+      "type": "string",
+      "description": "The default language code for the form (e.g., 'en').",
+      "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+      "default": "en"
+    },
+    "supportedLanguages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+      },
+      "description": "List of supported language codes for the form.",
+      "default": ["en"]
+    },
+    "languageDetails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+            "description": "ISO 639-1 language code"
+          },
+          "name": {
+            "type": "string",
+            "description": "English name of the language"
+          },
+          "nativeName": {
+            "type": "string",
+            "description": "How the language is written in its native script"
+          }
+        },
+        "required": ["code", "name", "nativeName"]
+      },
+      "description": "Detailed information about each supported language"
     }
   },
+  "required": ["app"],
   "$defs": {
     "page": {
       "type": "object",
@@ -667,6 +716,300 @@
         }
       },
       "description": "Configuration for the thank you page shown after form submission"
+    },
+    "translationEntry": {
+      "type": "object",
+      "description": "Translation entry for a specific language",
+      "properties": {
+        "app": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Translated app title"
+            }
+          }
+        },
+        "pages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Page ID to match with original page"
+              },
+              "title": {
+                "type": "string",
+                "description": "Translated page title"
+              },
+              "components": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Component ID to match with original component"
+                    },
+                    "label": {
+                      "type": "string",
+                      "description": "Translated component label"
+                    },
+                    "props": {
+                      "type": "object",
+                      "properties": {
+                        "placeholder": {
+                          "type": "string",
+                          "description": "Translated placeholder text"
+                        },
+                        "helperText": {
+                          "type": "string",
+                          "description": "Translated helper text"
+                        },
+                        "options": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string",
+                                "description": "Translated option label"
+                              },
+                              "value": {
+                                "description": "Option value (unchanged)"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "validation": {
+                      "type": "object",
+                      "properties": {
+                        "errorMessages": {
+                          "type": "object",
+                          "description": "Translated validation error messages",
+                          "patternProperties": {
+                            ".*": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "thankYouPage": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Translated thank you page title"
+            },
+            "message": {
+              "type": "string",
+              "description": "Translated thank you page message"
+            },
+            "customActions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "description": "Translated action button label"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ui": {
+          "type": "object",
+          "description": "UI text translations",
+          "properties": {
+            "stepIndicator": {
+              "type": "string",
+              "description": "Step indicator text (supports {currentStep} and {totalSteps} placeholders)"
+            },
+            "nextButton": {
+              "type": "string",
+              "description": "Next button text"
+            },
+            "previousButton": {
+              "type": "string",
+              "description": "Previous button text"
+            },
+            "submitButton": {
+              "type": "string",
+              "description": "Submit button text"
+            },
+            "confirmSubmitButton": {
+              "type": "string",
+              "description": "Confirm submit button text"
+            },
+            "reviewConfirmButton": {
+              "type": "string",
+              "description": "Review confirm button text"
+            },
+            "submissionsTitle": {
+              "type": "string",
+              "description": "Form submissions title"
+            },
+            "noSubmissionsText": {
+              "type": "string",
+              "description": "No submissions text"
+            },
+            "thankYouTitle": {
+              "type": "string",
+              "description": "Thank you page title"
+            },
+            "thankYouMessage": {
+              "type": "string",
+              "description": "Thank you page message"
+            },
+            "restartButton": {
+              "type": "string",
+              "description": "Restart button text"
+            },
+            "multiPageInfo": {
+              "type": "string",
+              "description": "Multi-page info text (supports {pageCount} placeholder)"
+            },
+            "invalidFormData": {
+              "type": "string",
+              "description": "Invalid form data error message"
+            },
+            "noPagesDefined": {
+              "type": "string",
+              "description": "No pages defined error message"
+            },
+            "invalidPageIndex": {
+              "type": "string",
+              "description": "Invalid page index error message"
+            },
+            "noContentInSection": {
+              "type": "string",
+              "description": "No content in section error message"
+            },
+            "addItemButton": {
+              "type": "string",
+              "description": "Add item button text"
+            },
+            "removeItemButton": {
+              "type": "string",
+              "description": "Remove item button text"
+            },
+            "addAnotherButton": {
+              "type": "string",
+              "description": "Add another button text"
+            },
+            "requiredIndicator": {
+              "type": "string",
+              "description": "Required field indicator"
+            },
+            "requiredText": {
+              "type": "string",
+              "description": "Required field text"
+            },
+            "loadingText": {
+              "type": "string",
+              "description": "Loading text"
+            },
+            "submittingText": {
+              "type": "string",
+              "description": "Submitting text"
+            },
+            "requiredFieldAriaLabel": {
+              "type": "string",
+              "description": "Required field ARIA label"
+            },
+            "optionalFieldAriaLabel": {
+              "type": "string",
+              "description": "Optional field ARIA label"
+            },
+            "errorAriaLabel": {
+              "type": "string",
+              "description": "Error ARIA label"
+            },
+            "successAriaLabel": {
+              "type": "string",
+              "description": "Success ARIA label"
+            }
+          }
+        },
+        "errorMessages": {
+          "type": "object",
+          "description": "Default error message translations",
+          "properties": {
+            "required": {
+              "type": "string",
+              "description": "Required field error (supports {fieldLabel} placeholder)"
+            },
+            "minLength": {
+              "type": "string",
+              "description": "Minimum length error (supports {fieldLabel} and {minLength} placeholders)"
+            },
+            "maxLength": {
+              "type": "string",
+              "description": "Maximum length error (supports {fieldLabel} and {maxLength} placeholders)"
+            },
+            "pattern": {
+              "type": "string",
+              "description": "Pattern validation error (supports {fieldLabel} placeholder)"
+            },
+            "minItems": {
+              "type": "string",
+              "description": "Minimum items error (supports {fieldLabel} and {minItems} placeholders)"
+            },
+            "maxItems": {
+              "type": "string",
+              "description": "Maximum items error (supports {fieldLabel} and {maxItems} placeholders)"
+            },
+            "minDate": {
+              "type": "string",
+              "description": "Minimum date error (supports {fieldLabel} and {minDate} placeholders)"
+            },
+            "maxDate": {
+              "type": "string",
+              "description": "Maximum date error (supports {fieldLabel} and {maxDate} placeholders)"
+            },
+            "min": {
+              "type": "string",
+              "description": "Minimum value error (supports {fieldLabel} and {min} placeholders)"
+            },
+            "max": {
+              "type": "string",
+              "description": "Maximum value error (supports {fieldLabel} and {max} placeholders)"
+            },
+            "invalidFormat": {
+              "type": "string",
+              "description": "Invalid format error (supports {fieldLabel} placeholder)"
+            },
+            "invalidEmail": {
+              "type": "string",
+              "description": "Invalid email error (supports {fieldLabel} placeholder)"
+            },
+            "invalidNumber": {
+              "type": "string",
+              "description": "Invalid number error (supports {fieldLabel} placeholder)"
+            },
+            "invalidDate": {
+              "type": "string",
+              "description": "Invalid date error (supports {fieldLabel} placeholder)"
+            },
+            "generic": {
+              "type": "string",
+              "description": "Generic validation error (supports {fieldLabel} placeholder)"
+            }
+          }
+        }
+      }
     }
   }
 }

@@ -3,6 +3,7 @@ import { Menu } from '@headlessui/react';
 import { READY_MADE_FORMS } from './example-form-definitions/ready-made-forms';
 import { PdfUploadButton } from '../atoms/PdfUploadButton';
 import { AgentConversation } from './AgentConversation';
+import { FormGenerationView } from './FormGenerationView';
 import { useAgentState } from './AgentStateManager';
 import { FormGenerationResult } from '../../services/form-generation.service';
 
@@ -68,12 +69,14 @@ export function AgentPromptInput({
 
   const {
     state: agentState,
+    setCurrentView,
     startAgentConversation,
     processUserResponse,
     skipToFormGeneration,
     generateFormFromConversation,
     resetAgentState,
     setError: setAgentError,
+    conversationManager,
   } = useAgentState();
 
   const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -177,7 +180,10 @@ export function AgentPromptInput({
           onFormGenerated={handleAgentFormGenerated}
           onError={handleAgentError}
           onSkipToForm={skipToFormGeneration}
+          onStartGeneration={() => setCurrentView('generating')}
+          onGenerateForm={generateFormFromConversation}
           isLoading={agentState.isLoading}
+          conversationManager={conversationManager}
         />
       </div>
     );
@@ -195,23 +201,7 @@ export function AgentPromptInput({
             ← Back to prompt
           </button>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <div className="flex items-center justify-center mb-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Generating Form
-          </h3>
-          <p className="text-gray-600">
-            Creating your form based on the conversation...
-          </p>
-          <button
-            onClick={generateFormFromConversation}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Generate Form Now
-          </button>
-        </div>
+        <FormGenerationView />
       </div>
     );
   }
@@ -446,7 +436,7 @@ export function AgentPromptInput({
             type="button"
             onClick={handleGenerate}
             disabled={isLoading || agentState.isLoading || !prompt.trim()}
-            className={`flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 relative overflow-hidden ${
+            className={`flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 relative overflow-hidden ${
               isLoading || agentState.isLoading ? 'cursor-not-allowed' : ''
             }`}
           >
