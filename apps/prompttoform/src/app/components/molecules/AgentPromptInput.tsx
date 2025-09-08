@@ -179,6 +179,8 @@ export function AgentPromptInput({
           onFormGenerated={handleAgentFormGenerated}
           onError={handleAgentError}
           onSkipToForm={skipToFormGeneration}
+          onStartGeneration={() => setCurrentView('generating')}
+          onGenerateForm={generateFormFromConversation}
           isLoading={agentState.isLoading}
           conversationManager={conversationManager}
         />

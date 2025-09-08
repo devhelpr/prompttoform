@@ -11,50 +11,6 @@ import { JsonValidator } from './JsonValidator';
 import { useEffect, useMemo, useState } from 'react';
 import { parseJsonSafely } from '../../utils/json-utils';
 
-// Accordion component for collapsible sections
-interface AccordionProps {
-  title: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}
-
-function Accordion({ title, children, defaultOpen = false }: AccordionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  return (
-    <div className="border border-gray-200 rounded-lg">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset transition-colors"
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-900">{title}</span>
-          <svg
-            className={`w-5 h-5 text-gray-500 transform transition-transform ${
-              isOpen ? 'rotate-180' : ''
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </div>
-      </button>
-      {isOpen && (
-        <div className="px-4 py-3 bg-white border-t border-gray-200">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
 interface FormPreviewPanelProps {
   parsedJson: UIJson | null;
   activeTab: ViewMode;
@@ -89,11 +45,6 @@ export function FormPreviewPanel({
 }: FormPreviewPanelProps) {
   const [jsonErrors, setJsonErrors] = useState<string[]>([]);
   const [isJsonValid, setIsJsonValid] = useState(true);
-  const [pageChangeEvents, setPageChangeEvents] = useState<PageChangeEvent[]>(
-    []
-  );
-  const [currentPageEvent, setCurrentPageEvent] =
-    useState<PageChangeEvent | null>(null);
 
   // Multi-language support
   const isMultiLanguage = useMemo(() => {
@@ -166,17 +117,6 @@ export function FormPreviewPanel({
     setJsonErrors(errors);
   };
 
-  const handlePageChange = (event: PageChangeEvent) => {
-    console.log('Page change event in preview:', event);
-    setCurrentPageEvent(event);
-    setPageChangeEvents((prev) => [...prev, event]);
-  };
-
-  const clearPageChangeEvents = () => {
-    setPageChangeEvents([]);
-    setCurrentPageEvent(null);
-  };
-
   const handleUpdatePreview = () => {
     if (!isJsonValid) {
       return;
@@ -235,113 +175,7 @@ export function FormPreviewPanel({
                     onLanguageChange: onLanguageChange || (() => {}),
                   } as MultiLanguageFormRendererSettings
                 }
-                onPageChange={handlePageChange}
               />
-              <div className="mt-8">
-                {/* Debug Information Accordion */}
-                <Accordion
-                  title="🔍 Form Debug Information"
-                  defaultOpen={false}
-                >
-                  <div className="space-y-4">
-                    {/* Current Page Change Event */}
-                    {currentPageEvent ? (
-                      <div>
-                        <div className="flex justify-between items-center mb-3">
-                          <h4 className="text-sm font-semibold text-gray-800">
-                            Current Page Change Event
-                          </h4>
-                          <button
-                            onClick={clearPageChangeEvents}
-                            className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                          >
-                            Clear Events
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-blue-50 p-3 rounded border">
-                          <div>
-                            <p>
-                              <strong>Page ID:</strong>{' '}
-                              {currentPageEvent.pageId}
-                            </p>
-                            <p>
-                              <strong>Page Title:</strong>{' '}
-                              {currentPageEvent.pageTitle}
-                            </p>
-                            <p>
-                              <strong>Page Index:</strong>{' '}
-                              {currentPageEvent.pageIndex + 1} of{' '}
-                              {currentPageEvent.totalPages}
-                            </p>
-                            <p>
-                              <strong>Type:</strong>
-                              {currentPageEvent.isFirstPage && ' (First Page)'}
-                              {currentPageEvent.isLastPage && ' (Last Page)'}
-                              {currentPageEvent.isEndPage && ' (End Page)'}
-                              {currentPageEvent.isConfirmationPage &&
-                                ' (Confirmation Page)'}
-                            </p>
-                          </div>
-                          <div>
-                            {currentPageEvent.previousPageId && (
-                              <p>
-                                <strong>Previous Page ID:</strong>{' '}
-                                {currentPageEvent.previousPageId}
-                              </p>
-                            )}
-                            {currentPageEvent.previousPageIndex !==
-                              undefined && (
-                              <p>
-                                <strong>Previous Page Index:</strong>{' '}
-                                {currentPageEvent.previousPageIndex + 1}
-                              </p>
-                            )}
-                            <p>
-                              <strong>Total Pages:</strong>{' '}
-                              {currentPageEvent.totalPages}
-                            </p>
-                            <p>
-                              <strong>Event Count:</strong>{' '}
-                              {pageChangeEvents.length}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded border">
-                        Navigate through the form to see page change events
-                      </div>
-                    )}
-
-                    {/* Page Change Event History */}
-                    {pageChangeEvents.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-800 mb-2">
-                          Page Change Event History ({pageChangeEvents.length}{' '}
-                          events)
-                        </h4>
-                        <div className="space-y-2 max-h-32 overflow-y-auto bg-gray-50 p-3 rounded border">
-                          {pageChangeEvents.map((event, index) => (
-                            <div
-                              key={index}
-                              className="text-xs bg-white p-2 rounded border"
-                            >
-                              <div className="font-medium">
-                                {event.pageTitle} (Step {event.pageIndex + 1})
-                              </div>
-                              <div className="text-gray-600">
-                                {event.previousPageId
-                                  ? `From: ${event.previousPageId}`
-                                  : 'Initial page'}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Accordion>
-              </div>
             </div>
           </div>
         ) : (

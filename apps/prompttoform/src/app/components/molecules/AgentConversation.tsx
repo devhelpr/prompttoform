@@ -1,15 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ConversationMessage } from '../atoms/ConversationMessage';
-import { AgentQuestionInput } from '../atoms/AgentQuestionInput';
-import type { ConversationState, AgentQuestion } from '../../types/agent.types';
+import type { ConversationState } from '../../types/agent.types';
 
 interface AgentConversationProps {
   conversationState: ConversationState;
-  onFormGenerated: (formResult: any) => void;
+  onFormGenerated: (formResult: unknown) => void;
   onError: (error: string) => void;
   onSkipToForm: () => void;
+  onStartGeneration: () => void;
+  onGenerateForm: () => Promise<unknown>;
   isLoading: boolean;
-  conversationManager: any; // Add the conversation manager as a prop
+  conversationManager: unknown; // Add the conversation manager as a prop
 }
 
 export const AgentConversation: React.FC<AgentConversationProps> = ({
@@ -17,6 +18,8 @@ export const AgentConversation: React.FC<AgentConversationProps> = ({
   onFormGenerated,
   onError,
   onSkipToForm,
+  onStartGeneration,
+  onGenerateForm,
   isLoading,
   conversationManager,
 }) => {
@@ -55,82 +58,63 @@ export const AgentConversation: React.FC<AgentConversationProps> = ({
       // Use the passed conversation manager instead of creating a new one
 
       // Process all responses sequentially
-      let currentState = conversationState;
-
       for (const question of conversationState.currentQuestions) {
         const response = userResponses[question.id] || '';
         const stringValue = Array.isArray(response)
           ? response.join(', ')
           : response;
 
-        currentState = await conversationManager.processUserResponse(
-          stringValue,
-          question.id
-        );
+        await (
+          conversationManager as {
+            processUserResponse: (
+              response: string,
+              questionId: string
+            ) => Promise<unknown>;
+          }
+        ).processUserResponse(stringValue, question.id);
       }
 
-      // Generate the form directly
-      const { FormGenerationAgent } = await import('../../services/agents');
-      const formGenerationAgent = new FormGenerationAgent({} as any);
+      // Start generation view first
+      onStartGeneration();
 
-      const formResult = await formGenerationAgent.generateFormFromConversation(
-        currentState
-      );
-      onFormGenerated(formResult);
+      // Generate the form using the AgentStateManager's function
+      const formResult = await onGenerateForm();
+      if (formResult) {
+        onFormGenerated(formResult);
+      }
     } catch (error) {
       onError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsProcessingResponse(false);
     }
-  }, [conversationState, userResponses, onFormGenerated, onError]);
-
-  const handleSkipToFormGeneration = useCallback(async () => {
-    try {
-      setIsProcessingResponse(true);
-
-      // Use the passed conversation manager instead of creating a new one
-
-      const updatedState = await conversationManager.skipToFormGeneration();
-
-      const { FormGenerationAgent } = await import('../../services/agents');
-      const schemaJson = await import('@schema');
-      const formGenerationAgent = new FormGenerationAgent(
-        schemaJson.default as any,
-        true
-      );
-
-      const formResult = await formGenerationAgent.generateFormFromConversation(
-        updatedState
-      );
-      onFormGenerated(formResult);
-    } catch (error) {
-      onError(error instanceof Error ? error.message : 'An error occurred');
-    } finally {
-      setIsProcessingResponse(false);
-    }
-  }, [onFormGenerated, onError]);
+  }, [
+    conversationState,
+    userResponses,
+    onFormGenerated,
+    onError,
+    onStartGeneration,
+    onGenerateForm,
+    conversationManager,
+  ]);
 
   const handleGenerateForm = useCallback(async () => {
     try {
       setIsProcessingResponse(true);
 
-      const { FormGenerationAgent } = await import('../../services/agents');
-      const schemaJson = await import('@schema');
-      const formGenerationAgent = new FormGenerationAgent(
-        schemaJson.default as any,
-        true
-      );
+      // Start generation view first
+      onStartGeneration();
 
-      const formResult = await formGenerationAgent.generateFormFromConversation(
-        conversationState
-      );
-      onFormGenerated(formResult);
+      // Generate the form using the AgentStateManager's function
+      const formResult = await onGenerateForm();
+      if (formResult) {
+        onFormGenerated(formResult);
+      }
     } catch (error) {
       onError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsProcessingResponse(false);
     }
-  }, [conversationState, onFormGenerated, onError]);
+  }, [onFormGenerated, onError, onStartGeneration, onGenerateForm]);
 
   const isProcessing = isLoading || isProcessingResponse;
 

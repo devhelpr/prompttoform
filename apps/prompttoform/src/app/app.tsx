@@ -5,7 +5,6 @@ import { FormEditorLayout } from './components/templates/FormEditorLayout';
 import { InitialPromptInput } from './components/molecules/InitialPromptInput';
 import { AgentPromptInput } from './components/molecules/AgentPromptInput';
 import { AgentStateProvider } from './components/molecules/AgentStateManager';
-import { ConversationDebugger } from './components/debug/ConversationDebugger';
 import { FormEditorSidebar } from './components/molecules/FormEditorSidebar';
 import { FormPreviewPanel } from './components/molecules/FormPreviewPanel';
 import { ErrorBoundary } from './components/molecules/ErrorBoundary';
@@ -680,7 +679,6 @@ function AppContent() {
           onHistoryClick={() => setIsSessionHistoryOpen(true)}
           onImportJsonClick={() => setIsImportJsonOpen(true)}
         >
-          <ConversationDebugger />
           <AgentStateProvider
             onFormGenerated={(result) => {
               if (result.success && result.parsedJson) {
