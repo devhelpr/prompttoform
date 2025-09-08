@@ -394,6 +394,29 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     validateForm();
   }, [validateForm]);
 
+  // Update translation service language when settings change
+  useEffect(() => {
+    const multiLangSettings = settings as MultiLanguageFormRendererSettings;
+    if (multiLangSettings.currentLanguage) {
+      translationService.setLanguage(multiLangSettings.currentLanguage);
+
+      // Re-validate form with new language to update error messages
+      if (isSubmitted || Object.keys(validationErrors).length > 0) {
+        const isValid = validateForm();
+        if (!isValid) {
+          // Force re-render to show updated error messages
+          setValidationErrors({ ...validationErrors });
+        }
+      }
+    }
+  }, [
+    translationService,
+    settings,
+    isSubmitted,
+    validationErrors,
+    validateForm,
+  ]);
+
   // Reset initial event trigger when form changes
   useEffect(() => {
     initialEventTriggeredRef.current = false;
