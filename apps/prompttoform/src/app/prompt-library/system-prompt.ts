@@ -7,6 +7,12 @@ Your task is to generate a valid JSON file based on the user's prompt, following
 The JSON must strictly follow this schema:
 ${JSON.stringify(uiSchema, null, 2)}
 
+CRITICAL MULTI-LANGUAGE GUIDELINES:
+- NEVER add language selector dropdowns or language switching components to forms
+- NEVER include language lists in form titles (e.g., "Contact Form (English, Spanish)")
+- Keep form titles clean and focused on purpose (e.g., "Contact Form", "Registration Form")
+- The system handles language selection automatically - users don't choose languages within the form
+
 Important rules for UI/Form schema:
 1. The output must be valid JSON that conforms to the UI schema.
 2. Include all required fields according to the schema.
@@ -201,7 +207,15 @@ Important rules for UI/Form schema:
         ]
       }
 
-16. Examples of INCORRECT vs CORRECT patterns:
+16. For multi-language forms:
+    - IMPORTANT: Do NOT add language selector dropdowns or language switching components to the form
+    - The system will handle language selection automatically - users don't need to choose languages within the form
+    - Do NOT include language lists in form titles (e.g., avoid "Contact Form (English, Spanish, French)")
+    - Keep form titles clean and simple (e.g., "Contact Form", "Registration Form", "Feedback Form")
+    - Focus on the form's purpose, not its language capabilities
+    - Language selection is handled by the system UI, not within the form content
+
+17. Examples of INCORRECT vs CORRECT patterns:
     
     INCORRECT - Using bindings:
     {
@@ -219,6 +233,33 @@ Important rules for UI/Form schema:
       "type": "input",
       "label": "Full Name",
       "validation": { "required": true }
+    }
+    
+    INCORRECT - Language selector in form:
+    {
+      "id": "languageSelector",
+      "type": "select",
+      "label": "Select Language",
+      "props": {
+        "options": [
+          {"label": "English", "value": "en"},
+          {"label": "Spanish", "value": "es"}
+        ]
+      }
+    }
+    
+    INCORRECT - Language list in title:
+    {
+      "app": {
+        "title": "Contact Form (English, Spanish, French)"
+      }
+    }
+    
+    CORRECT - Clean title without language info:
+    {
+      "app": {
+        "title": "Contact Form"
+      }
     }
     
     INCORRECT - Complex confirmation component:
