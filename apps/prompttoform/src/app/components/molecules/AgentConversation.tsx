@@ -1,14 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ConversationMessage } from '../atoms/ConversationMessage';
 import type { ConversationState } from '../../types/agent.types';
+import { FormGenerationResult } from '../../services/form-generation.service';
 
 interface AgentConversationProps {
   conversationState: ConversationState;
-  onFormGenerated: (formResult: unknown) => void;
+  onFormGenerated: (formResult: FormGenerationResult) => void;
   onError: (error: string) => void;
   onSkipToForm: () => void;
   onStartGeneration: () => void;
-  onGenerateForm: () => Promise<unknown>;
+  onGenerateForm: () => Promise<FormGenerationResult | null>;
   isLoading: boolean;
   conversationManager: unknown; // Add the conversation manager as a prop
 }

@@ -69,6 +69,7 @@ export function AgentPromptInput({
 
   const {
     state: agentState,
+    setCurrentView,
     startAgentConversation,
     processUserResponse,
     skipToFormGeneration,
