@@ -16,6 +16,9 @@ export default defineConfig(() => ({
     port: 4200,
     host: 'localhost',
   },
+  define: {
+    'import.meta.env.VITEST': JSON.stringify(process.env.VITEST || false),
+  },
   plugins: [
     react(),
     nxViteTsPaths(),

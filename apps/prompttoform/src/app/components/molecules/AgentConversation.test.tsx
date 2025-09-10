@@ -29,6 +29,8 @@ describe('AgentConversation', () => {
   const mockOnFormGenerated = vi.fn();
   const mockOnError = vi.fn();
   const mockOnSkipToForm = vi.fn();
+  const mockOnStartGeneration = vi.fn();
+  const mockOnGenerateForm = vi.fn();
   const mockConversationManager = {
     processUserResponse: vi.fn(),
     skipToFormGeneration: vi.fn(),
@@ -91,6 +93,8 @@ describe('AgentConversation', () => {
         onFormGenerated={mockOnFormGenerated}
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
+        onStartGeneration={mockOnStartGeneration}
+        onGenerateForm={mockOnGenerateForm}
         isLoading={false}
         conversationManager={mockConversationManager}
       />
@@ -111,6 +115,8 @@ describe('AgentConversation', () => {
         onFormGenerated={mockOnFormGenerated}
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
+        onStartGeneration={mockOnStartGeneration}
+        onGenerateForm={mockOnGenerateForm}
         isLoading={false}
         conversationManager={mockConversationManager}
       />
@@ -138,6 +144,8 @@ describe('AgentConversation', () => {
         onFormGenerated={mockOnFormGenerated}
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
+        onStartGeneration={mockOnStartGeneration}
+        onGenerateForm={mockOnGenerateForm}
         isLoading={false}
         conversationManager={mockConversationManager}
       />
@@ -167,6 +175,8 @@ describe('AgentConversation', () => {
         onFormGenerated={mockOnFormGenerated}
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
+        onStartGeneration={mockOnStartGeneration}
+        onGenerateForm={mockOnGenerateForm}
         isLoading={false}
         conversationManager={mockConversationManager}
       />
@@ -185,6 +195,8 @@ describe('AgentConversation', () => {
         onFormGenerated={mockOnFormGenerated}
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
+        onStartGeneration={mockOnStartGeneration}
+        onGenerateForm={mockOnGenerateForm}
         isLoading={false}
         conversationManager={mockConversationManager}
       />
@@ -228,6 +240,8 @@ describe('AgentConversation', () => {
         onFormGenerated={mockOnFormGenerated}
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
+        onStartGeneration={mockOnStartGeneration}
+        onGenerateForm={mockOnGenerateForm}
         isLoading={false}
         conversationManager={mockConversationManager}
       />
@@ -246,22 +260,16 @@ describe('AgentConversation', () => {
       currentQuestions: [],
     };
 
-    const mockGenerateForm = vi.fn().mockResolvedValue({
+    const mockFormResult = {
       success: true,
       parsedJson: { app: { title: 'Test Form', pages: [] } },
       formattedJson: '{"app":{"title":"Test Form","pages":[]}}',
       rawJson: '{"app":{"title":"Test Form","pages":[]}}',
       sessionId: 'test-session',
-    });
+    };
 
-    // Mock the FormGenerationAgent constructor and method
-    const { FormGenerationAgent } = await import('../../services/agents');
-    vi.mocked(FormGenerationAgent).mockImplementation(
-      () =>
-        ({
-          generateFormFromConversation: mockGenerateForm,
-        } as any)
-    );
+    // Mock the onGenerateForm function to return the form result
+    mockOnGenerateForm.mockResolvedValue(mockFormResult);
 
     render(
       <AgentConversation
@@ -269,6 +277,8 @@ describe('AgentConversation', () => {
         onFormGenerated={mockOnFormGenerated}
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
+        onStartGeneration={mockOnStartGeneration}
+        onGenerateForm={mockOnGenerateForm}
         isLoading={false}
         conversationManager={mockConversationManager}
       />
@@ -280,8 +290,9 @@ describe('AgentConversation', () => {
     fireEvent.click(generateButton);
 
     await waitFor(() => {
-      expect(mockGenerateForm).toHaveBeenCalledWith(completeState);
-      expect(mockOnFormGenerated).toHaveBeenCalled();
+      expect(mockOnStartGeneration).toHaveBeenCalled();
+      expect(mockOnGenerateForm).toHaveBeenCalled();
+      expect(mockOnFormGenerated).toHaveBeenCalledWith(mockFormResult);
     });
   });
 
@@ -300,6 +311,8 @@ describe('AgentConversation', () => {
         onFormGenerated={mockOnFormGenerated}
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
+        onStartGeneration={mockOnStartGeneration}
+        onGenerateForm={mockOnGenerateForm}
         isLoading={false}
         conversationManager={mockConversationManager}
       />
@@ -350,6 +363,8 @@ describe('AgentConversation', () => {
         onFormGenerated={mockOnFormGenerated}
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
+        onStartGeneration={mockOnStartGeneration}
+        onGenerateForm={mockOnGenerateForm}
         isLoading={false}
         conversationManager={mockConversationManager}
       />
@@ -366,6 +381,8 @@ describe('AgentConversation', () => {
         onFormGenerated={mockOnFormGenerated}
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
+        onStartGeneration={mockOnStartGeneration}
+        onGenerateForm={mockOnGenerateForm}
         isLoading={false}
         conversationManager={mockConversationManager}
       />
@@ -392,6 +409,8 @@ describe('AgentConversation', () => {
         onFormGenerated={mockOnFormGenerated}
         onError={mockOnError}
         onSkipToForm={mockOnSkipToForm}
+        onStartGeneration={mockOnStartGeneration}
+        onGenerateForm={mockOnGenerateForm}
         isLoading={false}
         conversationManager={mockConversationManager}
       />

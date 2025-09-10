@@ -1,7 +1,7 @@
-import { callLLMAPI, getCurrentAPIConfig } from '../llm-api';
+import { BaseAgent } from './base-agent';
 import { PromptAnalysis } from '../../types/agent.types';
 
-export class PromptAnalysisAgent {
+export class PromptAnalysisAgent extends BaseAgent {
   private readonly analysisPrompt = `You are an expert form analyst. Your task is to analyze user prompts to determine if they contain enough information to generate a comprehensive form.
 
 Analyze the following prompt and determine:
@@ -30,80 +30,84 @@ Respond with a JSON object containing:
 
 Be thorough but concise. If the prompt is incomplete, suggest 2-3 specific questions that would help gather the missing information.`;
 
-  async analyzePrompt(prompt: string): Promise<PromptAnalysis> {
-    try {
-      const apiConfig = getCurrentAPIConfig();
+  constructor() {
+    super('PromptAnalysisAgent', '1.0.0');
+  }
 
-      if (!apiConfig.apiKey && !apiConfig.systemKey) {
-        throw new Error(
-          `No API key set for ${apiConfig.name}. Please configure it in the Settings.`
+  protected getAgentType(): string {
+    return 'analysis';
+  }
+
+  async analyzePrompt(prompt: string): Promise<PromptAnalysis> {
+    return this.measureExecutionTime(async () => {
+      try {
+        const response = await this.callLLMWithErrorHandling(
+          prompt,
+          this.analysisPrompt
+        );
+
+        // Parse the JSON response
+        const analysis = this.parseAnalysisResponse(response);
+
+        // Validate the analysis
+        this.validateAnalysis(analysis);
+
+        return analysis;
+      } catch (error) {
+        this.logError('analyzePrompt', error);
+
+        // Return a fallback analysis
+        return this.createFallbackResponse(
+          {
+            isComplete: false,
+            missingCategories: ['form_purpose', 'required_fields'],
+            confidence: 0.1,
+            reasoning:
+              'Unable to analyze prompt due to API error. Proceeding with basic analysis.',
+            suggestedQuestions: [
+              'What is the main purpose of this form?',
+              'What specific information do you need to collect?',
+            ],
+          },
+          'API error during prompt analysis'
         );
       }
-
-      const response = await callLLMAPI(prompt, this.analysisPrompt, apiConfig);
-
-      // Parse the JSON response
-      const analysis = this.parseAnalysisResponse(response);
-
-      // Validate the analysis
-      this.validateAnalysis(analysis);
-
-      return analysis;
-    } catch (error) {
-      console.error('Error analyzing prompt:', error);
-
-      // Return a fallback analysis
-      return {
-        isComplete: false,
-        missingCategories: ['form_purpose', 'required_fields'],
-        confidence: 0.1,
-        reasoning:
-          'Unable to analyze prompt due to API error. Proceeding with basic analysis.',
-        suggestedQuestions: [
-          'What is the main purpose of this form?',
-          'What specific information do you need to collect?',
-        ],
-      };
-    }
+    }, 'analyzePrompt').then(({ result }) => result);
   }
 
   private parseAnalysisResponse(response: string): PromptAnalysis {
-    try {
-      // Try to extract JSON from the response
-      let jsonString = response.trim();
+    const fallbackAnalysis: PromptAnalysis = {
+      isComplete: false,
+      missingCategories: ['form_purpose', 'required_fields'],
+      confidence: 0.3,
+      reasoning: 'Fallback analysis due to parsing error',
+      suggestedQuestions: [
+        'What is the main purpose of this form?',
+        'What specific information do you need to collect?',
+      ],
+    };
 
-      // Remove markdown code blocks if present
-      if (jsonString.includes('```')) {
-        const codeBlockMatch = jsonString.match(
-          /```(?:json)?\s*([\s\S]*?)\s*```/
-        );
-        if (codeBlockMatch) {
-          jsonString = codeBlockMatch[1].trim();
-        }
-      }
+    const parsed = this.parseJsonResponse(response, fallbackAnalysis);
 
-      const parsed = JSON.parse(jsonString);
-
-      return {
-        isComplete: Boolean(parsed.isComplete),
-        missingCategories: Array.isArray(parsed.missingCategories)
-          ? parsed.missingCategories
-          : [],
-        confidence:
-          typeof parsed.confidence === 'number'
-            ? Math.max(0, Math.min(1, parsed.confidence))
-            : 0.5,
-        reasoning: String(parsed.reasoning || 'No reasoning provided'),
-        suggestedQuestions: Array.isArray(parsed.suggestedQuestions)
-          ? parsed.suggestedQuestions
-          : [],
-      };
-    } catch (parseError) {
-      console.error('Error parsing analysis response:', parseError);
-
-      // Fallback parsing - try to extract information from text
+    // If parsing failed and we got the fallback, try heuristic analysis
+    if (parsed === fallbackAnalysis) {
       return this.fallbackAnalysis(response);
     }
+
+    return {
+      isComplete: Boolean(parsed.isComplete),
+      missingCategories: Array.isArray(parsed.missingCategories)
+        ? parsed.missingCategories
+        : [],
+      confidence:
+        typeof parsed.confidence === 'number'
+          ? Math.max(0, Math.min(1, parsed.confidence))
+          : 0.5,
+      reasoning: String(parsed.reasoning || 'No reasoning provided'),
+      suggestedQuestions: Array.isArray(parsed.suggestedQuestions)
+        ? parsed.suggestedQuestions
+        : [],
+    };
   }
 
   private fallbackAnalysis(response: string): PromptAnalysis {
@@ -145,26 +149,19 @@ Be thorough but concise. If the prompt is incomplete, suggest 2-3 specific quest
   }
 
   private validateAnalysis(analysis: PromptAnalysis): void {
-    if (typeof analysis.isComplete !== 'boolean') {
-      throw new Error('Invalid analysis: isComplete must be boolean');
-    }
-
-    if (!Array.isArray(analysis.missingCategories)) {
-      throw new Error('Invalid analysis: missingCategories must be array');
-    }
-
-    if (
-      typeof analysis.confidence !== 'number' ||
-      analysis.confidence < 0 ||
-      analysis.confidence > 1
-    ) {
-      throw new Error(
-        'Invalid analysis: confidence must be number between 0 and 1'
-      );
-    }
-
-    if (typeof analysis.reasoning !== 'string') {
-      throw new Error('Invalid analysis: reasoning must be string');
-    }
+    this.validateBooleanField(analysis.isComplete, 'isComplete', 'analysis');
+    this.validateArrayField(
+      analysis.missingCategories,
+      'missingCategories',
+      'analysis'
+    );
+    this.validateNumberField(
+      analysis.confidence,
+      'confidence',
+      0,
+      1,
+      'analysis'
+    );
+    this.validateStringField(analysis.reasoning, 'reasoning', 'analysis');
   }
 }

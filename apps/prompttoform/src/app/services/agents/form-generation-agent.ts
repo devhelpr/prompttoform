@@ -1,3 +1,4 @@
+import { BaseAgent } from './base-agent';
 import { FormGenerationService } from '../form-generation.service';
 import { UISchema } from '../../types/ui-schema';
 import {
@@ -6,25 +7,29 @@ import {
 } from '../../types/agent.types';
 import { FormGenerationResult } from '../form-generation.service';
 
-export class FormGenerationAgent {
+export class FormGenerationAgent extends BaseAgent {
   private formGenerationService: FormGenerationService;
 
   constructor(uiSchema: UISchema, skipValidation = true) {
+    super('FormGenerationAgent', '1.0.0');
     this.formGenerationService = new FormGenerationService(
       uiSchema,
       skipValidation
     );
   }
 
+  protected getAgentType(): string {
+    return 'form-generation';
+  }
+
   async generateFormFromConversation(
     conversationState: ConversationState,
     onProgress?: (progress: any) => void
   ): Promise<FormGenerationResult> {
-    try {
-      // Debug: Log the conversation state received
-      console.log(
-        'FormGenerationAgent.generateFormFromConversation received:',
-        {
+    return this.measureExecutionTime(async () => {
+      try {
+        // Debug: Log the conversation state received
+        this.logOperation('generateFormFromConversation', {
           totalMessages: conversationState.messages.length,
           messages: conversationState.messages.map((m) => ({
             id: m.id,
@@ -39,71 +44,73 @@ export class FormGenerationAgent {
               content: m.content,
               timestamp: m.timestamp,
             })),
+        });
+
+        // Build the enhanced prompt from conversation
+        const enhancedPrompt = this.buildEnhancedPrompt(conversationState);
+
+        // Generate the form using the existing service
+        const result = await this.formGenerationService.generateForm(
+          enhancedPrompt,
+          onProgress
+        );
+
+        // Add conversation context to the result
+        if (result.success) {
+          result.conversationContext = {
+            originalPrompt: this.getOriginalPrompt(conversationState),
+            conversationHistory: conversationState.messages,
+            gatheredInformation: conversationState.context,
+            analysis: conversationState.analysis || {
+              isComplete: false,
+              missingCategories: [],
+              confidence: 0,
+              reasoning: 'No analysis available',
+              suggestedQuestions: [],
+            },
+          };
         }
-      );
 
-      // Build the enhanced prompt from conversation
-      const enhancedPrompt = this.buildEnhancedPrompt(conversationState);
-
-      // Generate the form using the existing service
-      const result = await this.formGenerationService.generateForm(
-        enhancedPrompt,
-        onProgress
-      );
-
-      // Add conversation context to the result
-      if (result.success) {
-        result.conversationContext = {
-          originalPrompt: this.getOriginalPrompt(conversationState),
-          conversationHistory: conversationState.messages,
-          gatheredInformation: conversationState.context,
-          analysis: conversationState.analysis || {
-            isComplete: false,
-            missingCategories: [],
-            confidence: 0,
-            reasoning: 'No analysis available',
-            suggestedQuestions: [],
-          },
+        return result;
+      } catch (error) {
+        this.logError('generateFormFromConversation', error);
+        return {
+          success: false,
+          error: `Failed to generate form from conversation: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`,
         };
       }
-
-      return result;
-    } catch (error) {
-      console.error('Error generating form from conversation:', error);
-      return {
-        success: false,
-        error: `Failed to generate form from conversation: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`,
-      };
-    }
+    }, 'generateFormFromConversation').then(({ result }) => result);
   }
 
   async generateFormFromContext(
     context: FormGenerationContext
   ): Promise<FormGenerationResult> {
-    try {
-      // Build prompt from context
-      const prompt = this.buildPromptFromContext(context);
+    return this.measureExecutionTime(async () => {
+      try {
+        // Build prompt from context
+        const prompt = this.buildPromptFromContext(context);
 
-      // Generate the form
-      const result = await this.formGenerationService.generateForm(prompt);
+        // Generate the form
+        const result = await this.formGenerationService.generateForm(prompt);
 
-      // Add context to result
-      if (result.success) {
-        result.conversationContext = context;
+        // Add context to result
+        if (result.success) {
+          result.conversationContext = context;
+        }
+
+        return result;
+      } catch (error) {
+        this.logError('generateFormFromContext', error);
+        return {
+          success: false,
+          error: `Failed to generate form from context: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`,
+        };
       }
-
-      return result;
-    } catch (error) {
-      console.error('Error generating form from context:', error);
-      return {
-        success: false,
-        error: `Failed to generate form from context: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`,
-      };
-    }
+    }, 'generateFormFromContext').then(({ result }) => result);
   }
 
   private buildEnhancedPrompt(conversationState: ConversationState): string {
@@ -124,7 +131,7 @@ export class FormGenerationAgent {
     }
 
     // Log the enhanced prompt for debugging
-    console.log('Enhanced prompt for form generation:', {
+    this.logOperation('buildEnhancedPrompt', {
       originalPrompt,
       gatheredInfo,
       contextKeys: Object.keys(conversationState.context),
@@ -158,15 +165,14 @@ export class FormGenerationAgent {
     );
 
     // Debug: Log the raw timestamps before sorting
-    console.log(
-      'Raw user messages before sorting:',
-      userMessages.map((m) => ({
+    this.logOperation('getOriginalPrompt - raw messages', {
+      userMessages: userMessages.map((m) => ({
         id: m.id,
         content: m.content,
         timestamp: m.timestamp,
         timestampMs: new Date(m.timestamp).getTime(),
-      }))
-    );
+      })),
+    });
 
     const sortedUserMessages = userMessages.sort(
       (a, b) =>
@@ -174,20 +180,19 @@ export class FormGenerationAgent {
     );
 
     // Debug: Log the sorted messages
-    console.log(
-      'Sorted user messages:',
-      sortedUserMessages.map((m) => ({
+    this.logOperation('getOriginalPrompt - sorted messages', {
+      sortedMessages: sortedUserMessages.map((m) => ({
         id: m.id,
         content: m.content,
         timestamp: m.timestamp,
         timestampMs: new Date(m.timestamp).getTime(),
-      }))
-    );
+      })),
+    });
 
     const firstUserMessage = sortedUserMessages[0];
 
     // Debug logging to see what's in the conversation state
-    console.log('getOriginalPrompt debug:', {
+    this.logOperation('getOriginalPrompt debug', {
       totalMessages: conversationState.messages.length,
       allMessages: conversationState.messages.map((m) => ({
         id: m.id,

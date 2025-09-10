@@ -1,11 +1,11 @@
-import { callLLMAPI, getCurrentAPIConfig } from '../llm-api';
+import { BaseAgent } from './base-agent';
 import {
   AgentQuestion,
   PromptAnalysis,
   ConversationMessage,
 } from '../../types/agent.types';
 
-export class QuestionGenerationAgent {
+export class QuestionGenerationAgent extends BaseAgent {
   private readonly questionPrompt = `You are an expert form designer and user experience specialist. Your task is to generate specific, actionable questions to help users provide missing information for form creation.
 
 Based on the analysis and conversation history, generate 1-3 targeted questions that will help gather the missing information needed to create a comprehensive form.
@@ -39,36 +39,41 @@ Respond with a JSON array of question objects:
 
 Focus on the most critical missing information first. Generate questions that will significantly improve the form quality.`;
 
+  constructor() {
+    super('QuestionGenerationAgent', '1.0.0');
+  }
+
+  protected getAgentType(): string {
+    return 'question-generation';
+  }
+
   async generateQuestions(
     analysis: PromptAnalysis,
     conversationHistory: ConversationMessage[] = []
   ): Promise<AgentQuestion[]> {
-    try {
-      const apiConfig = getCurrentAPIConfig();
+    return this.measureExecutionTime(async () => {
+      try {
+        // Build context from conversation history
+        const context = this.buildConversationContext(conversationHistory);
 
-      if (!apiConfig.apiKey && !apiConfig.systemKey) {
-        throw new Error(
-          `No API key set for ${apiConfig.name}. Please configure it in the Settings.`
+        const prompt = this.buildQuestionPrompt(analysis, context);
+
+        const response = await this.callLLMWithErrorHandling(
+          prompt,
+          this.questionPrompt
         );
+
+        const questions = this.parseQuestionsResponse(response);
+
+        // Validate and enhance questions
+        return this.validateAndEnhanceQuestions(questions);
+      } catch (error) {
+        this.logError('generateQuestions', error);
+
+        // Return fallback questions based on missing categories
+        return this.generateFallbackQuestions(analysis);
       }
-
-      // Build context from conversation history
-      const context = this.buildConversationContext(conversationHistory);
-
-      const prompt = this.buildQuestionPrompt(analysis, context);
-
-      const response = await callLLMAPI(prompt, this.questionPrompt, apiConfig);
-
-      const questions = this.parseQuestionsResponse(response);
-
-      // Validate and enhance questions
-      return this.validateAndEnhanceQuestions(questions);
-    } catch (error) {
-      console.error('Error generating questions:', error);
-
-      // Return fallback questions based on missing categories
-      return this.generateFallbackQuestions(analysis);
-    }
+    }, 'generateQuestions').then(({ result }) => result);
   }
 
   private buildConversationContext(
@@ -135,8 +140,8 @@ Generate specific questions to gather the missing information. Focus on the most
         placeholder: String(q.placeholder || ''),
         helpText: String(q.helpText || ''),
       }));
-    } catch (parseError) {
-      console.error('Error parsing questions response:', parseError);
+    } catch {
+      // If JSON parsing fails, throw an error so the catch block in generateQuestions can handle it
       throw new Error('Failed to parse questions response');
     }
   }

@@ -1,3 +1,4 @@
+import { BaseAgent } from './base-agent';
 import { generateResponse } from '../llm-api';
 import {
   TranslationRequest,
@@ -5,11 +6,16 @@ import {
   TranslationConfig,
 } from '../../types/multi-language-agent.types';
 
-export class TranslationGenerationAgent {
+export class TranslationGenerationAgent extends BaseAgent {
   private config: TranslationConfig;
 
   constructor(config: TranslationConfig) {
+    super('TranslationGenerationAgent', '1.0.0');
     this.config = config;
+  }
+
+  protected getAgentType(): string {
+    return 'translation-generation';
   }
 
   /**
@@ -18,75 +24,77 @@ export class TranslationGenerationAgent {
   async generateTranslations(
     request: TranslationRequest
   ): Promise<TranslationResult> {
-    const startTime = Date.now();
-    const translations: Record<string, any> = {};
-    const errors: string[] = [];
+    return this.measureExecutionTime(async () => {
+      const translations: Record<string, any> = {};
+      const errors: string[] = [];
 
-    try {
-      // Handle empty target languages
-      if (!request.targetLanguages || request.targetLanguages.length === 0) {
+      try {
+        // Handle empty target languages
+        if (!request.targetLanguages || request.targetLanguages.length === 0) {
+          return {
+            success: true,
+            translations: {},
+            processingTime: 0,
+          };
+        }
+
+        for (const language of request.targetLanguages) {
+          try {
+            const languagePrompt = this.buildComprehensiveLanguagePrompt(
+              request.formJson,
+              language,
+              request.sourceLanguage,
+              request.languageDetails
+            );
+
+            const response = await this.retryWithBackoff(
+              () => generateResponse(languagePrompt),
+              this.config.maxRetries,
+              1000
+            );
+
+            const parsedResponse = this.parseTranslationResponse(
+              response as string
+            );
+            if (parsedResponse.isValid) {
+              translations[language] = parsedResponse.data;
+            } else {
+              errors.push(
+                `Invalid translation response for ${language}: ${parsedResponse.errors?.join(
+                  ', '
+                )}`
+              );
+            }
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : 'Unknown error';
+            errors.push(`Failed to translate to ${language}: ${errorMessage}`);
+          }
+        }
+
         return {
-          success: true,
-          translations: {},
-          processingTime: Date.now() - startTime,
+          success: errors.length === 0,
+          translations:
+            Object.keys(translations).length > 0 ? translations : undefined,
+          errors: errors.length > 0 ? errors : undefined,
+          processingTime: 0, // Will be set by measureExecutionTime
+        };
+      } catch (error) {
+        this.logError('generateTranslations', error);
+        return {
+          success: false,
+          errors: [
+            `Translation generation failed: ${
+              error instanceof Error ? error.message : 'Unknown error'
+            }`,
+          ],
+          processingTime: 0, // Will be set by measureExecutionTime
         };
       }
-
-      for (const language of request.targetLanguages) {
-        try {
-          const languagePrompt = this.buildComprehensiveLanguagePrompt(
-            request.formJson,
-            language,
-            request.sourceLanguage,
-            request.languageDetails
-          );
-
-          const response = await this.retryWithBackoff(
-            () => generateResponse(languagePrompt),
-            this.config.maxRetries,
-            1000
-          );
-
-          const parsedResponse = this.parseTranslationResponse(
-            response as string
-          );
-          if (parsedResponse.isValid) {
-            translations[language] = parsedResponse.data;
-          } else {
-            errors.push(
-              `Invalid translation response for ${language}: ${parsedResponse.errors?.join(
-                ', '
-              )}`
-            );
-          }
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-          errors.push(`Failed to translate to ${language}: ${errorMessage}`);
-        }
-      }
-
-      const processingTime = Date.now() - startTime;
-
-      return {
-        success: errors.length === 0,
-        translations:
-          Object.keys(translations).length > 0 ? translations : undefined,
-        errors: errors.length > 0 ? errors : undefined,
-        processingTime,
-      };
-    } catch (error) {
-      const processingTime = Date.now() - startTime;
-      return {
-        success: false,
-        errors: [
-          `Translation generation failed: ${
-            error instanceof Error ? error.message : 'Unknown error'
-          }`,
-        ],
-        processingTime,
-      };
-    }
+    }, 'generateTranslations').then(({ result, executionTime }) => ({
+      ...result,
+      processingTime: executionTime,
+    }));
   }
 
   /**
@@ -229,24 +237,24 @@ Return ONLY the translated JSON object, no additional text or explanations.`;
     data?: any;
     errors?: string[];
   } {
-    try {
-      const parsed = JSON.parse(response);
-      const validation = this.validateTranslationResponse(parsed);
+    const fallbackResponse = {
+      isValid: false,
+      errors: ['Error parsing translation response'],
+    };
 
-      if (validation.isValid) {
-        return { isValid: true, data: parsed };
-      } else {
-        return { isValid: false, errors: validation.errors };
-      }
-    } catch (error) {
-      return {
-        isValid: false,
-        errors: [
-          `Error parsing translation response: ${
-            error instanceof Error ? error.message : 'Unknown error'
-          }`,
-        ],
-      };
+    const parsed = this.parseJsonResponse(response, fallbackResponse);
+
+    // If we got the fallback response, return it directly
+    if (parsed === fallbackResponse) {
+      return fallbackResponse;
+    }
+
+    const validation = this.validateTranslationResponse(parsed);
+
+    if (validation.isValid) {
+      return { isValid: true, data: parsed };
+    } else {
+      return { isValid: false, errors: validation.errors };
     }
   }
 
@@ -295,34 +303,5 @@ Return ONLY the translated JSON object, no additional text or explanations.`;
       isValid: errors.length === 0,
       errors: errors.length > 0 ? errors : undefined,
     };
-  }
-
-  /**
-   * Retry operation with exponential backoff
-   */
-  private async retryWithBackoff<T>(
-    operation: () => Promise<T>,
-    maxRetries: number,
-    baseDelay: number
-  ): Promise<T> {
-    let lastError: Error;
-
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      try {
-        return await operation();
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error('Unknown error');
-
-        if (attempt === maxRetries - 1) {
-          throw lastError;
-        }
-
-        // Exponential backoff with jitter
-        const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
-    }
-
-    throw lastError!;
   }
 }
