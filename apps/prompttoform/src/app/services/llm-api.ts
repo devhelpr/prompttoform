@@ -271,6 +271,7 @@ export async function callLLMAPI(
         ...(apiConfig.additionalProperties && {
           ...apiConfig.additionalProperties,
         }),
+        ...additionalProperties,
       }),
       mode: 'cors',
     });
