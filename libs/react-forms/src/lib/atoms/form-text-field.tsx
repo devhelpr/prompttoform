@@ -42,11 +42,12 @@ export const TextFormField: React.FC<TextFormFieldProps> = ({
           {props.text}
         </p>
       )}
-      {typeof props?.helperText === 'string' && (
-        <p className={getClassNames('text-gray-700', classes?.fieldText)}>
-          {props.helperText}
-        </p>
-      )}
+      {typeof props?.helperText === 'string' &&
+        props.helperText.trim() !== '' && (
+          <p className={getClassNames('text-gray-700', classes?.fieldText)}>
+            {props.helperText}
+          </p>
+        )}
     </div>
   );
 };
