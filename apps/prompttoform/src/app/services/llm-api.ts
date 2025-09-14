@@ -164,7 +164,8 @@ export async function callLLMAPI(
   prompt: string,
   systemMessage: string,
   apiConfig: APIConfig,
-  jsonSchema?: any
+  jsonSchema?: any,
+  additionalProperties?: any
 ): Promise<string> {
   if (!apiConfig.apiKey && !apiConfig.systemKey) {
     throw new Error(
@@ -201,6 +202,7 @@ export async function callLLMAPI(
               ...apiConfig.additionalProperties,
             }),
           },
+          ...additionalProperties,
         }),
       });
 
@@ -269,6 +271,7 @@ export async function callLLMAPI(
         ...(apiConfig.additionalProperties && {
           ...apiConfig.additionalProperties,
         }),
+        ...additionalProperties,
       }),
       mode: 'cors',
     });

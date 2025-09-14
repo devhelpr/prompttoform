@@ -55,7 +55,11 @@ export async function generateUIFromPrompt(
   const systemMessage = getSystemPrompt(uiSchema);
 
   try {
-    return await callLLMAPI(prompt, systemMessage, apiConfig, uiSchema);
+    return await callLLMAPI(prompt, systemMessage, apiConfig, uiSchema, {
+      useOpenAPITool: {
+        useOpenAPITool: true,
+      },
+    });
   } catch (error) {
     console.error('Error calling API:', error);
     throw error;

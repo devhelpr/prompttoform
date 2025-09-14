@@ -1,14 +1,20 @@
+import { BaseAgent } from './base-agent';
 import { generateResponse } from '../llm-api';
 import {
   MultiLanguageAnalysis,
   LanguageDetectionConfig,
 } from '../../types/multi-language-agent.types';
 
-export class MultiLanguageDetectionAgent {
+export class MultiLanguageDetectionAgent extends BaseAgent {
   private config: LanguageDetectionConfig;
 
   constructor(config: LanguageDetectionConfig) {
+    super('MultiLanguageDetectionAgent', '1.0.0');
     this.config = config;
+  }
+
+  protected getAgentType(): string {
+    return 'multi-language-detection';
   }
 
   /**
@@ -17,16 +23,18 @@ export class MultiLanguageDetectionAgent {
   async detectMultiLanguageRequest(
     prompt: string
   ): Promise<MultiLanguageAnalysis> {
-    try {
-      const detectionPrompt = this.buildDetectionPrompt(prompt);
-      const response = await generateResponse(detectionPrompt);
-      return this.parseAnalysisResponse(response);
-    } catch (error) {
-      console.error('Error in multi-language detection:', error);
-      return this.getFallbackAnalysis(
-        error instanceof Error ? error.message : 'Unknown error'
-      );
-    }
+    return this.measureExecutionTime(async () => {
+      try {
+        const detectionPrompt = this.buildDetectionPrompt(prompt);
+        const response = await generateResponse(detectionPrompt);
+        return this.parseAnalysisResponse(response);
+      } catch (error) {
+        this.logError('detectMultiLanguageRequest', error);
+        return this.getFallbackAnalysis(
+          error instanceof Error ? error.message : 'Unknown error'
+        );
+      }
+    }, 'detectMultiLanguageRequest').then(({ result }) => result);
   }
 
   /**
@@ -77,32 +85,35 @@ If no multi-language is requested, set isMultiLanguageRequested to false and inc
    * Parse the LLM response into a MultiLanguageAnalysis object
    */
   private parseAnalysisResponse(response: string): MultiLanguageAnalysis {
-    try {
-      const parsed = JSON.parse(response);
+    const fallbackAnalysis: MultiLanguageAnalysis = {
+      isMultiLanguageRequested: false,
+      requestedLanguages: ['en'],
+      confidence: 0,
+      reasoning: 'Error parsing LLM response',
+      languageDetails: [{ code: 'en', name: 'English', nativeName: 'English' }],
+    };
 
-      // Validate and clean the response
-      const requestedLanguages = this.validateLanguageCodes(
-        Array.isArray(parsed.requestedLanguages)
-          ? parsed.requestedLanguages
-          : ['en']
-      );
+    const parsed = this.parseJsonResponse(response, fallbackAnalysis);
 
-      const languageDetails = this.getLanguageDetails(requestedLanguages);
+    // Validate and clean the response
+    const requestedLanguages = this.validateLanguageCodes(
+      Array.isArray(parsed.requestedLanguages)
+        ? parsed.requestedLanguages
+        : ['en']
+    );
 
-      return {
-        isMultiLanguageRequested: Boolean(parsed.isMultiLanguageRequested),
-        requestedLanguages,
-        confidence: Math.max(0, Math.min(1, Number(parsed.confidence) || 0)),
-        reasoning: String(parsed.reasoning || 'No reasoning provided'),
-        suggestedLanguages: Array.isArray(parsed.suggestedLanguages)
-          ? this.validateLanguageCodes(parsed.suggestedLanguages)
-          : undefined,
-        languageDetails,
-      };
-    } catch (error) {
-      console.error('Error parsing LLM response:', error);
-      return this.getFallbackAnalysis('Error parsing LLM response');
-    }
+    const languageDetails = this.getLanguageDetails(requestedLanguages);
+
+    return {
+      isMultiLanguageRequested: Boolean(parsed.isMultiLanguageRequested),
+      requestedLanguages,
+      confidence: Math.max(0, Math.min(1, Number(parsed.confidence) || 0)),
+      reasoning: String(parsed.reasoning || 'No reasoning provided'),
+      suggestedLanguages: Array.isArray(parsed.suggestedLanguages)
+        ? this.validateLanguageCodes(parsed.suggestedLanguages)
+        : undefined,
+      languageDetails,
+    };
   }
 
   /**

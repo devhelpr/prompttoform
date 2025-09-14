@@ -162,7 +162,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       if (customMessage) {
         // TODO: Remove this deprecation warning in a future version
         // Only show warning in development mode, not during tests
-        if (process.env.NODE_ENV === 'development' && !process.env.VITEST) {
+        if (import.meta.env.MODE === 'development' && !import.meta.env.VITEST) {
           console.warn(
             `Field-level errorMessages are deprecated. Please use translations instead. ` +
               `Field: ${component.id}, ErrorType: ${errorType}. ` +
@@ -436,7 +436,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       if (isSubmitted || Object.keys(validationErrors).length > 0) {
         // Use setTimeout to avoid infinite loop and ensure validation runs after language change
         // Skip setTimeout in test environments to avoid timing issues
-        if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
+        if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
           // Force a complete re-validation - validateForm will use the updated translation service
           const isValid = validateForm();
           // The validateForm function will call setValidationErrors with the new translated messages
