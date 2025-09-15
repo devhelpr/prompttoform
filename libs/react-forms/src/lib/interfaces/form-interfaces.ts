@@ -1,4 +1,5 @@
 import { FieldType } from '../types/field-types';
+import { ExpressionConfig } from './expression-interfaces';
 
 export interface DateRange {
   minDate?: string;
@@ -23,6 +24,7 @@ export interface FormComponentFieldProps {
     step?: number;
     showLabels?: boolean;
     showValue?: boolean;
+    mode?: 'single' | 'range';
     confirmationSettings?: {
       showSummary?: boolean;
       groupBySection?: boolean;
@@ -30,6 +32,7 @@ export interface FormComponentFieldProps {
       customTitle?: string;
       customMessage?: string;
     };
+    expression?: ExpressionConfig;
   } & DateRange;
   children?: FormComponentFieldProps[];
   visibilityConditions?: VisibilityCondition[];
