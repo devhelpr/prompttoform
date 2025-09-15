@@ -1,6 +1,8 @@
 import React from 'react';
 import { HTMLInputTypeAttribute } from 'react';
 import { getClassNames } from '../utils/class-utils';
+import { withExpression } from '../hoc/with-expression';
+import { ExpressionConfig } from '../interfaces/expression-interfaces';
 
 interface FormInputFieldProps {
   fieldId: string;
@@ -16,6 +18,7 @@ interface FormInputFieldProps {
     min?: number;
     max?: number;
     helperText?: string;
+    expression?: ExpressionConfig;
   };
   showError: boolean;
   validationErrors: string[];
@@ -29,7 +32,7 @@ interface FormInputFieldProps {
   };
 }
 
-export const FormInputField: React.FC<FormInputFieldProps> = ({
+const FormInputFieldBase: React.FC<FormInputFieldProps> = ({
   fieldId,
   label,
   value,
@@ -117,3 +120,5 @@ export const FormInputField: React.FC<FormInputFieldProps> = ({
     </div>
   );
 };
+
+export const FormInputField = withExpression(FormInputFieldBase);

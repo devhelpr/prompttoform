@@ -17,6 +17,7 @@ import {
   FormConfirmationField,
   FormSliderRangeField,
 } from '../atoms';
+import { ExpressionContextProvider } from '../contexts/expression-context';
 import {
   FormRendererProps,
   FormValues,
@@ -47,6 +48,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
   );
+  const [validation, setValidation] = useState<Record<string, boolean>>({});
+  const [required, setRequired] = useState<Record<string, boolean>>({});
   const [blurredFields, setBlurredFields] = useState<Record<string, boolean>>(
     {}
   );
@@ -1908,78 +1911,96 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [settings.theme]);
 
   return (
-    <div
-      className={getClassNames('w-full', settings.classes?.container)}
-      style={themeStyles}
+    <ExpressionContextProvider
+      formValues={formValues}
+      validation={validation}
+      required={required}
+      errors={Object.fromEntries(
+        Object.entries(validationErrors).map(([key, value]) => [
+          key,
+          Array.isArray(value) ? value.join(', ') : value,
+        ])
+      )}
+      metadata={{
+        currentStep: getCurrentStep().currentStep,
+        totalSteps: getCurrentStep().totalSteps,
+        isSubmitted,
+        disabled,
+      }}
     >
-      {/* Check for invalid form data */}
-      {!formJson || !formJson.app ? (
-        <div className="p-4 text-red-500">
-          {translationService.translateUI('invalidFormData')}
-        </div>
-      ) : showThankYouPage ? (
-        renderThankYouPage()
-      ) : (
-        <>
-          <div
-            className={getClassNames(
-              'mb-4 bg-indigo-50 p-4 rounded-md',
-              settings.classes?.header
-            )}
-          >
-            <h1
+      <div
+        className={getClassNames('w-full', settings.classes?.container)}
+        style={themeStyles}
+      >
+        {/* Check for invalid form data */}
+        {!formJson || !formJson.app ? (
+          <div className="p-4 text-red-500">
+            {translationService.translateUI('invalidFormData')}
+          </div>
+        ) : showThankYouPage ? (
+          renderThankYouPage()
+        ) : (
+          <>
+            <div
               className={getClassNames(
-                'text-2xl font-bold text-indigo-700',
+                'mb-4 bg-indigo-50 p-4 rounded-md',
                 settings.classes?.header
               )}
             >
-              {translationService.translateApp('title', formJson.app.title)}
-            </h1>
-            {Array.isArray(formJson.app.pages) &&
-              formJson.app.pages.length > 1 &&
-              !disabled && (
-                <div
-                  className={getClassNames(
-                    'mt-2 text-sm text-indigo-500',
-                    settings.classes?.header
-                  )}
-                >
-                  {translationService.translateUI('multiPageInfo', {
-                    pageCount: formJson.app.pages.length,
-                  })}
-                </div>
-              )}
-          </div>
-
-          <div className="space-y-8">{renderMultiStepForm()}</div>
-
-          {hasSubmissions && !disabled && settings.showFormSubmissions && (
-            <div
-              className={getClassNames(
-                'mt-8 border-t pt-6',
-                settings.classes?.submissionsContainer
-              )}
-            >
-              <h3
+              <h1
                 className={getClassNames(
-                  'text-lg font-medium mb-4',
-                  settings.classes?.submissionsTitle
+                  'text-2xl font-bold text-indigo-700',
+                  settings.classes?.header
                 )}
               >
-                {translationService.translateUI('submissionsTitle')}
-              </h3>
+                {translationService.translateApp('title', formJson.app.title)}
+              </h1>
+              {Array.isArray(formJson.app.pages) &&
+                formJson.app.pages.length > 1 &&
+                !disabled && (
+                  <div
+                    className={getClassNames(
+                      'mt-2 text-sm text-indigo-500',
+                      settings.classes?.header
+                    )}
+                  >
+                    {translationService.translateUI('multiPageInfo', {
+                      pageCount: formJson.app.pages.length,
+                    })}
+                  </div>
+                )}
+            </div>
+
+            <div className="space-y-8">{renderMultiStepForm()}</div>
+
+            {hasSubmissions && !disabled && settings.showFormSubmissions && (
               <div
                 className={getClassNames(
-                  'bg-gray-50 p-4 rounded-md',
-                  settings.classes?.submissionsData
+                  'mt-8 border-t pt-6',
+                  settings.classes?.submissionsContainer
                 )}
               >
-                {renderSubmissionData()}
+                <h3
+                  className={getClassNames(
+                    'text-lg font-medium mb-4',
+                    settings.classes?.submissionsTitle
+                  )}
+                >
+                  {translationService.translateUI('submissionsTitle')}
+                </h3>
+                <div
+                  className={getClassNames(
+                    'bg-gray-50 p-4 rounded-md',
+                    settings.classes?.submissionsData
+                  )}
+                >
+                  {renderSubmissionData()}
+                </div>
               </div>
-            </div>
-          )}
-        </>
-      )}
-    </div>
+            )}
+          </>
+        )}
+      </div>
+    </ExpressionContextProvider>
   );
 };
