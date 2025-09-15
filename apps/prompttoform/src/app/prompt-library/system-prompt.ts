@@ -40,7 +40,7 @@ Important rules for UI/Form schema:
      - radio: For single selection from multiple options
      - select: For dropdown selections with many options
      - date: For date input fields
-     - slider-range: For selecting a range of values with dual handles (price ranges, age ranges, etc.)
+     - slider-range: For selecting single values or ranges with slider controls (price ranges, age ranges, ratings, etc.)
      - button: For user actions (rare - forms typically auto-generate buttons)
      - table: For displaying tabular data
      - form: For grouping form elements
@@ -105,11 +105,12 @@ Important rules for UI/Form schema:
        }
      }
    
-   - For slider-range validation, include min, max, step, and range validation:
+   - For slider-range validation, include min, max, step, mode, and range validation:
      "props": { 
        "min": 0,
        "max": 1000,
        "step": 10,
+       "mode": "range",
        "showLabels": true,
        "showValue": true,
        "helperText": "Select your preferred price range"
@@ -122,6 +123,27 @@ Important rules for UI/Form schema:
          "required": "Please select a price range",
          "minRange": "Price range must be at least {minRange}",
          "maxRange": "Price range cannot exceed {maxRange}"
+       }
+     }
+     
+   - For single value sliders (ratings, scores, etc.), use mode: "single":
+     "props": { 
+       "min": 1,
+       "max": 5,
+       "step": 1,
+       "mode": "single",
+       "showLabels": true,
+       "showValue": true,
+       "helperText": "Rate your satisfaction from 1 to 5"
+     },
+     "validation": {
+       "required": true,
+       "min": 1,
+       "max": 5,
+       "errorMessages": {
+         "required": "Please provide a rating",
+         "min": "Rating must be at least {min}",
+         "max": "Rating cannot exceed {max}"
        }
      }
 

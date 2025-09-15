@@ -9,8 +9,8 @@ interface SliderRangeValue {
 interface FormSliderRangeFieldProps {
   fieldId: string;
   label?: string;
-  value: SliderRangeValue;
-  onChange: (value: SliderRangeValue) => void;
+  value: SliderRangeValue | number;
+  onChange: (value: SliderRangeValue | number) => void;
   onBlur: () => void;
   validation?: {
     required?: boolean;
@@ -29,6 +29,7 @@ interface FormSliderRangeFieldProps {
     showValue?: boolean;
     helperText?: string;
     disabled?: boolean;
+    mode?: 'single' | 'range';
   };
   showError: boolean;
   validationErrors: string[];
@@ -63,7 +64,14 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
   const step = props?.step ?? 1;
   const showLabels = props?.showLabels ?? true;
   const showValue = props?.showValue ?? true;
+  const mode = props?.mode ?? 'single';
   const isDisabled = disabled ?? props?.disabled ?? false;
+
+  // Normalize value to range format for internal use
+  const normalizedValue =
+    mode === 'single'
+      ? { min: value as number, max: value as number }
+      : (value as SliderRangeValue);
 
   const errorId = `${fieldId}-error`;
   const helperId = `${fieldId}-helper`;
@@ -75,8 +83,8 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
 
   // Calculate percentage positions
   const getPercentage = (val: number) => ((val - min) / (max - min)) * 100;
-  const minPercentage = getPercentage(value.min);
-  const maxPercentage = getPercentage(value.max);
+  const minPercentage = getPercentage(normalizedValue.min);
+  const maxPercentage = getPercentage(normalizedValue.max);
 
   // Convert percentage to value
   const getValueFromPercentage = (percentage: number) => {
@@ -102,18 +110,24 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
         );
         const newValue = getValueFromPercentage(percentage);
 
-        if (handle === 'min') {
-          const newMin = Math.min(
-            newValue,
-            value.max - (validation?.minRange ?? 0)
-          );
-          onChange({ min: newMin, max: value.max });
+        if (mode === 'single') {
+          // In single mode, both handles move together
+          onChange(newValue);
         } else {
-          const newMax = Math.max(
-            newValue,
-            value.min + (validation?.minRange ?? 0)
-          );
-          onChange({ min: value.min, max: newMax });
+          // In range mode, handles move independently
+          if (handle === 'min') {
+            const newMin = Math.min(
+              newValue,
+              normalizedValue.max - (validation?.minRange ?? 0)
+            );
+            onChange({ min: newMin, max: normalizedValue.max });
+          } else {
+            const newMax = Math.max(
+              newValue,
+              normalizedValue.min + (validation?.minRange ?? 0)
+            );
+            onChange({ min: normalizedValue.min, max: newMax });
+          }
         }
       };
 
@@ -127,7 +141,17 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
       document.addEventListener('pointermove', handlePointerMove);
       document.addEventListener('pointerup', handlePointerUp);
     },
-    [disabled, value, onChange, onBlur, validation, min, max, step]
+    [
+      isDisabled,
+      normalizedValue,
+      onChange,
+      onBlur,
+      validation,
+      min,
+      max,
+      step,
+      mode,
+    ]
   );
 
   // Handle keyboard navigation
@@ -136,7 +160,8 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
       if (isDisabled) return;
 
       const stepSize = step;
-      let newValue = handle === 'min' ? value.min : value.max;
+      let newValue =
+        handle === 'min' ? normalizedValue.min : normalizedValue.max;
 
       switch (e.key) {
         case 'ArrowLeft':
@@ -169,23 +194,39 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
           return;
       }
 
-      if (handle === 'min') {
-        const newMin = Math.min(
-          newValue,
-          value.max - (validation?.minRange ?? 0)
-        );
-        onChange({ min: newMin, max: value.max });
+      if (mode === 'single') {
+        // In single mode, both handles move together
+        onChange(newValue);
       } else {
-        const newMax = Math.max(
-          newValue,
-          value.min + (validation?.minRange ?? 0)
-        );
-        onChange({ min: value.min, max: newMax });
+        // In range mode, handles move independently
+        if (handle === 'min') {
+          const newMin = Math.min(
+            newValue,
+            normalizedValue.max - (validation?.minRange ?? 0)
+          );
+          onChange({ min: newMin, max: normalizedValue.max });
+        } else {
+          const newMax = Math.max(
+            newValue,
+            normalizedValue.min + (validation?.minRange ?? 0)
+          );
+          onChange({ min: normalizedValue.min, max: newMax });
+        }
       }
 
       onBlur();
     },
-    [isDisabled, value, onChange, onBlur, validation, min, max, step]
+    [
+      isDisabled,
+      normalizedValue,
+      onChange,
+      onBlur,
+      validation,
+      min,
+      max,
+      step,
+      mode,
+    ]
   );
 
   return (
@@ -209,8 +250,14 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
         {/* Value Display */}
         {showValue && (
           <div className="flex justify-between text-sm text-gray-600">
-            <span>Min: {value.min}</span>
-            <span>Max: {value.max}</span>
+            {mode === 'single' ? (
+              <span>Value: {normalizedValue.min}</span>
+            ) : (
+              <>
+                <span>Min: {normalizedValue.min}</span>
+                <span>Max: {normalizedValue.max}</span>
+              </>
+            )}
           </div>
         )}
 
@@ -226,8 +273,12 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
           role="slider"
           aria-valuemin={min}
           aria-valuemax={max}
-          aria-valuenow={value.min}
-          aria-valuetext={`Range from ${value.min} to ${value.max}`}
+          aria-valuenow={normalizedValue.min}
+          aria-valuetext={
+            mode === 'single'
+              ? `Value: ${normalizedValue.min}`
+              : `Range from ${normalizedValue.min} to ${normalizedValue.max}`
+          }
           aria-label={label || 'Range slider'}
         >
           {/* Track */}
@@ -237,8 +288,11 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
           <div
             className="absolute h-full bg-blue-500 rounded-lg"
             style={{
-              left: `${minPercentage}%`,
-              width: `${maxPercentage - minPercentage}%`,
+              left: mode === 'single' ? '0%' : `${minPercentage}%`,
+              width:
+                mode === 'single'
+                  ? `${minPercentage}%`
+                  : `${maxPercentage - minPercentage}%`,
             }}
           />
 
@@ -260,23 +314,27 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
             aria-label="Minimum value"
           />
 
-          {/* Max Handle */}
-          <div
-            className={getClassNames(
-              `absolute w-6 h-6 bg-white border-2 border-blue-500 rounded-full cursor-grab active:cursor-grabbing transform -translate-y-1/2 top-1/2 ${
-                isDragging === 'max' ? 'shadow-lg scale-110' : 'hover:shadow-md'
-              } ${isDisabled ? 'cursor-not-allowed' : ''}`
-            )}
-            style={{ left: `calc(${maxPercentage}% - 12px)` }}
-            onPointerDown={(e) => handlePointerDown('max', e)}
-            onKeyDown={(e) => handleKeyDown('max', e)}
-            tabIndex={isDisabled ? -1 : 0}
-            role="slider"
-            aria-valuemin={value.min}
-            aria-valuemax={max}
-            aria-valuenow={value.max}
-            aria-label="Maximum value"
-          />
+          {/* Max Handle - Only show in range mode */}
+          {mode === 'range' && (
+            <div
+              className={getClassNames(
+                `absolute w-6 h-6 bg-white border-2 border-blue-500 rounded-full cursor-grab active:cursor-grabbing transform -translate-y-1/2 top-1/2 ${
+                  isDragging === 'max'
+                    ? 'shadow-lg scale-110'
+                    : 'hover:shadow-md'
+                } ${isDisabled ? 'cursor-not-allowed' : ''}`
+              )}
+              style={{ left: `calc(${maxPercentage}% - 12px)` }}
+              onPointerDown={(e) => handlePointerDown('max', e)}
+              onKeyDown={(e) => handleKeyDown('max', e)}
+              tabIndex={isDisabled ? -1 : 0}
+              role="slider"
+              aria-valuemin={normalizedValue.min}
+              aria-valuemax={max}
+              aria-valuenow={normalizedValue.max}
+              aria-label="Maximum value"
+            />
+          )}
         </div>
 
         {/* Labels */}

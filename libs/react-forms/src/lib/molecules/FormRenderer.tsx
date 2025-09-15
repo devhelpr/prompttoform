@@ -1580,9 +1580,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               fieldId={prefixedFieldId}
               label={translatedLabel}
               value={
-                typeof formValues[id] === 'object' && formValues[id] !== null
-                  ? (formValues[id] as { min: number; max: number })
-                  : { min: props?.min ?? 0, max: props?.max ?? 100 }
+                formValues[id] !== undefined && formValues[id] !== null
+                  ? (formValues[id] as number | { min: number; max: number })
+                  : props?.mode === 'range'
+                  ? { min: props?.min ?? 0, max: props?.max ?? 100 }
+                  : props?.min ?? 0
               }
               onChange={(value) => handleInputChange(id, value)}
               onBlur={() => handleBlur(id)}

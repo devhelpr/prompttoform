@@ -688,6 +688,12 @@
                       "type": "boolean",
                       "description": "Whether to show current values",
                       "default": true
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": ["single", "range"],
+                      "description": "Slider mode - single value or range selection",
+                      "default": "single"
                     }
                   }
                 }
