@@ -1,5 +1,5 @@
 import React from 'react';
-import { getClassNames } from '../../utils/class-names';
+import { getClassNames } from '../utils/class-utils';
 import { useExpressionEvaluation } from '../hooks/use-expression-evaluation';
 import { ExpressionContext } from '../interfaces/expression-interfaces';
 

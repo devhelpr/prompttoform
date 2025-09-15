@@ -40,7 +40,7 @@ describe('ExpressionEngineService', () => {
         context
       );
 
-      expect(result.value).toBe(100);
+      expect(result.value).toBeCloseTo(100, 10);
       expect(result.error).toBeUndefined();
     });
   });

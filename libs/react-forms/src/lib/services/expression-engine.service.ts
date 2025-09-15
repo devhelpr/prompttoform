@@ -82,8 +82,14 @@ export class ExpressionEngineService {
       // Create evaluation context
       const evalContext = this.createEvaluationContext(context);
 
+      // Pre-process expression to handle member expressions
+      const processedExpression = this.preprocessExpression(
+        expression,
+        context
+      );
+
       // Parse and evaluate expression
-      const expr = this.parser.parse(expression);
+      const expr = this.parser.parse(processedExpression);
       const result = expr.evaluate(evalContext);
 
       // Cache result
@@ -131,13 +137,32 @@ export class ExpressionEngineService {
     }
 
     try {
-      const expr = this.parser.parse(expression);
-      const dependencies = this.extractDependencies(expr);
+      // Extract dependencies from the original expression (before preprocessing)
+      const dependencies = this.extractDependenciesFromString(expression);
       this.dependencyCache.set(expression, dependencies);
       return dependencies;
     } catch {
       return [];
     }
+  }
+
+  /**
+   * Extract field dependencies from string expression
+   */
+  private extractDependenciesFromString(expression: string): string[] {
+    const dependencies = new Set<string>();
+
+    // Match fieldId.value patterns
+    const memberExpressionRegex = /\b(\w+)\.value\b/g;
+    let match;
+    while ((match = memberExpressionRegex.exec(expression)) !== null) {
+      const fieldId = match[1];
+      if (!this.isBuiltInFunction(fieldId)) {
+        dependencies.add(fieldId);
+      }
+    }
+
+    return Array.from(dependencies);
   }
 
   /**
@@ -148,8 +173,19 @@ export class ExpressionEngineService {
 
     const traverse = (node: any) => {
       if (node && typeof node === 'object') {
+        // Check if this is an identifier (variable reference)
         if (node.type === 'Identifier' && !this.isBuiltInFunction(node.name)) {
           dependencies.add(node.name);
+        }
+
+        // Check if this is a member expression (e.g., fieldId.value)
+        if (
+          node.type === 'MemberExpression' &&
+          node.object &&
+          node.object.type === 'Identifier' &&
+          !this.isBuiltInFunction(node.object.name)
+        ) {
+          dependencies.add(node.object.name);
         }
 
         // Traverse child nodes
@@ -191,6 +227,24 @@ export class ExpressionEngineService {
   }
 
   /**
+   * Pre-process expression to handle member expressions
+   */
+  private preprocessExpression(
+    expression: string,
+    context: FormContext
+  ): string {
+    let processedExpression = expression;
+
+    // Replace fieldId.value with fieldId for direct access
+    Object.keys(context).forEach((fieldId) => {
+      const regex = new RegExp(`\\b${fieldId}\\.value\\b`, 'g');
+      processedExpression = processedExpression.replace(regex, fieldId);
+    });
+
+    return processedExpression;
+  }
+
+  /**
    * Create evaluation context from form context
    */
   private createEvaluationContext(context: FormContext): Record<string, any> {
@@ -198,14 +252,9 @@ export class ExpressionEngineService {
       Math: Math,
     };
 
-    // Add field values and properties
+    // Add field values directly for simpler expressions
     Object.entries(context).forEach(([fieldId, fieldData]) => {
-      evalContext[fieldId] = {
-        value: fieldData.value,
-        valid: fieldData.valid,
-        required: fieldData.required,
-        error: fieldData.error,
-      };
+      evalContext[fieldId] = fieldData.value;
     });
 
     return evalContext;

@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { FormSliderRangeField } from '../form-slider-range-field';
+import { ExpressionContextProvider } from '../../contexts/expression-context';
 
 describe('FormSliderRangeField', () => {
   const defaultProps = {
@@ -22,8 +23,21 @@ describe('FormSliderRangeField', () => {
     },
   };
 
+  const renderWithContext = (component: React.ReactElement) => {
+    return render(
+      <ExpressionContextProvider
+        formValues={{}}
+        validation={{}}
+        required={{}}
+        errors={{}}
+      >
+        {component}
+      </ExpressionContextProvider>
+    );
+  };
+
   it('renders with correct label and value display', () => {
-    render(<FormSliderRangeField {...defaultProps} />);
+    renderWithContext(<FormSliderRangeField {...defaultProps} />);
 
     expect(screen.getByText('Test Range')).toBeInTheDocument();
     expect(screen.getByText('Min: 20')).toBeInTheDocument();
@@ -32,7 +46,7 @@ describe('FormSliderRangeField', () => {
   });
 
   it('renders with min/max labels when showLabels is true', () => {
-    render(<FormSliderRangeField {...defaultProps} />);
+    renderWithContext(<FormSliderRangeField {...defaultProps} />);
 
     expect(screen.getByText('0')).toBeInTheDocument();
     expect(screen.getByText('100')).toBeInTheDocument();
@@ -44,7 +58,7 @@ describe('FormSliderRangeField', () => {
       props: { ...defaultProps.props, showValue: false },
     };
 
-    render(<FormSliderRangeField {...props} />);
+    renderWithContext(<FormSliderRangeField {...props} />);
 
     expect(screen.queryByText('Min: 20')).not.toBeInTheDocument();
     expect(screen.queryByText('Max: 80')).not.toBeInTheDocument();
@@ -56,7 +70,7 @@ describe('FormSliderRangeField', () => {
       props: { ...defaultProps.props, showLabels: false },
     };
 
-    render(<FormSliderRangeField {...props} />);
+    renderWithContext(<FormSliderRangeField {...props} />);
 
     expect(screen.queryByText('0')).not.toBeInTheDocument();
     expect(screen.queryByText('100')).not.toBeInTheDocument();
@@ -68,7 +82,7 @@ describe('FormSliderRangeField', () => {
       validation: { required: true },
     };
 
-    render(<FormSliderRangeField {...props} />);
+    renderWithContext(<FormSliderRangeField {...props} />);
 
     expect(screen.getByText('*')).toBeInTheDocument();
   });
@@ -80,7 +94,7 @@ describe('FormSliderRangeField', () => {
       validationErrors: ['Range is too small', 'Range is invalid'],
     };
 
-    render(<FormSliderRangeField {...props} />);
+    renderWithContext(<FormSliderRangeField {...props} />);
 
     expect(screen.getByText('Range is too small')).toBeInTheDocument();
     expect(screen.getByText('Range is invalid')).toBeInTheDocument();
@@ -92,7 +106,7 @@ describe('FormSliderRangeField', () => {
       disabled: true,
     };
 
-    render(<FormSliderRangeField {...props} />);
+    renderWithContext(<FormSliderRangeField {...props} />);
 
     const sliderContainer = screen.getByLabelText('Test Range');
     expect(sliderContainer).toHaveClass('opacity-50', 'cursor-not-allowed');
@@ -105,7 +119,7 @@ describe('FormSliderRangeField', () => {
       onChange,
     };
 
-    render(<FormSliderRangeField {...props} />);
+    renderWithContext(<FormSliderRangeField {...props} />);
 
     const minHandle = screen.getByLabelText('Minimum value');
     minHandle.focus();
@@ -127,7 +141,7 @@ describe('FormSliderRangeField', () => {
       onChange,
     };
 
-    render(<FormSliderRangeField {...props} />);
+    renderWithContext(<FormSliderRangeField {...props} />);
 
     const maxHandle = screen.getByLabelText('Maximum value');
     maxHandle.focus();
@@ -150,7 +164,7 @@ describe('FormSliderRangeField', () => {
       props: { ...defaultProps.props, step: 5 },
     };
 
-    render(<FormSliderRangeField {...props} />);
+    renderWithContext(<FormSliderRangeField {...props} />);
 
     const minHandle = screen.getByLabelText('Minimum value');
     minHandle.focus();
@@ -166,7 +180,7 @@ describe('FormSliderRangeField', () => {
       onChange,
     };
 
-    render(<FormSliderRangeField {...props} />);
+    renderWithContext(<FormSliderRangeField {...props} />);
 
     const minHandle = screen.getByLabelText('Minimum value');
     minHandle.focus();
@@ -187,7 +201,7 @@ describe('FormSliderRangeField', () => {
       onChange,
     };
 
-    render(<FormSliderRangeField {...props} />);
+    renderWithContext(<FormSliderRangeField {...props} />);
 
     const minHandle = screen.getByLabelText('Minimum value');
     minHandle.focus();
