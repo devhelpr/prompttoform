@@ -40,6 +40,7 @@ Important rules for UI/Form schema:
      - radio: For single selection from multiple options
      - select: For dropdown selections with many options
      - date: For date input fields
+     - slider-range: For selecting a range of values with dual handles (price ranges, age ranges, etc.)
      - button: For user actions (rare - forms typically auto-generate buttons)
      - table: For displaying tabular data
      - form: For grouping form elements
@@ -101,6 +102,26 @@ Important rules for UI/Form schema:
          "invalidNumber": "Please enter a valid number",
          "min": "You must be at least {min} years old",
          "max": "Please enter a realistic age (maximum {max} years)"
+       }
+     }
+   
+   - For slider-range validation, include min, max, step, and range validation:
+     "props": { 
+       "min": 0,
+       "max": 1000,
+       "step": 10,
+       "showLabels": true,
+       "showValue": true,
+       "helperText": "Select your preferred price range"
+     },
+     "validation": {
+       "required": true,
+       "minRange": 50,
+       "maxRange": 500,
+       "errorMessages": {
+         "required": "Please select a price range",
+         "minRange": "Price range must be at least {minRange}",
+         "maxRange": "Price range cannot exceed {maxRange}"
        }
      }
 

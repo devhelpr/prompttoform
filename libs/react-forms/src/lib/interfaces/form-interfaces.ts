@@ -20,6 +20,9 @@ export interface FormComponentFieldProps {
     rows?: number;
     buttonType?: string;
     onClick?: string;
+    step?: number;
+    showLabels?: boolean;
+    showValue?: boolean;
     confirmationSettings?: {
       showSummary?: boolean;
       groupBySection?: boolean;
@@ -45,6 +48,12 @@ export interface FormComponentFieldProps {
     maxItems?: number;
     min?: number;
     max?: number;
+    minRange?: number;
+    maxRange?: number;
+    minValueMin?: number;
+    minValueMax?: number;
+    maxValueMin?: number;
+    maxValueMax?: number;
     errorMessages?: {
       required?: string;
       minLength?: string;
@@ -60,6 +69,12 @@ export interface FormComponentFieldProps {
       invalidEmail?: string;
       invalidNumber?: string;
       invalidDate?: string;
+      minRange?: string;
+      maxRange?: string;
+      minValueMin?: string;
+      minValueMax?: string;
+      maxValueMin?: string;
+      maxValueMax?: string;
     };
   } & DateRange;
 }

@@ -11,6 +11,7 @@ export type FieldType =
   | 'form'
   | 'section'
   | 'date'
+  | 'slider-range'
   | 'html'
   | 'decisionTree'
   | 'confirmation';

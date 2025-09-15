@@ -155,6 +155,9 @@
         },
         {
           "$ref": "#/$defs/textComponent"
+        },
+        {
+          "$ref": "#/$defs/sliderRangeComponent"
         }
       ]
     },
@@ -638,6 +641,126 @@
           "properties": {
             "type": {
               "const": "text"
+            }
+          },
+          "required": ["type"]
+        }
+      ]
+    },
+    "sliderRangeComponent": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/componentBase"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "slider-range"
+            },
+            "props": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/baseProps"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "number",
+                      "description": "Minimum value of the range"
+                    },
+                    "max": {
+                      "type": "number",
+                      "description": "Maximum value of the range"
+                    },
+                    "step": {
+                      "type": "number",
+                      "description": "Step size for value increments",
+                      "default": 1
+                    },
+                    "showLabels": {
+                      "type": "boolean",
+                      "description": "Whether to show min/max labels",
+                      "default": true
+                    },
+                    "showValue": {
+                      "type": "boolean",
+                      "description": "Whether to show current values",
+                      "default": true
+                    }
+                  }
+                }
+              ]
+            },
+            "validation": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/componentBase/properties/validation"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "minRange": {
+                      "type": "number",
+                      "description": "Minimum range span"
+                    },
+                    "maxRange": {
+                      "type": "number",
+                      "description": "Maximum range span"
+                    },
+                    "minValueMin": {
+                      "type": "number",
+                      "description": "Minimum value for the minimum handle"
+                    },
+                    "minValueMax": {
+                      "type": "number",
+                      "description": "Maximum value for the minimum handle"
+                    },
+                    "maxValueMin": {
+                      "type": "number",
+                      "description": "Minimum value for the maximum handle"
+                    },
+                    "maxValueMax": {
+                      "type": "number",
+                      "description": "Maximum value for the maximum handle"
+                    },
+                    "errorMessages": {
+                      "type": "object",
+                      "properties": {
+                        "required": {
+                          "type": "string",
+                          "description": "Custom error message for required field validation"
+                        },
+                        "minRange": {
+                          "type": "string",
+                          "description": "Custom error message for minimum range validation. Use {minRange} placeholder."
+                        },
+                        "maxRange": {
+                          "type": "string",
+                          "description": "Custom error message for maximum range validation. Use {maxRange} placeholder."
+                        },
+                        "minValueMin": {
+                          "type": "string",
+                          "description": "Custom error message for minimum value validation. Use {minValueMin} placeholder."
+                        },
+                        "minValueMax": {
+                          "type": "string",
+                          "description": "Custom error message for maximum value validation. Use {minValueMax} placeholder."
+                        },
+                        "maxValueMin": {
+                          "type": "string",
+                          "description": "Custom error message for minimum value validation. Use {maxValueMin} placeholder."
+                        },
+                        "maxValueMax": {
+                          "type": "string",
+                          "description": "Custom error message for maximum value validation. Use {maxValueMax} placeholder."
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
             }
           },
           "required": ["type"]
