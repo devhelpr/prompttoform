@@ -82,29 +82,16 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     const currentPage = formJson.app.pages[currentStepIndex];
     if (!currentPage?.components) return;
 
-    console.log(
-      `[DEBUG] Initializing array fields for page ${currentStepIndex}:`,
-      {
-        pageId: currentPage.id,
-        components: currentPage.components.filter((c) => c.type === 'array'),
-      }
-    );
-
     setFormValues((prevFormValues) => {
       const newFormValues = { ...prevFormValues };
       let hasChanges = false;
 
       currentPage.components.forEach((component) => {
         if (component.type === 'array' && !(component.id in prevFormValues)) {
-          console.log(`[DEBUG] Initializing array field:`, component.id);
           newFormValues[component.id] = [];
           hasChanges = true;
         }
       });
-
-      if (hasChanges) {
-        console.log(`[DEBUG] Array fields initialized:`, newFormValues);
-      }
 
       return hasChanges ? newFormValues : prevFormValues;
     });
@@ -239,24 +226,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         // Handle array component validation
         if (component.type === 'array' && component.arrayItems) {
           const arrayValue = value as Array<Record<string, unknown>>;
-          console.log(`[DEBUG] Array validation for ${fieldId}:`, {
-            componentId: component.id,
-            fieldId,
-            value,
-            arrayValue,
-            required: component.validation?.required,
-            arrayLength: arrayValue?.length,
-            validation: component.validation,
-          });
 
           if (
             component.validation?.required &&
             (!arrayValue || arrayValue.length === 0)
           ) {
-            console.log(
-              `[DEBUG] Array validation failed - required but empty:`,
-              fieldId
-            );
             errors.push({
               fieldId,
               message: getErrorMessage(component, 'required'),
@@ -267,11 +241,6 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               component.validation?.minItems &&
               arrayValue.length < component.validation.minItems
             ) {
-              console.log(`[DEBUG] Array validation failed - minItems:`, {
-                fieldId,
-                arrayLength: arrayValue.length,
-                minItems: component.validation.minItems,
-              });
               errors.push({
                 fieldId,
                 message: getErrorMessage(component, 'minItems', {
@@ -283,11 +252,6 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               component.validation?.maxItems &&
               arrayValue.length > component.validation.maxItems
             ) {
-              console.log(`[DEBUG] Array validation failed - maxItems:`, {
-                fieldId,
-                arrayLength: arrayValue.length,
-                maxItems: component.validation.maxItems,
-              });
               errors.push({
                 fieldId,
                 message: getErrorMessage(component, 'maxItems', {
@@ -297,24 +261,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             }
             // Validate each array item
             arrayValue.forEach((item, index) => {
-              console.log(`[DEBUG] Validating array item ${index}:`, {
-                item,
-                fieldId,
-              });
               component.arrayItems?.forEach((arrayItem) => {
                 arrayItem.components.forEach((child) => {
                   const childFieldId = `${fieldId}[${index}].${child.id}`;
                   const shouldValidateChild = shouldShowError(childFieldId);
-
-                  console.log(`[DEBUG] Validating child component:`, {
-                    childId: child.id,
-                    item,
-                    parentFieldId: `${fieldId}[${index}]`,
-                    childFieldId,
-                    shouldValidateChild,
-                    isBlurred: blurredFields[childFieldId],
-                    isSubmitted,
-                  });
 
                   // Only validate child components that have been interacted with
                   if (shouldValidateChild) {
@@ -322,10 +272,6 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                       child,
                       item,
                       `${fieldId}[${index}]`
-                    );
-                    console.log(
-                      `[DEBUG] Child validation errors:`,
-                      childErrors
                     );
                     errors.push(...childErrors);
                   }
@@ -480,12 +426,6 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     const currentPage = formJson.app.pages[currentStepIndex];
     if (!currentPage || !currentPage.components) return true;
 
-    console.log(`[DEBUG] validateForm called for page ${currentStepIndex}:`, {
-      pageId: currentPage.id,
-      formValues,
-      arrayItems,
-    });
-
     const newValidationErrors: ValidationErrors = {};
     let isValid = true;
 
@@ -498,21 +438,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           const fieldId = parentId
             ? `${parentId}.${component.id}`
             : component.id;
-          console.log(`[DEBUG] Validating component ${fieldId}:`, {
-            componentId: component.id,
-            fieldId,
-            type: component.type,
-            value: formValues[fieldId],
-            validation: component.validation,
-          });
           const errors = validateComponent(component, formValues, parentId);
-          console.log(`[DEBUG] Validation errors for ${fieldId}:`, errors);
-          if (errors.length > 0) {
-            console.log(
-              `[DEBUG] Detailed validation errors for ${fieldId}:`,
-              errors.map((e) => ({ fieldId: e.fieldId, message: e.message }))
-            );
-          }
           errors.forEach((error) => {
             if (!newValidationErrors[error.fieldId]) {
               newValidationErrors[error.fieldId] = [];
@@ -595,15 +521,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [onPageChange, formJson?.app?.pages]);
 
   const handleInputChange = (id: string, value: unknown) => {
-    console.log(`[DEBUG] handleInputChange called:`, { id, value });
-    setFormValues((prev) => {
-      const newValues = {
-        ...prev,
-        [id]: value,
-      };
-      console.log(`[DEBUG] New formValues:`, newValues);
-      return newValues;
-    });
+    setFormValues((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
   };
 
   const handleBlur = (id: string) => {
@@ -685,11 +606,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [formJson, currentStepIndex, formValues]);
 
   const handleNext = useCallback(() => {
-    console.log(`[DEBUG] handleNext called`);
     setIsSubmitted(true);
-    const isValid = validateForm();
-    console.log(`[DEBUG] validateForm result:`, isValid);
-    if (isValid) {
+    if (validateForm()) {
       const currentPage = formJson.app.pages[currentStepIndex];
 
       // Handle end pages or confirmation pages
@@ -1045,12 +963,6 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   // Helper function to format values for display in template variables
   const formatValueForDisplay = (value: unknown): string => {
-    console.log(`[DEBUG] formatValueForDisplay called with:`, {
-      value,
-      type: typeof value,
-      isArray: Array.isArray(value),
-    });
-
     if (Array.isArray(value)) {
       // Handle array values - format as a readable list
       if (value.length === 0) {
@@ -1103,13 +1015,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     text: string,
     values: FormValues
   ): string => {
-    console.log(`[DEBUG] replaceTemplateVariables called with:`, {
-      text,
-      values,
-    });
     return text.replace(/\{\{([^}]+)\}\}/g, (match, variable) => {
       const varName = variable.trim();
-      console.log(`[DEBUG] Processing template variable:`, { match, varName });
 
       // Handle nested variable paths like "applicant.fullName"
       if (varName.includes('.')) {
@@ -1132,14 +1039,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
       // Try direct field name match
       let directValue = values[varName];
-      console.log(`[DEBUG] Direct field match for ${varName}:`, {
-        directValue,
-        isEmpty: isEmptyValue(directValue),
-      });
       if (!isEmptyValue(directValue)) {
-        const result = formatValueForDisplay(directValue);
-        console.log(`[DEBUG] Direct field result for ${varName}:`, result);
-        return result;
+        return formatValueForDisplay(directValue);
       }
 
       // Try common field name variations
@@ -1620,10 +1521,6 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       shouldShowError(fieldId) && validationErrors[fieldId]?.length > 0;
 
     const handleAddItem = () => {
-      console.log(`[DEBUG] handleAddItem called for ${fieldId}:`, {
-        componentId: component.id,
-        items,
-      });
       const newItem: Record<string, unknown> = {};
       component.arrayItems?.forEach((arrayItem) => {
         arrayItem.components.forEach((comp) => {
@@ -1631,7 +1528,6 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         });
       });
       const newItems = [...items, newItem];
-      console.log(`[DEBUG] Adding new item:`, { newItem, newItems });
       setArrayItems((prev) => ({
         ...prev,
         [component.id]: newItems,
