@@ -75,6 +75,28 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     );
   }, [formJson, settings]);
 
+  // Initialize array fields in formValues
+  useEffect(() => {
+    if (!formJson?.app?.pages) return;
+
+    const currentPage = formJson.app.pages[currentStepIndex];
+    if (!currentPage?.components) return;
+
+    const newFormValues = { ...formValues };
+    let hasChanges = false;
+
+    currentPage.components.forEach((component) => {
+      if (component.type === 'array' && !(component.id in formValues)) {
+        newFormValues[component.id] = [];
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      setFormValues(newFormValues);
+    }
+  }, [formJson, currentStepIndex, formValues]);
+
   // Helper function to trigger page change event
   const triggerPageChangeEvent = useCallback(
     (newPageIndex: number, previousPageIndex?: number) => {
@@ -1429,10 +1451,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   const renderArrayField = (
     component: FormComponentFieldProps,
-    parentId: string
+    fieldId: string
   ): React.ReactElement => {
     const items = arrayItems[component.id] || [];
-    const fieldId = parentId ? `${parentId}.${component.id}` : component.id;
     const prefixedFieldId = getPrefixedId(fieldId);
     const showError =
       shouldShowError(fieldId) && validationErrors[fieldId]?.length > 0;
@@ -1449,7 +1470,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         ...prev,
         [component.id]: newItems,
       }));
-      handleInputChange(component.id, newItems);
+      handleInputChange(fieldId, newItems);
     };
 
     const handleRemoveItem = (index: number) => {
@@ -1458,7 +1479,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         ...prev,
         [component.id]: newItems,
       }));
-      handleInputChange(component.id, newItems);
+      handleInputChange(fieldId, newItems);
     };
 
     return (
@@ -1479,6 +1500,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             ))}
           </div>
         )}
+        {typeof component.props?.helperText === 'string' &&
+          component.props.helperText.trim() !== '' &&
+          !showError && (
+            <p className="mt-1 text-sm text-gray-500">
+              {component.props.helperText}
+            </p>
+          )}
         {items.map((_, index) => (
           <div key={index} className="flex items-center mb-2">
             <div className="flex-1">
