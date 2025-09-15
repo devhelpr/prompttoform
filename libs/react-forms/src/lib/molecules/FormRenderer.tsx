@@ -15,6 +15,7 @@ import {
   FormDateField,
   FormSectionField,
   FormConfirmationField,
+  FormSliderRangeField,
 } from '../atoms';
 import {
   FormRendererProps,
@@ -411,6 +412,92 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 fieldId,
                 message: getErrorMessage(component, 'pattern'),
               });
+            }
+          } else if (component.type === 'slider-range') {
+            const rangeValue = value as { min: number; max: number };
+
+            if (
+              rangeValue &&
+              typeof rangeValue === 'object' &&
+              'min' in rangeValue &&
+              'max' in rangeValue
+            ) {
+              // Validate range span
+              const rangeSpan = rangeValue.max - rangeValue.min;
+
+              if (
+                component.validation?.minRange &&
+                rangeSpan < component.validation.minRange
+              ) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'minRange', {
+                    minRange: component.validation.minRange,
+                  }),
+                });
+              }
+
+              if (
+                component.validation?.maxRange &&
+                rangeSpan > component.validation.maxRange
+              ) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'maxRange', {
+                    maxRange: component.validation.maxRange,
+                  }),
+                });
+              }
+
+              // Validate minimum value constraints
+              if (
+                component.validation?.minValueMin !== undefined &&
+                rangeValue.min < component.validation.minValueMin
+              ) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'minValueMin', {
+                    minValueMin: component.validation.minValueMin,
+                  }),
+                });
+              }
+
+              if (
+                component.validation?.minValueMax !== undefined &&
+                rangeValue.min > component.validation.minValueMax
+              ) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'minValueMax', {
+                    minValueMax: component.validation.minValueMax,
+                  }),
+                });
+              }
+
+              // Validate maximum value constraints
+              if (
+                component.validation?.maxValueMin !== undefined &&
+                rangeValue.max < component.validation.maxValueMin
+              ) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'maxValueMin', {
+                    maxValueMin: component.validation.maxValueMin,
+                  }),
+                });
+              }
+
+              if (
+                component.validation?.maxValueMax !== undefined &&
+                rangeValue.max > component.validation.maxValueMax
+              ) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'maxValueMax', {
+                    maxValueMax: component.validation.maxValueMax,
+                  }),
+                });
+              }
             }
           }
         }
@@ -1484,6 +1571,33 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               formValues={formValues}
               formComponents={getAllFormComponents()}
               props={processPropsWithTemplates(props)}
+            />
+          );
+
+        case 'slider-range':
+          return (
+            <FormSliderRangeField
+              fieldId={prefixedFieldId}
+              label={translatedLabel}
+              value={
+                typeof formValues[id] === 'object' && formValues[id] !== null
+                  ? (formValues[id] as { min: number; max: number })
+                  : { min: props?.min ?? 0, max: props?.max ?? 100 }
+              }
+              onChange={(value) => handleInputChange(id, value)}
+              onBlur={() => handleBlur(id)}
+              validation={translatedValidation}
+              props={processPropsWithTemplates(translatedProps)}
+              showError={showError}
+              validationErrors={validationErrors[fieldId] || []}
+              disabled={disabled}
+              classes={{
+                field: settings.classes?.field,
+                fieldLabel: settings.classes?.fieldLabel,
+                fieldSlider: settings.classes?.fieldSlider,
+                fieldError: settings.classes?.fieldError,
+                fieldHelperText: settings.classes?.fieldHelperText,
+              }}
             />
           );
 

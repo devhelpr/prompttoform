@@ -176,6 +176,7 @@ export interface FormRendererClasses {
   fieldCheckbox?: string;
   fieldRadio?: string;
   fieldDate?: string;
+  fieldSlider?: string;
   fieldText?: string;
   fieldError?: string;
   fieldHelperText?: string;
