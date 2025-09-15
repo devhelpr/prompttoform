@@ -309,8 +309,8 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
             tabIndex={isDisabled ? -1 : 0}
             role="slider"
             aria-valuemin={min}
-            aria-valuemax={value.max}
-            aria-valuenow={value.min}
+            aria-valuemax={max}
+            aria-valuenow={normalizedValue.min}
             aria-label="Minimum value"
           />
 
