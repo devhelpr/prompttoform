@@ -218,8 +218,9 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
         <div
           ref={sliderRef}
           className={getClassNames(
-            'relative h-6 bg-gray-200 rounded-lg cursor-pointer',
-            isDisabled ? 'opacity-50 cursor-not-allowed' : '',
+            `relative h-6 bg-gray-200 rounded-lg cursor-pointer ${
+              isDisabled ? 'opacity-50 cursor-not-allowed' : ''
+            }`,
             classes?.fieldSlider
           )}
           role="slider"
@@ -244,9 +245,9 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
           {/* Min Handle */}
           <div
             className={getClassNames(
-              'absolute w-6 h-6 bg-white border-2 border-blue-500 rounded-full cursor-grab active:cursor-grabbing transform -translate-y-1/2 top-1/2',
-              isDragging === 'min' ? 'shadow-lg scale-110' : 'hover:shadow-md',
-              isDisabled ? 'cursor-not-allowed' : ''
+              `absolute w-6 h-6 bg-white border-2 border-blue-500 rounded-full cursor-grab active:cursor-grabbing transform -translate-y-1/2 top-1/2 ${
+                isDragging === 'min' ? 'shadow-lg scale-110' : 'hover:shadow-md'
+              } ${isDisabled ? 'cursor-not-allowed' : ''}`
             )}
             style={{ left: `calc(${minPercentage}% - 12px)` }}
             onPointerDown={(e) => handlePointerDown('min', e)}
@@ -262,9 +263,9 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
           {/* Max Handle */}
           <div
             className={getClassNames(
-              'absolute w-6 h-6 bg-white border-2 border-blue-500 rounded-full cursor-grab active:cursor-grabbing transform -translate-y-1/2 top-1/2',
-              isDragging === 'max' ? 'shadow-lg scale-110' : 'hover:shadow-md',
-              isDisabled ? 'cursor-not-allowed' : ''
+              `absolute w-6 h-6 bg-white border-2 border-blue-500 rounded-full cursor-grab active:cursor-grabbing transform -translate-y-1/2 top-1/2 ${
+                isDragging === 'max' ? 'shadow-lg scale-110' : 'hover:shadow-md'
+              } ${isDisabled ? 'cursor-not-allowed' : ''}`
             )}
             style={{ left: `calc(${maxPercentage}% - 12px)` }}
             onPointerDown={(e) => handlePointerDown('max', e)}
