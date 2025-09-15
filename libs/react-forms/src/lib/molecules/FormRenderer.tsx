@@ -208,8 +208,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         parentId?: string
       ): ValidationError[] => {
         const errors: ValidationError[] = [];
-        const value = formData[component.id];
         const fieldId = parentId ? `${parentId}.${component.id}` : component.id;
+        const value = formData[fieldId];
 
         // Handle form component validation recursively
         if (component.type === 'form' && component.children) {
@@ -422,10 +422,16 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     const newValidationErrors: ValidationErrors = {};
     let isValid = true;
 
-    const validateComponents = (components: FormComponentFieldProps[]) => {
+    const validateComponents = (
+      components: FormComponentFieldProps[],
+      parentId?: string
+    ) => {
       components.forEach((component) => {
         if (isComponentVisible(component.visibilityConditions, formValues)) {
-          const errors = validateComponent(component, formValues);
+          const fieldId = parentId
+            ? `${parentId}.${component.id}`
+            : component.id;
+          const errors = validateComponent(component, formValues, parentId);
           errors.forEach((error) => {
             if (!newValidationErrors[error.fieldId]) {
               newValidationErrors[error.fieldId] = [];
