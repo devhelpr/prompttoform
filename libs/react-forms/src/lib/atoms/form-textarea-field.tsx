@@ -43,7 +43,7 @@ export const FormTextareaField: React.FC<FormTextareaFieldProps> = ({
   const helperId = `${fieldId}-helper`;
   const describedBy = showError
     ? errorId
-    : typeof props?.helperText === 'string'
+    : typeof props?.helperText === 'string' && props.helperText.trim() !== ''
     ? helperId
     : undefined;
 
@@ -96,17 +96,19 @@ export const FormTextareaField: React.FC<FormTextareaFieldProps> = ({
           ))}
         </div>
       )}
-      {typeof props?.helperText === 'string' && !showError && (
-        <p
-          id={helperId}
-          className={getClassNames(
-            'mt-1 text-sm text-gray-500',
-            classes?.fieldHelperText
-          )}
-        >
-          {props.helperText}
-        </p>
-      )}
+      {typeof props?.helperText === 'string' &&
+        props.helperText.trim() !== '' &&
+        !showError && (
+          <p
+            id={helperId}
+            className={getClassNames(
+              'mt-1 text-sm text-gray-500',
+              classes?.fieldHelperText
+            )}
+          >
+            {props.helperText}
+          </p>
+        )}
     </div>
   );
 };

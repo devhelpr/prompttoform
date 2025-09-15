@@ -147,13 +147,17 @@ export class TranslationService {
           if (current && typeof current === 'object' && part in current) {
             current = current[part];
           } else {
-            return fallback || property;
+            return fallback !== undefined ? fallback : property;
           }
         }
-        return typeof current === 'string' ? current : fallback || property;
+        return typeof current === 'string'
+          ? current
+          : fallback !== undefined
+          ? fallback
+          : property;
       }
     }
-    return fallback || property;
+    return fallback !== undefined ? fallback : property;
   }
 
   translatePage(

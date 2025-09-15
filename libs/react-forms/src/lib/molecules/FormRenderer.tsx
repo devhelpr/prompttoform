@@ -75,6 +75,28 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     );
   }, [formJson, settings]);
 
+  // Initialize array fields in formValues
+  useEffect(() => {
+    if (!formJson?.app?.pages) return;
+
+    const currentPage = formJson.app.pages[currentStepIndex];
+    if (!currentPage?.components) return;
+
+    setFormValues((prevFormValues) => {
+      const newFormValues = { ...prevFormValues };
+      let hasChanges = false;
+
+      currentPage.components.forEach((component) => {
+        if (component.type === 'array' && !(component.id in prevFormValues)) {
+          newFormValues[component.id] = [];
+          hasChanges = true;
+        }
+      });
+
+      return hasChanges ? newFormValues : prevFormValues;
+    });
+  }, [formJson, currentStepIndex]);
+
   // Helper function to trigger page change event
   const triggerPageChangeEvent = useCallback(
     (newPageIndex: number, previousPageIndex?: number) => {
@@ -186,8 +208,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         parentId?: string
       ): ValidationError[] => {
         const errors: ValidationError[] = [];
-        const value = formData[component.id];
         const fieldId = parentId ? `${parentId}.${component.id}` : component.id;
+        const value = formData[fieldId];
 
         // Handle form component validation recursively
         if (component.type === 'form' && component.children) {
@@ -204,6 +226,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         // Handle array component validation
         if (component.type === 'array' && component.arrayItems) {
           const arrayValue = value as Array<Record<string, unknown>>;
+
           if (
             component.validation?.required &&
             (!arrayValue || arrayValue.length === 0)
@@ -240,12 +263,18 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             arrayValue.forEach((item, index) => {
               component.arrayItems?.forEach((arrayItem) => {
                 arrayItem.components.forEach((child) => {
-                  const childErrors = validateComponent(
-                    child,
-                    item,
-                    `${fieldId}[${index}]`
-                  );
-                  errors.push(...childErrors);
+                  const childFieldId = `${fieldId}[${index}].${child.id}`;
+                  const shouldValidateChild = shouldShowError(childFieldId);
+
+                  // Only validate child components that have been interacted with
+                  if (shouldValidateChild) {
+                    const childErrors = validateComponent(
+                      child,
+                      item,
+                      `${fieldId}[${index}]`
+                    );
+                    errors.push(...childErrors);
+                  }
                 });
               });
             });
@@ -400,10 +429,16 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     const newValidationErrors: ValidationErrors = {};
     let isValid = true;
 
-    const validateComponents = (components: FormComponentFieldProps[]) => {
+    const validateComponents = (
+      components: FormComponentFieldProps[],
+      parentId?: string
+    ) => {
       components.forEach((component) => {
         if (isComponentVisible(component.visibilityConditions, formValues)) {
-          const errors = validateComponent(component, formValues);
+          const fieldId = parentId
+            ? `${parentId}.${component.id}`
+            : component.id;
+          const errors = validateComponent(component, formValues, parentId);
           errors.forEach((error) => {
             if (!newValidationErrors[error.fieldId]) {
               newValidationErrors[error.fieldId] = [];
@@ -926,6 +961,55 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     return false;
   };
 
+  // Helper function to format values for display in template variables
+  const formatValueForDisplay = (value: unknown): string => {
+    if (Array.isArray(value)) {
+      // Handle array values - format as a readable list
+      if (value.length === 0) {
+        return 'None';
+      }
+
+      // Check if it's an array of objects (like array field items)
+      if (
+        value.length > 0 &&
+        typeof value[0] === 'object' &&
+        value[0] !== null
+      ) {
+        // For array field items, extract the main field values
+        return value
+          .map((item, index) => {
+            if (typeof item === 'object' && item !== null) {
+              const itemValues = Object.values(item).filter(
+                (v) => v !== undefined && v !== null && v !== ''
+              );
+              if (itemValues.length > 0) {
+                return `Item ${index + 1}: ${itemValues.join(', ')}`;
+              }
+            }
+            return `Item ${index + 1}`;
+          })
+          .join('; ');
+      }
+
+      // For simple arrays, join with commas
+      return value.join(', ');
+    }
+
+    if (typeof value === 'object' && value !== null) {
+      // Handle object values - extract meaningful values
+      const objValues = Object.values(value).filter(
+        (v) => v !== undefined && v !== null && v !== ''
+      );
+      if (objValues.length > 0) {
+        return objValues.join(', ');
+      }
+      return 'Object';
+    }
+
+    // For primitive values, convert to string
+    return String(value);
+  };
+
   // Helper function to replace template variables in text
   const replaceTemplateVariables = (
     text: string,
@@ -949,14 +1033,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         }
 
         if (!isEmptyValue(value)) {
-          return String(value);
+          return formatValueForDisplay(value);
         }
       }
 
       // Try direct field name match
       let directValue = values[varName];
       if (!isEmptyValue(directValue)) {
-        return String(directValue);
+        return formatValueForDisplay(directValue);
       }
 
       // Try common field name variations
@@ -970,7 +1054,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       for (const variation of variations) {
         const value = values[variation];
         if (!isEmptyValue(value)) {
-          return String(value);
+          return formatValueForDisplay(value);
         }
       }
 
@@ -982,7 +1066,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       );
 
       if (matchingKey && !isEmptyValue(values[matchingKey])) {
-        return String(values[matchingKey]);
+        return formatValueForDisplay(values[matchingKey]);
       }
 
       // Return a dash for missing/empty fields
@@ -1429,10 +1513,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   const renderArrayField = (
     component: FormComponentFieldProps,
-    parentId: string
+    fieldId: string
   ): React.ReactElement => {
     const items = arrayItems[component.id] || [];
-    const fieldId = parentId ? `${parentId}.${component.id}` : component.id;
     const prefixedFieldId = getPrefixedId(fieldId);
     const showError =
       shouldShowError(fieldId) && validationErrors[fieldId]?.length > 0;
@@ -1441,7 +1524,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       const newItem: Record<string, unknown> = {};
       component.arrayItems?.forEach((arrayItem) => {
         arrayItem.components.forEach((comp) => {
-          newItem[comp.id] = '';
+          newItem[comp.id] = undefined;
         });
       });
       const newItems = [...items, newItem];
@@ -1449,7 +1532,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         ...prev,
         [component.id]: newItems,
       }));
-      handleInputChange(component.id, newItems);
+      handleInputChange(fieldId, newItems);
     };
 
     const handleRemoveItem = (index: number) => {
@@ -1458,7 +1541,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         ...prev,
         [component.id]: newItems,
       }));
-      handleInputChange(component.id, newItems);
+      handleInputChange(fieldId, newItems);
     };
 
     return (
@@ -1479,6 +1562,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             ))}
           </div>
         )}
+        {typeof component.props?.helperText === 'string' &&
+          component.props.helperText.trim() !== '' &&
+          !showError && (
+            <p className="mt-1 text-sm text-gray-500">
+              {component.props.helperText}
+            </p>
+          )}
         {items.map((_, index) => (
           <div key={index} className="flex items-center mb-2">
             <div className="flex-1">

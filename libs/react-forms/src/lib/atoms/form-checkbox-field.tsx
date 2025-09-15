@@ -41,7 +41,7 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
   const helperId = `${fieldId}-helper`;
   const describedBy = showError
     ? errorId
-    : typeof props?.helperText === 'string'
+    : typeof props?.helperText === 'string' && props.helperText.trim() !== ''
     ? helperId
     : undefined;
 
@@ -98,17 +98,19 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
             ))}
           </div>
         )}
-        {typeof props?.helperText === 'string' && !showError && (
-          <p
-            id={helperId}
-            className={getClassNames(
-              'mt-1 text-sm text-gray-500',
-              classes?.fieldHelperText
-            )}
-          >
-            {props.helperText}
-          </p>
-        )}
+        {typeof props?.helperText === 'string' &&
+          props.helperText.trim() !== '' &&
+          !showError && (
+            <p
+              id={helperId}
+              className={getClassNames(
+                'mt-1 text-sm text-gray-500',
+                classes?.fieldHelperText
+              )}
+            >
+              {props.helperText}
+            </p>
+          )}
       </div>
     );
   }
@@ -201,17 +203,19 @@ export const FormCheckboxField: React.FC<FormCheckboxFieldProps> = ({
           ))}
         </div>
       )}
-      {typeof props?.helperText === 'string' && !showError && (
-        <p
-          id={helperId}
-          className={getClassNames(
-            'mt-1 text-sm text-gray-500',
-            classes?.fieldHelperText
-          )}
-        >
-          {props.helperText}
-        </p>
-      )}
+      {typeof props?.helperText === 'string' &&
+        props.helperText.trim() !== '' &&
+        !showError && (
+          <p
+            id={helperId}
+            className={getClassNames(
+              'mt-1 text-sm text-gray-500',
+              classes?.fieldHelperText
+            )}
+          >
+            {props.helperText}
+          </p>
+        )}
     </div>
   );
 };
