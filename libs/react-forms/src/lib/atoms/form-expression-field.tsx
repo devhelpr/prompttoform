@@ -1,7 +1,7 @@
 import React from 'react';
 import { getClassNames } from '../utils/class-utils';
 import { useExpressionEvaluation } from '../hooks/use-expression-evaluation';
-import { ExpressionContext } from '../interfaces/expression-interfaces';
+import { ExpressionContext as ExpressionContextType } from '../interfaces/expression-interfaces';
 
 interface FormExpressionFieldProps {
   fieldId: string;
@@ -16,7 +16,7 @@ interface FormExpressionFieldProps {
     | 'label'
     | 'helperText';
   dependencies?: string[];
-  context: ExpressionContext;
+  context: ExpressionContextType;
   children: React.ReactNode;
   classes?: {
     field?: string;

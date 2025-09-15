@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
 import {
-  ExpressionContext,
+  ExpressionContext as ExpressionContextType,
   ExpressionEvaluationResult,
 } from '../interfaces/expression-interfaces';
 import {
@@ -18,7 +18,7 @@ interface ExpressionContextProviderProps {
 }
 
 interface ExpressionContextValue {
-  context: ExpressionContext;
+  context: ExpressionContextType;
   evaluateExpression: (
     expression: string,
     fieldId: string
@@ -38,7 +38,7 @@ export const ExpressionContextProvider: React.FC<
 > = ({ children, formValues, validation, required, errors, metadata = {} }) => {
   // Create expression context
   const context = useMemo(
-    (): ExpressionContext => ({
+    (): ExpressionContextType => ({
       values: formValues,
       validation,
       required,

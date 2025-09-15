@@ -7,6 +7,7 @@ import {
   UseExpressionConfig,
   UseExpressionResult,
   ExpressionEvaluationResult,
+  ExpressionContext as ExpressionContextType,
 } from '../interfaces/expression-interfaces';
 
 /**
@@ -28,7 +29,7 @@ export function useExpressionEvaluation(
   const [value, setValue] = useState<any>(null);
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
-  const lastContextRef = useRef<ExpressionContext>(context);
+  const lastContextRef = useRef<ExpressionContextType>(context);
   const lastExpressionRef = useRef<string>(expression.expression);
 
   /**
@@ -127,7 +128,7 @@ export function useExpressionEvaluation(
    * Check if context has changed
    */
   const hasContextChanged = useCallback(
-    (prev: ExpressionContext, current: ExpressionContext) => {
+    (prev: ExpressionContextType, current: ExpressionContextType) => {
       // Check if any relevant values have changed
       const relevantFields = expression.dependencies || [];
 
