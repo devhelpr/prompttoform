@@ -615,11 +615,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [formJson, currentStepIndex, formValues, validateComponent]);
 
   useEffect(() => {
-    // Only validate if we have form values initialized
-    if (Object.keys(formValues).length > 0) {
+    // Only validate if we have form values initialized AND the user has interacted with the form
+    if (
+      Object.keys(formValues).length > 0 &&
+      (isSubmitted || Object.keys(blurredFields).length > 0)
+    ) {
       validateForm();
     }
-  }, [validateForm, formValues]);
+  }, [validateForm, formValues, isSubmitted, blurredFields]);
 
   // Update translation service language when settings change
   useEffect(() => {
@@ -1382,12 +1385,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               fieldId={prefixedFieldId}
               label={translatedLabel}
               value={
-                typeof formValues[id] === 'string'
-                  ? (formValues[id] as string)
+                typeof formValues[fieldId] === 'string'
+                  ? (formValues[fieldId] as string)
                   : ''
               }
-              onChange={(value) => handleInputChange(id, value)}
-              onBlur={() => handleBlur(id)}
+              onChange={(value) => handleInputChange(fieldId, value)}
+              onBlur={() => handleBlur(fieldId)}
               validation={translatedValidation}
               expression={translatedProps?.expression}
               props={{
@@ -1412,12 +1415,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               fieldId={prefixedFieldId}
               label={translatedLabel}
               value={
-                typeof formValues[id] === 'string'
-                  ? (formValues[id] as string)
+                typeof formValues[fieldId] === 'string'
+                  ? (formValues[fieldId] as string)
                   : ''
               }
-              onChange={(value) => handleInputChange(id, value)}
-              onBlur={() => handleBlur(id)}
+              onChange={(value) => handleInputChange(fieldId, value)}
+              onBlur={() => handleBlur(fieldId)}
               validation={translatedValidation}
               expression={translatedProps?.expression}
               props={{
@@ -1442,11 +1445,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               fieldId={prefixedFieldId}
               label={translatedLabel}
               value={
-                typeof formValues[id] === 'string'
-                  ? (formValues[id] as string)
+                typeof formValues[fieldId] === 'string'
+                  ? (formValues[fieldId] as string)
                   : ''
               }
-              onChange={(value) => handleInputChange(id, value)}
+              onChange={(value) => handleInputChange(fieldId, value)}
               validation={translatedValidation}
               props={processPropsWithTemplates(translatedProps)}
               showError={showError}
@@ -1467,9 +1470,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             <FormCheckboxField
               fieldId={prefixedFieldId}
               label={translatedLabel}
-              value={formValues[id] as boolean | string[]}
-              onChange={(value) => handleInputChange(id, value)}
-              onBlur={() => handleBlur(id)}
+              value={formValues[fieldId] as boolean | string[]}
+              onChange={(value) => handleInputChange(fieldId, value)}
+              onBlur={() => handleBlur(fieldId)}
               validation={translatedValidation}
               props={processPropsWithTemplates(translatedProps)}
               showError={showError}
@@ -1491,12 +1494,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               fieldId={prefixedFieldId}
               label={translatedLabel}
               value={
-                typeof formValues[id] === 'string'
-                  ? (formValues[id] as string)
+                typeof formValues[fieldId] === 'string'
+                  ? (formValues[fieldId] as string)
                   : ''
               }
-              onChange={(value) => handleInputChange(id, value)}
-              onBlur={() => handleBlur(id)}
+              onChange={(value) => handleInputChange(fieldId, value)}
+              onBlur={() => handleBlur(fieldId)}
               validation={translatedValidation}
               props={processPropsWithTemplates(translatedProps)}
               showError={showError}
@@ -1518,12 +1521,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               fieldId={prefixedFieldId}
               label={translatedLabel}
               value={
-                typeof formValues[id] === 'string'
-                  ? (formValues[id] as string)
+                typeof formValues[fieldId] === 'string'
+                  ? (formValues[fieldId] as string)
                   : ''
               }
-              onChange={(value) => handleInputChange(id, value)}
-              onBlur={() => handleBlur(id)}
+              onChange={(value) => handleInputChange(fieldId, value)}
+              onBlur={() => handleBlur(fieldId)}
               validation={translatedValidation}
               props={processPropsWithTemplates(translatedProps)}
               showError={showError}
@@ -1680,14 +1683,17 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               fieldId={prefixedFieldId}
               label={translatedLabel}
               value={
-                formValues[id] !== undefined && formValues[id] !== null
-                  ? (formValues[id] as number | { min: number; max: number })
+                formValues[fieldId] !== undefined &&
+                formValues[fieldId] !== null
+                  ? (formValues[fieldId] as
+                      | number
+                      | { min: number; max: number })
                   : props?.mode === 'range'
                   ? { min: props?.min ?? 0, max: props?.max ?? 100 }
                   : props?.min ?? 0
               }
-              onChange={(value) => handleInputChange(id, value)}
-              onBlur={() => handleBlur(id)}
+              onChange={(value) => handleInputChange(fieldId, value)}
+              onBlur={() => handleBlur(fieldId)}
               validation={translatedValidation}
               expression={translatedProps?.expression}
               props={{

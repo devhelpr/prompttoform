@@ -135,6 +135,17 @@ export function withExpression<P extends object>(
     const enhancedProps = useMemo(() => {
       const enhanced: any = { ...restProps, onChange: stableOnChange };
 
+      // Preserve original validation props unless overridden by expressions
+      if (!actualExpression || actualExpression.mode !== 'validation') {
+        // Keep original showError and validationErrors if no validation expression
+        if (restProps.showError !== undefined) {
+          enhanced.showError = restProps.showError;
+        }
+        if (restProps.validationErrors !== undefined) {
+          enhanced.validationErrors = restProps.validationErrors;
+        }
+      }
+
       // For read-only calculated fields, override the value directly
       if (
         actualExpression &&
