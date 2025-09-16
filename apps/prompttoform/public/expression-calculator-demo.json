@@ -1,0 +1,367 @@
+{
+  "app": {
+    "title": "Advanced Expression Calculator Demo",
+    "pages": [
+      {
+        "id": "price-calculator",
+        "title": "Price Calculator with Sliders",
+        "components": [
+          {
+            "type": "text",
+            "id": "title",
+            "label": "Dynamic Price Calculator",
+            "props": {
+              "className": "text-2xl font-bold mb-6"
+            }
+          },
+          {
+            "type": "input",
+            "id": "basePrice",
+            "label": "Base Price",
+            "props": {
+              "type": "number",
+              "placeholder": "Enter base price",
+              "helperText": "Enter the base price before any calculations"
+            },
+            "validation": {
+              "required": true,
+              "min": 0,
+              "errorMessages": {
+                "required": "Please enter a base price",
+                "min": "Price must be positive"
+              }
+            }
+          },
+          {
+            "type": "slider-range",
+            "id": "quantity",
+            "label": "Quantity",
+            "props": {
+              "min": 1,
+              "max": 50,
+              "step": 1,
+              "mode": "single",
+              "showLabels": true,
+              "showValue": true,
+              "helperText": "Select quantity using the slider"
+            },
+            "validation": {
+              "required": true,
+              "errorMessages": {
+                "required": "Please select a quantity"
+              }
+            }
+          },
+          {
+            "type": "slider-range",
+            "id": "discountPercent",
+            "label": "Discount Percentage",
+            "props": {
+              "min": 0,
+              "max": 50,
+              "step": 5,
+              "mode": "single",
+              "showLabels": true,
+              "showValue": true,
+              "helperText": "Select discount percentage (0-50%)"
+            },
+            "validation": {
+              "required": true,
+              "errorMessages": {
+                "required": "Please select a discount percentage"
+              }
+            }
+          },
+          {
+            "type": "input",
+            "id": "subtotal",
+            "label": "Subtotal",
+            "props": {
+              "type": "number",
+              "readOnly": true,
+              "helperText": "Calculated automatically: Base Price × Quantity",
+              "expression": {
+                "expression": "basePrice.value * quantity.value",
+                "mode": "value",
+                "dependencies": ["basePrice", "quantity"]
+              }
+            }
+          },
+          {
+            "type": "input",
+            "id": "discountAmount",
+            "label": "Discount Amount",
+            "props": {
+              "type": "number",
+              "readOnly": true,
+              "helperText": "Calculated automatically: Subtotal × Discount %",
+              "expression": {
+                "expression": "subtotal.value * (discountPercent.value / 100)",
+                "mode": "value",
+                "dependencies": ["subtotal", "discountPercent"]
+              }
+            }
+          },
+          {
+            "type": "input",
+            "id": "finalPrice",
+            "label": "Final Price",
+            "props": {
+              "type": "number",
+              "readOnly": true,
+              "helperText": "Calculated automatically: Subtotal - Discount",
+              "expression": {
+                "expression": "subtotal.value - discountAmount.value",
+                "mode": "value",
+                "dependencies": ["subtotal", "discountAmount"]
+              }
+            }
+          },
+          {
+            "type": "text",
+            "id": "summary",
+            "label": "Order Summary",
+            "props": {
+              "expression": {
+                "expression": "finalPrice.value > 0 ? `Total: $${Math.round(finalPrice.value * 100) / 100} (${quantity.value} items, ${discountPercent.value}% discount)` : 'Enter values to see summary'",
+                "mode": "value",
+                "dependencies": ["finalPrice", "quantity", "discountPercent"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "range-calculator",
+        "title": "Range Calculator Demo",
+        "components": [
+          {
+            "type": "text",
+            "id": "title2",
+            "label": "Range Calculator",
+            "props": {
+              "className": "text-2xl font-bold mb-6"
+            }
+          },
+          {
+            "type": "slider-range",
+            "id": "budgetRange",
+            "label": "Budget Range",
+            "props": {
+              "min": 0,
+              "max": 10000,
+              "step": 100,
+              "mode": "range",
+              "showLabels": true,
+              "showValue": true,
+              "helperText": "Select your budget range"
+            },
+            "validation": {
+              "required": true,
+              "errorMessages": {
+                "required": "Please select a budget range"
+              }
+            }
+          },
+          {
+            "type": "input",
+            "id": "budgetSize",
+            "label": "Budget Range Size",
+            "props": {
+              "type": "number",
+              "readOnly": true,
+              "helperText": "Calculated automatically: Max - Min",
+              "expression": {
+                "expression": "budgetRange.value.max - budgetRange.value.min",
+                "mode": "value",
+                "dependencies": ["budgetRange"]
+              }
+            }
+          },
+          {
+            "type": "input",
+            "id": "budgetAverage",
+            "label": "Budget Average",
+            "props": {
+              "type": "number",
+              "readOnly": true,
+              "helperText": "Calculated automatically: (Min + Max) ÷ 2",
+              "expression": {
+                "expression": "(budgetRange.value.min + budgetRange.value.max) / 2",
+                "mode": "value",
+                "dependencies": ["budgetRange"]
+              }
+            }
+          },
+          {
+            "type": "text",
+            "id": "budgetStatus",
+            "label": "Budget Status",
+            "props": {
+              "expression": {
+                "expression": "budgetSize.value > 5000 ? 'High Budget Range' : budgetSize.value > 2000 ? 'Medium Budget Range' : 'Low Budget Range'",
+                "mode": "value",
+                "dependencies": ["budgetSize"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "conditional-calculator",
+        "title": "Conditional Calculator",
+        "components": [
+          {
+            "type": "text",
+            "id": "title3",
+            "label": "Conditional Calculator",
+            "props": {
+              "className": "text-2xl font-bold mb-6"
+            }
+          },
+          {
+            "type": "radio",
+            "id": "userType",
+            "label": "User Type",
+            "props": {
+              "options": [
+                { "label": "Student", "value": "student" },
+                { "label": "Professional", "value": "professional" },
+                { "label": "Senior", "value": "senior" }
+              ],
+              "helperText": "Select your user type for pricing"
+            },
+            "validation": {
+              "required": true,
+              "errorMessages": {
+                "required": "Please select your user type"
+              }
+            }
+          },
+          {
+            "type": "slider-range",
+            "id": "serviceRating",
+            "label": "Service Rating",
+            "props": {
+              "min": 1,
+              "max": 5,
+              "step": 1,
+              "mode": "single",
+              "showLabels": true,
+              "showValue": true,
+              "helperText": "Rate the service quality (1-5 stars)",
+              "expression": {
+                "expression": "userType.value === 'senior' ? 'Senior Discount Available - Rate our service' : 'Rate our service quality'",
+                "mode": "helperText",
+                "dependencies": ["userType"]
+              }
+            },
+            "validation": {
+              "required": true,
+              "errorMessages": {
+                "required": "Please provide a service rating"
+              }
+            }
+          },
+          {
+            "type": "input",
+            "id": "baseServicePrice",
+            "label": "Base Service Price",
+            "props": {
+              "type": "number",
+              "placeholder": "Enter base price",
+              "helperText": "Enter the base service price"
+            },
+            "validation": {
+              "required": true,
+              "min": 0,
+              "errorMessages": {
+                "required": "Please enter a base service price",
+                "min": "Price must be positive"
+              }
+            }
+          },
+          {
+            "type": "input",
+            "id": "discountRate",
+            "label": "Discount Rate",
+            "props": {
+              "type": "number",
+              "readOnly": true,
+              "helperText": "Calculated based on user type",
+              "expression": {
+                "expression": "userType.value === 'student' ? 15 : userType.value === 'senior' ? 20 : 0",
+                "mode": "value",
+                "dependencies": ["userType"]
+              }
+            }
+          },
+          {
+            "type": "input",
+            "id": "ratingMultiplier",
+            "label": "Rating Multiplier",
+            "props": {
+              "type": "number",
+              "readOnly": true,
+              "helperText": "Calculated based on service rating",
+              "expression": {
+                "expression": "serviceRating.value >= 4 ? 1.1 : serviceRating.value >= 3 ? 1.0 : 0.9",
+                "mode": "value",
+                "dependencies": ["serviceRating"]
+              }
+            }
+          },
+          {
+            "type": "input",
+            "id": "finalServicePrice",
+            "label": "Final Service Price",
+            "props": {
+              "type": "number",
+              "readOnly": true,
+              "helperText": "Calculated with discounts and rating multiplier",
+              "expression": {
+                "expression": "Math.round((baseServicePrice.value * (1 - discountRate.value/100) * ratingMultiplier.value) * 100) / 100",
+                "mode": "value",
+                "dependencies": [
+                  "baseServicePrice",
+                  "discountRate",
+                  "ratingMultiplier"
+                ]
+              }
+            }
+          },
+          {
+            "type": "text",
+            "id": "pricingBreakdown",
+            "label": "Pricing Breakdown",
+            "props": {
+              "expression": {
+                "expression": "finalServicePrice.value > 0 ? `Base: $${baseServicePrice.value} | Discount: ${discountRate.value}% | Rating: ${serviceRating.value}/5 | Final: $${finalServicePrice.value}` : 'Enter values to see breakdown'",
+                "mode": "value",
+                "dependencies": [
+                  "finalServicePrice",
+                  "baseServicePrice",
+                  "discountRate",
+                  "serviceRating"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "translations": {
+    "en": {
+      "ui": {
+        "nextButton": "Next",
+        "previousButton": "Previous",
+        "submitButton": "Submit",
+        "stepIndicator": "Step {currentStep} of {totalSteps}",
+        "multiPageInfo": "This form has {pageCount} pages"
+      }
+    }
+  },
+  "defaultLanguage": "en",
+  "supportedLanguages": ["en"]
+}
