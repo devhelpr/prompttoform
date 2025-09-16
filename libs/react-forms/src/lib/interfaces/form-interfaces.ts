@@ -1,4 +1,5 @@
 import { FieldType } from '../types/field-types';
+import { ExpressionConfig } from './expression-interfaces';
 
 export interface DateRange {
   minDate?: string;
@@ -10,6 +11,7 @@ export interface FormComponentFieldProps {
   id: string;
   label?: string;
   defaultValue?: unknown;
+  expression?: ExpressionConfig;
   options?: { label: string; value: string }[];
   props?: Record<string, unknown> & {
     inputType?: string;
@@ -20,6 +22,10 @@ export interface FormComponentFieldProps {
     rows?: number;
     buttonType?: string;
     onClick?: string;
+    step?: number;
+    showLabels?: boolean;
+    showValue?: boolean;
+    mode?: 'single' | 'range';
     confirmationSettings?: {
       showSummary?: boolean;
       groupBySection?: boolean;
@@ -27,6 +33,7 @@ export interface FormComponentFieldProps {
       customTitle?: string;
       customMessage?: string;
     };
+    expression?: ExpressionConfig;
   } & DateRange;
   children?: FormComponentFieldProps[];
   visibilityConditions?: VisibilityCondition[];
@@ -45,6 +52,12 @@ export interface FormComponentFieldProps {
     maxItems?: number;
     min?: number;
     max?: number;
+    minRange?: number;
+    maxRange?: number;
+    minValueMin?: number;
+    minValueMax?: number;
+    maxValueMin?: number;
+    maxValueMax?: number;
     errorMessages?: {
       required?: string;
       minLength?: string;
@@ -60,6 +73,12 @@ export interface FormComponentFieldProps {
       invalidEmail?: string;
       invalidNumber?: string;
       invalidDate?: string;
+      minRange?: string;
+      maxRange?: string;
+      minValueMin?: string;
+      minValueMax?: string;
+      maxValueMin?: string;
+      maxValueMax?: string;
     };
   } & DateRange;
 }
@@ -86,6 +105,19 @@ export interface PageProps {
 export interface FormDefinition {
   app: {
     title: string;
+    version?: string;
+    language?: string;
+    theme?: string;
+    settings?: {
+      showProgressBar?: boolean;
+      showStepNumbers?: boolean;
+      allowBackNavigation?: boolean;
+      submitButtonText?: string;
+      nextButtonText?: string;
+      previousButtonText?: string;
+      showRestartButton?: boolean;
+      restartButtonText?: string;
+    };
     pages: PageProps[];
     dataSources?: Record<string, unknown>[];
     thankYouPage?: ThankYouPage;
@@ -161,6 +193,7 @@ export interface FormRendererClasses {
   fieldCheckbox?: string;
   fieldRadio?: string;
   fieldDate?: string;
+  fieldSlider?: string;
   fieldText?: string;
   fieldError?: string;
   fieldHelperText?: string;

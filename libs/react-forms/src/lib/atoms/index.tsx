@@ -5,6 +5,8 @@ export * from './form-input-field';
 export * from './form-radio-field';
 export * from './form-select-field';
 export * from './form-section-field';
+export * from './form-slider-range-field';
+export * from './form-expression-field';
 export * from './form-textarea-field';
 export * from './form-text-field';
 export * from './language-selector';

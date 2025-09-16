@@ -10,6 +10,96 @@ export interface ReadyMadeForm {
 
 export const READY_MADE_FORMS: ReadyMadeForm[] = [
   {
+    name: 'Simple Slider Test',
+    description:
+      'Very simple form with 2 sliders and an expression that adds them together',
+    prompt:
+      'Create a simple form with 2 sliders and a readonly field that shows their sum',
+    json: {
+      app: {
+        title: 'Simple Slider Test',
+        version: '1.0.0',
+        language: 'en',
+        theme: 'default',
+        settings: {
+          showProgressBar: true,
+          showStepNumbers: true,
+          allowBackNavigation: true,
+          submitButtonText: 'Submit',
+          nextButtonText: 'Next',
+          previousButtonText: 'Previous',
+          showRestartButton: true,
+          restartButtonText: 'Restart',
+        },
+        pages: [
+          {
+            id: 'page1',
+            title: 'Slider Addition Test',
+            route: '/slider-test',
+            components: [
+              {
+                id: 'slider1',
+                type: 'slider-range',
+                label: 'First Number',
+                props: {
+                  min: 0,
+                  max: 100,
+                  step: 1,
+                  showLabels: true,
+                  showValue: true,
+                  mode: 'single',
+                  helperText: 'Move this slider to change the first number',
+                },
+                validation: {
+                  required: true,
+                },
+              },
+              {
+                id: 'slider2',
+                type: 'slider-range',
+                label: 'Second Number',
+                props: {
+                  min: 0,
+                  max: 100,
+                  step: 1,
+                  showLabels: true,
+                  showValue: true,
+                  mode: 'single',
+                  helperText: 'Move this slider to change the second number',
+                },
+                validation: {
+                  required: true,
+                },
+              },
+              {
+                id: 'sum',
+                type: 'input',
+                label: 'Sum (Readonly)',
+                props: {
+                  inputType: 'number',
+                  readOnly: true,
+                  helperText:
+                    'This field shows the sum of the two sliders above',
+                },
+                expression: {
+                  expression: 'slider1 + slider2',
+                  mode: 'value',
+                  dependencies: ['slider1', 'slider2'],
+                  evaluateOnChange: true,
+                },
+              },
+            ],
+          },
+        ],
+        thankYouPage: {
+          title: 'Test Complete!',
+          message: 'Thank you for testing the simple slider addition form.',
+          showRestartButton: true,
+        },
+      },
+    },
+  },
+  {
     name: 'Multi-Language Contact Form',
     description:
       'Simple contact form with Dutch, English, and Swedish language support',
@@ -2326,6 +2416,452 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
               className: 'bg-green-600 text-white hover:bg-green-700',
             },
           ],
+        },
+      },
+    },
+  },
+  {
+    name: 'Dynamic Calculator with Sliders',
+    description:
+      'Interactive calculator with sliders and real-time expressions for testing slider-range and expression engine',
+    prompt:
+      'Create a dynamic calculator form with sliders for price, quantity, tax rate, and discount, with real-time calculations using expressions',
+    json: {
+      app: {
+        title: 'Dynamic Calculator with Sliders',
+        pages: [
+          {
+            id: 'calculator-page',
+            title: 'Dynamic Calculator',
+            route: '/calculator',
+            layout: 'vertical',
+            components: [
+              {
+                id: 'intro-text',
+                type: 'text',
+                label: 'Welcome to the Dynamic Calculator',
+                props: {
+                  helperText:
+                    'Use the sliders below to adjust values and see real-time calculations. This form demonstrates slider-range components and expression engine functionality.',
+                },
+              },
+              {
+                id: 'price',
+                type: 'slider-range',
+                label: 'Product Price',
+                props: {
+                  min: 0,
+                  max: 1000,
+                  step: 10,
+                  showLabels: true,
+                  showValue: true,
+                  mode: 'single',
+                  helperText: 'Adjust the product price using the slider',
+                },
+                validation: {
+                  required: true,
+                  min: 10,
+                  max: 1000,
+                },
+              },
+              {
+                id: 'quantity',
+                type: 'slider-range',
+                label: 'Quantity',
+                props: {
+                  min: 1,
+                  max: 100,
+                  step: 1,
+                  showLabels: true,
+                  showValue: true,
+                  mode: 'single',
+                  helperText: 'Select the quantity you want to purchase',
+                },
+                validation: {
+                  required: true,
+                  min: 1,
+                  max: 100,
+                },
+              },
+              {
+                id: 'subtotal',
+                type: 'input',
+                label: 'Subtotal',
+                props: {
+                  inputType: 'number',
+                  readOnly: true,
+                  helperText: 'Automatically calculated: Price × Quantity',
+                },
+                expression: {
+                  expression: 'price * quantity',
+                  mode: 'value',
+                  dependencies: ['price', 'quantity'],
+                  evaluateOnChange: true,
+                },
+                validation: {
+                  required: true,
+                },
+              },
+              {
+                id: 'taxRate',
+                type: 'slider-range',
+                label: 'Tax Rate (%)',
+                props: {
+                  min: 0,
+                  max: 25,
+                  step: 0.5,
+                  showLabels: true,
+                  showValue: true,
+                  mode: 'single',
+                  helperText: 'Set the tax rate percentage',
+                },
+                validation: {
+                  required: true,
+                  min: 0,
+                  max: 25,
+                },
+              },
+              {
+                id: 'taxAmount',
+                type: 'input',
+                label: 'Tax Amount',
+                props: {
+                  inputType: 'number',
+                  readOnly: true,
+                  helperText: 'Automatically calculated: Subtotal × Tax Rate',
+                },
+                expression: {
+                  expression: 'subtotal * (taxRate / 100)',
+                  mode: 'value',
+                  dependencies: ['subtotal', 'taxRate'],
+                  evaluateOnChange: true,
+                },
+                validation: {
+                  required: true,
+                },
+              },
+              {
+                id: 'discountRange',
+                type: 'slider-range',
+                label: 'Discount Range',
+                props: {
+                  min: 0,
+                  max: 200,
+                  step: 5,
+                  showLabels: true,
+                  showValue: true,
+                  mode: 'range',
+                  helperText:
+                    'Select a discount range (min and max discount amount)',
+                },
+                validation: {
+                  required: true,
+                  minRange: 10,
+                  maxRange: 200,
+                },
+              },
+              {
+                id: 'discountAmount',
+                type: 'input',
+                label: 'Discount Amount',
+                props: {
+                  inputType: 'number',
+                  placeholder: 'Enter discount amount',
+                  helperText:
+                    'Enter a discount amount within the selected range',
+                },
+                validation: {
+                  required: true,
+                  minValueMin: 0,
+                  maxValueMax: 200,
+                },
+              },
+              {
+                id: 'total',
+                type: 'input',
+                label: 'Total Amount',
+                props: {
+                  inputType: 'number',
+                  readOnly: true,
+                  helperText: 'Final total: Subtotal + Tax - Discount',
+                },
+                expression: {
+                  expression: 'subtotal + taxAmount - discountAmount',
+                  mode: 'value',
+                  dependencies: ['subtotal', 'taxAmount', 'discountAmount'],
+                  evaluateOnChange: true,
+                },
+                validation: {
+                  required: true,
+                },
+              },
+              {
+                id: 'summary',
+                type: 'textarea',
+                label: 'Order Summary',
+                props: {
+                  readOnly: true,
+                  rows: 4,
+                  helperText: 'Dynamic summary based on your selections',
+                },
+                expression: {
+                  expression: 'total',
+                  mode: 'value',
+                  dependencies: ['total'],
+                  evaluateOnChange: true,
+                },
+              },
+              {
+                id: 'submit-order',
+                type: 'button',
+                label: 'Place Order',
+                props: {
+                  className: 'primary',
+                },
+              },
+            ],
+          },
+        ],
+        thankYouPage: {
+          title: 'Order Placed Successfully!',
+          message:
+            'Thank you for your order. Your dynamic calculation has been processed.',
+          showRestartButton: true,
+        },
+      },
+    },
+  },
+  {
+    name: 'Advanced Expression Demo',
+    description:
+      'Comprehensive form demonstrating various expression modes and complex calculations',
+    prompt:
+      'Create a form that demonstrates all expression modes including value, visibility, validation, disabled, required, label, and helperText with complex calculations',
+    json: {
+      app: {
+        title: 'Advanced Expression Demo',
+        pages: [
+          {
+            id: 'expression-demo',
+            title: 'Expression Engine Demo',
+            route: '/demo',
+            layout: 'vertical',
+            components: [
+              {
+                id: 'intro-text',
+                type: 'text',
+                label: 'Expression Engine Demonstration',
+                props: {
+                  helperText:
+                    'This form demonstrates various expression modes and complex calculations using the expression engine.',
+                },
+              },
+              {
+                id: 'userType',
+                type: 'select',
+                label: 'User Type',
+                props: {
+                  options: [
+                    { label: 'Individual', value: 'individual' },
+                    { label: 'Business', value: 'business' },
+                    { label: 'Non-Profit', value: 'nonprofit' },
+                  ],
+                  helperText:
+                    'Select your user type to see dynamic form behavior',
+                },
+                validation: {
+                  required: true,
+                },
+              },
+              {
+                id: 'age',
+                type: 'slider-range',
+                label: 'Age',
+                props: {
+                  min: 18,
+                  max: 100,
+                  step: 1,
+                  showLabels: true,
+                  showValue: true,
+                  mode: 'single',
+                  helperText: 'Your age affects available options',
+                },
+                validation: {
+                  required: true,
+                  min: 18,
+                  max: 100,
+                },
+              },
+              {
+                id: 'ageStatus',
+                type: 'input',
+                label: 'Age Status',
+                props: {
+                  readOnly: true,
+                  helperText: 'Dynamic age category based on your age',
+                },
+                expression: {
+                  expression: 'age < 25 ? 1 : age < 65 ? 2 : 3',
+                  mode: 'value',
+                  dependencies: ['age'],
+                  evaluateOnChange: true,
+                },
+              },
+              {
+                id: 'discountCode',
+                type: 'input',
+                label: 'Discount Code',
+                props: {
+                  placeholder: 'Enter discount code',
+                  helperText: 'This field is only visible for business users',
+                },
+                expression: {
+                  expression: 'userType === "business"',
+                  mode: 'visibility',
+                  dependencies: ['userType'],
+                  evaluateOnChange: true,
+                },
+                validation: {
+                  required: false,
+                },
+              },
+              {
+                id: 'discountHelper',
+                type: 'text',
+                label: 'Discount Information',
+                props: {
+                  helperText: 'Dynamic helper text based on user type',
+                },
+                expression: {
+                  expression:
+                    'userType === "business" ? 1 : userType === "nonprofit" ? 2 : 3',
+                  mode: 'helperText',
+                  dependencies: ['userType'],
+                  evaluateOnChange: true,
+                },
+              },
+              {
+                id: 'email',
+                type: 'input',
+                label: 'Email Address',
+                props: {
+                  inputType: 'email',
+                  placeholder: 'Enter your email',
+                  helperText: 'Email validation changes based on user type',
+                },
+                expression: {
+                  expression: 'userType === "business" ? 1 : 0',
+                  mode: 'helperText',
+                  dependencies: ['userType'],
+                  evaluateOnChange: true,
+                },
+                validation: {
+                  required: true,
+                  pattern: '^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$',
+                },
+              },
+              {
+                id: 'phone',
+                type: 'input',
+                label: 'Phone Number',
+                props: {
+                  inputType: 'tel',
+                  placeholder: 'Enter your phone number',
+                  helperText: 'Phone field is required for business users',
+                },
+                expression: {
+                  expression: 'userType === "business"',
+                  mode: 'required',
+                  dependencies: ['userType'],
+                  evaluateOnChange: true,
+                },
+                validation: {
+                  required: false,
+                  pattern: '^\\+?[0-9\\-\\s]{7,15}$',
+                },
+              },
+              {
+                id: 'newsletter',
+                type: 'checkbox',
+                label: 'Subscribe to Newsletter',
+                props: {
+                  helperText:
+                    'Newsletter subscription is disabled for non-profit users',
+                },
+                expression: {
+                  expression: 'userType !== "nonprofit"',
+                  mode: 'disabled',
+                  dependencies: ['userType'],
+                  evaluateOnChange: true,
+                },
+              },
+              {
+                id: 'terms',
+                type: 'checkbox',
+                label: 'Terms and Conditions',
+                props: {
+                  helperText: 'Dynamic label based on user type',
+                },
+                expression: {
+                  expression:
+                    'userType === "business" ? 1 : userType === "nonprofit" ? 2 : 3',
+                  mode: 'label',
+                  dependencies: ['userType'],
+                  evaluateOnChange: true,
+                },
+                validation: {
+                  required: true,
+                },
+              },
+              {
+                id: 'complexCalculation',
+                type: 'input',
+                label: 'Complex Calculation Result',
+                props: {
+                  readOnly: true,
+                  helperText:
+                    'Complex calculation using multiple fields and Math functions',
+                },
+                expression: {
+                  expression:
+                    'Math.round((age * 2.5 + (userType === "business" ? 100 : userType === "nonprofit" ? 50 : 0)) * 1.1)',
+                  mode: 'value',
+                  dependencies: ['age', 'userType'],
+                  evaluateOnChange: true,
+                },
+              },
+              {
+                id: 'conditionalMessage',
+                type: 'textarea',
+                label: 'Personalized Message',
+                props: {
+                  readOnly: true,
+                  rows: 3,
+                  helperText: 'Dynamic message based on all form inputs',
+                },
+                expression: {
+                  expression: 'age * 2.5',
+                  mode: 'value',
+                  dependencies: ['age'],
+                  evaluateOnChange: true,
+                },
+              },
+              {
+                id: 'submit-demo',
+                type: 'button',
+                label: 'Submit Demo',
+                props: {
+                  className: 'primary',
+                },
+              },
+            ],
+          },
+        ],
+        thankYouPage: {
+          title: 'Demo Submitted Successfully!',
+          message:
+            'Thank you for testing the advanced expression engine demo. All calculations and dynamic behaviors have been processed.',
+          showRestartButton: true,
         },
       },
     },

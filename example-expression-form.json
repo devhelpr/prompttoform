@@ -1,0 +1,201 @@
+{
+  "app": {
+    "title": "Expression Engine Demo",
+    "pages": [
+      {
+        "id": "calculator",
+        "title": "Dynamic Calculator",
+        "components": [
+          {
+            "type": "text",
+            "id": "title",
+            "label": "Dynamic Calculator Demo",
+            "props": {
+              "className": "text-2xl font-bold mb-6"
+            }
+          },
+          {
+            "type": "input",
+            "id": "price",
+            "label": "Price",
+            "props": {
+              "type": "number",
+              "placeholder": "Enter price",
+              "helperText": "Enter the base price"
+            },
+            "validation": {
+              "required": true
+            }
+          },
+          {
+            "type": "input",
+            "id": "quantity",
+            "label": "Quantity",
+            "props": {
+              "type": "number",
+              "placeholder": "Enter quantity",
+              "helperText": "Enter the quantity"
+            },
+            "validation": {
+              "required": true
+            }
+          },
+          {
+            "type": "input",
+            "id": "taxRate",
+            "label": "Tax Rate (%)",
+            "props": {
+              "type": "number",
+              "placeholder": "Enter tax rate",
+              "helperText": "Enter tax rate as percentage (e.g., 10 for 10%)"
+            },
+            "validation": {
+              "required": true
+            }
+          },
+          {
+            "type": "input",
+            "id": "subtotal",
+            "label": "Subtotal",
+            "props": {
+              "type": "number",
+              "readOnly": true,
+              "helperText": "Calculated automatically",
+              "expression": {
+                "expression": "price.value * quantity.value",
+                "mode": "value",
+                "dependencies": ["price", "quantity"]
+              }
+            }
+          },
+          {
+            "type": "input",
+            "id": "tax",
+            "label": "Tax Amount",
+            "props": {
+              "type": "number",
+              "readOnly": true,
+              "helperText": "Calculated automatically",
+              "expression": {
+                "expression": "subtotal.value * (taxRate.value / 100)",
+                "mode": "value",
+                "dependencies": ["subtotal", "taxRate"]
+              }
+            }
+          },
+          {
+            "type": "input",
+            "id": "total",
+            "label": "Total",
+            "props": {
+              "type": "number",
+              "readOnly": true,
+              "helperText": "Calculated automatically",
+              "expression": {
+                "expression": "subtotal.value + tax.value",
+                "mode": "value",
+                "dependencies": ["subtotal", "tax"]
+              }
+            }
+          },
+          {
+            "type": "text",
+            "id": "summary",
+            "label": "Order Summary",
+            "props": {
+              "expression": {
+                "expression": "total.value > 0 ? `Order Total: $${round(total.value * 100) / 100}` : 'Enter values to see total'",
+                "mode": "value",
+                "dependencies": ["total"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "conditional",
+        "title": "Conditional Logic Demo",
+        "components": [
+          {
+            "type": "text",
+            "id": "title2",
+            "label": "Conditional Logic Demo",
+            "props": {
+              "className": "text-2xl font-bold mb-6"
+            }
+          },
+          {
+            "type": "radio",
+            "id": "userType",
+            "label": "User Type",
+            "props": {
+              "options": [
+                { "label": "Student", "value": "student" },
+                { "label": "Professional", "value": "professional" },
+                { "label": "Senior", "value": "senior" }
+              ]
+            },
+            "validation": {
+              "required": true
+            }
+          },
+          {
+            "type": "input",
+            "id": "age",
+            "label": "Age",
+            "props": {
+              "type": "number",
+              "placeholder": "Enter your age",
+              "expression": {
+                "expression": "userType.value === 'senior' ? 'Senior Discount Available' : 'Regular Pricing'",
+                "mode": "helperText",
+                "dependencies": ["userType"]
+              }
+            },
+            "validation": {
+              "required": true
+            }
+          },
+          {
+            "type": "input",
+            "id": "discount",
+            "label": "Discount Code",
+            "props": {
+              "placeholder": "Enter discount code",
+              "expression": {
+                "expression": "userType.value === 'student' || userType.value === 'senior'",
+                "mode": "visibility",
+                "dependencies": ["userType"]
+              }
+            }
+          },
+          {
+            "type": "text",
+            "id": "status",
+            "label": "Status",
+            "props": {
+              "expression": {
+                "expression": "age.value >= 18 ? 'Eligible for all services' : 'Parental consent required'",
+                "mode": "value",
+                "dependencies": ["age"]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "translations": {
+    "en": {
+      "ui": {
+        "nextButton": "Next",
+        "previousButton": "Previous",
+        "submitButton": "Submit",
+        "stepIndicator": "Step {currentStep} of {totalSteps}",
+        "multiPageInfo": "This form has {pageCount} pages"
+      }
+    }
+  },
+  "defaultLanguage": "en",
+  "supportedLanguages": ["en"]
+}

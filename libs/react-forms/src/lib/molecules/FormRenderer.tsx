@@ -15,7 +15,9 @@ import {
   FormDateField,
   FormSectionField,
   FormConfirmationField,
+  FormSliderRangeField,
 } from '../atoms';
+import { ExpressionContextProvider } from '../contexts/expression-context';
 import {
   FormRendererProps,
   FormValues,
@@ -46,6 +48,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
   );
+  const [validation, setValidation] = useState<Record<string, boolean>>({});
+  const [required, setRequired] = useState<Record<string, boolean>>({});
   const [blurredFields, setBlurredFields] = useState<Record<string, boolean>>(
     {}
   );
@@ -60,6 +64,67 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   >({});
   const [showThankYouPage, setShowThankYouPage] = useState(false);
   const initialEventTriggeredRef = useRef(false);
+
+  // Initialize form values with default values for all fields
+  useEffect(() => {
+    if (!formJson) {
+      return;
+    }
+
+    const initialValues: FormValues = {};
+
+    const initializeFieldValues = (components: FormComponentFieldProps[]) => {
+      components.forEach((component) => {
+        if (component.id) {
+          // Initialize based on component type
+          switch (component.type) {
+            case 'slider-range':
+              if (component.props?.mode === 'range') {
+                initialValues[component.id] = {
+                  min: component.props?.min ?? 0,
+                  max: component.props?.max ?? 100,
+                };
+              } else {
+                initialValues[component.id] = component.props?.min ?? 0;
+              }
+              break;
+            case 'input':
+            case 'textarea':
+              initialValues[component.id] = '';
+              break;
+            case 'select':
+            case 'radio':
+              initialValues[component.id] = '';
+              break;
+            case 'checkbox':
+              initialValues[component.id] = false;
+              break;
+            case 'date':
+              initialValues[component.id] = '';
+              break;
+            default:
+              initialValues[component.id] = null;
+          }
+        }
+
+        // Recursively initialize children
+        if (component.children) {
+          initializeFieldValues(component.children);
+        }
+      });
+    };
+
+    // Initialize values for all pages - with null checks
+    if (formJson?.app?.pages && Array.isArray(formJson.app.pages)) {
+      formJson.app.pages.forEach((page) => {
+        if (page.components) {
+          initializeFieldValues(page.components);
+        }
+      });
+    }
+
+    setFormValues(initialValues);
+  }, [formJson]);
 
   // Initialize translation service
   const translationService = useMemo(() => {
@@ -412,6 +477,92 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 message: getErrorMessage(component, 'pattern'),
               });
             }
+          } else if (component.type === 'slider-range') {
+            const rangeValue = value as { min: number; max: number };
+
+            if (
+              rangeValue &&
+              typeof rangeValue === 'object' &&
+              'min' in rangeValue &&
+              'max' in rangeValue
+            ) {
+              // Validate range span
+              const rangeSpan = rangeValue.max - rangeValue.min;
+
+              if (
+                component.validation?.minRange &&
+                rangeSpan < component.validation.minRange
+              ) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'minRange', {
+                    minRange: component.validation.minRange,
+                  }),
+                });
+              }
+
+              if (
+                component.validation?.maxRange &&
+                rangeSpan > component.validation.maxRange
+              ) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'maxRange', {
+                    maxRange: component.validation.maxRange,
+                  }),
+                });
+              }
+
+              // Validate minimum value constraints
+              if (
+                component.validation?.minValueMin !== undefined &&
+                rangeValue.min < component.validation.minValueMin
+              ) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'minValueMin', {
+                    minValueMin: component.validation.minValueMin,
+                  }),
+                });
+              }
+
+              if (
+                component.validation?.minValueMax !== undefined &&
+                rangeValue.min > component.validation.minValueMax
+              ) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'minValueMax', {
+                    minValueMax: component.validation.minValueMax,
+                  }),
+                });
+              }
+
+              // Validate maximum value constraints
+              if (
+                component.validation?.maxValueMin !== undefined &&
+                rangeValue.max < component.validation.maxValueMin
+              ) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'maxValueMin', {
+                    maxValueMin: component.validation.maxValueMin,
+                  }),
+                });
+              }
+
+              if (
+                component.validation?.maxValueMax !== undefined &&
+                rangeValue.max > component.validation.maxValueMax
+              ) {
+                errors.push({
+                  fieldId,
+                  message: getErrorMessage(component, 'maxValueMax', {
+                    maxValueMax: component.validation.maxValueMax,
+                  }),
+                });
+              }
+            }
           }
         }
 
@@ -421,7 +572,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   );
 
   const validateForm = useCallback(() => {
-    if (!formJson || !formJson.app) return true;
+    if (
+      !formJson ||
+      !formJson.app ||
+      !formJson.app.pages ||
+      !Array.isArray(formJson.app.pages)
+    )
+      return true;
 
     const currentPage = formJson.app.pages[currentStepIndex];
     if (!currentPage || !currentPage.components) return true;
@@ -458,8 +615,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [formJson, currentStepIndex, formValues, validateComponent]);
 
   useEffect(() => {
-    validateForm();
-  }, [validateForm]);
+    // Only validate if we have form values initialized AND the user has interacted with the form
+    if (
+      Object.keys(formValues).length > 0 &&
+      (isSubmitted || Object.keys(blurredFields).length > 0)
+    ) {
+      validateForm();
+    }
+  }, [validateForm, formValues, isSubmitted, blurredFields]);
 
   // Update translation service language when settings change
   useEffect(() => {
@@ -564,6 +727,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   };
 
   const getNextPage = useCallback((): string | null => {
+    if (!formJson?.app?.pages || !Array.isArray(formJson.app.pages))
+      return null;
     const currentPage = formJson.app.pages[currentStepIndex];
     if (!currentPage) return null;
 
@@ -737,7 +902,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   const getCurrentStep = (): { currentStep: number; totalSteps: number } => {
     // Use the state value instead of hardcoding
-    const totalSteps = formJson.app.pages?.length || 0;
+    const totalSteps = formJson?.app?.pages?.length || 0;
     const currentStep = currentStepIndex + 1; // Convert to 1-indexed for display
 
     return { currentStep, totalSteps };
@@ -796,7 +961,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       return null;
     }
 
-    const currentPage = formJson.app.pages[currentStep - 1];
+    const currentPage = formJson?.app?.pages?.[currentStep - 1];
     const isEndPage = currentPage && currentPage.isEndPage === true;
     const isConfirmationPage =
       currentPage && currentPage.isConfirmationPage === true;
@@ -811,7 +976,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       // Check if next page is a confirmation page
       const nextPageIndex = currentStep;
       if (nextPageIndex < totalSteps) {
-        const nextPage = formJson.app.pages[nextPageIndex];
+        const nextPage = formJson?.app?.pages?.[nextPageIndex];
         if (nextPage && nextPage.isConfirmationPage) {
           nextButtonText = translationService.translateUI(
             'reviewConfirmButton'
@@ -857,7 +1022,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   };
 
   const renderMultiStepForm = (): React.ReactElement => {
-    if (!formJson.app.pages || formJson.app.pages.length === 0) {
+    if (
+      !formJson?.app?.pages ||
+      !Array.isArray(formJson.app.pages) ||
+      formJson.app.pages.length === 0
+    ) {
       return (
         <div className="p-4 text-red-500">
           {translationService.translateUI('noPagesDefined')}
@@ -926,28 +1095,64 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     if (!formJson?.app?.pages) return [];
 
     const allComponents: FormComponentFieldProps[] = [];
+    const processedIds = new Set<string>();
 
-    const extractComponents = (components: FormComponentFieldProps[]) => {
+    // Define field types that should be included in the summary
+    const fieldTypes = [
+      'input',
+      'textarea',
+      'select',
+      'checkbox',
+      'radio',
+      'slider-range',
+      'date',
+      'time',
+      'number',
+    ];
+
+    const extractComponents = (
+      components: FormComponentFieldProps[],
+      parentPath = ''
+    ) => {
       components.forEach((component) => {
-        allComponents.push(component);
+        const currentPath = parentPath
+          ? `${parentPath}.${component.id}`
+          : component.id;
+
+        // Skip confirmation components to avoid self-reference
+        if (component.type !== 'confirmation') {
+          // Only add field components (not containers, buttons, etc.)
+          if (fieldTypes.includes(component.type)) {
+            // Only add if we haven't processed this component ID before
+            if (!processedIds.has(component.id)) {
+              // Create a copy of the component with the full path
+              const componentWithPath = { ...component, fullPath: currentPath };
+              allComponents.push(componentWithPath);
+              processedIds.add(component.id);
+            }
+          }
+        }
         if (component.children) {
-          extractComponents(component.children);
+          extractComponents(component.children, currentPath);
         }
         if (component.arrayItems) {
           component.arrayItems.forEach((arrayItem) => {
             if (arrayItem.components) {
-              extractComponents(arrayItem.components);
+              extractComponents(arrayItem.components, currentPath);
             }
           });
         }
       });
     };
 
-    formJson.app.pages.forEach((page) => {
-      if (page.components) {
-        extractComponents(page.components);
-      }
-    });
+    if (formJson?.app?.pages && Array.isArray(formJson.app.pages)) {
+      formJson.app.pages.forEach((page) => {
+        // Skip confirmation pages to avoid including confirmation components
+        if (!page.isConfirmationPage && page.components) {
+          extractComponents(page.components);
+        }
+      });
+    }
 
     return allComponents;
   };
@@ -1118,6 +1323,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       );
       const translatedProps: any = {
         ...props,
+        // Include expression if it exists on the component
+        ...(component.expression && { expression: component.expression }),
       };
 
       // Only include placeholder if it exists in the original props
@@ -1196,19 +1403,33 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           );
 
         case 'input':
+          // Debug: log the expression for input fields
+          if (id === 'sum') {
+            console.log('🔍 FormRenderer input field (sum):', {
+              translatedProps,
+              expression: translatedProps?.expression,
+              fieldId: id,
+              originalComponent: component,
+              originalExpression: component.expression,
+              originalProps: component.props,
+            });
+          }
           return (
             <FormInputField
               fieldId={prefixedFieldId}
               label={translatedLabel}
               value={
-                typeof formValues[id] === 'string'
-                  ? (formValues[id] as string)
+                typeof formValues[fieldId] === 'string'
+                  ? (formValues[fieldId] as string)
                   : ''
               }
-              onChange={(value) => handleInputChange(id, value)}
-              onBlur={() => handleBlur(id)}
+              onChange={(value) => handleInputChange(fieldId, value)}
+              onBlur={() => handleBlur(fieldId)}
               validation={translatedValidation}
-              props={processPropsWithTemplates(translatedProps)}
+              expression={translatedProps?.expression}
+              props={{
+                ...processPropsWithTemplates(translatedProps),
+              }}
               showError={showError}
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
@@ -1228,14 +1449,17 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               fieldId={prefixedFieldId}
               label={translatedLabel}
               value={
-                typeof formValues[id] === 'string'
-                  ? (formValues[id] as string)
+                typeof formValues[fieldId] === 'string'
+                  ? (formValues[fieldId] as string)
                   : ''
               }
-              onChange={(value) => handleInputChange(id, value)}
-              onBlur={() => handleBlur(id)}
+              onChange={(value) => handleInputChange(fieldId, value)}
+              onBlur={() => handleBlur(fieldId)}
               validation={translatedValidation}
-              props={processPropsWithTemplates(translatedProps)}
+              expression={translatedProps?.expression}
+              props={{
+                ...processPropsWithTemplates(translatedProps),
+              }}
               showError={showError}
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
@@ -1255,11 +1479,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               fieldId={prefixedFieldId}
               label={translatedLabel}
               value={
-                typeof formValues[id] === 'string'
-                  ? (formValues[id] as string)
+                typeof formValues[fieldId] === 'string'
+                  ? (formValues[fieldId] as string)
                   : ''
               }
-              onChange={(value) => handleInputChange(id, value)}
+              onChange={(value) => handleInputChange(fieldId, value)}
               validation={translatedValidation}
               props={processPropsWithTemplates(translatedProps)}
               showError={showError}
@@ -1280,9 +1504,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             <FormCheckboxField
               fieldId={prefixedFieldId}
               label={translatedLabel}
-              value={formValues[id] as boolean | string[]}
-              onChange={(value) => handleInputChange(id, value)}
-              onBlur={() => handleBlur(id)}
+              value={formValues[fieldId] as boolean | string[]}
+              onChange={(value) => handleInputChange(fieldId, value)}
+              onBlur={() => handleBlur(fieldId)}
               validation={translatedValidation}
               props={processPropsWithTemplates(translatedProps)}
               showError={showError}
@@ -1304,12 +1528,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               fieldId={prefixedFieldId}
               label={translatedLabel}
               value={
-                typeof formValues[id] === 'string'
-                  ? (formValues[id] as string)
+                typeof formValues[fieldId] === 'string'
+                  ? (formValues[fieldId] as string)
                   : ''
               }
-              onChange={(value) => handleInputChange(id, value)}
-              onBlur={() => handleBlur(id)}
+              onChange={(value) => handleInputChange(fieldId, value)}
+              onBlur={() => handleBlur(fieldId)}
               validation={translatedValidation}
               props={processPropsWithTemplates(translatedProps)}
               showError={showError}
@@ -1331,12 +1555,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               fieldId={prefixedFieldId}
               label={translatedLabel}
               value={
-                typeof formValues[id] === 'string'
-                  ? (formValues[id] as string)
+                typeof formValues[fieldId] === 'string'
+                  ? (formValues[fieldId] as string)
                   : ''
               }
-              onChange={(value) => handleInputChange(id, value)}
-              onBlur={() => handleBlur(id)}
+              onChange={(value) => handleInputChange(fieldId, value)}
+              onBlur={() => handleBlur(fieldId)}
               validation={translatedValidation}
               props={processPropsWithTemplates(translatedProps)}
               showError={showError}
@@ -1484,6 +1708,41 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               formValues={formValues}
               formComponents={getAllFormComponents()}
               props={processPropsWithTemplates(props)}
+            />
+          );
+
+        case 'slider-range':
+          return (
+            <FormSliderRangeField
+              fieldId={prefixedFieldId}
+              label={translatedLabel}
+              value={
+                formValues[fieldId] !== undefined &&
+                formValues[fieldId] !== null
+                  ? (formValues[fieldId] as
+                      | number
+                      | { min: number; max: number })
+                  : props?.mode === 'range'
+                  ? { min: props?.min ?? 0, max: props?.max ?? 100 }
+                  : props?.min ?? 0
+              }
+              onChange={(value) => handleInputChange(fieldId, value)}
+              onBlur={() => handleBlur(fieldId)}
+              validation={translatedValidation}
+              expression={translatedProps?.expression}
+              props={{
+                ...processPropsWithTemplates(translatedProps),
+              }}
+              showError={showError}
+              validationErrors={validationErrors[fieldId] || []}
+              disabled={disabled}
+              classes={{
+                field: settings.classes?.field,
+                fieldLabel: settings.classes?.fieldLabel,
+                fieldSlider: settings.classes?.fieldSlider,
+                fieldError: settings.classes?.fieldError,
+                fieldHelperText: settings.classes?.fieldHelperText,
+              }}
             />
           );
 
@@ -1792,78 +2051,96 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [settings.theme]);
 
   return (
-    <div
-      className={getClassNames('w-full', settings.classes?.container)}
-      style={themeStyles}
+    <ExpressionContextProvider
+      formValues={formValues}
+      validation={validation}
+      required={required}
+      errors={Object.fromEntries(
+        Object.entries(validationErrors).map(([key, value]) => [
+          key,
+          Array.isArray(value) ? value.join(', ') : value,
+        ])
+      )}
+      metadata={{
+        currentStep: getCurrentStep().currentStep,
+        totalSteps: getCurrentStep().totalSteps,
+        isSubmitted,
+        disabled,
+      }}
     >
-      {/* Check for invalid form data */}
-      {!formJson || !formJson.app ? (
-        <div className="p-4 text-red-500">
-          {translationService.translateUI('invalidFormData')}
-        </div>
-      ) : showThankYouPage ? (
-        renderThankYouPage()
-      ) : (
-        <>
-          <div
-            className={getClassNames(
-              'mb-4 bg-indigo-50 p-4 rounded-md',
-              settings.classes?.header
-            )}
-          >
-            <h1
+      <div
+        className={getClassNames('w-full', settings.classes?.container)}
+        style={themeStyles}
+      >
+        {/* Check for invalid form data */}
+        {!formJson || !formJson.app ? (
+          <div className="p-4 text-red-500">
+            {translationService.translateUI('invalidFormData')}
+          </div>
+        ) : showThankYouPage ? (
+          renderThankYouPage()
+        ) : (
+          <>
+            <div
               className={getClassNames(
-                'text-2xl font-bold text-indigo-700',
+                'mb-4 bg-indigo-50 p-4 rounded-md',
                 settings.classes?.header
               )}
             >
-              {translationService.translateApp('title', formJson.app.title)}
-            </h1>
-            {Array.isArray(formJson.app.pages) &&
-              formJson.app.pages.length > 1 &&
-              !disabled && (
-                <div
-                  className={getClassNames(
-                    'mt-2 text-sm text-indigo-500',
-                    settings.classes?.header
-                  )}
-                >
-                  {translationService.translateUI('multiPageInfo', {
-                    pageCount: formJson.app.pages.length,
-                  })}
-                </div>
-              )}
-          </div>
-
-          <div className="space-y-8">{renderMultiStepForm()}</div>
-
-          {hasSubmissions && !disabled && settings.showFormSubmissions && (
-            <div
-              className={getClassNames(
-                'mt-8 border-t pt-6',
-                settings.classes?.submissionsContainer
-              )}
-            >
-              <h3
+              <h1
                 className={getClassNames(
-                  'text-lg font-medium mb-4',
-                  settings.classes?.submissionsTitle
+                  'text-2xl font-bold text-indigo-700',
+                  settings.classes?.header
                 )}
               >
-                {translationService.translateUI('submissionsTitle')}
-              </h3>
+                {translationService.translateApp('title', formJson.app.title)}
+              </h1>
+              {Array.isArray(formJson.app.pages) &&
+                formJson.app.pages.length > 1 &&
+                !disabled && (
+                  <div
+                    className={getClassNames(
+                      'mt-2 text-sm text-indigo-500',
+                      settings.classes?.header
+                    )}
+                  >
+                    {translationService.translateUI('multiPageInfo', {
+                      pageCount: formJson.app.pages.length,
+                    })}
+                  </div>
+                )}
+            </div>
+
+            <div className="space-y-8">{renderMultiStepForm()}</div>
+
+            {hasSubmissions && !disabled && settings.showFormSubmissions && (
               <div
                 className={getClassNames(
-                  'bg-gray-50 p-4 rounded-md',
-                  settings.classes?.submissionsData
+                  'mt-8 border-t pt-6',
+                  settings.classes?.submissionsContainer
                 )}
               >
-                {renderSubmissionData()}
+                <h3
+                  className={getClassNames(
+                    'text-lg font-medium mb-4',
+                    settings.classes?.submissionsTitle
+                  )}
+                >
+                  {translationService.translateUI('submissionsTitle')}
+                </h3>
+                <div
+                  className={getClassNames(
+                    'bg-gray-50 p-4 rounded-md',
+                    settings.classes?.submissionsData
+                  )}
+                >
+                  {renderSubmissionData()}
+                </div>
               </div>
-            </div>
-          )}
-        </>
-      )}
-    </div>
+            )}
+          </>
+        )}
+      </div>
+    </ExpressionContextProvider>
   );
 };

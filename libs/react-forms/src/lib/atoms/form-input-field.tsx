@@ -1,6 +1,8 @@
 import React from 'react';
 import { HTMLInputTypeAttribute } from 'react';
 import { getClassNames } from '../utils/class-utils';
+import { withExpression } from '../hoc/with-expression';
+import { ExpressionConfig } from '../interfaces/expression-interfaces';
 
 interface FormInputFieldProps {
   fieldId: string;
@@ -13,9 +15,13 @@ interface FormInputFieldProps {
   };
   props?: {
     type?: string;
+    inputType?: string;
     min?: number;
     max?: number;
+    readOnly?: boolean;
+    placeholder?: string;
     helperText?: string;
+    expression?: ExpressionConfig;
   };
   showError: boolean;
   validationErrors: string[];
@@ -29,7 +35,7 @@ interface FormInputFieldProps {
   };
 }
 
-export const FormInputField: React.FC<FormInputFieldProps> = ({
+const FormInputFieldBase: React.FC<FormInputFieldProps> = ({
   fieldId,
   label,
   value,
@@ -68,23 +74,31 @@ export const FormInputField: React.FC<FormInputFieldProps> = ({
       </label>
       <input
         id={fieldId}
-        type={(props?.type as HTMLInputTypeAttribute) || 'text'}
+        type={
+          (props?.inputType as HTMLInputTypeAttribute) ||
+          (props?.type as HTMLInputTypeAttribute) ||
+          'text'
+        }
         className={getClassNames(
           `w-full p-2 border ${
             showError ? 'border-red-500' : 'border-gray-300'
-          } rounded-md ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`,
+          } rounded-md ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''} ${
+            props?.readOnly ? 'bg-gray-50 cursor-not-allowed' : ''
+          }`,
           classes?.fieldInput
         )}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
+        readOnly={props?.readOnly}
+        disabled={disabled}
+        placeholder={props?.placeholder}
         required={!!validation?.required}
         aria-required={!!validation?.required}
         aria-invalid={showError}
         aria-describedby={describedBy}
-        min={props?.type === 'number' ? props.min : undefined}
-        max={props?.type === 'number' ? props.max : undefined}
-        disabled={disabled}
+        min={props?.inputType === 'number' ? props.min : undefined}
+        max={props?.inputType === 'number' ? props.max : undefined}
       />
       {showError && (
         <div
@@ -117,3 +131,5 @@ export const FormInputField: React.FC<FormInputFieldProps> = ({
     </div>
   );
 };
+
+export const FormInputField = withExpression(FormInputFieldBase);

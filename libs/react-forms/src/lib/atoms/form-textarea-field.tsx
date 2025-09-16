@@ -1,5 +1,7 @@
 import React from 'react';
 import { getClassNames } from '../utils/class-utils';
+import { withExpression } from '../hoc/with-expression';
+import { ExpressionConfig } from '../interfaces/expression-interfaces';
 
 interface FormTextareaFieldProps {
   fieldId: string;
@@ -13,6 +15,7 @@ interface FormTextareaFieldProps {
   props?: {
     rows?: number;
     helperText?: string;
+    expression?: ExpressionConfig;
   };
   showError: boolean;
   validationErrors: string[];
@@ -26,7 +29,7 @@ interface FormTextareaFieldProps {
   };
 }
 
-export const FormTextareaField: React.FC<FormTextareaFieldProps> = ({
+const FormTextareaFieldBase: React.FC<FormTextareaFieldProps> = ({
   fieldId,
   label,
   value,
@@ -112,3 +115,5 @@ export const FormTextareaField: React.FC<FormTextareaFieldProps> = ({
     </div>
   );
 };
+
+export const FormTextareaField = withExpression(FormTextareaFieldBase);
