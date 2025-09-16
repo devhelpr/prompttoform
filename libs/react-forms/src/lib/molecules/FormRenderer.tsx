@@ -1095,17 +1095,50 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     if (!formJson?.app?.pages) return [];
 
     const allComponents: FormComponentFieldProps[] = [];
+    const processedIds = new Set<string>();
 
-    const extractComponents = (components: FormComponentFieldProps[]) => {
+    // Define field types that should be included in the summary
+    const fieldTypes = [
+      'input',
+      'textarea',
+      'select',
+      'checkbox',
+      'radio',
+      'slider-range',
+      'date',
+      'time',
+      'number',
+    ];
+
+    const extractComponents = (
+      components: FormComponentFieldProps[],
+      parentPath = ''
+    ) => {
       components.forEach((component) => {
-        allComponents.push(component);
+        const currentPath = parentPath
+          ? `${parentPath}.${component.id}`
+          : component.id;
+
+        // Skip confirmation components to avoid self-reference
+        if (component.type !== 'confirmation') {
+          // Only add field components (not containers, buttons, etc.)
+          if (fieldTypes.includes(component.type)) {
+            // Only add if we haven't processed this component ID before
+            if (!processedIds.has(component.id)) {
+              // Create a copy of the component with the full path
+              const componentWithPath = { ...component, fullPath: currentPath };
+              allComponents.push(componentWithPath);
+              processedIds.add(component.id);
+            }
+          }
+        }
         if (component.children) {
-          extractComponents(component.children);
+          extractComponents(component.children, currentPath);
         }
         if (component.arrayItems) {
           component.arrayItems.forEach((arrayItem) => {
             if (arrayItem.components) {
-              extractComponents(arrayItem.components);
+              extractComponents(arrayItem.components, currentPath);
             }
           });
         }
@@ -1114,7 +1147,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     if (formJson?.app?.pages && Array.isArray(formJson.app.pages)) {
       formJson.app.pages.forEach((page) => {
-        if (page.components) {
+        // Skip confirmation pages to avoid including confirmation components
+        if (!page.isConfirmationPage && page.components) {
           extractComponents(page.components);
         }
       });

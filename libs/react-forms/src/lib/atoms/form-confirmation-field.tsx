@@ -207,9 +207,10 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
     }> = [];
 
     components.forEach((component) => {
-      const currentPath = parentPath
-        ? `${parentPath}.${component.id}`
-        : component.id;
+      // Use fullPath if available (from getAllFormComponents), otherwise construct it
+      const currentPath =
+        (component as any).fullPath ||
+        (parentPath ? `${parentPath}.${component.id}` : component.id);
 
       // Skip excluded fields
       if (
