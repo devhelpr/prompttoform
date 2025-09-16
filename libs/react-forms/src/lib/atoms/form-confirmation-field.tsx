@@ -242,13 +242,13 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
         result.push(...formValues);
       } else if (component.type === 'array') {
         // Handle array fields
-        const arrayValue = values[component.id];
+        const arrayValue = values[currentPath];
         if (arrayValue !== undefined) {
           result.push({ component, value: arrayValue, path: currentPath });
         }
       } else {
         // Handle regular input fields
-        const value = values[component.id];
+        const value = values[currentPath];
         if (value !== undefined) {
           result.push({ component, value, path: currentPath });
         }
