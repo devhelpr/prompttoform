@@ -82,7 +82,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                     'This field shows the sum of the two sliders above',
                 },
                 expression: {
-                  expression: 'slider1 + slider2',
+                  expression: 'slider1.value + slider2.value',
                   mode: 'value',
                   dependencies: ['slider1', 'slider2'],
                   evaluateOnChange: true,
@@ -2701,7 +2701,8 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                   helperText: 'Dynamic age category based on your age',
                 },
                 expression: {
-                  expression: 'age < 25 ? 1 : age < 65 ? 2 : 3',
+                  expression:
+                    'age.value < 25 ? "Young Adult" : age.value < 65 ? "Adult" : "Senior"',
                   mode: 'value',
                   dependencies: ['age'],
                   evaluateOnChange: true,
@@ -2716,7 +2717,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                   helperText: 'This field is only visible for business users',
                 },
                 expression: {
-                  expression: 'userType === "business"',
+                  expression: 'userType.value == "business"',
                   mode: 'visibility',
                   dependencies: ['userType'],
                   evaluateOnChange: true,
@@ -2734,7 +2735,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                 },
                 expression: {
                   expression:
-                    'userType === "business" ? 1 : userType === "nonprofit" ? 2 : 3',
+                    'userType.value == "business" ? "Business users get 10% discount" : userType.value == "nonprofit" ? "Non-profit users get 15% discount" : "Individual users get standard pricing"',
                   mode: 'helperText',
                   dependencies: ['userType'],
                   evaluateOnChange: true,
@@ -2750,7 +2751,8 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                   helperText: 'Email validation changes based on user type',
                 },
                 expression: {
-                  expression: 'userType === "business" ? 1 : 0',
+                  expression:
+                    'userType.value == "business" ? "Business email validation is stricter" : "Standard email validation"',
                   mode: 'helperText',
                   dependencies: ['userType'],
                   evaluateOnChange: true,
@@ -2770,7 +2772,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                   helperText: 'Phone field is required for business users',
                 },
                 expression: {
-                  expression: 'userType === "business"',
+                  expression: 'userType.value == "business"',
                   mode: 'required',
                   dependencies: ['userType'],
                   evaluateOnChange: true,
@@ -2789,7 +2791,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                     'Newsletter subscription is disabled for non-profit users',
                 },
                 expression: {
-                  expression: 'userType !== "nonprofit"',
+                  expression: 'userType.value != "nonprofit"',
                   mode: 'disabled',
                   dependencies: ['userType'],
                   evaluateOnChange: true,
@@ -2804,7 +2806,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                 },
                 expression: {
                   expression:
-                    'userType === "business" ? 1 : userType === "nonprofit" ? 2 : 3',
+                    'userType.value == "business" ? "Business Terms and Conditions" : userType.value == "nonprofit" ? "Non-Profit Terms and Conditions" : "Individual Terms and Conditions"',
                   mode: 'label',
                   dependencies: ['userType'],
                   evaluateOnChange: true,
@@ -2824,7 +2826,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                 },
                 expression: {
                   expression:
-                    'Math.round((age * 2.5 + (userType === "business" ? 100 : userType === "nonprofit" ? 50 : 0)) * 1.1)',
+                    'round((age.value * 2.5 + (userType.value == "business" ? 100 : userType.value == "nonprofit" ? 50 : 0)) * 1.1)',
                   mode: 'value',
                   dependencies: ['age', 'userType'],
                   evaluateOnChange: true,
@@ -2840,7 +2842,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                   helperText: 'Dynamic message based on all form inputs',
                 },
                 expression: {
-                  expression: 'age * 2.5',
+                  expression: 'age.value * 2.5',
                   mode: 'value',
                   dependencies: ['age'],
                   evaluateOnChange: true,
