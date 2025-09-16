@@ -101,6 +101,7 @@ const FormSliderRangeFieldBase: React.FC<FormSliderRangeFieldProps> = ({
       if (isDisabled) return;
 
       e.preventDefault();
+      e.stopPropagation();
       setIsDragging(handle);
 
       const handlePointerMove = (e: PointerEvent) => {
@@ -143,6 +144,61 @@ const FormSliderRangeFieldBase: React.FC<FormSliderRangeFieldProps> = ({
 
       document.addEventListener('pointermove', handlePointerMove);
       document.addEventListener('pointerup', handlePointerUp);
+    },
+    [
+      isDisabled,
+      normalizedValue,
+      onChange,
+      onBlur,
+      validation,
+      min,
+      max,
+      step,
+      mode,
+    ]
+  );
+
+  // Handle track click to set value
+  const handleTrackClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (isDisabled || !sliderRef.current) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const rect = sliderRef.current.getBoundingClientRect();
+      const percentage = Math.max(
+        0,
+        Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)
+      );
+      const newValue = getValueFromPercentage(percentage);
+
+      if (mode === 'single') {
+        // In single mode, set the value directly
+        onChange(newValue);
+      } else {
+        // In range mode, determine which handle to move based on which is closer
+        const distanceToMin = Math.abs(newValue - normalizedValue.min);
+        const distanceToMax = Math.abs(newValue - normalizedValue.max);
+
+        if (distanceToMin <= distanceToMax) {
+          // Move min handle
+          const newMin = Math.min(
+            newValue,
+            normalizedValue.max - (validation?.minRange ?? 0)
+          );
+          onChange({ min: newMin, max: normalizedValue.max });
+        } else {
+          // Move max handle
+          const newMax = Math.max(
+            newValue,
+            normalizedValue.min + (validation?.minRange ?? 0)
+          );
+          onChange({ min: normalizedValue.min, max: newMax });
+        }
+      }
+
+      onBlur();
     },
     [
       isDisabled,
@@ -283,6 +339,7 @@ const FormSliderRangeFieldBase: React.FC<FormSliderRangeFieldProps> = ({
               : `Range from ${normalizedValue.min} to ${normalizedValue.max}`
           }
           aria-label={label || 'Range slider'}
+          onClick={handleTrackClick}
         >
           {/* Track */}
           <div className="absolute inset-0 bg-gray-200 rounded-lg" />
