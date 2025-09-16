@@ -61,7 +61,7 @@ export const FormExpressionField: React.FC<FormExpressionFieldProps> = ({
       return child;
     }
 
-    const childProps: any = { ...child.props };
+    const childProps: any = { ...(child.props || {}) };
 
     switch (mode) {
       case 'value':

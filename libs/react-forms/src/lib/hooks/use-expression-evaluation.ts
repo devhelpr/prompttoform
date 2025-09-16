@@ -28,7 +28,7 @@ export function useExpressionEvaluation(
   const [error, setError] = useState<string | undefined>();
   const [value, setValue] = useState<any>(null);
 
-  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const lastContextRef = useRef<ExpressionContextType>(context);
   const lastExpressionRef = useRef<string>(expression.expression);
 

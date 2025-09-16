@@ -35,8 +35,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
           {
             id: 'page1',
             title: 'Slider Addition Test',
-            description:
-              'Move the sliders and watch the sum update in real-time',
+            route: '/slider-test',
             components: [
               {
                 id: 'slider1',

@@ -105,6 +105,19 @@ export interface PageProps {
 export interface FormDefinition {
   app: {
     title: string;
+    version?: string;
+    language?: string;
+    theme?: string;
+    settings?: {
+      showProgressBar?: boolean;
+      showStepNumbers?: boolean;
+      allowBackNavigation?: boolean;
+      submitButtonText?: string;
+      nextButtonText?: string;
+      previousButtonText?: string;
+      showRestartButton?: boolean;
+      restartButtonText?: string;
+    };
     pages: PageProps[];
     dataSources?: Record<string, unknown>[];
     thankYouPage?: ThankYouPage;
