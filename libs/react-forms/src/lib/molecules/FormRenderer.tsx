@@ -65,6 +65,67 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const [showThankYouPage, setShowThankYouPage] = useState(false);
   const initialEventTriggeredRef = useRef(false);
 
+  // Initialize form values with default values for all fields
+  useEffect(() => {
+    if (!formJson) {
+      return;
+    }
+
+    const initialValues: FormValues = {};
+
+    const initializeFieldValues = (components: FormComponentFieldProps[]) => {
+      components.forEach((component) => {
+        if (component.id) {
+          // Initialize based on component type
+          switch (component.type) {
+            case 'slider-range':
+              if (component.props?.mode === 'range') {
+                initialValues[component.id] = {
+                  min: component.props?.min ?? 0,
+                  max: component.props?.max ?? 100,
+                };
+              } else {
+                initialValues[component.id] = component.props?.min ?? 0;
+              }
+              break;
+            case 'input':
+            case 'textarea':
+              initialValues[component.id] = '';
+              break;
+            case 'select':
+            case 'radio':
+              initialValues[component.id] = '';
+              break;
+            case 'checkbox':
+              initialValues[component.id] = false;
+              break;
+            case 'date':
+              initialValues[component.id] = '';
+              break;
+            default:
+              initialValues[component.id] = null;
+          }
+        }
+
+        // Recursively initialize children
+        if (component.children) {
+          initializeFieldValues(component.children);
+        }
+      });
+    };
+
+    // Initialize values for all pages - with null checks
+    if (formJson?.app?.pages && Array.isArray(formJson.app.pages)) {
+      formJson.app.pages.forEach((page) => {
+        if (page.components) {
+          initializeFieldValues(page.components);
+        }
+      });
+    }
+
+    setFormValues(initialValues);
+  }, [formJson]);
+
   // Initialize translation service
   const translationService = useMemo(() => {
     const multiLangForm = formJson as MultiLanguageFormDefinition;
@@ -511,7 +572,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   );
 
   const validateForm = useCallback(() => {
-    if (!formJson || !formJson.app) return true;
+    if (
+      !formJson ||
+      !formJson.app ||
+      !formJson.app.pages ||
+      !Array.isArray(formJson.app.pages)
+    )
+      return true;
 
     const currentPage = formJson.app.pages[currentStepIndex];
     if (!currentPage || !currentPage.components) return true;
@@ -548,8 +615,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [formJson, currentStepIndex, formValues, validateComponent]);
 
   useEffect(() => {
-    validateForm();
-  }, [validateForm]);
+    // Only validate if we have form values initialized
+    if (Object.keys(formValues).length > 0) {
+      validateForm();
+    }
+  }, [validateForm, formValues]);
 
   // Update translation service language when settings change
   useEffect(() => {
@@ -654,6 +724,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   };
 
   const getNextPage = useCallback((): string | null => {
+    if (!formJson?.app?.pages || !Array.isArray(formJson.app.pages))
+      return null;
     const currentPage = formJson.app.pages[currentStepIndex];
     if (!currentPage) return null;
 
@@ -827,7 +899,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   const getCurrentStep = (): { currentStep: number; totalSteps: number } => {
     // Use the state value instead of hardcoding
-    const totalSteps = formJson.app.pages?.length || 0;
+    const totalSteps = formJson?.app?.pages?.length || 0;
     const currentStep = currentStepIndex + 1; // Convert to 1-indexed for display
 
     return { currentStep, totalSteps };
@@ -886,7 +958,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       return null;
     }
 
-    const currentPage = formJson.app.pages[currentStep - 1];
+    const currentPage = formJson?.app?.pages?.[currentStep - 1];
     const isEndPage = currentPage && currentPage.isEndPage === true;
     const isConfirmationPage =
       currentPage && currentPage.isConfirmationPage === true;
@@ -901,7 +973,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       // Check if next page is a confirmation page
       const nextPageIndex = currentStep;
       if (nextPageIndex < totalSteps) {
-        const nextPage = formJson.app.pages[nextPageIndex];
+        const nextPage = formJson?.app?.pages?.[nextPageIndex];
         if (nextPage && nextPage.isConfirmationPage) {
           nextButtonText = translationService.translateUI(
             'reviewConfirmButton'
@@ -947,7 +1019,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   };
 
   const renderMultiStepForm = (): React.ReactElement => {
-    if (!formJson.app.pages || formJson.app.pages.length === 0) {
+    if (
+      !formJson?.app?.pages ||
+      !Array.isArray(formJson.app.pages) ||
+      formJson.app.pages.length === 0
+    ) {
       return (
         <div className="p-4 text-red-500">
           {translationService.translateUI('noPagesDefined')}
@@ -1033,11 +1109,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       });
     };
 
-    formJson.app.pages.forEach((page) => {
-      if (page.components) {
-        extractComponents(page.components);
-      }
-    });
+    if (formJson?.app?.pages && Array.isArray(formJson.app.pages)) {
+      formJson.app.pages.forEach((page) => {
+        if (page.components) {
+          extractComponents(page.components);
+        }
+      });
+    }
 
     return allComponents;
   };
@@ -1208,6 +1286,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       );
       const translatedProps: any = {
         ...props,
+        // Include expression if it exists on the component
+        ...(component.expression && { expression: component.expression }),
       };
 
       // Only include placeholder if it exists in the original props
@@ -1286,6 +1366,17 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           );
 
         case 'input':
+          // Debug: log the expression for input fields
+          if (id === 'sum') {
+            console.log('🔍 FormRenderer input field (sum):', {
+              translatedProps,
+              expression: translatedProps?.expression,
+              fieldId: id,
+              originalComponent: component,
+              originalExpression: component.expression,
+              originalProps: component.props,
+            });
+          }
           return (
             <FormInputField
               fieldId={prefixedFieldId}
@@ -1298,7 +1389,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               onChange={(value) => handleInputChange(id, value)}
               onBlur={() => handleBlur(id)}
               validation={translatedValidation}
-              props={processPropsWithTemplates(translatedProps)}
+              expression={translatedProps?.expression}
+              props={{
+                ...processPropsWithTemplates(translatedProps),
+              }}
               showError={showError}
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
@@ -1325,7 +1419,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               onChange={(value) => handleInputChange(id, value)}
               onBlur={() => handleBlur(id)}
               validation={translatedValidation}
-              props={processPropsWithTemplates(translatedProps)}
+              expression={translatedProps?.expression}
+              props={{
+                ...processPropsWithTemplates(translatedProps),
+              }}
               showError={showError}
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
@@ -1592,7 +1689,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               onChange={(value) => handleInputChange(id, value)}
               onBlur={() => handleBlur(id)}
               validation={translatedValidation}
-              props={processPropsWithTemplates(translatedProps)}
+              expression={translatedProps?.expression}
+              props={{
+                ...processPropsWithTemplates(translatedProps),
+              }}
               showError={showError}
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}

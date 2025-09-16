@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useCallback } from 'react';
 import { useExpressionContext } from '../contexts/expression-context';
 import { ExpressionConfig } from '../interfaces/expression-interfaces';
 
 interface WithExpressionProps {
   expression?: ExpressionConfig;
   fieldId: string;
+  onChange?: (value: any) => void;
   [key: string]: any;
 }
 
@@ -15,12 +16,42 @@ export function withExpression<P extends object>(
   WrappedComponent: React.ComponentType<P>
 ) {
   const WithExpressionComponent = (props: P & WithExpressionProps) => {
-    const { expression, fieldId, ...restProps } = props;
+    const { expression, fieldId, onChange, ...restProps } = props;
     const { evaluateExpression, context } = useExpressionContext();
 
-    // Evaluate expressions for different modes
+    // Extract expression from props.expression if it exists
+    const actualExpression =
+      expression || (restProps as any)?.props?.expression;
+
+    // Extract read-only flag to avoid infinite loops
+    const isReadOnly = (restProps as any)?.props?.readOnly === true;
+
+    // Get the current form values for this expression's dependencies
+    const currentFormValues = useMemo(() => {
+      if (!actualExpression?.dependencies) return {};
+
+      const values: Record<string, any> = {};
+      actualExpression.dependencies.forEach((dep: string) => {
+        if (context.values[dep] !== undefined) {
+          // The context.values[dep] IS the value, not context.values[dep].value
+          values[dep] = context.values[dep];
+        }
+      });
+      return values;
+    }, [
+      actualExpression?.dependencies,
+      // Use a more reliable dependency tracking
+      actualExpression?.dependencies
+        ?.map((dep: string) => {
+          const value = context.values[dep];
+          return `${dep}:${value}`;
+        })
+        .join('|') || '',
+    ]);
+
+    // Evaluate expressions when dependencies change
     const expressionResults = useMemo(() => {
-      if (!expression) {
+      if (!actualExpression) {
         return {
           value: null,
           visibility: true,
@@ -42,42 +73,75 @@ export function withExpression<P extends object>(
         helperText: undefined,
       };
 
-      // Evaluate each expression mode
-      const modes: (keyof typeof results)[] = [
-        'value',
-        'visibility',
-        'validation',
-        'disabled',
-        'required',
-        'label',
-        'helperText',
-      ];
+      // Only evaluate if we have a stable expression
+      if (actualExpression.expression) {
+        const evaluation = evaluateExpression(
+          actualExpression.expression,
+          fieldId
+        );
 
-      modes.forEach((mode) => {
-        if (expression.mode === mode) {
-          const result = evaluateExpression(expression.expression, fieldId);
-          if (result.success) {
-            (results as any)[mode] = result.value;
-          }
+        if (
+          evaluation.success &&
+          evaluation.value !== null &&
+          evaluation.value !== undefined
+        ) {
+          (results as any)[actualExpression.mode] = evaluation.value;
         }
-      });
+      }
 
       return results;
-    }, [expression, fieldId, evaluateExpression]);
+    }, [
+      actualExpression?.expression,
+      actualExpression?.mode,
+      fieldId,
+      currentFormValues,
+    ]);
 
-    // Don't render if visibility expression evaluates to false
-    if (expressionResults.visibility === false) {
-      return null;
-    }
+    // Create a stable onChange callback to prevent infinite loops
+    const stableOnChange = useCallback(
+      (value: any) => {
+        if (onChange) {
+          onChange(value);
+        }
+      },
+      [onChange]
+    );
+
+    // Update form state for read-only calculated fields
+    useEffect(() => {
+      if (
+        actualExpression &&
+        actualExpression.mode === 'value' &&
+        expressionResults.value !== null &&
+        expressionResults.value !== undefined &&
+        stableOnChange &&
+        isReadOnly
+      ) {
+        // Only update if the current form value is different from the expression result
+        const currentValue = context.values[fieldId];
+        if (currentValue !== expressionResults.value) {
+          stableOnChange(expressionResults.value);
+        }
+      }
+    }, [
+      expressionResults.value,
+      fieldId,
+      stableOnChange,
+      isReadOnly,
+      actualExpression,
+    ]);
 
     // Apply expression results to props
     const enhancedProps = useMemo(() => {
-      const enhanced: any = { ...restProps };
+      const enhanced: any = { ...restProps, onChange: stableOnChange };
 
-      // Apply value expression
+      // For read-only calculated fields, override the value directly
       if (
+        actualExpression &&
+        actualExpression.mode === 'value' &&
         expressionResults.value !== null &&
-        expressionResults.value !== undefined
+        expressionResults.value !== undefined &&
+        isReadOnly
       ) {
         enhanced.value = expressionResults.value;
       }
@@ -102,15 +166,40 @@ export function withExpression<P extends object>(
         enhanced.helperText = expressionResults.helperText;
       }
 
-      // Apply validation expression
-      if (expressionResults.validation === false) {
+      // Apply validation expression - only if we have an actual expression
+      if (
+        actualExpression &&
+        actualExpression.mode === 'validation' &&
+        expressionResults.validation === false
+      ) {
         enhanced.showError = true;
         enhanced.validationErrors = enhanced.validationErrors || [];
         enhanced.validationErrors.push('Expression validation failed');
       }
 
       return enhanced;
-    }, [restProps, expressionResults]);
+    }, [restProps, expressionResults, stableOnChange]);
+
+    // Don't render if visibility expression evaluates to false
+    if (expressionResults.visibility === false) {
+      return null;
+    }
+
+    // Show error if expression evaluation failed
+    if (
+      actualExpression &&
+      !evaluateExpression(actualExpression.expression, fieldId).success
+    ) {
+      const evaluation = evaluateExpression(
+        actualExpression.expression,
+        fieldId
+      );
+      return (
+        <div className="text-red-500 text-sm p-2 border border-red-200 rounded">
+          Expression Error: {evaluation.error}
+        </div>
+      );
+    }
 
     return <WrappedComponent {...(enhancedProps as P)} />;
   };
@@ -120,34 +209,4 @@ export function withExpression<P extends object>(
   })`;
 
   return WithExpressionComponent;
-}
-
-/**
- * Hook for using expression evaluation in field components
- */
-export function useFieldExpression(
-  fieldId: string,
-  expression?: ExpressionConfig
-) {
-  const { evaluateExpression, context } = useExpressionContext();
-
-  return useMemo(() => {
-    if (!expression) {
-      return {
-        value: null,
-        hasError: false,
-        error: undefined,
-        isEvaluating: false,
-      };
-    }
-
-    const result = evaluateExpression(expression.expression, fieldId);
-
-    return {
-      value: result.value,
-      hasError: !result.success,
-      error: result.error,
-      isEvaluating: false, // We could add loading state if needed
-    };
-  }, [fieldId, expression, evaluateExpression]);
 }

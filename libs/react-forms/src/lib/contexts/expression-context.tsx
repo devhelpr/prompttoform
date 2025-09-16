@@ -61,6 +61,8 @@ export const ExpressionContextProvider: React.FC<
       };
     });
 
+    // Clear expression cache when form values change
+    expressionEngine.clearCache();
     return ctx;
   }, [formValues, validation, required, errors]);
 
@@ -72,6 +74,7 @@ export const ExpressionContextProvider: React.FC<
     ): ExpressionEvaluationResult => {
       try {
         const result = expressionEngine.evaluate(expression, formContext);
+
         return {
           value: result.value,
           success: !result.error,

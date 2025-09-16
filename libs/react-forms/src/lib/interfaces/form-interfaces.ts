@@ -11,6 +11,7 @@ export interface FormComponentFieldProps {
   id: string;
   label?: string;
   defaultValue?: unknown;
+  expression?: ExpressionConfig;
   options?: { label: string; value: string }[];
   props?: Record<string, unknown> & {
     inputType?: string;

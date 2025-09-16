@@ -1,5 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { getClassNames } from '../utils/class-utils';
+import { withExpression } from '../hoc/with-expression';
+import { ExpressionConfig } from '../interfaces/expression-interfaces';
 
 interface SliderRangeValue {
   min: number;
@@ -30,6 +32,7 @@ interface FormSliderRangeFieldProps {
     helperText?: string;
     disabled?: boolean;
     mode?: 'single' | 'range';
+    expression?: ExpressionConfig;
   };
   showError: boolean;
   validationErrors: string[];
@@ -43,7 +46,7 @@ interface FormSliderRangeFieldProps {
   };
 }
 
-export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
+const FormSliderRangeFieldBase: React.FC<FormSliderRangeFieldProps> = ({
   fieldId,
   label,
   value,
@@ -379,3 +382,5 @@ export const FormSliderRangeField: React.FC<FormSliderRangeFieldProps> = ({
     </div>
   );
 };
+
+export const FormSliderRangeField = withExpression(FormSliderRangeFieldBase);

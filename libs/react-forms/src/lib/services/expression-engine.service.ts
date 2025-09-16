@@ -88,6 +88,13 @@ export class ExpressionEngineService {
         context
       );
 
+      console.log('🔧 ExpressionEngine evaluating:', {
+        originalExpression: expression,
+        processedExpression,
+        evalContext,
+        context,
+      });
+
       // Parse and evaluate expression
       const expr = this.parser.parse(processedExpression);
       const result = expr.evaluate(evalContext);
@@ -258,6 +265,127 @@ export class ExpressionEngineService {
     });
 
     return evalContext;
+  }
+
+  /**
+   * Evaluate multiple expressions with dependency resolution
+   * This allows expressions to depend on the results of other expressions
+   */
+  evaluateWithDependencies(
+    expressions: Array<{
+      fieldId: string;
+      expression: string;
+      context: FormContext;
+    }>
+  ): Record<string, ExpressionResult> {
+    const results: Record<string, ExpressionResult> = {};
+    const evaluated = new Set<string>();
+    const evaluating = new Set<string>();
+
+    // Helper function to evaluate a single expression
+    const evaluateField = (fieldId: string): ExpressionResult => {
+      // Check if already evaluated
+      if (evaluated.has(fieldId)) {
+        return results[fieldId];
+      }
+
+      // Check for circular dependency
+      if (evaluating.has(fieldId)) {
+        return {
+          value: null,
+          error: `Circular dependency detected for field: ${fieldId}`,
+          dependencies: [],
+        };
+      }
+
+      // Find the expression for this field
+      const fieldExpression = expressions.find(
+        (expr) => expr.fieldId === fieldId
+      );
+      if (!fieldExpression) {
+        return {
+          value: null,
+          error: `No expression found for field: ${fieldId}`,
+          dependencies: [],
+        };
+      }
+
+      // Mark as currently evaluating
+      evaluating.add(fieldId);
+
+      try {
+        // Get dependencies
+        const dependencies = this.getDependencies(fieldExpression.expression);
+
+        // Evaluate dependencies first
+        for (const dep of dependencies) {
+          if (!evaluated.has(dep)) {
+            evaluateField(dep);
+          }
+        }
+
+        // Create enhanced context with evaluated results
+        const enhancedContext = this.createEnhancedEvaluationContext(
+          fieldExpression.context,
+          results
+        );
+
+        // Evaluate the expression
+        const result = this.evaluate(
+          fieldExpression.expression,
+          enhancedContext
+        );
+        results[fieldId] = result;
+        evaluated.add(fieldId);
+        evaluating.delete(fieldId);
+
+        return result;
+      } catch (error) {
+        evaluating.delete(fieldId);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        const result = {
+          value: null,
+          error: `Expression evaluation failed for ${fieldId}: ${errorMessage}`,
+          dependencies: this.getDependencies(fieldExpression.expression),
+        };
+        results[fieldId] = result;
+        return result;
+      }
+    };
+
+    // Evaluate all expressions
+    expressions.forEach(({ fieldId }) => {
+      if (!evaluated.has(fieldId)) {
+        evaluateField(fieldId);
+      }
+    });
+
+    return results;
+  }
+
+  /**
+   * Create enhanced evaluation context that includes evaluated expression results
+   */
+  private createEnhancedEvaluationContext(
+    context: FormContext,
+    expressionResults: Record<string, ExpressionResult>
+  ): FormContext {
+    const enhancedContext: FormContext = { ...context };
+
+    // Add evaluated expression results to the context
+    Object.entries(expressionResults).forEach(([fieldId, result]) => {
+      if (result.value !== null && result.value !== undefined) {
+        enhancedContext[fieldId] = {
+          value: result.value,
+          valid: true,
+          required: false,
+          error: undefined,
+        };
+      }
+    });
+
+    return enhancedContext;
   }
 
   /**
