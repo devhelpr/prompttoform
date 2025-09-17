@@ -123,7 +123,7 @@
             "label": "Order Summary",
             "props": {
               "expression": {
-                "expression": "finalPrice.value > 0 ? `Total: $${Math.round(finalPrice.value * 100) / 100} (${quantity.value} items, ${discountPercent.value}% discount)` : 'Enter values to see summary'",
+                "expression": "finalPrice.value > 0 ? 'Total: $' + round(finalPrice.value * 100) / 100 + ' (' + quantity.value + ' items, ' + discountPercent.value + '% discount)' : 'Enter values to see summary'",
                 "mode": "value",
                 "dependencies": ["finalPrice", "quantity", "discountPercent"]
               }
@@ -336,7 +336,7 @@
             "label": "Pricing Breakdown",
             "props": {
               "expression": {
-                "expression": "finalServicePrice.value > 0 ? `Base: $${baseServicePrice.value} | Discount: ${discountRate.value}% | Rating: ${serviceRating.value}/5 | Final: $${finalServicePrice.value}` : 'Enter values to see breakdown'",
+                "expression": "finalServicePrice.value > 0 ? 'Base: $' + baseServicePrice.value + ' | Discount: ' + discountRate.value + '% | Rating: ' + serviceRating.value + '/5 | Final: $' + finalServicePrice.value : 'Enter values to see breakdown'",
                 "mode": "value",
                 "dependencies": [
                   "finalServicePrice",

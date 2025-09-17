@@ -27,8 +27,8 @@ Expressions reference form field values using the pattern: `fieldId.value`
 "total.value - discount.value"
 
 // Advanced calculations
-"Math.round((basePrice.value * (1 + taxRate.value/100)) * 100) / 100"
-"Math.max(minValue.value, Math.min(maxValue.value, sliderValue.value))"
+"round((basePrice.value * (1 + taxRate.value/100)) * 100) / 100"
+"max(minValue.value, min(maxValue.value, sliderValue.value))"
 ```
 
 ### Conditional Logic
@@ -209,7 +209,7 @@ Enables/disables fields based on conditions.
 "originalPrice.value * (1 - discountPercent.value/100)"
 
 // Complex pricing with multiple factors
-"Math.round((basePrice.value * quantity.value * (1 + taxRate.value/100) * (1 - discountPercent.value/100)) * 100) / 100"
+"round((basePrice.value * quantity.value * (1 + taxRate.value/100) * (1 - discountPercent.value/100)) * 100) / 100"
 ```
 
 ### Percentage Calculations
@@ -242,10 +242,10 @@ Enables/disables fields based on conditions.
 
 ```javascript
 // BMI calculation
-"weight.value / Math.pow(height.value/100, 2)"
+"weight.value / pow(height.value/100, 2)"
 
 // Age calculation
-"Math.floor((new Date() - new Date(birthDate.value)) / (365.25 * 24 * 60 * 60 * 1000))"
+"floor((new Date() - new Date(birthDate.value)) / (365.25 * 24 * 60 * 60 * 1000))"
 ```
 
 ## Best Practices

@@ -293,6 +293,12 @@ Important rules for UI/Form schema:
     - Expressions enable real-time calculations based on other form field values
     - Expression syntax supports field references, mathematical operations, and conditional logic
     - Field references use the pattern: fieldId.value (e.g., "price.value", "quantity.value")
+    - Supported functions (use without Math. prefix):
+      * Math functions: round(), floor(), ceil(), abs(), min(), max(), sqrt(), pow()
+      * Utility functions: parseFloat(), parseInt(), isNaN(), isFinite(), toString()
+      * Array functions: length(array) - returns array length or 0 for non-arrays
+      * Conditional function: if(condition, trueValue, falseValue)
+      * Ternary operator: condition ? trueValue : falseValue
     - Available expression modes:
       * "value": Calculate and set the field's value automatically
       * "visibility": Show/hide fields based on conditions
@@ -304,9 +310,9 @@ Important rules for UI/Form schema:
     - Expression examples for calculations:
       * Basic arithmetic: "price.value * quantity.value"
       * Percentage calculations: "subtotal.value * (taxRate.value / 100)"
-      * Complex formulas: "Math.round((basePrice.value * (1 + taxRate.value/100)) * 100) / 100"
+      * Complex formulas: "round((basePrice.value * (1 + taxRate.value/100)) * 100) / 100"
       * Conditional calculations: "userType.value === 'senior' ? price.value * 0.9 : price.value"
-      * Range calculations: "Math.max(minValue.value, Math.min(maxValue.value, sliderValue.value))"
+      * Range calculations: "max(minValue.value, min(maxValue.value, sliderValue.value))"
     - For slider-based calculations:
       * Single value sliders: "sliderValue.value * multiplier.value"
       * Range sliders: "(sliderRange.value.max - sliderRange.value.min) * rate.value"
@@ -328,8 +334,8 @@ Important rules for UI/Form schema:
       * Total calculations: "subtotal.value + tax.value - discount.value"
       * Average calculations: "(value1.value + value2.value + value3.value) / 3"
       * Percentage calculations: "(part.value / whole.value) * 100"
-      * BMI calculations: "weight.value / Math.pow(height.value/100, 2)"
-      * Age calculations: "Math.floor((new Date() - new Date(birthDate.value)) / (365.25 * 24 * 60 * 60 * 1000))"
+      * BMI calculations: "weight.value / pow(height.value/100, 2)"
+      * Age calculations: "floor((new Date() - new Date(birthDate.value)) / (365.25 * 24 * 60 * 60 * 1000))"
     - Best practices for expressions:
       * Always include dependencies array with all referenced field IDs
       * Use descriptive field IDs that clearly indicate their purpose
