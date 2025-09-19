@@ -1,6 +1,7 @@
 import React, { useMemo, useEffect, useCallback } from 'react';
 import { useExpressionContext } from '../contexts/expression-context';
 import { ExpressionConfig } from '../interfaces/expression-interfaces';
+import { expressionEngine } from '../services/expression-engine.service';
 
 interface WithExpressionProps {
   expression?: ExpressionConfig;
@@ -120,7 +121,12 @@ export function withExpression<P extends object>(
         // Only update if the current form value is different from the expression result
         const currentValue = context.values[fieldId];
         if (currentValue !== expressionResults.value) {
+          // Update the form value
           stableOnChange(expressionResults.value);
+
+          // Force a re-evaluation of all expressions by clearing the cache
+          // This ensures that expressions depending on this readonly field are updated
+          expressionEngine.clearCache();
         }
       }
     }, [

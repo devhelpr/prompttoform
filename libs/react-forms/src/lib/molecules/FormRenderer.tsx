@@ -16,6 +16,7 @@ import {
   FormSectionField,
   FormConfirmationField,
   FormSliderRangeField,
+  FormExpressionField,
 } from '../atoms';
 import { ExpressionContextProvider } from '../contexts/expression-context';
 import {
@@ -1308,7 +1309,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         return <></>;
       }
 
-      const { id, type, label, props, validation } = component;
+      const {
+        id,
+        type,
+        label,
+        props,
+        validation: componentValidation,
+      } = component;
       const fieldId = parentId ? `${parentId}.${id}` : id;
       const prefixedFieldId = getPrefixedId(fieldId);
       const hasError = validationErrors[fieldId]?.length > 0;
@@ -1367,12 +1374,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       }
 
       // Handle translated validation messages
-      const translatedValidation = validation
+      const translatedValidation = componentValidation
         ? {
-            ...validation,
-            errorMessages: validation.errorMessages
+            ...componentValidation,
+            errorMessages: componentValidation.errorMessages
               ? Object.fromEntries(
-                  Object.entries(validation.errorMessages).map(
+                  Object.entries(componentValidation.errorMessages).map(
                     ([key, message]) => [
                       key,
                       translationService.translateComponent(
@@ -1390,30 +1397,59 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
       switch (type) {
         case 'text':
-          return (
-            <TextFormField
-              label={translatedLabel}
-              props={processPropsWithTemplates(translatedProps)}
-              classes={{
-                field: settings.classes?.field,
-                fieldLabel: settings.classes?.fieldLabel,
-                fieldText: settings.classes?.fieldText,
-              }}
-            />
-          );
+          // Check if this text component has an expression
+          if (translatedProps?.expression) {
+            // Use FormExpressionField for text components with expressions
+            return (
+              <FormExpressionField
+                fieldId={prefixedFieldId}
+                label={translatedLabel}
+                expression={translatedProps.expression.expression}
+                mode={translatedProps.expression.mode || 'value'}
+                dependencies={translatedProps.expression.dependencies}
+                context={{
+                  values: formValues,
+                  validation: validation,
+                  required: required,
+                  errors: Object.keys(validationErrors).reduce((acc, key) => {
+                    acc[key] = validationErrors[key]?.[0] || undefined;
+                    return acc;
+                  }, {} as Record<string, string | undefined>),
+                }}
+                classes={{
+                  field: settings.classes?.field,
+                  fieldLabel: settings.classes?.fieldLabel,
+                  fieldError: settings.classes?.fieldError,
+                  fieldHelperText: settings.classes?.fieldHelperText,
+                }}
+              >
+                <TextFormField
+                  label={translatedLabel}
+                  props={processPropsWithTemplates(translatedProps)}
+                  classes={{
+                    field: settings.classes?.field,
+                    fieldLabel: settings.classes?.fieldLabel,
+                    fieldText: settings.classes?.fieldText,
+                  }}
+                />
+              </FormExpressionField>
+            );
+          } else {
+            // Use regular TextFormField for text components without expressions
+            return (
+              <TextFormField
+                label={translatedLabel}
+                props={processPropsWithTemplates(translatedProps)}
+                classes={{
+                  field: settings.classes?.field,
+                  fieldLabel: settings.classes?.fieldLabel,
+                  fieldText: settings.classes?.fieldText,
+                }}
+              />
+            );
+          }
 
         case 'input':
-          // Debug: log the expression for input fields
-          if (id === 'sum') {
-            console.log('🔍 FormRenderer input field (sum):', {
-              translatedProps,
-              expression: translatedProps?.expression,
-              fieldId: id,
-              originalComponent: component,
-              originalExpression: component.expression,
-              originalProps: component.props,
-            });
-          }
           return (
             <FormInputField
               fieldId={prefixedFieldId}
