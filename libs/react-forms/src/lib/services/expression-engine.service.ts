@@ -40,7 +40,6 @@ export class ExpressionEngineService {
   private setupCustomFunctions() {
     // Add custom functions to the parser
     this.parser.functions = {
-      ...this.parser.functions,
       // Math functions
       abs: Math.abs,
       round: Math.round,
@@ -56,12 +55,33 @@ export class ExpressionEngineService {
       isNaN: isNaN,
       isFinite: isFinite,
       // String functions
-      toString: (value: any) => String(value),
+      toString: (value: any) => {
+        return value.toString();
+      },
+      getAsString: (value: any) => {
+        return value.toString();
+      },
       // Array functions
       length: (arr: any) => (Array.isArray(arr) ? arr.length : 0),
       // Conditional functions
       if: (condition: boolean, trueValue: any, falseValue: any) =>
         condition ? trueValue : falseValue,
+      // Override unsupported functions to throw errors
+      sin: () => {
+        throw new Error('Function sin is not supported');
+      },
+      cos: () => {
+        throw new Error('Function cos is not supported');
+      },
+      tan: () => {
+        throw new Error('Function tan is not supported');
+      },
+      log: () => {
+        throw new Error('Function log is not supported');
+      },
+      exp: () => {
+        throw new Error('Function exp is not supported');
+      },
     };
   }
 
@@ -87,13 +107,6 @@ export class ExpressionEngineService {
         expression,
         context
       );
-
-      console.log('🔧 ExpressionEngine evaluating:', {
-        originalExpression: expression,
-        processedExpression,
-        evalContext,
-        context,
-      });
 
       // Parse and evaluate expression
       const expr = this.parser.parse(processedExpression);
@@ -248,6 +261,13 @@ export class ExpressionEngineService {
       processedExpression = processedExpression.replace(regex, fieldId);
     });
 
+    // Replace JavaScript-style operators with expr-eval compatible ones
+    processedExpression = processedExpression
+      .replace(/===/g, '==') // Replace strict equality with loose equality
+      .replace(/!==/g, '!=') // Replace strict inequality with loose inequality
+      .replace(/&&/g, 'and') // Replace logical AND with expr-eval syntax
+      .replace(/\|\|/g, 'or'); // Replace logical OR with expr-eval syntax
+
     return processedExpression;
   }
 
@@ -255,9 +275,7 @@ export class ExpressionEngineService {
    * Create evaluation context from form context
    */
   private createEvaluationContext(context: FormContext): Record<string, any> {
-    const evalContext: Record<string, any> = {
-      Math: Math,
-    };
+    const evalContext: Record<string, any> = {};
 
     // Add field values directly for simpler expressions
     Object.entries(context).forEach(([fieldId, fieldData]) => {

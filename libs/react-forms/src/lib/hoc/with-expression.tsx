@@ -133,7 +133,7 @@ export function withExpression<P extends object>(
 
     // Apply expression results to props
     const enhancedProps = useMemo(() => {
-      const enhanced: any = { ...restProps, onChange: stableOnChange };
+      const enhanced: any = { ...restProps, fieldId, onChange: stableOnChange };
 
       // Preserve original validation props unless overridden by expressions
       if (!actualExpression || actualExpression.mode !== 'validation') {

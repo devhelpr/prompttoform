@@ -20,6 +20,7 @@ describe('FormSliderRangeField', () => {
       showLabels: true,
       showValue: true,
       helperText: 'Select a range',
+      mode: 'range',
     },
   };
 
