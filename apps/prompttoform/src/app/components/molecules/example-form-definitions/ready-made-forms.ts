@@ -100,6 +100,242 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
     },
   },
   {
+    name: 'BMI Calculator',
+    description:
+      'Interactive BMI calculator with weight and height sliders, automatic BMI calculation, and health interpretation',
+    prompt:
+      'Create a BMI calculator with weight and height sliders, automatic BMI calculation, and health category interpretation',
+    json: {
+      app: {
+        title: 'BMI Calculator',
+        pages: [
+          {
+            id: 'bmi-input',
+            title: 'Enter measurements',
+            route: '/',
+            layout: 'vertical',
+            components: [
+              {
+                type: 'slider-range',
+                id: 'weightKg',
+                label: 'Body weight (kg)',
+                props: {
+                  min: 30,
+                  max: 250,
+                  step: 0.5,
+                  mode: 'single',
+                  showLabels: true,
+                  showValue: true,
+                  helperText: 'Select your weight in kilograms',
+                },
+                validation: {
+                  required: true,
+                  min: 30,
+                  max: 250,
+                  errorMessages: {
+                    required: 'Please select your weight',
+                    min: 'Weight must be at least {min} kg',
+                    max: 'Weight cannot exceed {max} kg',
+                  },
+                },
+              },
+              {
+                type: 'slider-range',
+                id: 'heightCm',
+                label: 'Height (cm)',
+                props: {
+                  min: 100,
+                  max: 230,
+                  step: 0.5,
+                  mode: 'single',
+                  showLabels: true,
+                  showValue: true,
+                  helperText: 'Select your height in centimeters',
+                },
+                validation: {
+                  required: true,
+                  min: 100,
+                  max: 230,
+                  errorMessages: {
+                    required: 'Please select your height',
+                    min: 'Height must be at least {min} cm',
+                    max: 'Height cannot exceed {max} cm',
+                  },
+                },
+              },
+              {
+                type: 'input',
+                id: 'bmi',
+                label: 'Body Mass Index (BMI)',
+                props: {
+                  inputType: 'number',
+                  readOnly: true,
+                  helperText: 'Calculated automatically from weight and height',
+                  expression: {
+                    expression:
+                      'round(weightKg.value / pow(heightCm.value/100, 2) * 10) / 10',
+                    mode: 'value',
+                    dependencies: ['weightKg', 'heightCm'],
+                    evaluateOnChange: true,
+                    debounceMs: 100,
+                  },
+                },
+                validation: {
+                  required: true,
+                  min: 5,
+                  max: 100,
+                  errorMessages: {
+                    required: 'BMI is calculated automatically',
+                    min: 'Calculated BMI seems too low',
+                    max: 'Calculated BMI seems too high',
+                    invalidNumber: 'Calculated BMI is not a valid number',
+                  },
+                },
+              },
+              {
+                type: 'text',
+                id: 'bmi-interpretation',
+                label: 'BMI interpretation',
+                props: {
+                  expression: {
+                    expression:
+                      "(bmi.value < 18.5 ? 'Underweight' : (bmi.value < 25 ? 'Normal weight' : (bmi.value < 30 ? 'Overweight' : 'Obesity')))",
+                    mode: 'value',
+                    dependencies: ['bmi'],
+                    evaluateOnChange: true,
+                    debounceMs: 100,
+                  },
+                },
+              },
+              {
+                type: 'section',
+                id: 'summary-section',
+                label: 'Summary',
+                children: [
+                  {
+                    type: 'text',
+                    id: 'summary-text',
+                    label: 'Your measurements',
+                    props: {
+                      helperText:
+                        'Weight: {{weightKg}} kg\nHeight: {{heightCm}} cm\nBMI: {{bmi}}',
+                    },
+                  },
+                ],
+              },
+            ],
+            nextPage: 'thank-you',
+          },
+          {
+            id: 'thank-you',
+            title: 'Results',
+            route: '/results',
+            layout: 'vertical',
+            components: [
+              {
+                type: 'text',
+                id: 'results-header',
+                label: 'Results',
+                props: {
+                  helperText: 'Your BMI has been calculated below',
+                },
+              },
+              {
+                type: 'text',
+                id: 'results-values',
+                label: 'Calculated values',
+                props: {
+                  helperText:
+                    'Weight: {{weightKg}} kg\nHeight: {{heightCm}} cm\nBMI: {{bmi}}',
+                },
+              },
+              {
+                type: 'text',
+                id: 'results-interpretation',
+                label: 'Interpretation',
+                props: {
+                  helperText: '{{bmi}}',
+                  expression: {
+                    expression:
+                      "(bmi.value < 18.5 ? 'Underweight (BMI < 18.5)' : (bmi.value < 25 ? 'Normal weight (BMI 18.5–24.9)' : (bmi.value < 30 ? 'Overweight (BMI 25–29.9)' : 'Obesity (BMI ≥ 30)')))",
+                    mode: 'helperText',
+                    dependencies: ['bmi'],
+                    evaluateOnChange: true,
+                    debounceMs: 100,
+                  },
+                },
+              },
+            ],
+            isEndPage: true,
+          },
+        ],
+        thankYouPage: {
+          title: 'Calculation complete',
+          message: 'Your BMI has been calculated successfully.',
+          showRestartButton: true,
+          customActions: [
+            {
+              label: 'Start Over',
+              action: 'restart',
+              className: 'bg-gray-800 text-white',
+            },
+          ],
+        },
+        dataSources: [],
+      },
+      defaultLanguage: 'en',
+      supportedLanguages: ['en'],
+      languageDetails: [
+        {
+          code: 'en',
+          name: 'English',
+          nativeName: 'English',
+        },
+      ],
+      translations: {
+        en: {
+          app: {
+            title: 'BMI Calculator',
+          },
+          pages: [
+            {
+              id: 'bmi-input',
+              title: 'Enter measurements',
+              components: [
+                {
+                  id: 'weightKg',
+                  label: 'Body weight (kg)',
+                },
+                {
+                  id: 'heightCm',
+                  label: 'Height (cm)',
+                },
+                {
+                  id: 'bmi',
+                  label: 'Body Mass Index (BMI)',
+                },
+              ],
+            },
+            {
+              id: 'thank-you',
+              title: 'Results',
+            },
+          ],
+          ui: {
+            nextButton: 'Next',
+            submitButton: 'Submit',
+            restartButton: 'Start Over',
+            loadingText: 'Calculating...',
+          },
+          errorMessages: {
+            required: 'This field is required',
+            invalidNumber: 'Please enter a valid number',
+          },
+        },
+      },
+    },
+  },
+  {
     name: 'Multi-Language Contact Form',
     description:
       'Simple contact form with Dutch, English, and Swedish language support',
