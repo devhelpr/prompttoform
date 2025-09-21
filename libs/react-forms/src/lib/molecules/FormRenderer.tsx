@@ -60,9 +60,6 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const [formSubmissions, setFormSubmissions] = useState<
     Record<string, FormValues>
   >({});
-  const [arrayItems, setArrayItems] = useState<
-    Record<string, Record<string, unknown>[]>
-  >({});
   const [showThankYouPage, setShowThankYouPage] = useState(false);
   const initialEventTriggeredRef = useRef(false);
 
@@ -689,6 +686,52 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       ...prev,
       [id]: value,
     }));
+  };
+
+  const handleArrayItemChange = (
+    arrayFieldId: string,
+    itemIndex: number,
+    fieldId: string,
+    value: unknown
+  ) => {
+    console.log('🔍 handleArrayItemChange called:', {
+      arrayFieldId,
+      itemIndex,
+      fieldId,
+      value,
+      currentFormValues: formValues,
+      currentProducts: formValues.products,
+    });
+
+    setFormValues((prev) => {
+      const newFormValues = { ...prev };
+      const arrayValue =
+        (newFormValues[arrayFieldId] as Array<Record<string, unknown>>) || [];
+
+      // Ensure the array has enough items
+      while (arrayValue.length <= itemIndex) {
+        arrayValue.push({});
+      }
+
+      // Update the specific field in the array item
+      arrayValue[itemIndex] = {
+        ...arrayValue[itemIndex],
+        [fieldId]: value,
+      };
+
+      newFormValues[arrayFieldId] = arrayValue;
+
+      console.log('🔍 handleArrayItemChange updating formValues:', {
+        arrayFieldId,
+        itemIndex,
+        fieldId,
+        value,
+        newArrayValue: arrayValue,
+        newFormValues,
+      });
+
+      return newFormValues;
+    });
   };
 
   const handleBlur = (id: string) => {
@@ -1806,11 +1849,283 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     ]
   );
 
+  const renderArrayItemComponent = (
+    comp: FormComponentFieldProps,
+    arrayFieldId: string,
+    itemIndex: number
+  ): React.ReactElement => {
+    const fieldId = `${arrayFieldId}[${itemIndex}].${comp.id}`;
+    const prefixedFieldId = getPrefixedId(fieldId);
+    const hasError = validationErrors[fieldId]?.length > 0;
+    const showError = shouldShowError(fieldId) && hasError;
+
+    // Get the current value from the array item
+    const arrayValue =
+      (formValues[arrayFieldId] as Array<Record<string, unknown>>) || [];
+    const itemValue = arrayValue[itemIndex] || {};
+    const currentValue = itemValue[comp.id];
+
+    // Get translated values
+    const translatedLabel = translationService.translateComponent(
+      comp.id,
+      currentStepIndex,
+      'label',
+      comp.label
+    );
+    const translatedProps: any = {
+      ...comp.props,
+      ...(comp.expression && { expression: comp.expression }),
+      ...(comp.props?.expression && { expression: comp.props.expression }),
+    };
+
+    // Handle translated options for select/radio components
+    if (
+      (comp.type === 'select' || comp.type === 'radio') &&
+      comp.props?.options &&
+      Array.isArray(comp.props.options)
+    ) {
+      translatedProps.options = comp.props.options.map(
+        (option: any, index: number) => ({
+          ...option,
+          label: translationService.translateComponent(
+            comp.id,
+            currentStepIndex,
+            `props.options.${index}.label`,
+            option.label
+          ),
+        })
+      );
+    }
+
+    // Handle translated validation messages
+    const translatedValidation = comp.validation
+      ? {
+          ...comp.validation,
+          errorMessages: comp.validation.errorMessages
+            ? Object.fromEntries(
+                Object.entries(comp.validation.errorMessages).map(
+                  ([key, message]) => [
+                    key,
+                    translationService.translateComponent(
+                      comp.id,
+                      currentStepIndex,
+                      `validation.errorMessages.${key}`,
+                      message as string
+                    ),
+                  ]
+                )
+              )
+            : undefined,
+        }
+      : undefined;
+
+    switch (comp.type) {
+      case 'input':
+        return (
+          <FormInputField
+            fieldId={prefixedFieldId}
+            label={translatedLabel}
+            value={typeof currentValue === 'string' ? currentValue : ''}
+            onChange={(value) =>
+              handleArrayItemChange(arrayFieldId, itemIndex, comp.id, value)
+            }
+            onBlur={() => handleBlur(fieldId)}
+            validation={translatedValidation}
+            expression={translatedProps?.expression}
+            props={{
+              ...processPropsWithTemplates(translatedProps),
+            }}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+            disabled={disabled}
+            // Array item field props
+            isArrayItem={true}
+            arrayItemChangeHandler={handleArrayItemChange}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldInput: settings.classes?.fieldInput,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
+          />
+        );
+
+      case 'textarea':
+        return (
+          <FormTextareaField
+            fieldId={prefixedFieldId}
+            label={translatedLabel}
+            value={typeof currentValue === 'string' ? currentValue : ''}
+            onChange={(value) =>
+              handleArrayItemChange(arrayFieldId, itemIndex, comp.id, value)
+            }
+            onBlur={() => handleBlur(fieldId)}
+            validation={translatedValidation}
+            expression={translatedProps?.expression}
+            props={{
+              ...processPropsWithTemplates(translatedProps),
+            }}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+            disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldTextarea: settings.classes?.fieldTextarea,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
+          />
+        );
+
+      case 'select':
+        return (
+          <FormSelectField
+            fieldId={prefixedFieldId}
+            label={translatedLabel}
+            value={typeof currentValue === 'string' ? currentValue : ''}
+            onChange={(value) =>
+              handleArrayItemChange(arrayFieldId, itemIndex, comp.id, value)
+            }
+            onBlur={() => handleBlur(fieldId)}
+            validation={translatedValidation}
+            props={processPropsWithTemplates(translatedProps)}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+            disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldSelect: settings.classes?.fieldSelect,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
+          />
+        );
+
+      case 'radio':
+        return (
+          <FormRadioField
+            fieldId={prefixedFieldId}
+            label={translatedLabel}
+            value={typeof currentValue === 'string' ? currentValue : ''}
+            onChange={(value) =>
+              handleArrayItemChange(arrayFieldId, itemIndex, comp.id, value)
+            }
+            validation={translatedValidation}
+            props={processPropsWithTemplates(translatedProps)}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+            disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldRadio: settings.classes?.fieldRadio,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
+          />
+        );
+
+      case 'checkbox':
+        return (
+          <FormCheckboxField
+            fieldId={prefixedFieldId}
+            label={translatedLabel}
+            value={currentValue as boolean | string[]}
+            onChange={(value) =>
+              handleArrayItemChange(arrayFieldId, itemIndex, comp.id, value)
+            }
+            onBlur={() => handleBlur(fieldId)}
+            validation={translatedValidation}
+            props={processPropsWithTemplates(translatedProps)}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+            disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldCheckbox: settings.classes?.fieldCheckbox,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
+          />
+        );
+
+      case 'date':
+        return (
+          <FormDateField
+            fieldId={prefixedFieldId}
+            label={translatedLabel}
+            value={typeof currentValue === 'string' ? currentValue : ''}
+            onChange={(value) =>
+              handleArrayItemChange(arrayFieldId, itemIndex, comp.id, value)
+            }
+            onBlur={() => handleBlur(fieldId)}
+            validation={translatedValidation}
+            props={processPropsWithTemplates(translatedProps)}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+            disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldDate: settings.classes?.fieldDate,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
+          />
+        );
+
+      case 'slider-range':
+        return (
+          <FormSliderRangeField
+            fieldId={prefixedFieldId}
+            label={translatedLabel}
+            value={
+              currentValue !== undefined && currentValue !== null
+                ? (currentValue as number | { min: number; max: number })
+                : comp.props?.mode === 'range'
+                ? { min: comp.props?.min ?? 0, max: comp.props?.max ?? 100 }
+                : comp.props?.min ?? 0
+            }
+            onChange={(value) =>
+              handleArrayItemChange(arrayFieldId, itemIndex, comp.id, value)
+            }
+            onBlur={() => handleBlur(fieldId)}
+            validation={translatedValidation}
+            expression={translatedProps?.expression}
+            props={{
+              ...processPropsWithTemplates(translatedProps),
+            }}
+            showError={showError}
+            validationErrors={validationErrors[fieldId] || []}
+            disabled={disabled}
+            classes={{
+              field: settings.classes?.field,
+              fieldLabel: settings.classes?.fieldLabel,
+              fieldSlider: settings.classes?.fieldSlider,
+              fieldError: settings.classes?.fieldError,
+              fieldHelperText: settings.classes?.fieldHelperText,
+            }}
+          />
+        );
+
+      default:
+        return (
+          <div className="text-sm text-gray-500">
+            Unsupported array item component type: {comp.type}
+          </div>
+        );
+    }
+  };
+
   const renderArrayField = (
     component: FormComponentFieldProps,
     fieldId: string
   ): React.ReactElement => {
-    const items = arrayItems[component.id] || [];
+    const items = (formValues[fieldId] as Array<Record<string, unknown>>) || [];
     const prefixedFieldId = getPrefixedId(fieldId);
     const showError =
       shouldShowError(fieldId) && validationErrors[fieldId]?.length > 0;
@@ -1823,19 +2138,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         });
       });
       const newItems = [...items, newItem];
-      setArrayItems((prev) => ({
-        ...prev,
-        [component.id]: newItems,
-      }));
       handleInputChange(fieldId, newItems);
     };
 
     const handleRemoveItem = (index: number) => {
       const newItems = items.filter((_, i) => i !== index);
-      setArrayItems((prev) => ({
-        ...prev,
-        [component.id]: newItems,
-      }));
       handleInputChange(fieldId, newItems);
     };
 
@@ -1871,13 +2178,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 <div key={arrayItem.id} className="mb-2">
                   {arrayItem.components.map((comp) => (
                     <div key={comp.id} className="mb-2">
-                      {renderComponent(
-                        {
-                          ...comp,
-                          id: `${component.id}[${index}].${comp.id}`,
-                        },
-                        `${fieldId}[${index}]`
-                      )}
+                      {renderArrayItemComponent(comp, fieldId, index)}
                     </div>
                   ))}
                 </div>

@@ -63,6 +63,123 @@ export class ExpressionEngineService {
       },
       // Array functions
       length: (arr: any) => (Array.isArray(arr) ? arr.length : 0),
+      // Array aggregation functions
+      sum: (arr: any, fieldExpression?: string) => {
+        if (arr === undefined || arr === null) {
+          return 0;
+        }
+        if (!Array.isArray(arr) || arr.length === 0) {
+          return 0;
+        }
+        if (!fieldExpression) {
+          // Simple sum of array values
+          return arr.reduce((acc, item) => {
+            const num = parseFloat(item) || 0;
+            return acc + num;
+          }, 0);
+        }
+        // Sum of calculated field values
+        const result = arr.reduce((acc, item, index) => {
+          if (typeof item === 'object' && item !== null) {
+            // Create a local evaluation context with the item's field values
+            const localContext: Record<string, any> = {};
+            Object.keys(item).forEach((fieldName) => {
+              const value = item[fieldName];
+              localContext[fieldName] =
+                value === null || value === undefined ? 0 : value;
+            });
+
+            try {
+              // Create a new parser instance for this evaluation
+              const localParser = new Parser();
+              localParser.functions = this.parser.functions;
+
+              const evalResult = localParser.evaluate(
+                fieldExpression,
+                localContext
+              );
+              const num = parseFloat(String(evalResult)) || 0;
+              return acc + num;
+            } catch (error) {
+              // Silently handle errors for empty arrays or missing data
+              return acc;
+            }
+          }
+          return acc;
+        }, 0);
+
+        // Ensure we return a valid number
+        return isNaN(result) ? 0 : result;
+      },
+      count: (arr: any) => {
+        return Array.isArray(arr) ? arr.length : 0;
+      },
+      // Specialized aggregation function for line totals
+      sumLineTotal: (arr: any) => {
+        if (arr === undefined || arr === null) {
+          return 0;
+        }
+        if (!Array.isArray(arr) || arr.length === 0) {
+          return 0;
+        }
+
+        const result = arr.reduce((acc, item, index) => {
+          if (typeof item === 'object' && item !== null) {
+            // Simple field access - should now be products[0].quantity, products[0].unitPrice
+            const quantity = parseFloat(item.quantity) || 0;
+            const unitPrice = parseFloat(item.unitPrice) || 0;
+            const lineTotal = quantity * unitPrice;
+
+            return acc + lineTotal;
+          }
+          return acc;
+        }, 0);
+
+        return isNaN(result) ? 0 : result;
+      },
+      avg: (arr: any, fieldExpression?: string) => {
+        if (!Array.isArray(arr) || arr.length === 0) return 0;
+        if (!fieldExpression) {
+          // Simple average of array values
+          const sum = arr.reduce((acc, item) => {
+            const num = parseFloat(item) || 0;
+            return acc + num;
+          }, 0);
+          return sum / arr.length;
+        }
+        // Average of calculated field values
+        const sum = arr.reduce((acc, item, index) => {
+          if (typeof item === 'object' && item !== null) {
+            // Create a local evaluation context with the item's field values
+            const localContext: Record<string, any> = {};
+            Object.keys(item).forEach((fieldName) => {
+              const value = item[fieldName];
+              localContext[fieldName] =
+                value === null || value === undefined ? 0 : value;
+            });
+
+            try {
+              // Create a new parser instance for this evaluation
+              const localParser = new Parser();
+              localParser.functions = this.parser.functions;
+
+              const evalResult = localParser.evaluate(
+                fieldExpression,
+                localContext
+              );
+              const num = parseFloat(String(evalResult)) || 0;
+              return acc + num;
+            } catch (error) {
+              // Silently handle errors for empty arrays or missing data
+              return acc;
+            }
+          }
+          return acc;
+        }, 0);
+
+        const result = sum / arr.length;
+        return isNaN(result) ? 0 : result;
+      },
       // Conditional functions
       if: (condition: boolean, trueValue: any, falseValue: any) =>
         condition ? trueValue : falseValue,
@@ -88,7 +205,11 @@ export class ExpressionEngineService {
   /**
    * Evaluate an expression with the given form context
    */
-  evaluate(expression: string, context: FormContext): ExpressionResult {
+  evaluate(
+    expression: string,
+    context: FormContext,
+    fieldId?: string
+  ): ExpressionResult {
     try {
       // Check cache first
       const cacheKey = this.getCacheKey(expression, context);
@@ -110,6 +231,7 @@ export class ExpressionEngineService {
 
       // Parse and evaluate expression
       const expr = this.parser.parse(processedExpression);
+
       const result = expr.evaluate(evalContext);
 
       // Cache result
@@ -117,6 +239,11 @@ export class ExpressionEngineService {
         value: result,
         dependencies,
       };
+
+      // Ensure we don't return NaN or Infinity values
+      if (typeof result === 'number' && (isNaN(result) || !isFinite(result))) {
+        expressionResult.value = 0;
+      }
 
       this.cache.set(cacheKey, expressionResult);
       return expressionResult;
@@ -208,6 +335,25 @@ export class ExpressionEngineService {
           dependencies.add(node.object.name);
         }
 
+        // Check for array field references (e.g., products[0].quantity)
+        if (
+          node.type === 'MemberExpression' &&
+          node.object &&
+          node.object.type === 'MemberExpression' &&
+          node.object.object &&
+          node.object.object.type === 'Identifier' &&
+          node.object.property &&
+          node.object.property.type === 'Literal' &&
+          typeof node.object.property.value === 'number' &&
+          node.property &&
+          node.property.type === 'Identifier'
+        ) {
+          const arrayName = node.object.object.name;
+          const index = node.object.property.value;
+          const fieldName = node.property.name;
+          dependencies.add(`${arrayName}[${index}].${fieldName}`);
+        }
+
         // Traverse child nodes
         Object.values(node).forEach((child) => {
           if (child && typeof child === 'object') {
@@ -242,12 +388,17 @@ export class ExpressionEngineService {
       'length',
       'if',
       'Math',
+      // Array aggregation functions
+      'sum',
+      'count',
+      'avg',
+      'sumLineTotal',
     ];
     return builtInFunctions.includes(name);
   }
 
   /**
-   * Pre-process expression to handle member expressions
+   * Pre-process expression to handle member expressions and array field references
    */
   private preprocessExpression(
     expression: string,
@@ -256,17 +407,30 @@ export class ExpressionEngineService {
     let processedExpression = expression;
 
     // Replace fieldId.value with fieldId for direct access
-    Object.keys(context).forEach((fieldId) => {
-      const regex = new RegExp(`\\b${fieldId}\\.value\\b`, 'g');
-      processedExpression = processedExpression.replace(regex, fieldId);
+    Object.keys(context).forEach((contextFieldId) => {
+      const regex = new RegExp(`\\b${contextFieldId}\\.value\\b`, 'g');
+      processedExpression = processedExpression.replace(regex, contextFieldId);
     });
+
+    // Handle array field references - convert array field access to valid variable names
+    // e.g., products[0].quantity -> products_0_quantity
+    processedExpression = processedExpression.replace(
+      /(\w+)\[(\d+)\]\.(\w+)/g,
+      (match, arrayName, index, fieldName) => {
+        const scopedFieldId = `${arrayName}[${index}].${fieldName}`;
+        if (context[scopedFieldId]) {
+          return `${arrayName}_${index}_${fieldName}`;
+        }
+        return match; // Return original if not found in context
+      }
+    );
 
     // Replace JavaScript-style operators with expr-eval compatible ones
     processedExpression = processedExpression
       .replace(/===/g, '==') // Replace strict equality with loose equality
       .replace(/!==/g, '!=') // Replace strict inequality with loose inequality
-      .replace(/&&/g, 'and') // Replace logical AND with expr-eval syntax
-      .replace(/\|\|/g, 'or'); // Replace logical OR with expr-eval syntax
+      .replace(/&&/g, 'and'); // Replace logical AND with expr-eval syntax
+    // Keep || as || since it's already valid in expr-eval
 
     return processedExpression;
   }
@@ -279,7 +443,53 @@ export class ExpressionEngineService {
 
     // Add field values directly for simpler expressions
     Object.entries(context).forEach(([fieldId, fieldData]) => {
-      evalContext[fieldId] = fieldData.value;
+      // Handle both direct values and field data objects
+      const value =
+        typeof fieldData === 'object' &&
+        fieldData !== null &&
+        'value' in fieldData
+          ? fieldData.value
+          : fieldData;
+
+      evalContext[fieldId] = value;
+
+      // Also add array field values with transformed names for expression evaluation
+      if (fieldId.includes('[') && fieldId.includes('].')) {
+        // This is an array field reference like "products[0].quantity"
+        const transformedName = fieldId.replace(/\[(\d+)\]\./g, '_$1_');
+        evalContext[transformedName] = value;
+      }
+    });
+
+    // Add array data for aggregation functions
+    // Group array fields by their base name (e.g., "products" from "products[0].quantity")
+    const arrayGroups: Record<string, any[]> = {};
+
+    Object.entries(context).forEach(([fieldId, fieldData]) => {
+      if (fieldId.includes('[') && fieldId.includes('].')) {
+        const match = fieldId.match(/^([^[]+)\[(\d+)\]\.(.+)$/);
+        if (match) {
+          const [, arrayName, indexStr, fieldName] = match;
+          const index = parseInt(indexStr, 10);
+
+          if (!arrayGroups[arrayName]) {
+            arrayGroups[arrayName] = [];
+          }
+
+          // Ensure the array is large enough
+          while (arrayGroups[arrayName].length <= index) {
+            arrayGroups[arrayName].push({});
+          }
+
+          // Set the field value
+          arrayGroups[arrayName][index][fieldName] = fieldData.value;
+        }
+      }
+    });
+
+    // Add array groups to evaluation context
+    Object.entries(arrayGroups).forEach(([arrayName, arrayData]) => {
+      evalContext[arrayName] = arrayData;
     });
 
     return evalContext;
@@ -351,7 +561,8 @@ export class ExpressionEngineService {
         // Evaluate the expression
         const result = this.evaluate(
           fieldExpression.expression,
-          enhancedContext
+          enhancedContext,
+          fieldId
         );
         results[fieldId] = result;
         evaluated.add(fieldId);

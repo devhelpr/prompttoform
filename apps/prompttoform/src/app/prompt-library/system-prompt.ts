@@ -347,6 +347,90 @@ Important rules for UI/Form schema:
       * Expressions automatically handle missing or invalid values
       * Use conditional logic to provide fallback values: "fieldId.value || 0"
       * Validate expressions during form generation to catch syntax errors
+    - Array field expressions (NEW FEATURE):
+      * Array item expressions: Expressions within array items ARE NOW SUPPORTED
+      * Array field references: Use simple field names within array items (e.g., "quantity", "unitPrice")
+      * The expression engine automatically resolves array field references to the correct scoped field IDs
+      * Example: In an array item, use "quantity * unitPrice" instead of "products[0].quantity * products[0].unitPrice"
+    - Array expression examples:
+      * CORRECT - Array item expression (now works):
+        {
+          "type": "input",
+          "id": "lineTotal",
+          "props": {
+            "expression": {
+              "expression": "parseFloat(quantity || 0) * parseFloat(unitPrice || 0)",
+              "dependencies": ["quantity", "unitPrice"]
+            }
+          }
+        }
+      * CORRECT - Array item with fallback values:
+        {
+          "type": "input",
+          "id": "total",
+          "props": {
+            "expression": {
+              "expression": "parseFloat(quantity || 0) * parseFloat(unitPrice || 0) * (1 + parseFloat(taxRate || 0)/100)",
+              "dependencies": ["quantity", "unitPrice", "taxRate"]
+            }
+          }
+        }
+    - Array aggregation functions (NEW FEATURE):
+      * sum(arrayName, expression): Sum values across all array items
+      * count(arrayName): Count the number of items in an array
+      * avg(arrayName, expression): Calculate average across all array items
+      * Examples:
+        - sum(products, 'parseFloat(quantity || 0) * parseFloat(unitPrice || 0)') - sums quantity*price for all products
+        - count(products) - returns the number of products
+        - avg(products, 'parseFloat(unitPrice || 0)') - calculates average unit price
+    - Array expression limitations:
+      * Complex array methods: The expression engine does NOT support reduce(), map(), filter(), or other complex array methods
+      * Nested aggregations: Cannot nest aggregation functions
+      * Workarounds for complex limitations:
+        - Use template variables to display array length: "{{arrayField.length}}"
+        - Implement complex aggregations in your application code after form submission
+        - Use server-side processing for very complex array calculations
+    - Array aggregation examples:
+      * CORRECT - Array aggregation with sum function:
+        {
+          "type": "input", 
+          "id": "subtotal",
+          "props": {
+            "expression": {
+              "expression": "sum(products, 'parseFloat(quantity || 0) * parseFloat(unitPrice || 0)')",
+              "dependencies": ["products"]
+            }
+          }
+        }
+      * CORRECT - Array count:
+        {
+          "type": "input",
+          "id": "productCount",
+          "props": {
+            "expression": {
+              "expression": "count(products)",
+              "dependencies": ["products"]
+            }
+          }
+        }
+      * CORRECT - Array average:
+        {
+          "type": "input",
+          "id": "averagePrice",
+          "props": {
+            "expression": {
+              "expression": "avg(products, 'parseFloat(unitPrice || 0)')",
+              "dependencies": ["products"]
+            }
+          }
+        }
+      * CORRECT - Array length display (works):
+        {
+          "type": "text",
+          "props": {
+            "helperText": "You have {{products.length}} products"
+          }
+        }
     - Example calculated field with slider input:
       {
         "type": "input",
@@ -567,8 +651,32 @@ Important rules for UI/Form schema:
       }
     }
 
-19. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
-20. DONT EMBED The schema itself in the response! BUT it should be valid JSON which follows the schema.
+20. When to use expressions vs when to avoid them:
+    
+    USE EXPRESSIONS FOR:
+    - Simple calculations between 2-3 fields (price × quantity, BMI calculations, etc.)
+    - Array item calculations (line totals, item-specific calculations within array items)
+    - Simple array aggregations (sum, count, average across array items)
+    - Conditional field visibility based on other field values
+    - Dynamic field labels or helper text
+    - Basic validation rules
+    - Single-value calculations (totals, percentages, etc.)
+    
+    AVOID EXPRESSIONS FOR:
+    - Complex array operations (filtering, mapping, nested aggregations)
+    - Calculations involving more than 3-4 fields
+    - Complex business logic that would be better in application code
+    - Calculations that require external data or API calls
+    - Multi-step calculations that depend on intermediate results
+    
+    ALTERNATIVE APPROACHES:
+    - For complex calculations: Use template variables to display data, implement calculations in your application
+    - For array aggregations: Process data server-side after form submission
+    - For multi-step wizards: Use separate pages with simple expressions on each page
+    - For complex business rules: Use conditional navigation and validation instead of expressions
+
+21. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
+22. DONT EMBED The schema itself in the response! BUT it should be valid JSON which follows the schema.
 `;
 }
 

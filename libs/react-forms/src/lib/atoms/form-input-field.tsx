@@ -26,6 +26,14 @@ interface FormInputFieldProps {
   showError: boolean;
   validationErrors: string[];
   disabled?: boolean;
+  // Array item field props
+  isArrayItem?: boolean;
+  arrayItemChangeHandler?: (
+    arrayFieldId: string,
+    itemIndex: number,
+    fieldName: string,
+    value: any
+  ) => void;
   classes?: {
     field?: string;
     fieldLabel?: string;
@@ -83,7 +91,7 @@ const FormInputFieldBase: React.FC<FormInputFieldProps> = ({
           `w-full p-2 border ${
             showError ? 'border-red-500' : 'border-gray-300'
           } rounded-md ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''} ${
-            props?.readOnly ? 'bg-gray-50 cursor-not-allowed' : ''
+            props?.readOnly ? 'bg-gray-50 cursor-not-allowed text-gray-900' : ''
           }`,
           classes?.fieldInput
         )}
