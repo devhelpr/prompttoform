@@ -80,15 +80,7 @@ export function withExpression<P extends object>(
 
       // For calculated fields, provide a default value instead of null
       if (actualExpression.mode === 'value') {
-        const isCalculatedField =
-          fieldId.includes('lineTotal') ||
-          fieldId.includes('subtotal') ||
-          fieldId.includes('grandTotal') ||
-          fieldId.includes('total');
-
-        if (isCalculatedField) {
-          results.value = 0; // Default value for calculated fields
-        }
+        results.value = actualExpression.defaultValue ?? 0; // Use configured default value or 0
       }
 
       // Only evaluate if we have a stable expression
@@ -112,63 +104,6 @@ export function withExpression<P extends object>(
 
     // Update expression results when dependencies change
     useEffect(() => {
-      // Special handling for line total fields - force manual calculation
-      if (
-        fieldId &&
-        fieldId.includes('lineTotal') &&
-        actualExpression?.expression
-      ) {
-        const arrayItemMatch = fieldId.match(/^([^[]+)\[(\d+)\]\.(.+)$/);
-        if (arrayItemMatch) {
-          const [, arrayName, indexStr] = arrayItemMatch;
-          const index = parseInt(indexStr, 10);
-
-          // Try to get values from the raw form context first
-          const arrayData = contextValues[arrayName];
-          let quantityValue, unitPriceValue;
-
-          if (
-            arrayData &&
-            Array.isArray(arrayData.value) &&
-            arrayData.value[index]
-          ) {
-            // Get values from the array item directly
-            const item = arrayData.value[index];
-            quantityValue = item.quantity;
-            unitPriceValue = item.unitPrice;
-          } else {
-            // Fallback to scoped field IDs
-            const quantityFieldId = `${arrayName}[${index}].quantity`;
-            const unitPriceFieldId = `${arrayName}[${index}].unitPrice`;
-            quantityValue = contextValues[quantityFieldId]?.value;
-            unitPriceValue = contextValues[unitPriceFieldId]?.value;
-          }
-
-          // Manual calculation as fallback
-          if (quantityValue !== undefined && unitPriceValue !== undefined) {
-            const quantity = parseFloat(quantityValue || 0);
-            const unitPrice = parseFloat(unitPriceValue || 0);
-            const manualTotal = quantity * unitPrice;
-
-            // If we have a valid manual calculation, use it
-            if (!isNaN(manualTotal)) {
-              const manualResults = {
-                value: manualTotal,
-                visibility: true,
-                validation: true,
-                disabled: false,
-                required: false,
-                label: undefined,
-                helperText: undefined,
-              };
-
-              setExpressionResults(manualResults);
-              return; // Skip the normal expression evaluation
-            }
-          }
-        }
-      }
-
       if (!actualExpression) {
         setExpressionResults({
           value: null,
@@ -194,15 +129,7 @@ export function withExpression<P extends object>(
 
       // For calculated fields, provide a default value instead of null
       if (actualExpression.mode === 'value') {
-        const isCalculatedField =
-          fieldId.includes('lineTotal') ||
-          fieldId.includes('subtotal') ||
-          fieldId.includes('grandTotal') ||
-          fieldId.includes('total');
-
-        if (isCalculatedField) {
-          results.value = 0; // Default value for calculated fields
-        }
+        results.value = actualExpression.defaultValue ?? 0; // Use configured default value or 0
       }
 
       // Only evaluate if we have a stable expression
@@ -407,24 +334,18 @@ export function withExpression<P extends object>(
 
       // For calculated fields (value mode), don't show error if dependencies are missing
       // Instead, show the field with a default value
+      // Any field with mode: "value" is automatically a calculated field
       if (actualExpression.mode === 'value') {
-        // Check if this is a calculated field that should show a default value
-        const isCalculatedField =
-          fieldId.includes('lineTotal') ||
-          fieldId.includes('subtotal') ||
-          fieldId.includes('grandTotal') ||
-          fieldId.includes('total');
-
-        if (isCalculatedField) {
-          // For calculated fields, show the field with a default value instead of an error
-          const enhancedPropsWithDefault = {
-            ...enhancedProps,
-            value: 0, // Default value for calculated fields
-            readOnly: true,
-            helperText: 'Calculated automatically',
-          };
-          return <WrappedComponent {...(enhancedPropsWithDefault as P)} />;
-        }
+        // For calculated fields, show the field with a default value instead of an error
+        const enhancedPropsWithDefault = {
+          ...enhancedProps,
+          value: actualExpression.defaultValue ?? 0, // Use configured default value or 0
+          readOnly: true,
+          helperText:
+            actualExpression.calculatedFieldHelperText ??
+            'Calculated automatically',
+        };
+        return <WrappedComponent {...(enhancedPropsWithDefault as P)} />;
       }
 
       // For non-calculated fields or validation errors, show the error

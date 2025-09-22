@@ -89,7 +89,9 @@
                       "mode": "value",
                       "dependencies": ["quantity", "unitPrice"],
                       "evaluateOnChange": true,
-                      "debounceMs": 100
+                      "debounceMs": 100,
+                      "defaultValue": 0,
+                      "calculatedFieldHelperText": "Calculated automatically"
                     },
                     "props": {
                       "inputType": "number",
@@ -117,17 +119,19 @@
             "id": "subtotal",
             "type": "input",
             "label": "Subtotal",
+            "expression": {
+              "expression": "sumLineTotal(products)",
+              "mode": "value",
+              "dependencies": ["products"],
+              "evaluateOnChange": true,
+              "debounceMs": 100,
+              "isCalculatedField": true,
+              "defaultValue": 0,
+              "calculatedFieldHelperText": "Calculated automatically from all line totals"
+            },
             "props": {
               "inputType": "number",
-              "readOnly": true,
-              "helperText": "Calculated automatically from all line totals",
-              "expression": {
-                "expression": "sumLineTotal(products)",
-                "mode": "value",
-                "dependencies": ["products"],
-                "evaluateOnChange": true,
-                "debounceMs": 100
-              }
+              "readOnly": true
             },
             "validation": {
               "required": true,
@@ -160,17 +164,19 @@
             "id": "grandTotal",
             "type": "input",
             "label": "Grand Total",
+            "expression": {
+              "expression": "subtotal + (subtotal * parseFloat(taxPercent ? taxPercent : 0) / 100)",
+              "mode": "value",
+              "dependencies": ["subtotal", "taxPercent"],
+              "evaluateOnChange": true,
+              "debounceMs": 100,
+              "isCalculatedField": true,
+              "defaultValue": 0,
+              "calculatedFieldHelperText": "Subtotal plus tax"
+            },
             "props": {
               "inputType": "number",
-              "readOnly": true,
-              "helperText": "Subtotal plus tax",
-              "expression": {
-                "expression": "subtotal + (subtotal * parseFloat(taxPercent ? taxPercent : 0) / 100)",
-                "mode": "value",
-                "dependencies": ["subtotal", "taxPercent"],
-                "evaluateOnChange": true,
-                "debounceMs": 100
-              }
+              "readOnly": true
             },
             "validation": {
               "required": true,
