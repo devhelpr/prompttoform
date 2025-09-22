@@ -343,6 +343,9 @@ Important rules for UI/Form schema:
       * Add helpful helperText explaining the calculation
       * Use debounceMs to optimize performance for complex calculations
       * Test expressions with edge cases (empty values, zero values, etc.)
+      * IMPORTANT: Do NOT use || operator with parseFloat() - use parseFloat(fieldName) directly
+        * WRONG: "parseFloat(quantity || 0)" - causes multiplication issues
+        * CORRECT: "parseFloat(quantity)" - the expression engine handles null/undefined values automatically
     - Expression error handling:
       * Expressions automatically handle missing or invalid values
       * Use conditional logic to provide fallback values: "fieldId.value || 0"
@@ -359,7 +362,7 @@ Important rules for UI/Form schema:
           "id": "lineTotal",
           "props": {
             "expression": {
-              "expression": "parseFloat(quantity || 0) * parseFloat(unitPrice || 0)",
+              "expression": "parseFloat(quantity) * parseFloat(unitPrice)",
               "dependencies": ["quantity", "unitPrice"]
             }
           }
@@ -370,7 +373,7 @@ Important rules for UI/Form schema:
           "id": "total",
           "props": {
             "expression": {
-              "expression": "parseFloat(quantity || 0) * parseFloat(unitPrice || 0) * (1 + parseFloat(taxRate || 0)/100)",
+              "expression": "parseFloat(quantity) * parseFloat(unitPrice) * (1 + parseFloat(taxRate)/100)",
               "dependencies": ["quantity", "unitPrice", "taxRate"]
             }
           }
@@ -380,9 +383,9 @@ Important rules for UI/Form schema:
       * count(arrayName): Count the number of items in an array
       * avg(arrayName, expression): Calculate average across all array items
       * Examples:
-        - sum(products, 'parseFloat(quantity || 0) * parseFloat(unitPrice || 0)') - sums quantity*price for all products
+        - sum(products, 'parseFloat(quantity) * parseFloat(unitPrice)') - sums quantity*price for all products
         - count(products) - returns the number of products
-        - avg(products, 'parseFloat(unitPrice || 0)') - calculates average unit price
+        - avg(products, 'parseFloat(unitPrice)') - calculates average unit price
     - Array expression limitations:
       * Complex array methods: The expression engine does NOT support reduce(), map(), filter(), or other complex array methods
       * Nested aggregations: Cannot nest aggregation functions

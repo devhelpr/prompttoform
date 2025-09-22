@@ -3201,7 +3201,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                         label: 'Line Total',
                         expression: {
                           expression:
-                            'parseFloat(quantity ? quantity : 0) * parseFloat(unitPrice ? unitPrice : 0)',
+                            'parseFloat(quantity) * parseFloat(unitPrice)',
                           mode: 'value',
                           dependencies: ['quantity', 'unitPrice'],
                           evaluateOnChange: true,
@@ -3283,7 +3283,7 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
                 label: 'Grand Total',
                 expression: {
                   expression:
-                    'subtotal + (subtotal * parseFloat(taxPercent ? taxPercent : 0) / 100)',
+                    'subtotal + (subtotal * parseFloat(taxPercent) / 100)',
                   mode: 'value',
                   dependencies: ['subtotal', 'taxPercent'],
                   evaluateOnChange: true,

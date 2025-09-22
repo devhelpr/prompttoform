@@ -85,8 +85,20 @@ export class ExpressionEngineService {
             const localContext: Record<string, any> = {};
             Object.keys(item).forEach((fieldName) => {
               const value = item[fieldName];
-              localContext[fieldName] =
-                value === null || value === undefined ? 0 : value;
+              // Extract the actual value from field objects (which have .value property)
+              if (
+                typeof value === 'object' &&
+                value !== null &&
+                'value' in value
+              ) {
+                localContext[fieldName] =
+                  value.value === null || value.value === undefined
+                    ? 0
+                    : value.value;
+              } else {
+                localContext[fieldName] =
+                  value === null || value === undefined ? 0 : value;
+              }
             });
 
             try {
@@ -154,8 +166,20 @@ export class ExpressionEngineService {
             const localContext: Record<string, any> = {};
             Object.keys(item).forEach((fieldName) => {
               const value = item[fieldName];
-              localContext[fieldName] =
-                value === null || value === undefined ? 0 : value;
+              // Extract the actual value from field objects (which have .value property)
+              if (
+                typeof value === 'object' &&
+                value !== null &&
+                'value' in value
+              ) {
+                localContext[fieldName] =
+                  value.value === null || value.value === undefined
+                    ? 0
+                    : value.value;
+              } else {
+                localContext[fieldName] =
+                  value === null || value === undefined ? 0 : value;
+              }
             });
 
             try {
