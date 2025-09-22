@@ -194,31 +194,6 @@ export const ExpressionContextProvider: React.FC<
           });
         }
 
-        // Debug logging for array item fields
-        if (
-          arrayItemMatch &&
-          (fieldId.includes('lineTotal') ||
-            fieldId.includes('quantity') ||
-            fieldId.includes('unitPrice'))
-        ) {
-          console.log('🔍 Array item expression evaluation result:', {
-            fieldId,
-            expression,
-            result: result.value,
-            success: !result.error,
-            error: result.error,
-            evaluationContext: evaluationContext,
-            quantityValue: evaluationContext.quantity?.value,
-            unitPriceValue: evaluationContext.unitPrice?.value,
-            manualResult:
-              evaluationContext.quantity?.value &&
-              evaluationContext.unitPrice?.value
-                ? parseFloat(evaluationContext.quantity.value) *
-                  parseFloat(evaluationContext.unitPrice.value)
-                : 0,
-          });
-        }
-
         return {
           value: result.value,
           success: !result.error,

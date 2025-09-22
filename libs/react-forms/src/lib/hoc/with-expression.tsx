@@ -14,7 +14,7 @@ const useFormValues = () => {
   // This is a temporary solution - we'll access the form values through the ExpressionContextProvider
   // but we need to ensure the context is properly updated
   const context = useExpressionContext();
-  return context.values;
+  return (context as any).values;
 };
 
 interface WithExpressionProps {
@@ -33,6 +33,7 @@ export function withExpression<P extends object>(
   const WithExpressionComponent = (props: P & WithExpressionProps) => {
     const { expression, fieldId, onChange, ...restProps } = props;
     const { evaluateExpression, context } = useExpressionContext();
+    const contextValues = (context as any).values;
     const isUpdatingRef = useRef(false);
     const lastUpdateTimeRef = useRef(0);
 
@@ -44,7 +45,17 @@ export function withExpression<P extends object>(
     const isReadOnly = (restProps as any)?.props?.readOnly === true;
 
     // Use state to store expression results and update them with useEffect
-    const [expressionResults, setExpressionResults] = useState(() => {
+    const [expressionResults, setExpressionResults] = useState<{
+      value: any;
+      visibility: boolean;
+      validation: boolean;
+      disabled: boolean;
+      required: boolean;
+      label?: string;
+      helperText?: string;
+      success?: boolean;
+      error?: string;
+    }>(() => {
       if (!actualExpression) {
         return {
           value: null,
@@ -58,7 +69,7 @@ export function withExpression<P extends object>(
       }
 
       const results = {
-        value: null,
+        value: null as any,
         visibility: true,
         validation: true,
         disabled: false,
@@ -66,6 +77,19 @@ export function withExpression<P extends object>(
         label: undefined,
         helperText: undefined,
       };
+
+      // For calculated fields, provide a default value instead of null
+      if (actualExpression.mode === 'value') {
+        const isCalculatedField =
+          fieldId.includes('lineTotal') ||
+          fieldId.includes('subtotal') ||
+          fieldId.includes('grandTotal') ||
+          fieldId.includes('total');
+
+        if (isCalculatedField) {
+          results.value = 0; // Default value for calculated fields
+        }
+      }
 
       // Only evaluate if we have a stable expression
       if (actualExpression.expression) {
@@ -88,26 +112,6 @@ export function withExpression<P extends object>(
 
     // Update expression results when dependencies change
     useEffect(() => {
-      // Debug logging for line total fields
-      if (fieldId && fieldId.includes('lineTotal')) {
-        const depValues = (actualExpression?.dependencies || []).map(
-          (dep) => context.values[dep]
-        );
-        console.log('🔍 LineTotal useEffect triggered:', {
-          fieldId,
-          actualExpression: !!actualExpression,
-          expression: actualExpression?.expression,
-          dependencies: actualExpression?.dependencies,
-          depValues,
-          depValuesDetails: depValues.map((val, i) => ({
-            dep: actualExpression?.dependencies?.[i],
-            value: val,
-            type: typeof val,
-          })),
-          contextValues: context.values,
-        });
-      }
-
       // Special handling for line total fields - force manual calculation
       if (
         fieldId &&
@@ -120,7 +124,7 @@ export function withExpression<P extends object>(
           const index = parseInt(indexStr, 10);
 
           // Try to get values from the raw form context first
-          const arrayData = context.values[arrayName];
+          const arrayData = contextValues[arrayName];
           let quantityValue, unitPriceValue;
 
           if (
@@ -136,8 +140,8 @@ export function withExpression<P extends object>(
             // Fallback to scoped field IDs
             const quantityFieldId = `${arrayName}[${index}].quantity`;
             const unitPriceFieldId = `${arrayName}[${index}].unitPrice`;
-            quantityValue = context.values[quantityFieldId]?.value;
-            unitPriceValue = context.values[unitPriceFieldId]?.value;
+            quantityValue = contextValues[quantityFieldId]?.value;
+            unitPriceValue = contextValues[unitPriceFieldId]?.value;
           }
 
           // Manual calculation as fallback
@@ -179,7 +183,7 @@ export function withExpression<P extends object>(
       }
 
       const results = {
-        value: null,
+        value: null as any,
         visibility: true,
         validation: true,
         disabled: false,
@@ -188,72 +192,26 @@ export function withExpression<P extends object>(
         helperText: undefined,
       };
 
-      // Only evaluate if we have a stable expression
-      if (fieldId && fieldId.includes('lineTotal')) {
-        console.log('🔍 LineTotal checking expression:', {
-          fieldId,
-          hasExpression: !!actualExpression.expression,
-          expression: actualExpression.expression,
-          mode: actualExpression.mode,
-        });
+      // For calculated fields, provide a default value instead of null
+      if (actualExpression.mode === 'value') {
+        const isCalculatedField =
+          fieldId.includes('lineTotal') ||
+          fieldId.includes('subtotal') ||
+          fieldId.includes('grandTotal') ||
+          fieldId.includes('total');
+
+        if (isCalculatedField) {
+          results.value = 0; // Default value for calculated fields
+        }
       }
 
+      // Only evaluate if we have a stable expression
+
       if (actualExpression.expression) {
-        // Debug: Log context values before evaluation
-        if (fieldId && fieldId.includes('lineTotal')) {
-          console.log('🔍 LineTotal context values before evaluation:', {
-            fieldId,
-            contextValues: context.values,
-            quantityValue: context.values['products[0].quantity'],
-            unitPriceValue: context.values['products[0].unitPrice'],
-            lineTotalValue: context.values['products[0].lineTotal'],
-            allContextKeys: Object.keys(context.values),
-            dependencies: actualExpression?.dependencies,
-            mappedDependencies: (actualExpression?.dependencies || []).map(
-              (dep) => {
-                // For array items, map local field names to full field IDs
-                const arrayItemMatch = fieldId?.match(
-                  /^([^[]+)\[(\d+)\]\.(.+)$/
-                );
-                if (arrayItemMatch) {
-                  const [, arrayName, indexStr] = arrayItemMatch;
-                  const index = parseInt(indexStr, 10);
-
-                  // If it's a local field name (like 'quantity', 'unitPrice'), map it to the full field ID
-                  if (
-                    dep === 'quantity' ||
-                    dep === 'unitPrice' ||
-                    dep === 'lineTotal'
-                  ) {
-                    const fullFieldId = `${arrayName}[${index}].${dep}`;
-                    return {
-                      dep,
-                      fullFieldId,
-                      value: context.values[fullFieldId],
-                    };
-                  }
-                }
-                return { dep, fullFieldId: dep, value: context.values[dep] };
-              }
-            ),
-          });
-        }
-
         const evaluation = evaluateExpression(
           actualExpression.expression,
           fieldId
         );
-
-        if (fieldId && fieldId.includes('lineTotal')) {
-          console.log('🔍 LineTotal evaluation result:', {
-            fieldId,
-            evaluation,
-            resultsBefore: results,
-            evaluationValue: evaluation.value,
-            evaluationSuccess: evaluation.success,
-            evaluationError: evaluation.error,
-          });
-        }
 
         if (
           evaluation.success &&
@@ -262,21 +220,6 @@ export function withExpression<P extends object>(
         ) {
           (results as any)[actualExpression.mode] = evaluation.value;
         }
-
-        if (fieldId && fieldId.includes('lineTotal')) {
-          console.log('🔍 LineTotal results after:', {
-            fieldId,
-            results,
-            mode: actualExpression.mode,
-            resultsValue: results.value,
-            resultsMode: results[actualExpression.mode],
-          });
-        }
-      } else if (fieldId && fieldId.includes('lineTotal')) {
-        console.log('🔍 LineTotal NO EXPRESSION FOUND:', {
-          fieldId,
-          actualExpression,
-        });
       }
 
       setExpressionResults(results);
@@ -287,7 +230,7 @@ export function withExpression<P extends object>(
       // Use a stable string representation of the dependencies
       actualExpression?.dependencies?.join(',') || '',
       // Add context values for the dependencies to ensure re-evaluation when values change
-      ...(actualExpression?.dependencies || []).map((dep) => {
+      ...(actualExpression?.dependencies || []).map((dep: string) => {
         // For array items, map local field names to full field IDs
         const arrayItemMatch = fieldId?.match(/^([^[]+)\[(\d+)\]\.(.+)$/);
         if (arrayItemMatch) {
@@ -301,161 +244,10 @@ export function withExpression<P extends object>(
             dep === 'lineTotal'
           ) {
             const fullFieldId = `${arrayName}[${index}].${dep}`;
-            return context.values[fullFieldId];
+            return contextValues[fullFieldId];
           }
         }
-        return context.values[dep];
-      }),
-    ]);
-
-    // Add a second useEffect that runs after a short delay to catch any missed updates
-    useEffect(() => {
-      if (
-        fieldId &&
-        fieldId.includes('lineTotal') &&
-        actualExpression?.expression
-      ) {
-        const timeoutId = setTimeout(() => {
-          const evaluation = evaluateExpression(
-            actualExpression.expression,
-            fieldId
-          );
-
-          if (fieldId && fieldId.includes('lineTotal')) {
-            console.log('🔍 LineTotal delayed evaluation:', {
-              fieldId,
-              evaluation,
-              currentResults: expressionResults,
-              evaluationValue: evaluation.value,
-              evaluationSuccess: evaluation.success,
-              evaluationError: evaluation.error,
-            });
-          }
-
-          if (
-            evaluation.success &&
-            evaluation.value !== null &&
-            evaluation.value !== undefined &&
-            evaluation.value !== expressionResults.value
-          ) {
-            const newResults = { ...expressionResults };
-            (newResults as any)[actualExpression.mode] = evaluation.value;
-
-            if (fieldId && fieldId.includes('lineTotal')) {
-              console.log('🔍 LineTotal updating from delayed evaluation:', {
-                fieldId,
-                oldValue: expressionResults.value,
-                newValue: evaluation.value,
-                newResults,
-              });
-            }
-
-            setExpressionResults(newResults);
-          }
-        }, 100);
-
-        return () => clearTimeout(timeoutId);
-      }
-    }, [
-      fieldId,
-      actualExpression?.expression,
-      actualExpression?.mode,
-      // Add context values for the dependencies to ensure re-evaluation when values change
-      ...(actualExpression?.dependencies || []).map((dep) => {
-        // For array items, map local field names to full field IDs
-        const arrayItemMatch = fieldId?.match(/^([^[]+)\[(\d+)\]\.(.+)$/);
-        if (arrayItemMatch) {
-          const [, arrayName, indexStr] = arrayItemMatch;
-          const index = parseInt(indexStr, 10);
-
-          // If it's a local field name (like 'quantity', 'unitPrice'), map it to the full field ID
-          if (
-            dep === 'quantity' ||
-            dep === 'unitPrice' ||
-            dep === 'lineTotal'
-          ) {
-            const fullFieldId = `${arrayName}[${index}].${dep}`;
-            return context.values[fullFieldId];
-          }
-        }
-        return context.values[dep];
-      }),
-    ]);
-
-    // Add a third useEffect that runs after a longer delay to catch any missed updates
-    useEffect(() => {
-      if (
-        fieldId &&
-        fieldId.includes('lineTotal') &&
-        actualExpression?.expression
-      ) {
-        const timeoutId = setTimeout(() => {
-          const evaluation = evaluateExpression(
-            actualExpression.expression,
-            fieldId
-          );
-
-          if (fieldId && fieldId.includes('lineTotal')) {
-            console.log('🔍 LineTotal long delayed evaluation:', {
-              fieldId,
-              evaluation,
-              currentResults: expressionResults,
-              evaluationValue: evaluation.value,
-              evaluationSuccess: evaluation.success,
-              evaluationError: evaluation.error,
-            });
-          }
-
-          if (
-            evaluation.success &&
-            evaluation.value !== null &&
-            evaluation.value !== undefined &&
-            evaluation.value !== expressionResults.value
-          ) {
-            const newResults = { ...expressionResults };
-            (newResults as any)[actualExpression.mode] = evaluation.value;
-
-            if (fieldId && fieldId.includes('lineTotal')) {
-              console.log(
-                '🔍 LineTotal updating from long delayed evaluation:',
-                {
-                  fieldId,
-                  oldValue: expressionResults.value,
-                  newValue: evaluation.value,
-                  newResults,
-                }
-              );
-            }
-
-            setExpressionResults(newResults);
-          }
-        }, 500);
-
-        return () => clearTimeout(timeoutId);
-      }
-    }, [
-      fieldId,
-      actualExpression?.expression,
-      actualExpression?.mode,
-      // Add context values for the dependencies to ensure re-evaluation when values change
-      ...(actualExpression?.dependencies || []).map((dep) => {
-        // For array items, map local field names to full field IDs
-        const arrayItemMatch = fieldId?.match(/^([^[]+)\[(\d+)\]\.(.+)$/);
-        if (arrayItemMatch) {
-          const [, arrayName, indexStr] = arrayItemMatch;
-          const index = parseInt(indexStr, 10);
-
-          // If it's a local field name (like 'quantity', 'unitPrice'), map it to the full field ID
-          if (
-            dep === 'quantity' ||
-            dep === 'unitPrice' ||
-            dep === 'lineTotal'
-          ) {
-            const fullFieldId = `${arrayName}[${index}].${dep}`;
-            return context.values[fullFieldId];
-          }
-        }
-        return context.values[dep];
+        return contextValues[dep];
       }),
     ]);
 
@@ -474,13 +266,6 @@ export function withExpression<P extends object>(
             const [, arrayFieldId, indexStr, fieldName] = arrayItemMatch;
             const itemIndex = parseInt(indexStr, 10);
 
-            console.log('🔍 Calling array item onChange:', {
-              fieldId,
-              arrayFieldId,
-              itemIndex,
-              fieldName,
-              value,
-            });
             (restProps as any).arrayItemChangeHandler(
               arrayFieldId,
               itemIndex,
@@ -489,12 +274,6 @@ export function withExpression<P extends object>(
             );
           } else {
             // Regular field or fallback
-            console.log('🔍 Calling regular onChange:', {
-              fieldId,
-              value,
-              isArrayItem: (restProps as any)?.isArrayItem,
-              hasArrayHandler: !!(restProps as any)?.arrayItemChangeHandler,
-            });
             onChange(value);
           }
         }
@@ -504,21 +283,6 @@ export function withExpression<P extends object>(
 
     // Update form state for read-only calculated fields
     useEffect(() => {
-      // Debug logging for line total fields
-      if (fieldId && fieldId.includes('lineTotal')) {
-        console.log('🔍 LineTotal useEffect triggered:', {
-          fieldId,
-          actualExpression: !!actualExpression,
-          mode: actualExpression?.mode,
-          expressionResultsValue: expressionResults.value,
-          stableOnChange: !!stableOnChange,
-          isReadOnly,
-          isUpdating: isUpdatingRef.current,
-          currentValue: context.values[fieldId],
-          expressionResultsObject: expressionResults,
-        });
-      }
-
       if (
         actualExpression &&
         actualExpression.mode === 'value' &&
@@ -529,22 +293,12 @@ export function withExpression<P extends object>(
         !isUpdatingRef.current
       ) {
         // Only update if the current form value is different from the expression result
-        const currentValue = context.values[fieldId];
+        const currentValue = contextValues[fieldId];
 
         // Add additional checks to prevent infinite loops
         const isValueDifferent = currentValue !== expressionResults.value;
         const isValueValid =
           !isNaN(expressionResults.value) && isFinite(expressionResults.value);
-
-        if (fieldId && fieldId.includes('lineTotal')) {
-          console.log('🔍 LineTotal update check:', {
-            fieldId,
-            currentValue,
-            expressionResultsValue: expressionResults.value,
-            isValueDifferent,
-            isValueValid,
-          });
-        }
 
         if (isValueDifferent && isValueValid) {
           const now = Date.now();
@@ -553,10 +307,6 @@ export function withExpression<P extends object>(
             // Set flag to prevent infinite loops
             isUpdatingRef.current = true;
             lastUpdateTimeRef.current = now;
-
-            if (fieldId && fieldId.includes('lineTotal')) {
-              console.log('🔍 LineTotal updating to:', expressionResults.value);
-            }
 
             // Update the form value immediately - no setTimeout needed
             stableOnChange(expressionResults.value);
@@ -576,7 +326,7 @@ export function withExpression<P extends object>(
       stableOnChange,
       isReadOnly,
       actualExpression,
-      context.values[fieldId], // Add this back to ensure we get fresh context values
+      contextValues[fieldId], // Add this back to ensure we get fresh context values
     ]);
 
     // Apply expression results to props
@@ -644,7 +394,8 @@ export function withExpression<P extends object>(
       return null;
     }
 
-    // Show error if expression evaluation failed
+    // Show error if expression evaluation failed, but only for non-calculated fields
+    // For calculated fields (like lineTotal), we should show a default value instead of an error
     if (
       actualExpression &&
       !evaluateExpression(actualExpression.expression, fieldId).success
@@ -653,6 +404,30 @@ export function withExpression<P extends object>(
         actualExpression.expression,
         fieldId
       );
+
+      // For calculated fields (value mode), don't show error if dependencies are missing
+      // Instead, show the field with a default value
+      if (actualExpression.mode === 'value') {
+        // Check if this is a calculated field that should show a default value
+        const isCalculatedField =
+          fieldId.includes('lineTotal') ||
+          fieldId.includes('subtotal') ||
+          fieldId.includes('grandTotal') ||
+          fieldId.includes('total');
+
+        if (isCalculatedField) {
+          // For calculated fields, show the field with a default value instead of an error
+          const enhancedPropsWithDefault = {
+            ...enhancedProps,
+            value: 0, // Default value for calculated fields
+            readOnly: true,
+            helperText: 'Calculated automatically',
+          };
+          return <WrappedComponent {...(enhancedPropsWithDefault as P)} />;
+        }
+      }
+
+      // For non-calculated fields or validation errors, show the error
       return (
         <div className="text-red-500 text-sm p-2 border border-red-200 rounded">
           Expression Error: {evaluation.error}

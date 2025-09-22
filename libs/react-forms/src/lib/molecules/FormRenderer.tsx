@@ -694,15 +694,6 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     fieldId: string,
     value: unknown
   ) => {
-    console.log('🔍 handleArrayItemChange called:', {
-      arrayFieldId,
-      itemIndex,
-      fieldId,
-      value,
-      currentFormValues: formValues,
-      currentProducts: formValues.products,
-    });
-
     setFormValues((prev) => {
       const newFormValues = { ...prev };
       const arrayValue =
@@ -720,15 +711,6 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       };
 
       newFormValues[arrayFieldId] = arrayValue;
-
-      console.log('🔍 handleArrayItemChange updating formValues:', {
-        arrayFieldId,
-        itemIndex,
-        fieldId,
-        value,
-        newArrayValue: arrayValue,
-        newFormValues,
-      });
 
       return newFormValues;
     });
