@@ -125,7 +125,6 @@
               "dependencies": ["products"],
               "evaluateOnChange": true,
               "debounceMs": 100,
-              "isCalculatedField": true,
               "defaultValue": 0,
               "calculatedFieldHelperText": "Calculated automatically from all line totals"
             },
@@ -170,7 +169,6 @@
               "dependencies": ["subtotal", "taxPercent"],
               "evaluateOnChange": true,
               "debounceMs": 100,
-              "isCalculatedField": true,
               "defaultValue": 0,
               "calculatedFieldHelperText": "Subtotal plus tax"
             },

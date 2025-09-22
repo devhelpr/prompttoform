@@ -3104,4 +3104,269 @@ export const READY_MADE_FORMS: ReadyMadeForm[] = [
       },
     },
   },
+  {
+    name: 'Product List with Auto-Calculated Totals',
+    description:
+      'Dynamic product list with automatic line totals, subtotals, and grand total calculations using intelligent expression engine',
+    prompt:
+      'Create a product list form with dynamic arrays where line totals, subtotals, and grand totals are calculated automatically using expressions',
+    json: {
+      app: {
+        title: 'Product List with Totals',
+        pages: [
+          {
+            id: 'productList',
+            title: 'Add Products',
+            route: '/add-products',
+            layout: 'vertical',
+            components: [
+              {
+                id: 'products',
+                type: 'array',
+                label: 'Products',
+                props: {
+                  helperText:
+                    'Add one or more products with quantity and unit price',
+                },
+                arrayItems: [
+                  {
+                    id: 'productItem',
+                    components: [
+                      {
+                        id: 'productName',
+                        type: 'input',
+                        label: 'Product Name',
+                        props: {
+                          placeholder: 'Enter product name',
+                          helperText: 'Provide a short descriptive name',
+                        },
+                        validation: {
+                          required: true,
+                          minLength: 1,
+                          maxLength: 100,
+                          errorMessages: {
+                            required: 'Please enter the product name',
+                            minLength:
+                              'Product name must be at least {minLength} character',
+                            maxLength:
+                              'Product name cannot exceed {maxLength} characters',
+                          },
+                        },
+                      },
+                      {
+                        id: 'quantity',
+                        type: 'input',
+                        label: 'Quantity',
+                        props: {
+                          inputType: 'number',
+                          placeholder: 'Enter quantity',
+                          helperText: 'Enter the quantity (whole number)',
+                        },
+                        validation: {
+                          required: true,
+                          min: 1,
+                          max: 1000000,
+                          errorMessages: {
+                            required: 'Please enter a quantity',
+                            invalidNumber: 'Please enter a valid number',
+                            min: 'Quantity must be at least {min}',
+                            max: 'Quantity cannot exceed {max}',
+                          },
+                        },
+                      },
+                      {
+                        id: 'unitPrice',
+                        type: 'input',
+                        label: 'Unit Price',
+                        props: {
+                          inputType: 'number',
+                          placeholder: 'Enter unit price',
+                          helperText: 'Enter price per unit in your currency',
+                        },
+                        validation: {
+                          required: true,
+                          min: 0,
+                          max: 100000000,
+                          errorMessages: {
+                            required: 'Please enter a unit price',
+                            invalidNumber: 'Please enter a valid number',
+                            min: 'Price must be at least {min}',
+                            max: 'Price cannot exceed {max}',
+                          },
+                        },
+                      },
+                      {
+                        id: 'lineTotal',
+                        type: 'input',
+                        label: 'Line Total',
+                        expression: {
+                          expression:
+                            'parseFloat(quantity ? quantity : 0) * parseFloat(unitPrice ? unitPrice : 0)',
+                          mode: 'value',
+                          dependencies: ['quantity', 'unitPrice'],
+                          evaluateOnChange: true,
+                          debounceMs: 100,
+                          defaultValue: 0,
+                          calculatedFieldHelperText: 'Calculated automatically',
+                        },
+                        props: {
+                          inputType: 'number',
+                          readOnly: true,
+                          helperText: 'Calculated automatically',
+                        },
+                        validation: {
+                          required: true,
+                          errorMessages: {
+                            required: 'Line total is required',
+                          },
+                        },
+                      },
+                    ],
+                  },
+                ],
+                validation: {
+                  minItems: 1,
+                  errorMessages: {
+                    minItems: 'Add at least {minItems} product',
+                  },
+                },
+              },
+              {
+                id: 'subtotal',
+                type: 'input',
+                label: 'Subtotal',
+                expression: {
+                  expression: 'sumLineTotal(products)',
+                  mode: 'value',
+                  dependencies: ['products'],
+                  evaluateOnChange: true,
+                  debounceMs: 100,
+                  defaultValue: 0,
+                  calculatedFieldHelperText:
+                    'Calculated automatically from all line totals',
+                },
+                props: {
+                  inputType: 'number',
+                  readOnly: true,
+                },
+                validation: {
+                  required: true,
+                  errorMessages: {
+                    required: 'Subtotal is required',
+                  },
+                },
+              },
+              {
+                id: 'taxPercent',
+                type: 'input',
+                label: 'Tax (%)',
+                props: {
+                  inputType: 'number',
+                  placeholder: 'Enter tax percent if applicable',
+                  helperText:
+                    'Enter tax percent to apply to subtotal (optional)',
+                },
+                validation: {
+                  required: false,
+                  min: 0,
+                  max: 100,
+                  errorMessages: {
+                    invalidNumber: 'Please enter a valid percentage',
+                    min: 'Tax percent cannot be less than {min}',
+                    max: 'Tax percent cannot exceed {max}',
+                  },
+                },
+              },
+              {
+                id: 'grandTotal',
+                type: 'input',
+                label: 'Grand Total',
+                expression: {
+                  expression:
+                    'subtotal + (subtotal * parseFloat(taxPercent ? taxPercent : 0) / 100)',
+                  mode: 'value',
+                  dependencies: ['subtotal', 'taxPercent'],
+                  evaluateOnChange: true,
+                  debounceMs: 100,
+                  defaultValue: 0,
+                  calculatedFieldHelperText: 'Subtotal plus tax',
+                },
+                props: {
+                  inputType: 'number',
+                  readOnly: true,
+                },
+                validation: {
+                  required: true,
+                  errorMessages: {
+                    required: 'Grand total is required',
+                  },
+                },
+              },
+              {
+                id: 'reviewSection',
+                type: 'section',
+                label: 'Review',
+                children: [
+                  {
+                    id: 'reviewText',
+                    type: 'text',
+                    label: 'Summary',
+                    props: {
+                      helperText:
+                        "Products count: {{products.length}}\nSubtotal: {{subtotal}}\nTax: {{taxPercent}}%\nGrand Total: {{grandTotal}}\n\nAll calculations are performed automatically using the expression engine's array aggregation functions.",
+                    },
+                  },
+                ],
+              },
+              {
+                id: 'submitButton',
+                type: 'button',
+                label: 'Submit',
+                props: {
+                  className: 'btn-primary',
+                  helperText: 'Submit the product list',
+                },
+              },
+            ],
+            isEndPage: true,
+          },
+        ],
+        dataSources: [
+          {
+            id: 'saveProductsAPI',
+            type: 'rest',
+            method: 'POST',
+            url: 'https://api.example.com/products',
+            params: {},
+            responseMapping: {
+              status: 'status',
+              id: 'data.id',
+            },
+          },
+        ],
+        thankYouPage: {
+          title: 'Thank You!',
+          message: 'Your product list was submitted successfully.',
+          showRestartButton: true,
+          customActions: [
+            {
+              label: 'View Products',
+              action: 'custom',
+              customAction: 'openProductList',
+              className: 'bg-blue-600 text-white',
+            },
+          ],
+        },
+      },
+      defaultLanguage: 'en',
+      supportedLanguages: ['en'],
+      languageDetails: [
+        {
+          code: 'en',
+          name: 'English',
+          nativeName: 'English',
+        },
+      ],
+    },
+  },
 ];
