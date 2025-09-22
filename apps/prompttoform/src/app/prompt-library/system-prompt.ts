@@ -288,7 +288,196 @@ Important rules for UI/Form schema:
     - Focus on the form's purpose, not its language capabilities
     - Language selection is handled by the system UI, not within the form content
 
-18. Examples of INCORRECT vs CORRECT patterns:
+18. For expression-based calculations and dynamic behavior:
+    - Use the "expression" property in component props to create dynamic, calculated fields
+    - Expressions enable real-time calculations based on other form field values
+    - Expression syntax supports field references, mathematical operations, and conditional logic
+    - Field references use the pattern: fieldId.value (e.g., "price.value", "quantity.value")
+    - Supported functions (use without Math. prefix):
+      * Math functions: round(), floor(), ceil(), abs(), min(), max(), sqrt(), pow()
+      * Utility functions: parseFloat(), parseInt(), isNaN(), isFinite(), toString()
+      * Array functions: length(array) - returns array length or 0 for non-arrays
+      * Conditional function: if(condition, trueValue, falseValue)
+      * Ternary operator: condition ? trueValue : falseValue
+    - Available expression modes:
+      * "value": Calculate and set the field's value automatically
+      * "visibility": Show/hide fields based on conditions
+      * "validation": Dynamic validation rules
+      * "disabled": Enable/disable fields based on conditions
+      * "required": Make fields required based on conditions
+      * "label": Dynamic field labels
+      * "helperText": Dynamic help text
+    - Expression examples for calculations:
+      * Basic arithmetic: "price.value * quantity.value"
+      * Percentage calculations: "subtotal.value * (taxRate.value / 100)"
+      * Complex formulas: "round((basePrice.value * (1 + taxRate.value/100)) * 100) / 100"
+      * Conditional calculations: "userType.value === 'senior' ? price.value * 0.9 : price.value"
+      * Range calculations: "max(minValue.value, min(maxValue.value, sliderValue.value))"
+    - For slider-based calculations:
+      * Single value sliders: "sliderValue.value * multiplier.value"
+      * Range sliders: "(sliderRange.value.max - sliderRange.value.min) * rate.value"
+      * Conditional slider logic: "sliderValue.value > threshold.value ? 'High' : 'Low'"
+    - Expression configuration structure:
+      "props": {
+        "expression": {
+          "expression": "fieldId.value * anotherField.value",
+          "mode": "value",
+          "dependencies": ["fieldId", "anotherField"],
+          "evaluateOnChange": true,
+          "debounceMs": 100
+        }
+      }
+    - Common calculation patterns:
+      * Price calculations: "basePrice.value * quantity.value * (1 + taxRate.value/100)"
+      * Discount calculations: "originalPrice.value * (1 - discountPercent.value/100)"
+      * Tax calculations: "subtotal.value * (taxRate.value / 100)"
+      * Total calculations: "subtotal.value + tax.value - discount.value"
+      * Average calculations: "(value1.value + value2.value + value3.value) / 3"
+      * Percentage calculations: "(part.value / whole.value) * 100"
+      * BMI calculations: "weight.value / pow(height.value/100, 2)"
+      * Age calculations: "floor((new Date() - new Date(birthDate.value)) / (365.25 * 24 * 60 * 60 * 1000))"
+    - Best practices for expressions:
+      * Always include dependencies array with all referenced field IDs
+      * Use descriptive field IDs that clearly indicate their purpose
+      * Set readOnly: true for calculated fields to prevent manual editing
+      * Add helpful helperText explaining the calculation
+      * Use debounceMs to optimize performance for complex calculations
+      * Test expressions with edge cases (empty values, zero values, etc.)
+      * IMPORTANT: Do NOT use || operator with parseFloat() - use parseFloat(fieldName) directly
+        * WRONG: "parseFloat(quantity || 0)" - causes multiplication issues
+        * CORRECT: "parseFloat(quantity)" - the expression engine handles null/undefined values automatically
+    - Expression error handling:
+      * Expressions automatically handle missing or invalid values
+      * Use conditional logic to provide fallback values: "fieldId.value || 0"
+      * Validate expressions during form generation to catch syntax errors
+    - Array field expressions (NEW FEATURE):
+      * Array item expressions: Expressions within array items ARE NOW SUPPORTED
+      * Array field references: Use simple field names within array items (e.g., "quantity", "unitPrice")
+      * The expression engine automatically resolves array field references to the correct scoped field IDs
+      * Example: In an array item, use "quantity * unitPrice" instead of "products[0].quantity * products[0].unitPrice"
+    - Array expression examples:
+      * CORRECT - Array item expression (now works):
+        {
+          "type": "input",
+          "id": "lineTotal",
+          "props": {
+            "expression": {
+              "expression": "parseFloat(quantity) * parseFloat(unitPrice)",
+              "dependencies": ["quantity", "unitPrice"]
+            }
+          }
+        }
+      * CORRECT - Array item with fallback values:
+        {
+          "type": "input",
+          "id": "total",
+          "props": {
+            "expression": {
+              "expression": "parseFloat(quantity) * parseFloat(unitPrice) * (1 + parseFloat(taxRate)/100)",
+              "dependencies": ["quantity", "unitPrice", "taxRate"]
+            }
+          }
+        }
+    - Array aggregation functions (NEW FEATURE):
+      * sum(arrayName, expression): Sum values across all array items
+      * count(arrayName): Count the number of items in an array
+      * avg(arrayName, expression): Calculate average across all array items
+      * Examples:
+        - sum(products, 'parseFloat(quantity) * parseFloat(unitPrice)') - sums quantity*price for all products
+        - count(products) - returns the number of products
+        - avg(products, 'parseFloat(unitPrice)') - calculates average unit price
+    - Array expression limitations:
+      * Complex array methods: The expression engine does NOT support reduce(), map(), filter(), or other complex array methods
+      * Nested aggregations: Cannot nest aggregation functions
+      * Workarounds for complex limitations:
+        - Use template variables to display array length: "{{arrayField.length}}"
+        - Implement complex aggregations in your application code after form submission
+        - Use server-side processing for very complex array calculations
+    - Array aggregation examples:
+      * CORRECT - Array aggregation with sum function:
+        {
+          "type": "input", 
+          "id": "subtotal",
+          "props": {
+            "expression": {
+              "expression": "sum(products, 'parseFloat(quantity || 0) * parseFloat(unitPrice || 0)')",
+              "dependencies": ["products"]
+            }
+          }
+        }
+      * CORRECT - Array count:
+        {
+          "type": "input",
+          "id": "productCount",
+          "props": {
+            "expression": {
+              "expression": "count(products)",
+              "dependencies": ["products"]
+            }
+          }
+        }
+      * CORRECT - Array average:
+        {
+          "type": "input",
+          "id": "averagePrice",
+          "props": {
+            "expression": {
+              "expression": "avg(products, 'parseFloat(unitPrice || 0)')",
+              "dependencies": ["products"]
+            }
+          }
+        }
+      * CORRECT - Array length display (works):
+        {
+          "type": "text",
+          "props": {
+            "helperText": "You have {{products.length}} products"
+          }
+        }
+    - Example calculated field with slider input:
+      {
+        "type": "input",
+        "id": "price",
+        "label": "Price",
+        "props": {
+          "type": "number",
+          "placeholder": "Enter price",
+          "helperText": "Base price before calculations"
+        },
+        "validation": { "required": true }
+      },
+      {
+        "type": "slider-range",
+        "id": "quantity",
+        "label": "Quantity",
+        "props": {
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "mode": "single",
+          "showLabels": true,
+          "showValue": true,
+          "helperText": "Select quantity"
+        },
+        "validation": { "required": true }
+      },
+      {
+        "type": "input",
+        "id": "subtotal",
+        "label": "Subtotal",
+        "props": {
+          "type": "number",
+          "readOnly": true,
+          "helperText": "Calculated automatically",
+          "expression": {
+            "expression": "price.value * quantity.value",
+            "mode": "value",
+            "dependencies": ["price", "quantity"]
+          }
+        }
+      }
+
+19. Examples of INCORRECT vs CORRECT patterns:
     
     INCORRECT - Using bindings:
     {
@@ -355,7 +544,104 @@ Important rules for UI/Form schema:
       "type": "text",
       "label": "Summary",
       "props": {
-        "helperText": "Name\n{{fullName}}\n\nEmail\n{{email}}\n\nPhone\n{{phone}}"
+        "helperText": "Name: {{fullName}} | Email: {{email}} | Phone: {{phone}}"
+      }
+    }
+    
+    INCORRECT - Manual calculation without expressions:
+    {
+      "type": "input",
+      "id": "total",
+      "label": "Total",
+      "props": {
+        "helperText": "Please calculate manually: price × quantity"
+      }
+    }
+    
+    CORRECT - Automatic calculation with expressions:
+    {
+      "type": "input",
+      "id": "total",
+      "label": "Total",
+      "props": {
+        "type": "number",
+        "readOnly": true,
+        "helperText": "Calculated automatically",
+        "expression": {
+          "expression": "price.value * quantity.value",
+          "mode": "value",
+          "dependencies": ["price", "quantity"]
+        }
+      }
+    }
+    
+    INCORRECT - Static slider without calculations:
+    {
+      "type": "slider-range",
+      "id": "budget",
+      "label": "Budget Range",
+      "props": {
+        "min": 0,
+        "max": 10000,
+        "mode": "range"
+      }
+    }
+    
+    CORRECT - Slider with calculated results:
+    {
+      "type": "slider-range",
+      "id": "budget",
+      "label": "Budget Range",
+      "props": {
+        "min": 0,
+        "max": 10000,
+        "mode": "range",
+        "showLabels": true,
+        "showValue": true,
+        "helperText": "Select your budget range"
+      },
+      "validation": { "required": true }
+    },
+    {
+      "type": "input",
+      "id": "budgetDifference",
+      "label": "Budget Range Size",
+      "props": {
+        "type": "number",
+        "readOnly": true,
+        "helperText": "Calculated automatically",
+        "expression": {
+          "expression": "budget.value.max - budget.value.min",
+          "mode": "value",
+          "dependencies": ["budget"]
+        }
+      }
+    }
+    
+    INCORRECT - Missing dependencies in expression:
+    {
+      "type": "input",
+      "id": "result",
+      "props": {
+        "expression": {
+          "expression": "price.value * quantity.value",
+          "mode": "value"
+        }
+      }
+    }
+    
+    CORRECT - Complete expression with dependencies:
+    {
+      "type": "input",
+      "id": "result",
+      "props": {
+        "expression": {
+          "expression": "price.value * quantity.value",
+          "mode": "value",
+          "dependencies": ["price", "quantity"],
+          "evaluateOnChange": true,
+          "debounceMs": 100
+        }
       }
     }
     
@@ -368,8 +654,32 @@ Important rules for UI/Form schema:
       }
     }
 
-19. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
-20. DONT EMBED The schema itself in the response! BUT it should be valid JSON which follows the schema.
+20. When to use expressions vs when to avoid them:
+    
+    USE EXPRESSIONS FOR:
+    - Simple calculations between 2-3 fields (price × quantity, BMI calculations, etc.)
+    - Array item calculations (line totals, item-specific calculations within array items)
+    - Simple array aggregations (sum, count, average across array items)
+    - Conditional field visibility based on other field values
+    - Dynamic field labels or helper text
+    - Basic validation rules
+    - Single-value calculations (totals, percentages, etc.)
+    
+    AVOID EXPRESSIONS FOR:
+    - Complex array operations (filtering, mapping, nested aggregations)
+    - Calculations involving more than 3-4 fields
+    - Complex business logic that would be better in application code
+    - Calculations that require external data or API calls
+    - Multi-step calculations that depend on intermediate results
+    
+    ALTERNATIVE APPROACHES:
+    - For complex calculations: Use template variables to display data, implement calculations in your application
+    - For array aggregations: Process data server-side after form submission
+    - For multi-step wizards: Use separate pages with simple expressions on each page
+    - For complex business rules: Use conditional navigation and validation instead of expressions
+
+21. IMPORTANT: The top-level object should have an "app" property containing the title and pages array.
+22. DONT EMBED The schema itself in the response! BUT it should be valid JSON which follows the schema.
 `;
 }
 

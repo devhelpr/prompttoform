@@ -45,7 +45,7 @@ describe('FormRenderer Thank You Page', () => {
     );
 
     // Fill in required field
-    const nameInput = screen.getByLabelText('Name');
+    const nameInput = screen.getByLabelText(/Name/);
     fireEvent.change(nameInput, { target: { value: 'John Doe' } });
 
     // Submit form
@@ -71,7 +71,7 @@ describe('FormRenderer Thank You Page', () => {
     );
 
     // Fill and submit form
-    const nameInput = screen.getByLabelText('Name');
+    const nameInput = screen.getByLabelText(/Name/);
     fireEvent.change(nameInput, { target: { value: 'John Doe' } });
 
     const submitButton = screen.getByText('Submit');
@@ -92,7 +92,7 @@ describe('FormRenderer Thank You Page', () => {
     });
 
     // Form should be reset
-    const resetNameInput = screen.getByLabelText('Name') as HTMLInputElement;
+    const resetNameInput = screen.getByLabelText(/Name/) as HTMLInputElement;
     expect(resetNameInput.value).toBe('');
   });
 
@@ -131,7 +131,7 @@ describe('FormRenderer Thank You Page', () => {
     );
 
     // Fill and submit form
-    const nameInput = screen.getByLabelText('Name');
+    const nameInput = screen.getByLabelText(/Name/);
     fireEvent.change(nameInput, { target: { value: 'John Doe' } });
 
     const submitButton = screen.getByText('Submit');
@@ -142,7 +142,7 @@ describe('FormRenderer Thank You Page', () => {
       expect(screen.getByText('Test Page')).toBeDefined();
     });
 
-    const finalNameInput = screen.getByLabelText('Name') as HTMLInputElement;
+    const finalNameInput = screen.getByLabelText(/Name/) as HTMLInputElement;
     expect(finalNameInput.value).toBe('');
   });
 });

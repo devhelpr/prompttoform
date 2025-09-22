@@ -66,7 +66,23 @@ export const FormExpressionField: React.FC<FormExpressionFieldProps> = ({
     switch (mode) {
       case 'value':
         if (value !== null && value !== undefined) {
-          childProps.value = value;
+          // Special handling for TextFormField components
+          const childType = child.type as any;
+          const isTextFormField =
+            childType?.displayName === 'TextFormField' ||
+            childType?.name === 'TextFormField' ||
+            (child.props as any)?.props !== undefined; // TextFormField has a props prop
+
+          if (isTextFormField) {
+            // For TextFormField, set the content in the props object
+            childProps.props = {
+              ...childProps.props,
+              content: value,
+            };
+          } else {
+            // For other components, set as value
+            childProps.value = value;
+          }
         }
         break;
       case 'disabled':
@@ -82,7 +98,22 @@ export const FormExpressionField: React.FC<FormExpressionFieldProps> = ({
         break;
       case 'helperText':
         if (typeof value === 'string') {
-          childProps.helperText = value;
+          // Special handling for TextFormField components
+          const childType = child.type as any;
+          const isTextFormField =
+            childType?.displayName === 'TextFormField' ||
+            childType?.name === 'TextFormField' ||
+            (child.props as any)?.props !== undefined; // TextFormField has a props prop
+
+          if (isTextFormField) {
+            // For TextFormField, set the helperText in the props object
+            childProps.props = {
+              ...childProps.props,
+              helperText: value,
+            };
+          } else {
+            childProps.helperText = value;
+          }
         }
         break;
       case 'validation':
@@ -91,6 +122,27 @@ export const FormExpressionField: React.FC<FormExpressionFieldProps> = ({
           childProps.validationErrors = [
             error || 'Expression validation failed',
           ];
+        }
+        break;
+      default:
+        // For other modes, try to set as value
+        if (value !== null && value !== undefined) {
+          // Special handling for TextFormField components
+          const childType = child.type as any;
+          const isTextFormField =
+            childType?.displayName === 'TextFormField' ||
+            childType?.name === 'TextFormField' ||
+            (child.props as any)?.props !== undefined; // TextFormField has a props prop
+
+          if (isTextFormField) {
+            // For TextFormField, set the content in the props object
+            childProps.props = {
+              ...childProps.props,
+              content: value,
+            };
+          } else {
+            childProps.value = value;
+          }
         }
         break;
     }

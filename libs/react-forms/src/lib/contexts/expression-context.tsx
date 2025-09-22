@@ -36,22 +36,11 @@ const ExpressionContext = createContext<ExpressionContextValue | undefined>(
 export const ExpressionContextProvider: React.FC<
   ExpressionContextProviderProps
 > = ({ children, formValues, validation, required, errors, metadata = {} }) => {
-  // Create expression context
-  const context = useMemo(
-    (): ExpressionContextType => ({
-      values: formValues,
-      validation,
-      required,
-      errors,
-      metadata,
-    }),
-    [formValues, validation, required, errors, metadata]
-  );
-
   // Convert to form context for expression engine
   const formContext = useMemo((): FormContext => {
     const ctx: FormContext = {};
 
+    // Add all form values to context
     Object.keys(formValues).forEach((fieldId) => {
       ctx[fieldId] = {
         value: formValues[fieldId],
@@ -61,10 +50,43 @@ export const ExpressionContextProvider: React.FC<
       };
     });
 
-    // Clear expression cache when form values change
-    expressionEngine.clearCache();
+    // Add array field values to context for expression evaluation
+    Object.keys(formValues).forEach((fieldId) => {
+      const value = formValues[fieldId];
+      if (Array.isArray(value)) {
+        // This is an array field, add individual array item fields to context
+        value.forEach((item, index) => {
+          if (typeof item === 'object' && item !== null) {
+            Object.keys(item).forEach((itemFieldId) => {
+              const scopedFieldId = `${fieldId}[${index}].${itemFieldId}`;
+              ctx[scopedFieldId] = {
+                value: item[itemFieldId],
+                valid: validation[scopedFieldId] ?? true,
+                required: required[scopedFieldId] ?? false,
+                error: errors[scopedFieldId],
+              };
+            });
+          }
+        });
+      }
+    });
+
+    // Don't clear cache here as it can cause infinite loops
+    // The cache will be invalidated naturally when dependencies change
     return ctx;
   }, [formValues, validation, required, errors]);
+
+  // Create expression context with processed values
+  const context = useMemo(
+    (): ExpressionContextType => ({
+      values: formContext, // Use the processed formContext instead of raw formValues
+      validation,
+      required,
+      errors,
+      metadata,
+    }),
+    [formContext, validation, required, errors, metadata]
+  );
 
   // Evaluate expression for a specific field
   const evaluateExpression = useMemo(() => {
@@ -73,13 +95,110 @@ export const ExpressionContextProvider: React.FC<
       fieldId: string
     ): ExpressionEvaluationResult => {
       try {
-        const result = expressionEngine.evaluate(expression, formContext);
+        // Check if this is an array item field (e.g., products[0].lineTotal)
+        const arrayItemMatch = fieldId.match(/^([^[]+)\[(\d+)\]\.(.+)$/);
+
+        let evaluationContext = formContext;
+        if (arrayItemMatch) {
+          // This is an array item field, create a local context
+          const [, arrayName, indexStr, fieldName] = arrayItemMatch;
+          const index = parseInt(indexStr, 10);
+
+          // Get the array item data
+          const arrayData = formValues[arrayName];
+
+          if (Array.isArray(arrayData) && arrayData[index]) {
+            const itemData = arrayData[index];
+
+            // Always create local context for array items, even if they don't have data yet
+            if (typeof itemData === 'object' && itemData !== null) {
+              // Create a local context with the array item's field values
+              const localContext: FormContext = { ...formContext };
+
+              // Add the array item's field values to the local context with direct field names
+              // This allows expressions like "quantity * unitPrice" to work
+              Object.keys(itemData).forEach((itemFieldId) => {
+                const fieldValue = itemData[itemFieldId];
+                localContext[itemFieldId] = {
+                  value: fieldValue,
+                  valid: true,
+                  required: false,
+                  error: undefined,
+                };
+              });
+
+              // Also add the scoped field names for backward compatibility
+              Object.keys(itemData).forEach((itemFieldId) => {
+                const scopedFieldId = `${arrayName}[${index}].${itemFieldId}`;
+                const fieldValue = itemData[itemFieldId];
+                localContext[scopedFieldId] = {
+                  value: fieldValue,
+                  valid: true,
+                  required: false,
+                  error: undefined,
+                };
+              });
+
+              evaluationContext = localContext;
+            }
+          } else {
+            // Even if there's no array data yet, create a minimal context with default values
+            const localContext: FormContext = { ...formContext };
+
+            // Add default values for common fields that might be used in expressions
+            const defaultFields = ['quantity', 'unitPrice', 'lineTotal'];
+            defaultFields.forEach((fieldName) => {
+              localContext[fieldName] = {
+                value: 0,
+                valid: true,
+                required: false,
+                error: undefined,
+              };
+            });
+
+            evaluationContext = localContext;
+          }
+        }
+
+        const result = expressionEngine.evaluate(
+          expression,
+          evaluationContext,
+          fieldId
+        );
+
+        // Only log for array item fields to reduce noise
+        if (arrayItemMatch) {
+          const quantityValue = evaluationContext.quantity?.value;
+          const unitPriceValue = evaluationContext.unitPrice?.value;
+          const manualResult =
+            parseFloat(quantityValue || 0) * parseFloat(unitPriceValue || 0);
+        }
+
+        // Map dependencies for array item fields
+        let mappedDependencies = result.dependencies;
+        if (arrayItemMatch) {
+          const [, arrayName, indexStr] = arrayItemMatch;
+          const index = parseInt(indexStr, 10);
+
+          // Map local field names to full field IDs
+          mappedDependencies = result.dependencies.map((dep) => {
+            // If it's a local field name (like 'quantity', 'unitPrice'), map it to the full field ID
+            if (
+              dep === 'quantity' ||
+              dep === 'unitPrice' ||
+              dep === 'lineTotal'
+            ) {
+              return `${arrayName}[${index}].${dep}`;
+            }
+            return dep;
+          });
+        }
 
         return {
           value: result.value,
           success: !result.error,
           error: result.error,
-          dependencies: result.dependencies,
+          dependencies: mappedDependencies,
           shouldUpdate: true,
         };
       } catch (error) {
@@ -94,7 +213,7 @@ export const ExpressionContextProvider: React.FC<
         };
       }
     };
-  }, [formContext]);
+  }, [formContext, formValues]);
 
   // Helper functions
   const getFieldValue = useMemo(() => {

@@ -14,6 +14,10 @@ export interface ExpressionConfig {
   evaluateOnChange?: boolean;
   /** Debounce delay for expression evaluation (ms) */
   debounceMs?: number;
+  /** Default value to show for calculated fields when dependencies are missing */
+  defaultValue?: any;
+  /** Helper text to show for calculated fields */
+  calculatedFieldHelperText?: string;
 }
 
 /**

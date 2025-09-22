@@ -48,7 +48,7 @@ export function useExpressionEvaluation(
     });
 
     return formCtx;
-  }, [context]);
+  }, [context.values, context.validation, context.required, context.errors]);
 
   /**
    * Evaluate expression with debouncing
@@ -173,7 +173,6 @@ export function useExpressionEvaluation(
     expression.expression,
     context,
     debouncedEvaluate,
-    hasContextChanged,
     expression.evaluateOnChange,
   ]);
 

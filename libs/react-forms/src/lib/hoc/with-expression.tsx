@@ -1,6 +1,21 @@
-import React, { useMemo, useEffect, useCallback } from 'react';
+import React, {
+  useMemo,
+  useEffect,
+  useCallback,
+  useRef,
+  useState,
+} from 'react';
 import { useExpressionContext } from '../contexts/expression-context';
 import { ExpressionConfig } from '../interfaces/expression-interfaces';
+import { expressionEngine } from '../services/expression-engine.service';
+
+// Custom hook to access form values directly from FormRenderer
+const useFormValues = () => {
+  // This is a temporary solution - we'll access the form values through the ExpressionContextProvider
+  // but we need to ensure the context is properly updated
+  const context = useExpressionContext();
+  return (context as any).values;
+};
 
 interface WithExpressionProps {
   expression?: ExpressionConfig;
@@ -18,6 +33,9 @@ export function withExpression<P extends object>(
   const WithExpressionComponent = (props: P & WithExpressionProps) => {
     const { expression, fieldId, onChange, ...restProps } = props;
     const { evaluateExpression, context } = useExpressionContext();
+    const contextValues = (context as any).values;
+    const isUpdatingRef = useRef(false);
+    const lastUpdateTimeRef = useRef(0);
 
     // Extract expression from props.expression if it exists
     const actualExpression =
@@ -26,31 +44,18 @@ export function withExpression<P extends object>(
     // Extract read-only flag to avoid infinite loops
     const isReadOnly = (restProps as any)?.props?.readOnly === true;
 
-    // Get the current form values for this expression's dependencies
-    const currentFormValues = useMemo(() => {
-      if (!actualExpression?.dependencies) return {};
-
-      const values: Record<string, any> = {};
-      actualExpression.dependencies.forEach((dep: string) => {
-        if (context.values[dep] !== undefined) {
-          // The context.values[dep] IS the value, not context.values[dep].value
-          values[dep] = context.values[dep];
-        }
-      });
-      return values;
-    }, [
-      actualExpression?.dependencies,
-      // Use a more reliable dependency tracking
-      actualExpression?.dependencies
-        ?.map((dep: string) => {
-          const value = context.values[dep];
-          return `${dep}:${value}`;
-        })
-        .join('|') || '',
-    ]);
-
-    // Evaluate expressions when dependencies change
-    const expressionResults = useMemo(() => {
+    // Use state to store expression results and update them with useEffect
+    const [expressionResults, setExpressionResults] = useState<{
+      value: any;
+      visibility: boolean;
+      validation: boolean;
+      disabled: boolean;
+      required: boolean;
+      label?: string;
+      helperText?: string;
+      success?: boolean;
+      error?: string;
+    }>(() => {
       if (!actualExpression) {
         return {
           value: null,
@@ -64,7 +69,7 @@ export function withExpression<P extends object>(
       }
 
       const results = {
-        value: null,
+        value: null as any,
         visibility: true,
         validation: true,
         disabled: false,
@@ -72,6 +77,11 @@ export function withExpression<P extends object>(
         label: undefined,
         helperText: undefined,
       };
+
+      // For calculated fields, provide a default value instead of null
+      if (actualExpression.mode === 'value') {
+        results.value = actualExpression.defaultValue ?? 0; // Use configured default value or 0
+      }
 
       // Only evaluate if we have a stable expression
       if (actualExpression.expression) {
@@ -90,21 +100,112 @@ export function withExpression<P extends object>(
       }
 
       return results;
+    });
+
+    // Update expression results when dependencies change
+    useEffect(() => {
+      if (!actualExpression) {
+        setExpressionResults({
+          value: null,
+          visibility: true,
+          validation: true,
+          disabled: false,
+          required: false,
+          label: undefined,
+          helperText: undefined,
+        });
+        return;
+      }
+
+      const results = {
+        value: null as any,
+        visibility: true,
+        validation: true,
+        disabled: false,
+        required: false,
+        label: undefined,
+        helperText: undefined,
+      };
+
+      // For calculated fields, provide a default value instead of null
+      if (actualExpression.mode === 'value') {
+        results.value = actualExpression.defaultValue ?? 0; // Use configured default value or 0
+      }
+
+      // Only evaluate if we have a stable expression
+
+      if (actualExpression.expression) {
+        const evaluation = evaluateExpression(
+          actualExpression.expression,
+          fieldId
+        );
+
+        if (
+          evaluation.success &&
+          evaluation.value !== null &&
+          evaluation.value !== undefined
+        ) {
+          (results as any)[actualExpression.mode] = evaluation.value;
+        }
+      }
+
+      setExpressionResults(results);
     }, [
       actualExpression?.expression,
       actualExpression?.mode,
       fieldId,
-      currentFormValues,
+      // Use a stable string representation of the dependencies
+      actualExpression?.dependencies?.join(',') || '',
+      // Add context values for the dependencies to ensure re-evaluation when values change
+      ...(actualExpression?.dependencies || []).map((dep: string) => {
+        // For array items, map local field names to full field IDs
+        const arrayItemMatch = fieldId?.match(/^([^[]+)\[(\d+)\]\.(.+)$/);
+        if (arrayItemMatch) {
+          const [, arrayName, indexStr] = arrayItemMatch;
+          const index = parseInt(indexStr, 10);
+
+          // If it's a local field name (like 'quantity', 'unitPrice'), map it to the full field ID
+          if (
+            dep === 'quantity' ||
+            dep === 'unitPrice' ||
+            dep === 'lineTotal'
+          ) {
+            const fullFieldId = `${arrayName}[${index}].${dep}`;
+            return contextValues[fullFieldId];
+          }
+        }
+        return contextValues[dep];
+      }),
     ]);
 
     // Create a stable onChange callback to prevent infinite loops
     const stableOnChange = useCallback(
       (value: any) => {
         if (onChange) {
-          onChange(value);
+          // Check if this is an array item field and we have the array item change handler
+          const arrayItemMatch = fieldId.match(/^([^[]+)\[(\d+)\]\.(.+)$/);
+          if (
+            arrayItemMatch &&
+            (restProps as any)?.isArrayItem &&
+            (restProps as any)?.arrayItemChangeHandler
+          ) {
+            // For array item fields, use the dedicated array item change handler
+            const [, arrayFieldId, indexStr, fieldName] = arrayItemMatch;
+            const itemIndex = parseInt(indexStr, 10);
+
+            (restProps as any).arrayItemChangeHandler(
+              arrayFieldId,
+              itemIndex,
+              fieldName,
+              value
+            );
+          } else {
+            // Regular field or fallback
+            onChange(value);
+          }
         }
       },
-      [onChange]
+      [onChange, fieldId, restProps]
     );
 
     // Update form state for read-only calculated fields
@@ -115,25 +216,49 @@ export function withExpression<P extends object>(
         expressionResults.value !== null &&
         expressionResults.value !== undefined &&
         stableOnChange &&
-        isReadOnly
+        isReadOnly &&
+        !isUpdatingRef.current
       ) {
         // Only update if the current form value is different from the expression result
-        const currentValue = context.values[fieldId];
-        if (currentValue !== expressionResults.value) {
-          stableOnChange(expressionResults.value);
+        const currentValue = contextValues[fieldId];
+
+        // Add additional checks to prevent infinite loops
+        const isValueDifferent = currentValue !== expressionResults.value;
+        const isValueValid =
+          !isNaN(expressionResults.value) && isFinite(expressionResults.value);
+
+        if (isValueDifferent && isValueValid) {
+          const now = Date.now();
+          // Prevent updates more than once every 100ms to avoid infinite loops
+          if (now - lastUpdateTimeRef.current > 100) {
+            // Set flag to prevent infinite loops
+            isUpdatingRef.current = true;
+            lastUpdateTimeRef.current = now;
+
+            // Update the form value immediately - no setTimeout needed
+            stableOnChange(expressionResults.value);
+
+            // Reset flag after a short delay
+            setTimeout(() => {
+              isUpdatingRef.current = false;
+            }, 50);
+          }
         }
       }
     }, [
-      expressionResults.value,
+      expressionResults.value, // Use .value specifically to trigger on value changes
+      expressionResults.success, // Also depend on success to catch evaluation changes
+      expressionResults.error, // Also depend on error to catch evaluation changes
       fieldId,
       stableOnChange,
       isReadOnly,
       actualExpression,
+      contextValues[fieldId], // Add this back to ensure we get fresh context values
     ]);
 
     // Apply expression results to props
     const enhancedProps = useMemo(() => {
-      const enhanced: any = { ...restProps, onChange: stableOnChange };
+      const enhanced: any = { ...restProps, fieldId, onChange: stableOnChange };
 
       // Preserve original validation props unless overridden by expressions
       if (!actualExpression || actualExpression.mode !== 'validation') {
@@ -196,7 +321,8 @@ export function withExpression<P extends object>(
       return null;
     }
 
-    // Show error if expression evaluation failed
+    // Show error if expression evaluation failed, but only for non-calculated fields
+    // For calculated fields (like lineTotal), we should show a default value instead of an error
     if (
       actualExpression &&
       !evaluateExpression(actualExpression.expression, fieldId).success
@@ -205,6 +331,24 @@ export function withExpression<P extends object>(
         actualExpression.expression,
         fieldId
       );
+
+      // For calculated fields (value mode), don't show error if dependencies are missing
+      // Instead, show the field with a default value
+      // Any field with mode: "value" is automatically a calculated field
+      if (actualExpression.mode === 'value') {
+        // For calculated fields, show the field with a default value instead of an error
+        const enhancedPropsWithDefault = {
+          ...enhancedProps,
+          value: actualExpression.defaultValue ?? 0, // Use configured default value or 0
+          readOnly: true,
+          helperText:
+            actualExpression.calculatedFieldHelperText ??
+            'Calculated automatically',
+        };
+        return <WrappedComponent {...(enhancedPropsWithDefault as P)} />;
+      }
+
+      // For non-calculated fields or validation errors, show the error
       return (
         <div className="text-red-500 text-sm p-2 border border-red-200 rounded">
           Expression Error: {evaluation.error}
