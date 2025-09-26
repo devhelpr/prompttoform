@@ -6,6 +6,8 @@ interface MainLayoutProps {
   onSettingsClick: () => void;
   onHistoryClick: () => void;
   onImportJsonClick: () => void;
+  onFormFlowClick?: () => void;
+  showFormFlowButton?: boolean;
 }
 
 export function MainLayout({
@@ -13,6 +15,8 @@ export function MainLayout({
   onSettingsClick,
   onHistoryClick,
   onImportJsonClick,
+  onFormFlowClick,
+  showFormFlowButton = false,
 }: MainLayoutProps) {
   return (
     <div className="h-full min-h-0 bg-gradient-to-br from-zinc-50 to-zinc-100">
@@ -22,6 +26,8 @@ export function MainLayout({
           onSettingsClick={onSettingsClick}
           onHistoryClick={onHistoryClick}
           onImportJsonClick={onImportJsonClick}
+          onFormFlowClick={onFormFlowClick}
+          showFormFlowButton={showFormFlowButton}
         />
 
         {/* Main Content Area */}
