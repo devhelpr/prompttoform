@@ -2313,7 +2313,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         <h2
           className={getClassNames(
             'text-xl font-bold mb-6',
-            settings.classes?.page
+            settings.classes?.pageTitle
           )}
         >
           {translationService.translatePage(
@@ -2409,7 +2409,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               <h1
                 className={getClassNames(
                   'text-2xl font-bold text-indigo-700',
-                  settings.classes?.header
+                  settings.classes?.headerTitle
                 )}
               >
                 {translationService.translateApp('title', formJson.app.title)}
