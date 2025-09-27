@@ -31,6 +31,7 @@ import {
   parseJsonSafely,
 } from '../../utils/json-utils';
 import { FormGenerationService } from '../../services/form-generation.service';
+import { useAppState } from './AppStateManager';
 
 import { PIIValidationService } from '../../services/pii-validation.service';
 
@@ -54,6 +55,12 @@ export function FormGenerator({
   formJson: string;
   triggerDeploy: boolean;
 }) {
+  const {
+    updateFormFromFlow,
+    updateFormFromJson,
+    markFormModified,
+    resolveFormConflicts,
+  } = useAppState();
   const [prompt, setPrompt] = useState('');
   const [updatePrompt, setUpdatePrompt] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -325,6 +332,9 @@ export function FormGenerator({
 
         setAndPersistGeneratedJson(formattedJson, parsed);
         setJsonError(null);
+
+        // Update form through synchronization service
+        updateFormFromJson(newJson);
       } else {
         setJsonError('Invalid JSON format');
         setGeneratedJson(newJson); // Keep the invalid JSON in the textarea
@@ -334,6 +344,21 @@ export function FormGenerator({
       setGeneratedJson(newJson); // Keep the invalid JSON in the textarea
       console.error('JSON parsing error:', error);
     }
+  };
+
+  // Synchronization handlers for flow editor
+  const handleFormChangeFromFlow = (nodes: any[], edges: any[]) => {
+    try {
+      updateFormFromFlow(nodes, edges);
+    } catch (error) {
+      console.error('Error synchronizing form changes from flow:', error);
+      setError('Failed to synchronize changes from flow editor');
+    }
+  };
+
+  const handleConflictDetected = (conflict: any) => {
+    console.warn('Conflict detected:', conflict);
+    setError(`Conflict detected: ${conflict.message || 'Unknown conflict'}`);
   };
 
   const validateAndUpdatePreview = () => {
@@ -811,7 +836,11 @@ export function FormGenerator({
             parsedJson &&
             parsedJson.app && (
               <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
-                <FormFlow formJson={parsedJson} />
+                <FormFlow
+                  formDefinition={parsedJson}
+                  onFormChange={handleFormChangeFromFlow}
+                  onConflictDetected={handleConflictDetected}
+                />
               </div>
             )
           ) : (

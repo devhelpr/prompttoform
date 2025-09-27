@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FormGenerator } from './FormGenerator';
+import { AppStateProvider } from './AppStateManager';
 
 // Mock all dependencies
 vi.mock('../../services/form-generation.service', () => ({
@@ -145,9 +146,21 @@ describe('FormGenerator Component', () => {
     vi.restoreAllMocks();
   });
 
+  // Helper function to render FormGenerator with AppStateProvider
+  const renderWithProvider = (props: {
+    formJson: string;
+    triggerDeploy: boolean;
+  }) => {
+    return render(
+      <AppStateProvider>
+        <FormGenerator {...props} />
+      </AppStateProvider>
+    );
+  };
+
   describe('Initial Render', () => {
     it('should render the form generator with initial state', () => {
-      render(<FormGenerator formJson="" triggerDeploy={false} />);
+      renderWithProvider({ formJson: '', triggerDeploy: false });
 
       expect(screen.getByText('Create a Form')).toBeTruthy();
       expect(screen.getByLabelText(/Describe your form/)).toBeTruthy();
@@ -167,7 +180,7 @@ describe('FormGenerator Component', () => {
         isChatCompletionCompatible: true,
       });
 
-      render(<FormGenerator formJson="" triggerDeploy={false} />);
+      renderWithProvider({ formJson: '', triggerDeploy: false });
 
       expect(screen.getByTestId('alert')).toBeTruthy();
       expect(screen.getByText(/No API key configured/)).toBeTruthy();
@@ -176,7 +189,7 @@ describe('FormGenerator Component', () => {
 
   describe('Prompt Input', () => {
     it('should update prompt when user types', async () => {
-      render(<FormGenerator formJson="" triggerDeploy={false} />);
+      renderWithProvider({ formJson: '', triggerDeploy: false });
 
       const promptInput = screen.getByLabelText(/Describe your form/);
       await user.type(promptInput, 'Create a contact form');
@@ -189,7 +202,7 @@ describe('FormGenerator Component', () => {
 
   describe('Session Management', () => {
     it('should open and close session history modal', async () => {
-      render(<FormGenerator formJson="" triggerDeploy={false} />);
+      renderWithProvider({ formJson: '', triggerDeploy: false });
 
       const historyButton = screen.getByRole('button', {
         name: 'Show History',
@@ -205,7 +218,7 @@ describe('FormGenerator Component', () => {
     });
 
     it('should load session when session is selected', async () => {
-      render(<FormGenerator formJson="" triggerDeploy={false} />);
+      renderWithProvider({ formJson: '', triggerDeploy: false });
 
       const historyButton = screen.getByRole('button', {
         name: 'Show History',
@@ -224,7 +237,7 @@ describe('FormGenerator Component', () => {
 
   describe('Settings Modal', () => {
     it('should open and close settings modal', async () => {
-      render(<FormGenerator formJson="" triggerDeploy={false} />);
+      renderWithProvider({ formJson: '', triggerDeploy: false });
 
       const settingsButton = screen.getByRole('button', { name: 'Settings' });
       await user.click(settingsButton);
@@ -242,7 +255,7 @@ describe('FormGenerator Component', () => {
 
   describe('Example Forms', () => {
     it('should load sample form when clicked', async () => {
-      render(<FormGenerator formJson="" triggerDeploy={false} />);
+      renderWithProvider({ formJson: '', triggerDeploy: false });
 
       const sampleButton = screen.getByRole('button', {
         name: 'Load Sample Form',
@@ -253,7 +266,7 @@ describe('FormGenerator Component', () => {
     });
 
     it('should load multi-step form when clicked', async () => {
-      render(<FormGenerator formJson="" triggerDeploy={false} />);
+      renderWithProvider({ formJson: '', triggerDeploy: false });
 
       const multiStepButton = screen.getByRole('button', {
         name: 'Load Multi-Step Form',
@@ -268,7 +281,7 @@ describe('FormGenerator Component', () => {
     it('should have update form UI elements when form is present', () => {
       // Render with a pre-existing form
       const existingForm = '{"app":{"title":"Test Form","pages":[]}}';
-      render(<FormGenerator formJson={existingForm} triggerDeploy={false} />);
+      renderWithProvider({ formJson: existingForm, triggerDeploy: false });
 
       // Check that update form elements are present
       expect(screen.getByRole('heading', { name: 'Update Form' })).toBeTruthy();

@@ -626,7 +626,17 @@ const generateCompleteFormDefinition = (nodes: Node[], edges: Edge[]) => {
   return result;
 };
 
-function Flow({ formDefinition }: { formDefinition: LibraryFormDefinition }) {
+function Flow({
+  formDefinition,
+  onFormChange,
+  onConflictDetected,
+  readOnly = false,
+}: {
+  formDefinition: LibraryFormDefinition;
+  onFormChange?: (nodes: Node[], edges: Edge[]) => void;
+  onConflictDetected?: (conflict: any) => void;
+  readOnly?: boolean;
+}) {
   const [selectedFormIndex, setSelectedFormIndex] = useState(0);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [importedForm, setImportedForm] = useState<any>(null);
@@ -982,7 +992,16 @@ function Flow({ formDefinition }: { formDefinition: LibraryFormDefinition }) {
       );
       if (!hasOnlySelected) {
         console.log('onNodeschanges with changes');
-        setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot));
+        setNodes((nodesSnapshot) => {
+          const updatedNodes = applyNodeChanges(changes, nodesSnapshot);
+
+          // Notify parent about form changes for synchronization
+          if (onFormChange) {
+            onFormChange(updatedNodes, edges);
+          }
+
+          return updatedNodes;
+        });
       } else {
         console.log('onNodeschanges with no changes ONLY selected');
       }
@@ -1046,40 +1065,76 @@ function Flow({ formDefinition }: { formDefinition: LibraryFormDefinition }) {
         setIsSelectionChanging(false);
       }, 500);
     },
-    [setNodes, activePageId]
+    [setNodes, activePageId, onFormChange, edges, selectedNode]
   );
 
-  const onEdgesChange = useCallback((changes: EdgeChange[]) => {
-    console.log('onEdgesChange with changes');
-    const hasOnlySelected = changes.every((change) => change.type === 'select');
-    if (!hasOnlySelected) {
-      setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot));
-    }
-    // Handle edge selection
-    changes.forEach((change) => {
-      if (change.type === 'select') {
-        setSelectedEdge(change.selected ? change.id : null);
-        if (change.selected) {
-          setEdgeEditorOpen(true);
-          setNodeEditorOpen(false); // Close node editor if open
-        }
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      console.log('onEdgesChange with changes');
+      const hasOnlySelected = changes.every(
+        (change) => change.type === 'select'
+      );
+      if (!hasOnlySelected) {
+        setEdges((edgesSnapshot) => {
+          const updatedEdges = applyEdgeChanges(changes, edgesSnapshot);
+
+          // Notify parent about form changes for synchronization
+          if (onFormChange) {
+            onFormChange(nodes, updatedEdges);
+          }
+
+          return updatedEdges;
+        });
       }
-    });
-  }, []);
+      // Handle edge selection
+      changes.forEach((change) => {
+        if (change.type === 'select') {
+          setSelectedEdge(change.selected ? change.id : null);
+          if (change.selected) {
+            setEdgeEditorOpen(true);
+            setNodeEditorOpen(false); // Close node editor if open
+          }
+        }
+      });
+    },
+    [onFormChange, nodes]
+  );
 
   const onConnect = useCallback(
-    (params: Connection) =>
-      setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
-    []
+    (params: Connection) => {
+      setEdges((edgesSnapshot) => {
+        const updatedEdges = addEdge(params, edgesSnapshot);
+
+        // Notify parent about form changes for synchronization
+        if (onFormChange) {
+          onFormChange(nodes, updatedEdges);
+        }
+
+        return updatedEdges;
+      });
+    },
+    [onFormChange, nodes]
   );
 
   // Handle edge reconnection
   const onReconnect = useCallback(
-    (oldEdge: Edge, newConnection: Connection) =>
-      setEdges((edgesSnapshot) =>
-        reconnectEdge(oldEdge, newConnection, edgesSnapshot)
-      ),
-    []
+    (oldEdge: Edge, newConnection: Connection) => {
+      setEdges((edgesSnapshot) => {
+        const updatedEdges = reconnectEdge(
+          oldEdge,
+          newConnection,
+          edgesSnapshot
+        );
+
+        // Notify parent about form changes for synchronization
+        if (onFormChange) {
+          onFormChange(nodes, updatedEdges);
+        }
+
+        return updatedEdges;
+      });
+    },
+    [onFormChange, nodes]
   );
 
   const onEdgeClick = useCallback(
