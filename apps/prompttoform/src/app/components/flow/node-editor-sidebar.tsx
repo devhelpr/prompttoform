@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -7,25 +7,25 @@ import {
   AlertCircle,
   CheckCircle,
   Settings,
-} from "lucide-react";
-import type { FormPage } from "@/types/form-page";
+} from 'lucide-react';
+import type { PageProps } from '@devhelpr/react-forms';
 
 interface NodeEditorSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   selectedNode: {
     id: string;
-    page: FormPage;
+    page: PageProps;
   } | null;
   selectedEdge: {
     id: string;
     source: string;
     target: string;
-    sourcePage: FormPage | null;
-    targetPage: FormPage | null;
+    sourcePage: PageProps | null;
+    targetPage: PageProps | null;
     currentBranchIndex: number | null;
   } | null;
-  onSaveNode: (nodeId: string, pageData: Omit<FormPage, "id">) => void;
+  onSaveNode: (nodeId: string, pageData: Omit<PageProps, 'id'>) => void;
   onUpdateEdge: (edgeId: string, branchIndex: number | null) => void;
 }
 
@@ -37,11 +37,11 @@ export function NodeEditorSidebar({
   onSaveNode,
   onUpdateEdge,
 }: NodeEditorSidebarProps) {
-  const [jsonText, setJsonText] = useState("");
+  const [jsonText, setJsonText] = useState('');
   const [isValid, setIsValid] = useState(true);
   const [saveStatus, setSaveStatus] = useState<
-    "idle" | "saving" | "success" | "error"
-  >("idle");
+    'idle' | 'saving' | 'success' | 'error'
+  >('idle');
 
   // Determine if we're editing a node or edge
   const isEditingNode = selectedNode !== null;
@@ -56,7 +56,7 @@ export function NodeEditorSidebar({
       const { id, ...pageDataWithoutId } = selectedNode.page;
       setJsonText(JSON.stringify(pageDataWithoutId, null, 2));
       setIsValid(true);
-      setSaveStatus("idle");
+      setSaveStatus('idle');
     }
   }, [selectedNode]);
 
@@ -66,11 +66,11 @@ export function NodeEditorSidebar({
       const parsed = JSON.parse(text);
       // Basic validation - ensure it has required fields
       return (
-        typeof parsed === "object" &&
+        typeof parsed === 'object' &&
         parsed !== null &&
-        typeof parsed.title === "string" &&
-        typeof parsed.route === "string" &&
-        typeof parsed.layout === "string" &&
+        typeof parsed.title === 'string' &&
+        typeof parsed.route === 'string' &&
+        typeof parsed.layout === 'string' &&
         Array.isArray(parsed.components)
       );
     } catch {
@@ -92,20 +92,20 @@ export function NodeEditorSidebar({
   const handleSaveNode = useCallback(() => {
     if (!selectedNode || !isValid) return;
 
-    setSaveStatus("saving");
+    setSaveStatus('saving');
 
     try {
       const parsedData = JSON.parse(jsonText);
       onSaveNode(selectedNode.id, parsedData);
-      setSaveStatus("success");
+      setSaveStatus('success');
 
       // Reset success status after 2 seconds
-      setTimeout(() => setSaveStatus("idle"), 2000);
+      setTimeout(() => setSaveStatus('idle'), 2000);
     } catch {
-      setSaveStatus("error");
+      setSaveStatus('error');
 
       // Reset error status after 3 seconds
-      setTimeout(() => setSaveStatus("idle"), 3000);
+      setTimeout(() => setSaveStatus('idle'), 3000);
     }
   }, [selectedNode, isValid, jsonText, onSaveNode]);
 
@@ -114,7 +114,7 @@ export function NodeEditorSidebar({
     if (!selectedEdge) return;
 
     const value = event.target.value;
-    if (value === "direct") {
+    if (value === 'direct') {
       onUpdateEdge(selectedEdge.id, null);
     } else {
       const branchIndex = parseInt(value);
@@ -125,12 +125,12 @@ export function NodeEditorSidebar({
   const selectValue =
     selectedEdge?.currentBranchIndex !== null && selectedEdge !== null
       ? selectedEdge.currentBranchIndex.toString()
-      : "direct";
+      : 'direct';
 
   return (
     <div
       className={`fixed left-0 top-0 h-full bg-white shadow-lg border-r border-gray-200 transition-all duration-300 ease-in-out z-30 ${
-        isOpen ? "w-96" : "w-12"
+        isOpen ? 'w-96' : 'w-12'
       }`}
     >
       {/* Toggle Button */}
@@ -139,20 +139,20 @@ export function NodeEditorSidebar({
         disabled={!isEditing}
         className={`absolute -right-3 top-4 rounded-full p-1 shadow-md transition-all z-10 ${
           isEditing
-            ? "bg-white border border-gray-200 hover:shadow-lg cursor-pointer"
-            : "bg-gray-100 border border-gray-300 cursor-not-allowed opacity-50"
+            ? 'bg-white border border-gray-200 hover:shadow-lg cursor-pointer'
+            : 'bg-gray-100 border border-gray-300 cursor-not-allowed opacity-50'
         }`}
       >
         {isOpen ? (
           <ChevronLeft
             className={`w-4 h-4 ${
-              isEditing ? "text-gray-600" : "text-gray-400"
+              isEditing ? 'text-gray-600' : 'text-gray-400'
             }`}
           />
         ) : (
           <ChevronRight
             className={`w-4 h-4 ${
-              isEditing ? "text-gray-600" : "text-gray-400"
+              isEditing ? 'text-gray-600' : 'text-gray-400'
             }`}
           />
         )}
@@ -165,16 +165,16 @@ export function NodeEditorSidebar({
             <div
               className="h-full flex flex-col w-96"
               style={{
-                animation: "slideInFromLeft 0.3s ease-out forwards",
-                transformOrigin: "left center",
+                animation: 'slideInFromLeft 0.3s ease-out forwards',
+                transformOrigin: 'left center',
               }}
             >
               {/* Header */}
               <div
                 className="p-4 border-b border-gray-200"
                 style={{
-                  animation: "slideInFromLeft 0.3s ease-out 0.1s both",
-                  transformOrigin: "left center",
+                  animation: 'slideInFromLeft 0.3s ease-out 0.1s both',
+                  transformOrigin: 'left center',
                 }}
               >
                 <div className="flex items-center">
@@ -184,7 +184,7 @@ export function NodeEditorSidebar({
                     <Settings className="w-5 h-5 text-gray-600 mr-2" />
                   )}
                   <h2 className="text-lg font-semibold text-gray-800">
-                    {isEditingNode ? "Node Editor" : "Edge Editor"}
+                    {isEditingNode ? 'Node Editor' : 'Edge Editor'}
                   </h2>
                 </div>
                 <p className="text-sm text-gray-600 mt-1">
@@ -201,8 +201,8 @@ export function NodeEditorSidebar({
                   <div
                     className="p-4 border-b border-gray-200 bg-gray-50"
                     style={{
-                      animation: "slideInFromLeft 0.3s ease-out 0.15s both",
-                      transformOrigin: "left center",
+                      animation: 'slideInFromLeft 0.3s ease-out 0.15s both',
+                      transformOrigin: 'left center',
                     }}
                   >
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -224,8 +224,8 @@ export function NodeEditorSidebar({
                   <div
                     className="flex-1 flex flex-col p-4"
                     style={{
-                      animation: "slideInFromLeft 0.3s ease-out 0.2s both",
-                      transformOrigin: "left center",
+                      animation: 'slideInFromLeft 0.3s ease-out 0.2s both',
+                      transformOrigin: 'left center',
                     }}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -253,8 +253,8 @@ export function NodeEditorSidebar({
                       onChange={handleJsonChange}
                       className={`flex-1 w-full p-3 border rounded-md font-mono text-sm resize-none ${
                         isValid
-                          ? "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                          : "border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500"
+                          ? 'border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500'
+                          : 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500'
                       }`}
                       placeholder="Enter valid JSON..."
                     />
@@ -264,38 +264,38 @@ export function NodeEditorSidebar({
                   <div
                     className="p-4 border-t border-gray-200"
                     style={{
-                      animation: "slideInFromLeft 0.3s ease-out 0.25s both",
-                      transformOrigin: "left center",
+                      animation: 'slideInFromLeft 0.3s ease-out 0.25s both',
+                      transformOrigin: 'left center',
                     }}
                   >
                     <button
                       onClick={handleSaveNode}
-                      disabled={!isValid || saveStatus === "saving"}
+                      disabled={!isValid || saveStatus === 'saving'}
                       className={`w-full px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center ${
-                        isValid && saveStatus !== "saving"
-                          ? "bg-blue-500 text-white hover:bg-blue-600"
-                          : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        isValid && saveStatus !== 'saving'
+                          ? 'bg-blue-500 text-white hover:bg-blue-600'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       }`}
                     >
-                      {saveStatus === "saving" && (
+                      {saveStatus === 'saving' && (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                       )}
-                      {saveStatus === "success" && (
+                      {saveStatus === 'success' && (
                         <CheckCircle className="w-4 h-4 mr-2" />
                       )}
-                      {saveStatus === "error" && (
+                      {saveStatus === 'error' && (
                         <AlertCircle className="w-4 h-4 mr-2" />
                       )}
-                      {saveStatus === "idle" && (
+                      {saveStatus === 'idle' && (
                         <Save className="w-4 h-4 mr-2" />
                       )}
-                      {saveStatus === "saving" && "Saving..."}
-                      {saveStatus === "success" && "Saved Successfully!"}
-                      {saveStatus === "error" && "Save Failed"}
-                      {saveStatus === "idle" && "Save Changes"}
+                      {saveStatus === 'saving' && 'Saving...'}
+                      {saveStatus === 'success' && 'Saved Successfully!'}
+                      {saveStatus === 'error' && 'Save Failed'}
+                      {saveStatus === 'idle' && 'Save Changes'}
                     </button>
 
-                    {saveStatus === "error" && (
+                    {saveStatus === 'error' && (
                       <p className="text-red-600 text-xs mt-2 text-center">
                         Failed to save. Please check your JSON and try again.
                       </p>
@@ -309,8 +309,8 @@ export function NodeEditorSidebar({
                 <div
                   className="flex-1 overflow-auto p-4"
                   style={{
-                    animation: "slideInFromLeft 0.3s ease-out 0.1s both",
-                    transformOrigin: "left center",
+                    animation: 'slideInFromLeft 0.3s ease-out 0.1s both',
+                    transformOrigin: 'left center',
                   }}
                 >
                   <div className="space-y-4">
@@ -350,11 +350,21 @@ export function NodeEditorSidebar({
                             <option value="direct">
                               Direct connection (no condition)
                             </option>
-                            {selectedEdge.sourcePage.branches.map(
-                              (branch, index) => (
+                            {selectedEdge.sourcePage.branches?.map(
+                              (
+                                branch: {
+                                  condition: {
+                                    field: string;
+                                    operator: string;
+                                    value: string;
+                                  };
+                                  nextPage: string;
+                                },
+                                index: number
+                              ) => (
                                 <option key={index} value={index}>
-                                  {branch.condition.field}{" "}
-                                  {branch.condition.operator}{" "}
+                                  {branch.condition.field}{' '}
+                                  {branch.condition.operator}{' '}
                                   {branch.condition.value}
                                 </option>
                               )
@@ -394,7 +404,7 @@ export function NodeEditorSidebar({
                                 selectedEdge.currentBranchIndex
                               ]?.condition.value
                             }`
-                          : "Direct connection"}
+                          : 'Direct connection'}
                       </p>
                     </div>
                   </div>
