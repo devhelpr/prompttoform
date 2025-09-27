@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../templates/MainLayout';
 import { InitialStateLayout } from '../templates/InitialStateLayout';
@@ -45,9 +45,13 @@ function LoadingSpinner() {
 
 interface MainAppPageProps {
   onNavigateToFormFlow: (formDefinition: any) => void;
+  updatedFormDefinition?: any;
 }
 
-export function MainAppPage({ onNavigateToFormFlow }: MainAppPageProps) {
+export function MainAppPage({
+  onNavigateToFormFlow,
+  updatedFormDefinition,
+}: MainAppPageProps) {
   const {
     state,
     setPrompt,
@@ -77,6 +81,25 @@ export function MainAppPage({ onNavigateToFormFlow }: MainAppPageProps) {
     isSuccess: false,
     siteUrl: '',
   });
+
+  // Handle updated form definition from flow page
+  useEffect(() => {
+    console.log(
+      'MainAppPage: useEffect triggered with updatedFormDefinition:',
+      !!updatedFormDefinition
+    );
+    if (updatedFormDefinition) {
+      console.log('MainAppPage: Processing updated form definition');
+      // Update the form data with the changes from the flow editor
+      const formattedJson = formatJsonForDisplay(updatedFormDefinition);
+      setGeneratedJson(formattedJson, updatedFormDefinition);
+
+      // Clear the updated form definition to prevent re-processing
+      // Note: This is a simplified approach - in a real app you might want to use a more sophisticated state management
+    } else {
+      console.log('MainAppPage: No updated form definition to process');
+    }
+  }, [updatedFormDefinition]);
 
   const handleGenerate = async (prompt: string) => {
     setPrompt(prompt);

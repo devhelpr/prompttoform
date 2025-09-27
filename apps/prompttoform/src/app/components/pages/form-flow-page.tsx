@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import FormFlow from '../molecules/FormFlow';
 
@@ -20,8 +20,63 @@ export function FormFlowPage({ formDefinition }: FormFlowPageProps) {
   // Get form definition from location state if not passed as prop
   const formData = formDefinition || location.state?.formDefinition;
 
+  // State to track updated form data
+  const [updatedFormData, setUpdatedFormData] = useState<FormDefinition | null>(
+    null
+  );
+
+  const handleFormChange = (nodes: any[], edges: any[]) => {
+    console.log(
+      'FormFlowPage: handleFormChange called with',
+      nodes.length,
+      'nodes and',
+      edges.length,
+      'edges'
+    );
+
+    // Convert nodes and edges back to form definition using the existing logic
+    if (formData) {
+      // Import the generateCompleteFormDefinition function from FormFlow
+      // For now, we'll create a simplified version that preserves the original structure
+      // but updates the pages based on the nodes
+      const updatedPages = nodes
+        .map((node) => node.data?.page)
+        .filter(Boolean)
+        .filter((page: any) => page.id !== 'thank-you-page'); // Filter out thank you page
+
+      console.log(
+        'FormFlowPage: Updated pages:',
+        updatedPages.map((p) => ({ id: p.id, title: p.title }))
+      );
+
+      const updatedForm = {
+        ...formData,
+        app: {
+          ...formData.app,
+          pages: updatedPages,
+        },
+        _lastModified: new Date().toISOString(),
+      };
+
+      console.log('FormFlowPage: Setting updated form data');
+      setUpdatedFormData(updatedForm);
+    } else {
+      console.log('FormFlowPage: No formData available');
+    }
+  };
+
   const handleBackToEditor = () => {
-    navigate('/');
+    console.log('FormFlowPage: handleBackToEditor called');
+    console.log('FormFlowPage: updatedFormData exists:', !!updatedFormData);
+
+    // Pass the updated form data back to the main editor
+    if (updatedFormData) {
+      console.log('FormFlowPage: Navigating back with updated form data');
+      navigate('/', { state: { updatedFormDefinition: updatedFormData } });
+    } else {
+      console.log('FormFlowPage: Navigating back without updated form data');
+      navigate('/');
+    }
   };
 
   if (!formData) {
@@ -90,7 +145,7 @@ export function FormFlowPage({ formDefinition }: FormFlowPageProps) {
 
       {/* Form Flow Content */}
       <div className="flex-1 overflow-hidden">
-        <FormFlow formJson={formData} />
+        <FormFlow formJson={formData} onFormChange={handleFormChange} />
       </div>
     </div>
   );

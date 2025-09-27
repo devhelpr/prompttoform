@@ -167,8 +167,7 @@ function Tooltip({ data }: { data: { page: PageProps; version?: number } }) {
             {data.page.title}
           </div>
           <BaseNodeContent>
-            <div className="nodrag nopan nowheel pointer-events-auto w-[300px] h-[400px] overflow-auto">
-              {}
+            <div className="nodrag nopan nowheel pointer-events-none w-[300px] h-[400px] overflow-auto">
               <FormRenderer
                 formJson={pageFormDefinition}
                 prefixId="flow"
@@ -1153,12 +1152,24 @@ function Flow({
       // Debug logging
       console.log('Node clicked:', node.id, 'Active page:', activePageId);
       console.log('Current selectedNode:', selectedNode);
+
+      // Set the selected node and open the node editor
+      setSelectedNode(node.id);
+      setSelectedEdge(null); // Clear edge selection
+      setNodeEditorOpen(true);
+      setEdgeEditorOpen(false);
     },
     [activePageId, selectedNode]
   );
 
   const onSaveNode = useCallback(
     (nodeId: string, pageData: Omit<PageProps, 'id'>) => {
+      console.log(
+        'FormFlow: onSaveNode called with nodeId:',
+        nodeId,
+        'pageData:',
+        pageData
+      );
       setNodes((currentNodes) => {
         // Find the current node to check if isEndPage changed
         const currentNode = currentNodes.find((node) => node.id === nodeId);
@@ -1212,7 +1223,16 @@ function Flow({
 
         // Notify parent about form changes for synchronization
         if (onFormChange) {
+          console.log(
+            'FormFlow: Calling onFormChange with',
+            updatedNodes.length,
+            'nodes and',
+            edges.length,
+            'edges'
+          );
           onFormChange(updatedNodes, edges);
+        } else {
+          console.log('FormFlow: onFormChange is not defined');
         }
 
         return updatedNodes;
@@ -1565,16 +1585,31 @@ interface Page {
 
 interface FormFlowProps {
   formJson: LibraryFormDefinition;
+  onFormChange?: (nodes: Node[], edges: Edge[]) => void;
+  onConflictDetected?: (conflict: any) => void;
+  readOnly?: boolean;
 }
 
-const FormFlow: React.FC<FormFlowProps> = ({ formJson }) => {
+const FormFlow: React.FC<FormFlowProps> = ({
+  formJson,
+  onFormChange,
+  onConflictDetected,
+  readOnly = false,
+}) => {
   const isMobile = useIsMobile();
 
   if (isMobile) {
     return <MobileWarning />;
   }
 
-  return <Flow formDefinition={formJson} />;
+  return (
+    <Flow
+      formDefinition={formJson}
+      onFormChange={onFormChange}
+      onConflictDetected={onConflictDetected}
+      readOnly={readOnly}
+    />
+  );
 };
 
 export default FormFlow;
