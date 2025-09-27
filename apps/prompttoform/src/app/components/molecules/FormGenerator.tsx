@@ -56,6 +56,7 @@ export function FormGenerator({
   triggerDeploy: boolean;
 }) {
   const {
+    state,
     updateFormFromFlow,
     updateFormFromJson,
     markFormModified,
@@ -798,6 +799,53 @@ export function FormGenerator({
                   JSON
                 </button>
               </div>
+              {/* Synchronization Status Indicator */}
+              {parsedJson && (
+                <div className="flex items-center space-x-2">
+                  <div
+                    className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
+                      state.syncStatus === 'synced'
+                        ? 'bg-green-100 text-green-800'
+                        : state.syncStatus === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : state.syncStatus === 'conflict'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        state.syncStatus === 'synced'
+                          ? 'bg-green-500'
+                          : state.syncStatus === 'pending'
+                          ? 'bg-yellow-500 animate-pulse'
+                          : state.syncStatus === 'conflict'
+                          ? 'bg-red-500'
+                          : 'bg-gray-500'
+                      }`}
+                    ></div>
+                    <span>
+                      {state.syncStatus === 'synced' && 'Synced'}
+                      {state.syncStatus === 'pending' && 'Syncing...'}
+                      {state.syncStatus === 'conflict' && 'Conflict'}
+                      {state.syncStatus === 'error' && 'Error'}
+                    </span>
+                  </div>
+                  {state.lastModifiedBy && (
+                    <span className="text-xs text-gray-500">
+                      Last modified: {state.lastModifiedBy}
+                    </span>
+                  )}
+                  {state.syncStatus === 'conflict' && (
+                    <button
+                      onClick={resolveFormConflicts}
+                      className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                      Resolve
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

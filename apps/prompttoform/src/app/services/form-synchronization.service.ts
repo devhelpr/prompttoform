@@ -89,6 +89,18 @@ export class FormSynchronizationService {
   ): FormDefinition {
     try {
       const updatedForm = this.generateFormFromFlow(nodes, edges, originalForm);
+
+      // Check for conflicts with the current form definition
+      if (this.currentFormDefinition) {
+        const conflict = this.detectConflict(
+          updatedForm,
+          this.currentFormDefinition
+        );
+        if (conflict) {
+          this.addConflict(conflict);
+        }
+      }
+
       this.trackChange({
         id: this.generateChangeId(),
         timestamp: new Date(),
@@ -116,6 +128,17 @@ export class FormSynchronizationService {
 
       if (!this.validateFormStructure(parsedForm)) {
         throw new Error('Invalid form structure');
+      }
+
+      // Check for conflicts with the current form definition
+      if (this.currentFormDefinition) {
+        const conflict = this.detectConflict(
+          parsedForm,
+          this.currentFormDefinition
+        );
+        if (conflict) {
+          this.addConflict(conflict);
+        }
       }
 
       this.trackChange({

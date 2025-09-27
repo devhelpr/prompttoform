@@ -176,6 +176,10 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
 
         const jsonString = JSON.stringify(updatedForm, null, 2);
 
+        // Check for conflicts
+        const conflicts = prev.formSynchronizationService.getActiveConflicts();
+        const syncStatus = conflicts.length > 0 ? 'conflict' : 'synced';
+
         return {
           ...prev,
           generatedJson: jsonString,
@@ -183,7 +187,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           lastModifiedBy: 'flow',
           formVersion: prev.formVersion + 1,
           pendingChanges: false,
-          syncStatus: 'synced',
+          syncStatus,
           error: null, // Clear any previous errors
         };
       } catch (error) {
@@ -204,6 +208,11 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           prev.formSynchronizationService.updateFromJson(jsonString);
 
         if (updatedForm) {
+          // Check for conflicts
+          const conflicts =
+            prev.formSynchronizationService.getActiveConflicts();
+          const syncStatus = conflicts.length > 0 ? 'conflict' : 'synced';
+
           return {
             ...prev,
             generatedJson: jsonString,
@@ -211,7 +220,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             lastModifiedBy: 'json',
             formVersion: prev.formVersion + 1,
             pendingChanges: false,
-            syncStatus: 'synced',
+            syncStatus,
             error: null, // Clear any previous errors
           };
         } else {
