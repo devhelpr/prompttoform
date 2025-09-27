@@ -1,273 +1,474 @@
-# PromptToForm.ai UI/UX Redesign Plan
+# Form Flow Editor Synchronization Planning
 
 ## Overview
-This document outlines the phased implementation plan for improving the UI/UX of PromptToForm.ai based on the new requirements in the README.
+This document outlines the plan to implement bidirectional synchronization between the form flow editor and the main form definition, ensuring that changes made in either interface are reflected in the other.
 
-## Week 1: Foundational UI/UX Changes ✅ COMPLETED
+## Current State Analysis
 
-### Goals
-- Implement responsive top navigation bar
-- Create centered textarea layout for initial state
-- Add hamburger menu for mobile
-- Implement settings and history menu options
+### Current Architecture
+1. **Form Flow Editor** (`FormFlow.tsx`):
+   - Uses React Flow to visualize form pages as nodes and connections as edges
+   - Generates flow from form definition via `generateFlowFromFormDefinition()`
+   - Updates flow state locally with `setNodes()` and `setEdges()`
+   - Has node/edge editors for modifying individual components
+   - Exports complete form definition via `generateCompleteFormDefinition()`
 
-### Implementation Details
-- ✅ Created `ResponsiveNavbar` component with mobile hamburger menu
-- ✅ Created `InitialStateLayout` for centered textarea layout
-- ✅ Created `MainLayout` wrapper component
-- ✅ Created `InitialPromptInput` component with examples dropdown and PII detection
-- ✅ Created `AppStateManager` React context for state management
-- ✅ Updated `App.tsx` to use new layout components and state management
-- ✅ Integrated PII detection warnings in prompt textareas
-- ✅ Added keyboard shortcuts (Cmd+Enter to generate)
-- ✅ Implemented smooth transitions between initial and editor views
+2. **Main Form Definition**:
+   - Stored in `AppStateManager` as `generatedJson` (string) and `parsedJson` (object)
+   - Managed through `FormGenerator` component
+   - Can be edited via JSON editor or form updates
+   - Persisted to IndexedDB via `FormSessionService`
 
-### Key Features
-- Responsive design with mobile-first approach
-- Clean, modern UI with proper spacing and typography
-- Accessibility improvements with ARIA labels and keyboard navigation
-- PII detection warnings for sensitive data
-- Examples dropdown for quick form generation
-- Proper error handling and loading states
+3. **Current Synchronization Issues**:
+   - Flow editor changes are not propagated back to main form definition
+   - No real-time synchronization between flow and JSON editor
+   - Changes in flow editor are lost when switching views
+   - No conflict resolution between different editing modes
 
-## Week 2: Core Components for Two-Panel Editor ✅ COMPLETED
+## Implementation Plan
 
-### Goals
-- Build two-panel editor layout with collapsible sidebar
-- Create form preview panel with tabbed interface
-- Implement sidebar with original prompt and update functionality
-- Add form flow visualization and JSON editor
+### Phase 1: Establish Bidirectional Data Flow
 
-### Implementation Details
-- ✅ Created `FormEditorLayout` component with responsive two-panel design
-- ✅ Created `FormEditorSidebar` with original prompt, update textarea, and action buttons
-- ✅ Created `FormPreviewPanel` with tabbed interface (Form Preview, Flow, Visual Flow, JSON)
-- ✅ Integrated deployment and evaluation workflows
-- ✅ Added session management integration points
-- ✅ Implemented collapsible sidebar with smooth animations
-- ✅ Added proper responsive behavior for mobile devices
+#### 1.1 Create Form Synchronization Service
+**File**: `apps/prompttoform/src/app/services/form-synchronization.service.ts`
 
-### Key Features
-- Two-panel layout with collapsible sidebar
-- Tabbed interface for different form views
-- Original prompt display in read-only mode
-- Update textarea for form modifications
-- Deploy to Netlify and Evaluate buttons
-- Session information display
-- Responsive design that works on all screen sizes
+```typescript
+interface FormSynchronizationService {
+  // Subscribe to form changes from any source
+  subscribeToFormChanges(callback: (formDefinition: FormDefinition) => void): () => void;
+  
+  // Update form from flow editor
+  updateFromFlow(nodes: Node[], edges: Edge[], originalForm: FormDefinition): FormDefinition;
+  
+  // Update form from JSON editor
+  updateFromJson(jsonString: string): FormDefinition | null;
+  
+  // Validate form consistency
+  validateFormConsistency(formDefinition: FormDefinition): ValidationResult;
+  
+  // Handle conflicts between different editing modes
+  resolveConflicts(flowForm: FormDefinition, jsonForm: FormDefinition): FormDefinition;
+}
+```
 
-## Week 3: Integration and Responsive Design ✅ COMPLETED
+#### 1.2 Extend AppStateManager
+**File**: `apps/prompttoform/src/app/components/molecules/AppStateManager.tsx`
 
-### Goals
-- Integrate all components seamlessly
-- Enhance mobile responsiveness and touch interactions
-- Add performance optimizations and error handling
-- Implement comprehensive testing and accessibility improvements
+Add new state properties:
+```typescript
+interface AppState {
+  // ... existing properties
+  formSynchronizationService: FormSynchronizationService;
+  lastModifiedBy: 'flow' | 'json' | 'prompt' | 'import';
+  formVersion: number;
+  pendingChanges: boolean;
+}
+```
 
-### Implementation Details
-- ✅ Enhanced `FormEditorLayout` with mobile overlay and touch-friendly interactions
-- ✅ Improved `FormPreviewPanel` with better mobile experience and keyboard shortcuts
-- ✅ Added `ErrorBoundary` component for graceful error handling
-- ✅ Created `TouchGestures` component for mobile swipe interactions
-- ✅ Added performance optimizations with Suspense and lazy loading
-- ✅ Implemented comprehensive keyboard shortcuts (1-4 for tabs, Cmd+C/D for actions)
-- ✅ Enhanced accessibility with proper ARIA labels and roles
-- ✅ Added mobile-specific responsive improvements
-- ✅ Fixed all linting errors and warnings
+Add new actions:
+```typescript
+interface AppStateActions {
+  // ... existing actions
+  updateFormFromFlow: (nodes: Node[], edges: Edge[]) => void;
+  updateFormFromJson: (jsonString: string) => void;
+  markFormModified: (source: 'flow' | 'json' | 'prompt' | 'import') => void;
+  resolveFormConflicts: () => void;
+}
+```
 
-### Key Features
-- **Mobile Overlay**: Sidebar slides in from left on mobile with backdrop
-- **Touch Gestures**: Support for swipe interactions (ready for integration)
-- **Keyboard Shortcuts**: 
-  - 1-4: Switch between tabs
-  - Cmd+C: Copy to clipboard
-  - Cmd+D: Download JSON
-- **Error Boundaries**: Graceful error handling with user-friendly error messages
-- **Performance**: Lazy loading and Suspense for better performance
-- **Accessibility**: Full ARIA support, keyboard navigation, screen reader friendly
-- **Responsive Design**: Optimized for all screen sizes with proper touch targets
+### Phase 2: Implement Flow-to-Form Synchronization
 
-### Technical Improvements
-- **Error Handling**: Comprehensive error boundaries with retry functionality
-- **Performance**: Lazy loading of heavy components, optimized re-renders
-- **Mobile UX**: Touch-friendly interactions, proper viewport handling
-- **Accessibility**: WCAG compliant with proper semantic markup
-- **Code Quality**: Fixed all linting issues, proper TypeScript types
+#### 2.1 Modify FormFlow Component
+**File**: `apps/prompttoform/src/app/components/molecules/FormFlow.tsx`
 
-## Week 4: Advanced Features and Polish ✅ COMPLETED
+Key changes:
+1. **Remove local state management** for form definition
+2. **Add synchronization callbacks** to parent component
+3. **Implement real-time updates** when nodes/edges change
+4. **Add conflict detection** and resolution
 
-### Goals
-- Implement session loading and management
-- Add JSON validation and live preview updates
-- Enhance form flow visualization
-- Add advanced mobile gestures
-- Implement comprehensive testing
-- **NEW**: Remove icons from tabs
-- **NEW**: Replace flow and visual-flow tabs with single "Visual Flow" tab
-- **NEW**: Add dedicated "Update Form" button to sidebar
-- **NEW**: Show creation history in sidebar
+```typescript
+interface FormFlowProps {
+  formDefinition: LibraryFormDefinition;
+  onFormChange: (updatedForm: LibraryFormDefinition) => void;
+  onConflictDetected: (conflict: FormConflict) => void;
+  readOnly?: boolean;
+}
 
-### Implementation Details
-- ✅ Created `SessionManager` component for comprehensive session management
-- ✅ Implemented `JsonValidator` with real-time validation and error feedback
-- ✅ Created `EnhancedFormFlow` with interactive visualization and zoom/pan
-- ✅ Added `PerformanceMonitor` for real-time performance tracking
-- ✅ Integrated session loading and creation workflows
-- ✅ Enhanced JSON editor with validation and error highlighting
-- ✅ Added performance monitoring with memory and network tracking
-- ✅ Implemented session persistence with IndexedDB
-- ✅ Added advanced form flow visualization with node details
-- ✅ **NEW**: Removed icons from all tabs for cleaner UI
-- ✅ **NEW**: Consolidated flow tabs into single "Visual Flow" tab using FormFlowMermaid
-- ✅ **NEW**: Added dedicated "Update Form" button to sidebar with loading states
-- ✅ **NEW**: Implemented creation history display in sidebar with collapsible view
-- ✅ **NEW**: Updated keyboard shortcuts to match new tab structure (1-3)
+// Replace local form state with props and callbacks
+const FormFlow: React.FC<FormFlowProps> = ({ 
+  formDefinition, 
+  onFormChange, 
+  onConflictDetected,
+  readOnly = false 
+}) => {
+  // Remove: const [importedForm, setImportedForm] = useState<any>(null);
+  // Remove: const [importedFormName, setImportedFormName] = useState<string>('');
+  
+  // Add: Real-time synchronization
+  const handleNodeChange = useCallback((nodeId: string, pageData: PageProps) => {
+    const updatedForm = updateFormDefinition(formDefinition, nodeId, pageData);
+    onFormChange(updatedForm);
+  }, [formDefinition, onFormChange]);
 
-### Key Features
+  const handleEdgeChange = useCallback((edges: Edge[]) => {
+    const updatedForm = updateFormConnections(formDefinition, edges);
+    onFormChange(updatedForm);
+  }, [formDefinition, onFormChange]);
+};
+```
 
-#### **Session Management**
-- **Session Loading**: Load previous sessions from IndexedDB
-- **Session Creation**: Automatic session creation on form generation
-- **Session Updates**: Track form modifications and updates
-- **Session Deletion**: Safe deletion with confirmation dialogs
-- **Session History**: Visual session list with metadata
-- **Netlify Integration**: Link sessions to deployed sites
+#### 2.2 Create Form Update Utilities
+**File**: `apps/prompttoform/src/app/utils/form-update-utils.ts`
 
-#### **JSON Validation**
-- **Real-time Validation**: Instant feedback on JSON syntax and structure
-- **Error Highlighting**: Visual indicators for validation errors
-- **Quick Fixes**: Suggested solutions for common errors
-- **Line Number Detection**: Pinpoint exact error locations
-- **Structure Validation**: Validate form schema requirements
-- **Live Preview Updates**: Update preview only when JSON is valid
+```typescript
+export const updateFormDefinition = (
+  formDefinition: FormDefinition,
+  nodeId: string,
+  pageData: PageProps
+): FormDefinition => {
+  // Update specific page in form definition
+  const updatedPages = formDefinition.app.pages.map(page => 
+    page.id === nodeId ? { ...page, ...pageData } : page
+  );
+  
+  return {
+    ...formDefinition,
+    app: {
+      ...formDefinition.app,
+      pages: updatedPages
+    }
+  };
+};
 
-#### **Enhanced Form Flow**
-- **Interactive Visualization**: Clickable nodes with detailed information
-- **Zoom and Pan**: Navigate large flow diagrams easily
-- **Node Details Panel**: View detailed information about selected nodes
-- **Visual Hierarchy**: Color-coded nodes by type (pages, components, conditions)
-- **Connection Visualization**: Clear flow connections with arrows
-- **Responsive Design**: Works on all screen sizes
+export const updateFormConnections = (
+  formDefinition: FormDefinition,
+  edges: Edge[]
+): FormDefinition => {
+  // Update page connections based on edges
+  const updatedPages = formDefinition.app.pages.map(page => {
+    const pageEdges = edges.filter(edge => edge.source === page.id);
+    
+    if (pageEdges.length === 0) {
+      return { ...page, nextPage: undefined, branches: undefined };
+    } else if (pageEdges.length === 1) {
+      return { ...page, nextPage: pageEdges[0].target, branches: undefined };
+    } else {
+      // Multiple edges - convert to branches
+      const branches = pageEdges.map(edge => ({
+        condition: extractConditionFromEdge(edge),
+        nextPage: edge.target
+      }));
+      return { ...page, nextPage: undefined, branches };
+    }
+  });
+  
+  return {
+    ...formDefinition,
+    app: {
+      ...formDefinition.app,
+      pages: updatedPages
+    }
+  };
+};
+```
 
-#### **Performance Monitoring**
-- **Real-time Metrics**: Track load time, render time, memory usage
-- **Network Monitoring**: Count and track network requests
-- **Error Tracking**: Monitor and display error counts
-- **Memory Usage**: Track JavaScript heap usage
-- **Performance Status**: Color-coded performance indicators
-- **Expandable Details**: Additional technical information
+### Phase 3: Implement Form-to-Flow Synchronization
 
-#### **Advanced Mobile Features**
-- **Touch Gestures**: Ready for swipe-to-switch-tabs functionality
-- **Mobile Optimization**: Optimized touch targets and interactions
-- **Performance Tracking**: Monitor mobile-specific performance metrics
-- **Responsive Validation**: Validation feedback optimized for mobile
+#### 3.1 Modify FormGenerator Component
+**File**: `apps/prompttoform/src/app/components/molecules/FormGenerator.tsx`
 
-#### **NEW: UI Improvements**
-- **Clean Tab Design**: Removed icons from tabs for cleaner, more professional look
-- **Simplified Flow View**: Single "Visual Flow" tab using FormFlowMermaid component
-- **Dedicated Update Button**: Clear "Update Form" button in sidebar with loading states
-- **Creation History**: Collapsible history view showing all form updates and modifications
-- **Updated Shortcuts**: Keyboard shortcuts updated to match new tab structure (1-3)
+Key changes:
+1. **Add form change handler** for flow editor
+2. **Implement conflict detection** between JSON and flow edits
+3. **Add synchronization status** indicators
 
-### Technical Enhancements
-- **Real-time JSON Validation**: Comprehensive validation with helpful error messages
-- **Optimized Session Management**: Efficient IndexedDB operations with error handling
-- **Enhanced Mobile Gestures**: Touch-friendly interactions throughout the app
-- **Performance Monitoring**: Real-time performance tracking and optimization
-- **Advanced Error Recovery**: Graceful error handling with user-friendly messages
-- **Type Safety**: Full TypeScript coverage with proper type definitions
-- **NEW: Streamlined UI**: Cleaner interface with better user experience
-- **NEW: Enhanced Workflow**: Improved form update process with dedicated button
-- **NEW: History Tracking**: Complete audit trail of form modifications
+```typescript
+const FormGenerator: React.FC<FormGeneratorProps> = ({ formJson, triggerDeploy }) => {
+  // ... existing state
+  
+  // Add synchronization state
+  const [syncStatus, setSyncStatus] = useState<'synced' | 'conflict' | 'pending'>('synced');
+  const [lastModifiedBy, setLastModifiedBy] = useState<'json' | 'flow' | 'prompt'>('prompt');
 
-## Summary of Completed Work
+  // Handle form changes from flow editor
+  const handleFormChangeFromFlow = useCallback((updatedForm: FormDefinition) => {
+    const jsonString = JSON.stringify(updatedForm, null, 2);
+    
+    // Check for conflicts with current JSON
+    if (lastModifiedBy === 'json' && hasConflicts(parsedJson, updatedForm)) {
+      setSyncStatus('conflict');
+      // Show conflict resolution dialog
+      showConflictResolutionDialog(parsedJson, updatedForm);
+    } else {
+      // Update form definition
+      setGeneratedJson(jsonString);
+      setParsedJson(updatedForm);
+      setLastModifiedBy('flow');
+      setSyncStatus('synced');
+    }
+  }, [parsedJson, lastModifiedBy]);
 
-### Week 1-4 Implementation Status: ✅ COMPLETE
+  // Handle JSON changes
+  const handleJsonChange = useCallback((newJson: string) => {
+    setGeneratedJson(newJson);
+    setLastModifiedBy('json');
+    
+    // Validate JSON and update parsed state
+    const parsed = parseJsonSafely(newJson);
+    if (parsed) {
+      setParsedJson(parsed);
+      setSyncStatus('synced');
+    } else {
+      setSyncStatus('pending');
+    }
+  }, []);
 
-**Total Components Created/Enhanced:**
-- 12 new components
-- 3 layout templates
-- 9 molecule components
-- 1 error boundary
-- 1 touch gestures utility
-- 1 performance monitor
-- 1 session manager
-- 1 JSON validator
-- 1 enhanced form flow
+  return (
+    <div>
+      {/* Add sync status indicator */}
+      <div className="sync-status">
+        <SyncStatusIndicator status={syncStatus} lastModifiedBy={lastModifiedBy} />
+      </div>
+      
+      {/* Update FormFlow component */}
+      {viewMode === 'flow' && parsedJson && (
+        <FormFlow 
+          formJson={parsedJson}
+          onFormChange={handleFormChangeFromFlow}
+          onConflictDetected={handleConflictDetected}
+        />
+      )}
+    </div>
+  );
+};
+```
 
-**Key Achievements:**
-- ✅ Fully responsive design that works on all devices
-- ✅ Modern, clean UI with proper accessibility
-- ✅ Two-panel editor layout with collapsible sidebar
-- ✅ Tabbed interface for form preview, flow, and JSON
-- ✅ Keyboard shortcuts and touch interactions
-- ✅ Error handling and performance optimizations
-- ✅ PII detection and examples integration
-- ✅ Deployment and evaluation workflows
-- ✅ Complete session management system
-- ✅ Real-time JSON validation with error feedback
-- ✅ Interactive form flow visualization
-- ✅ Performance monitoring and optimization
-- ✅ Advanced mobile features and gestures
-- ✅ **NEW**: Clean tab design without icons
-- ✅ **NEW**: Simplified flow visualization with single tab
-- ✅ **NEW**: Dedicated update form functionality
-- ✅ **NEW**: Complete creation history tracking
+#### 3.2 Create Conflict Resolution Components
+**File**: `apps/prompttoform/src/app/components/molecules/ConflictResolutionDialog.tsx`
 
-**Technical Quality:**
-- ✅ All linting errors resolved
-- ✅ TypeScript types properly defined
-- ✅ React best practices followed
-- ✅ Atomic design principles applied
-- ✅ Accessibility standards met
-- ✅ Performance optimizations implemented
-- ✅ Error boundaries and recovery mechanisms
-- ✅ Session persistence and management
-- ✅ Real-time validation and feedback
-- ✅ **NEW**: Streamlined UI components
-- ✅ **NEW**: Enhanced user workflow
-- ✅ **NEW**: Complete audit trail system
+```typescript
+interface ConflictResolutionDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onResolve: (resolution: ConflictResolution) => void;
+  conflict: FormConflict;
+}
 
-**Advanced Features Implemented:**
-- **Session Management**: Complete CRUD operations with IndexedDB
-- **JSON Validation**: Real-time validation with helpful error messages
-- **Enhanced Flow Visualization**: Interactive diagrams with zoom/pan
-- **Performance Monitoring**: Real-time metrics and optimization
-- **Mobile Gestures**: Touch-friendly interactions throughout
-- **Error Recovery**: Comprehensive error handling and user feedback
-- **NEW: UI Streamlining**: Cleaner, more professional interface
-- **NEW: Workflow Enhancement**: Improved form update process
-- **NEW: History Management**: Complete modification tracking
+interface FormConflict {
+  type: 'page_content' | 'page_connections' | 'form_structure';
+  jsonVersion: FormDefinition;
+  flowVersion: FormDefinition;
+  conflictingFields: string[];
+}
 
-The application now provides an **exceptional user experience** across all devices with modern, accessible, performant, and feature-rich code. The complete UI/UX redesign is now production-ready with advanced features that significantly enhance the form generation workflow! 🎉
+interface ConflictResolution {
+  strategy: 'use_json' | 'use_flow' | 'merge' | 'manual';
+  resolvedForm: FormDefinition;
+}
+```
 
-**Latest Updates (README Tasks):**
-- ✅ Removed icons from tabs for cleaner UI
-- ✅ Consolidated flow tabs into single "Visual Flow" tab
-- ✅ Added dedicated "Update Form" button to sidebar
-- ✅ Implemented creation history display in sidebar
-- ✅ Updated keyboard shortcuts to match new structure
-- ✅ **NEW**: Show menu bar when sidebar is closed
-- ✅ **NEW**: Implement JSON-patch functionality for update form
-- ✅ **NEW**: Enhanced form changes tracking with visual distinction between Update Form and Evaluate & Improve operations
-- ✅ **NEW**: Added menu bar to initial state screen (create form textarea)
-- ✅ **NEW**: Enhanced form changes debugging and database migration for updateType field
-- ✅ **NEW**: Fixed Start New Session to properly reset UI to main screen with create form textarea
-- ✅ **NEW**: Fixed "Deploy to Netlify" functionality - store session ID in localStorage and restore after authentication
-- ✅ **NEW**: Added "Import JSON" button to top menubar with comprehensive import modal
-- ✅ **NEW**: Added ready-made JSONs to example dropdown with direct loading functionality
+### Phase 4: Add Real-time Synchronization Features
 
-## Future Enhancements (Optional)
+#### 4.1 Implement Change Tracking
+**File**: `apps/prompttoform/src/app/services/change-tracking.service.ts`
 
-### Potential Next Steps
-1. **Advanced Testing**: Unit and integration tests for all components
-2. **Analytics Integration**: User behavior tracking and insights
-3. **Collaboration Features**: Real-time editing and sharing
-4. **Template System**: Pre-built form templates and examples
-5. **Advanced Export Options**: More export formats and integrations
-6. **Theme System**: Dark mode and custom themes
-7. **Advanced Validation**: Custom validation rules and schemas
-8. **Performance Optimization**: Further optimization and caching strategies
+```typescript
+interface ChangeTrackingService {
+  trackChange(change: FormChange): void;
+  getChangeHistory(): FormChange[];
+  undoLastChange(): FormDefinition | null;
+  redoLastChange(): FormDefinition | null;
+  canUndo(): boolean;
+  canRedo(): boolean;
+}
 
-The foundation is now solid and ready for any future enhancements while providing an excellent user experience for form generation and management. 
+interface FormChange {
+  id: string;
+  timestamp: Date;
+  type: 'node_update' | 'edge_update' | 'page_add' | 'page_remove' | 'json_edit';
+  source: 'flow' | 'json' | 'prompt';
+  before: FormDefinition;
+  after: FormDefinition;
+  description: string;
+}
+```
+
+#### 4.2 Add Auto-save Functionality
+**File**: `apps/prompttoform/src/app/services/auto-save.service.ts`
+
+```typescript
+interface AutoSaveService {
+  enableAutoSave(intervalMs: number): void;
+  disableAutoSave(): void;
+  saveNow(): Promise<void>;
+  isAutoSaveEnabled(): boolean;
+  getLastSaveTime(): Date | null;
+}
+```
+
+### Phase 5: User Experience Enhancements
+
+#### 5.1 Add Synchronization Status Indicators
+**File**: `apps/prompttoform/src/app/components/atoms/SyncStatusIndicator.tsx`
+
+```typescript
+interface SyncStatusIndicatorProps {
+  status: 'synced' | 'conflict' | 'pending' | 'error';
+  lastModifiedBy: 'json' | 'flow' | 'prompt';
+  lastSaveTime?: Date;
+}
+
+const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({ 
+  status, 
+  lastModifiedBy, 
+  lastSaveTime 
+}) => {
+  return (
+    <div className="sync-status-indicator">
+      <div className={`status-dot ${status}`} />
+      <span className="status-text">
+        {status === 'synced' && 'All changes synchronized'}
+        {status === 'conflict' && 'Conflicts detected - resolution needed'}
+        {status === 'pending' && 'Changes pending synchronization'}
+        {status === 'error' && 'Synchronization error'}
+      </span>
+      <span className="last-modified">
+        Last modified by: {lastModifiedBy}
+      </span>
+      {lastSaveTime && (
+        <span className="last-save">
+          Last saved: {lastSaveTime.toLocaleTimeString()}
+        </span>
+      )}
+    </div>
+  );
+};
+```
+
+#### 5.2 Add Change Notifications
+**File**: `apps/prompttoform/src/app/components/molecules/ChangeNotification.tsx`
+
+```typescript
+interface ChangeNotificationProps {
+  change: FormChange;
+  onAccept: () => void;
+  onReject: () => void;
+  onViewChanges: () => void;
+}
+
+const ChangeNotification: React.FC<ChangeNotificationProps> = ({
+  change,
+  onAccept,
+  onReject,
+  onViewChanges
+}) => {
+  return (
+    <div className="change-notification">
+      <div className="notification-header">
+        <h4>Form Updated</h4>
+        <span className="timestamp">{change.timestamp.toLocaleTimeString()}</span>
+      </div>
+      <div className="notification-content">
+        <p>{change.description}</p>
+        <p>Modified by: {change.source}</p>
+      </div>
+      <div className="notification-actions">
+        <button onClick={onAccept}>Accept Changes</button>
+        <button onClick={onReject}>Reject Changes</button>
+        <button onClick={onViewChanges}>View Details</button>
+      </div>
+    </div>
+  );
+};
+```
+
+### Phase 6: Testing and Validation
+
+#### 6.1 Unit Tests
+- Test form synchronization service
+- Test conflict resolution logic
+- Test change tracking functionality
+- Test auto-save behavior
+
+#### 6.2 Integration Tests
+- Test bidirectional synchronization
+- Test conflict scenarios
+- Test undo/redo functionality
+- Test auto-save integration
+
+#### 6.3 User Acceptance Tests
+- Test seamless editing experience
+- Test conflict resolution workflow
+- Test performance with large forms
+- Test data integrity
+
+## Implementation Timeline
+
+### Week 1-2: Foundation
+- [ ] Create FormSynchronizationService
+- [ ] Extend AppStateManager with sync state
+- [ ] Implement basic form update utilities
+
+### Week 3-4: Flow-to-Form Sync
+- [ ] Modify FormFlow component
+- [ ] Implement real-time node/edge updates
+- [ ] Add form definition generation from flow
+
+### Week 5-6: Form-to-Flow Sync
+- [ ] Modify FormGenerator component
+- [ ] Implement JSON change handling
+- [ ] Add conflict detection
+
+### Week 7-8: Conflict Resolution
+- [ ] Create conflict resolution dialog
+- [ ] Implement merge strategies
+- [ ] Add manual conflict resolution
+
+### Week 9-10: Advanced Features
+- [ ] Implement change tracking
+- [ ] Add auto-save functionality
+- [ ] Create undo/redo system
+
+### Week 11-12: UX Enhancements
+- [ ] Add sync status indicators
+- [ ] Implement change notifications
+- [ ] Add keyboard shortcuts
+
+### Week 13-14: Testing & Polish
+- [ ] Comprehensive testing
+- [ ] Performance optimization
+- [ ] Documentation updates
+
+## Risk Mitigation
+
+### Technical Risks
+1. **Data Loss**: Implement comprehensive backup and recovery
+2. **Performance**: Use debouncing and virtualization for large forms
+3. **Conflicts**: Implement robust conflict detection and resolution
+4. **State Management**: Use immutable data structures and proper state updates
+
+### User Experience Risks
+1. **Confusion**: Provide clear visual feedback and status indicators
+2. **Data Loss**: Implement auto-save and change notifications
+3. **Complexity**: Keep conflict resolution simple and intuitive
+4. **Performance**: Optimize for smooth real-time updates
+
+## Success Metrics
+
+1. **Synchronization Accuracy**: 100% of changes properly synchronized
+2. **Conflict Resolution**: <5% of conflicts require manual intervention
+3. **Performance**: <100ms response time for form updates
+4. **User Satisfaction**: >90% of users report seamless editing experience
+5. **Data Integrity**: Zero data loss incidents
+
+## Future Enhancements
+
+1. **Collaborative Editing**: Real-time multi-user editing
+2. **Version Control**: Git-like versioning for form definitions
+3. **Change History**: Detailed audit trail of all changes
+4. **Branching**: Create and merge form definition branches
+5. **Templates**: Save and reuse form definition templates
+6. **Validation**: Real-time form validation and error checking
+7. **Performance**: Web Workers for heavy form processing
+8. **Offline Support**: Work offline with sync when reconnected
