@@ -70,8 +70,8 @@ export function NodeEditorSidebar({
         parsed !== null &&
         typeof parsed.title === 'string' &&
         typeof parsed.route === 'string' &&
-        typeof parsed.layout === 'string' &&
         Array.isArray(parsed.components)
+        // Note: layout is optional, removed from validation
       );
     } catch {
       return false;
