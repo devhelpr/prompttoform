@@ -1169,6 +1169,7 @@ function Flow({
         // Only update version if isEndPage changed
         const shouldUpdateVersion = currentIsEndPage !== newIsEndPage;
 
+        let updatedNodes;
         if (shouldUpdateVersion) {
           // Only recreate the node if isEndPage changed (for handle re-registration)
           const filteredNodes = currentNodes.filter(
@@ -1189,10 +1190,10 @@ function Flow({
               version: Date.now(),
             },
           };
-          return [...filteredNodes, updatedNode];
+          updatedNodes = [...filteredNodes, updatedNode];
         } else {
           // Just update the page data without recreating the node
-          return currentNodes.map((node) => {
+          updatedNodes = currentNodes.map((node) => {
             if (node.id === nodeId) {
               return {
                 ...node,
@@ -1208,15 +1209,22 @@ function Flow({
             return node;
           });
         }
+
+        // Notify parent about form changes for synchronization
+        if (onFormChange) {
+          onFormChange(updatedNodes, edges);
+        }
+
+        return updatedNodes;
       });
     },
-    []
+    [onFormChange, edges]
   );
 
   const onUpdateEdge = useCallback(
     (edgeId: string, branchIndex: number | null) => {
       setEdges((currentEdges) => {
-        return currentEdges.map((edge) => {
+        const updatedEdges = currentEdges.map((edge) => {
           if (edge.id === edgeId) {
             // Update edge label, styling, and type based on branch selection
             if (branchIndex !== null) {
@@ -1258,9 +1266,16 @@ function Flow({
           }
           return edge;
         });
+
+        // Notify parent about form changes for synchronization
+        if (onFormChange) {
+          onFormChange(nodes, updatedEdges);
+        }
+
+        return updatedEdges;
       });
     },
-    [nodes]
+    [nodes, onFormChange]
   );
 
   // Helper function to extract all existing field IDs from the current flow
