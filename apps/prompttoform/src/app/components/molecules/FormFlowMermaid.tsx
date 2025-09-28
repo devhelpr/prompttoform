@@ -128,9 +128,9 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
     [pan]
   );
 
-  // Handle wheel events for zooming and panning
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
+  // Handle wheel events for zooming and panning using native event listeners
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       e.stopPropagation();
 
@@ -141,19 +141,39 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
         const newZoom = Math.max(0.1, Math.min(5, zoom * delta));
         setZoom(newZoom);
       } else {
-        // Panning functionality when zoomed in
-        if (zoom > 1) {
-          const deltaX = e.deltaX || 0;
-          const deltaY = e.deltaY || 0;
-          setPan((prev) => ({
-            x: prev.x - deltaX,
-            y: prev.y - deltaY,
-          }));
+        // Check if this is a trackpad gesture (small deltaY values typically indicate trackpad)
+        const isTrackpad = Math.abs(e.deltaY) < 100 && e.deltaMode === 0;
+
+        if (isTrackpad && Math.abs(e.deltaY) > 0) {
+          // Trackpad zoom - use regular wheel events for zooming
+          const delta = e.deltaY > 0 ? 0.95 : 1.05;
+          const newZoom = Math.max(0.1, Math.min(5, zoom * delta));
+          setZoom(newZoom);
+        } else {
+          // Mouse wheel or large trackpad movements - use for panning when zoomed in
+          if (zoom > 1) {
+            const deltaX = e.deltaX || 0;
+            const deltaY = e.deltaY || 0;
+            setPan((prev) => ({
+              x: prev.x - deltaX,
+              y: prev.y - deltaY,
+            }));
+          }
         }
       }
-    },
-    [zoom]
-  );
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('wheel', handleWheel, { passive: false });
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener('wheel', handleWheel);
+      }
+    };
+  }, [zoom]);
 
   // Touch event handlers
   const handleTouchStart = useCallback(
@@ -512,7 +532,6 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          onWheel={handleWheel}
           style={{
             cursor: isDragging ? 'grabbing' : 'grab',
             userSelect: 'none',
