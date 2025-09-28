@@ -382,6 +382,7 @@ export class FormSynchronizationService {
         };
       } else if (pageEdges.length === 1) {
         // Single edge - set nextPage
+        console.log(`Page ${page.id}: Single edge to ${pageEdges[0].target}`);
         return {
           id: page.id,
           title: page.title,
@@ -393,6 +394,7 @@ export class FormSynchronizationService {
         };
       } else {
         // Multiple edges - set branches
+        console.log(`Page ${page.id}: Multiple edges, creating branches`);
         const existingBranches = page.branches || [];
         const branches = pageEdges.map((edge, index) => {
           // Try to match edges to existing branches using edge labels

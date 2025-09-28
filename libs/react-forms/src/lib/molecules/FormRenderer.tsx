@@ -76,9 +76,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     return calculateLogicalPageOrder(formJson);
   }, [formJson]);
 
-  // Initialize current step index to the logical first page
+  // Initialize current step index to the logical first page (only on initial load)
   useEffect(() => {
-    if (logicalPageOrder.length > 0 && formJson?.app?.pages) {
+    if (
+      logicalPageOrder.length > 0 &&
+      formJson?.app?.pages &&
+      currentStepIndex === 0
+    ) {
       const logicalFirstPageId = logicalPageOrder[0].pageId;
       const arrayIndex = formJson.app.pages.findIndex(
         (page) => page.id === logicalFirstPageId
@@ -88,7 +92,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         setStepHistory([arrayIndex]);
       }
     }
-  }, [logicalPageOrder, formJson?.app?.pages, currentStepIndex]);
+  }, [logicalPageOrder, formJson?.app?.pages]);
 
   // Initialize form values with default values for all fields
   useEffect(() => {
@@ -698,11 +702,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       logicalPageOrder.length > 0 &&
       !initialEventTriggeredRef.current
     ) {
-      const initialPage = formJson.app.pages[0];
-      const logicalInitialPageIndex = getLogicalPageIndex(
-        initialPage.id,
-        logicalPageOrder
+      // Use the logical first page instead of the first page in the array
+      const logicalFirstPageId = logicalPageOrder[0].pageId;
+      const initialPage = formJson.app.pages.find(
+        (page) => page.id === logicalFirstPageId
       );
+      if (!initialPage) return; // Safety check
+
+      const logicalInitialPageIndex = 0; // First page in logical order
       const totalLogicalPages = getLogicalPageCount(logicalPageOrder);
 
       const event: PageChangeEvent = {
@@ -1160,17 +1167,17 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
 
     const { currentStep, totalSteps } = getCurrentStep();
-    const currentPageIndex = currentStep - 1;
 
-    if (currentPageIndex < 0 || currentPageIndex >= formJson.app.pages.length) {
+    // Use the actual array index, not the logical step number
+    const currentPage = formJson.app.pages[currentStepIndex];
+
+    if (!currentPage) {
       return (
         <div className="p-4 text-red-500">
           {translationService.translateUI('invalidPageIndex')}
         </div>
       );
     }
-
-    const currentPage = formJson.app.pages[currentPageIndex];
 
     return (
       <div className="w-full">

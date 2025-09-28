@@ -14,7 +14,13 @@
 // import dagre from 'dagre';
 // import 'reactflow/dist/style.css';
 
-import React, { useCallback, useState, useMemo } from 'react';
+import React, {
+  useCallback,
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+} from 'react';
 import {
   ReactFlow,
   type Node,
@@ -756,6 +762,9 @@ function Flow({
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+
+  // Ref to track current state for sync
+  const currentStateRef = useRef<{ nodes: Node[]; edges: Edge[] } | null>(null);
   const [activePageId, setActivePageId] = useState<string | null>(null);
   const [isSelectionChanging, setIsSelectionChanging] = useState(false);
   const [lastSelectedNode, setLastSelectedNode] = useState<string | null>(null);
