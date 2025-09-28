@@ -113,24 +113,43 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
   // Mouse/touch event handlers for panning
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      if (zoom > 1) {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(true);
-        setDragStart({ x: e.clientX, y: e.clientY });
-        setInitialPan(pan);
-      }
+      // Allow panning at any zoom level (including when fitted to screen)
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Prevent text selection
+      document.body.style.userSelect = 'none';
+      document.body.style.webkitUserSelect = 'none';
+
+      setIsDragging(true);
+      setDragStart({ x: e.clientX, y: e.clientY });
+      setInitialPan(pan);
     },
-    [zoom, pan]
+    [pan]
   );
 
-  // Handle wheel events for trackpad panning
+  // Handle wheel events for zooming and panning
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
-      // Only prevent default for vertical scrolling when zoomed in
-      if (zoom > 1 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        e.preventDefault();
-        e.stopPropagation();
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Check if Ctrl/Cmd key is pressed for zooming
+      if (e.ctrlKey || e.metaKey) {
+        // Zoom functionality
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        const newZoom = Math.max(0.1, Math.min(5, zoom * delta));
+        setZoom(newZoom);
+      } else {
+        // Panning functionality when zoomed in
+        if (zoom > 1) {
+          const deltaX = e.deltaX || 0;
+          const deltaY = e.deltaY || 0;
+          setPan((prev) => ({
+            x: prev.x - deltaX,
+            y: prev.y - deltaY,
+          }));
+        }
       }
     },
     [zoom]
@@ -139,11 +158,25 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
   // Touch event handlers
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
-      if (zoom > 1 && e.touches.length === 1) {
-        const touch = e.touches[0];
-        setIsDragging(true);
-        setDragStart({ x: touch.clientX, y: touch.clientY });
-        setInitialPan(pan);
+      if (e.touches.length === 1) {
+        // Single touch - panning
+        if (zoom > 1) {
+          const touch = e.touches[0];
+          setIsDragging(true);
+          setDragStart({ x: touch.clientX, y: touch.clientY });
+          setInitialPan(pan);
+        }
+      } else if (e.touches.length === 2) {
+        // Two touches - pinch to zoom
+        e.preventDefault();
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const distance = Math.sqrt(
+          Math.pow(touch2.clientX - touch1.clientX, 2) +
+            Math.pow(touch2.clientY - touch1.clientY, 2)
+        );
+        setDragStart({ x: distance, y: 0 });
+        setInitialPan({ x: zoom, y: 0 });
       }
     },
     [zoom, pan]
@@ -151,7 +184,8 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
 
   const handleTouchMove = useCallback(
     (e: React.TouchEvent) => {
-      if (isDragging && zoom > 1 && e.touches.length === 1) {
+      if (e.touches.length === 1 && isDragging && zoom > 1) {
+        // Single touch panning
         e.preventDefault();
         const touch = e.touches[0];
         const deltaX = touch.clientX - dragStart.x;
@@ -160,6 +194,18 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
           x: initialPan.x + deltaX,
           y: initialPan.y + deltaY,
         });
+      } else if (e.touches.length === 2) {
+        // Two touches - pinch to zoom
+        e.preventDefault();
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const distance = Math.sqrt(
+          Math.pow(touch2.clientX - touch1.clientX, 2) +
+            Math.pow(touch2.clientY - touch1.clientY, 2)
+        );
+        const scale = distance / dragStart.x;
+        const newZoom = Math.max(0.1, Math.min(5, initialPan.x * scale));
+        setZoom(newZoom);
       }
     },
     [isDragging, dragStart, initialPan, zoom]
@@ -210,7 +256,7 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
   // Global mouse event listeners for panning
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (isDragging && zoom > 1) {
+      if (isDragging) {
         e.preventDefault();
         e.stopPropagation();
         const deltaX = e.clientX - dragStart.x;
@@ -225,6 +271,11 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
     const handleGlobalMouseUp = (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+
+      // Restore text selection
+      document.body.style.userSelect = '';
+      document.body.style.webkitUserSelect = '';
+
       setIsDragging(false);
     };
 
@@ -310,6 +361,22 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
           // Set the SVG content
           mermaidRef.current.innerHTML = svg;
 
+          // Apply CSS to all SVG elements to prevent interference with panning
+          const svgElement = mermaidRef.current.querySelector('svg');
+          if (svgElement) {
+            // Set pointer events to none to prevent interference with panning
+            svgElement.style.pointerEvents = 'none';
+            svgElement.style.userSelect = 'none';
+
+            // Apply to all child elements as well
+            const allElements = svgElement.querySelectorAll('*');
+            allElements.forEach((element) => {
+              const htmlElement = element as HTMLElement;
+              htmlElement.style.pointerEvents = 'none';
+              htmlElement.style.userSelect = 'none';
+            });
+          }
+
           // Bind functions to the container
           if (bindFunctions && mermaidRef.current) {
             bindFunctions(mermaidRef.current);
@@ -351,7 +418,7 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
   }, [mermaidDiagram, handleFitToScreen]);
 
   return (
-    <div className="w-full h-full relative bg-white rounded-lg border border-zinc-300 relative">
+    <div className="w-full h-full relative bg-white rounded-lg border border-zinc-300">
       {/* Zoom Controls */}
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
         <button
@@ -420,13 +487,7 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
       <div
         ref={containerRef}
         className="absolute inset-0"
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onWheel={handleWheel}
         style={{
-          cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
           overflow: 'hidden',
         }}
       >
@@ -437,6 +498,29 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: 'top left',
             transition: isInitialized ? 'transform 0.2s ease-out' : 'none',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none',
+          }}
+        />
+
+        {/* Transparent overlay for capturing mouse events */}
+        <div
+          className="absolute inset-0"
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onWheel={handleWheel}
+          style={{
+            cursor: isDragging ? 'grabbing' : 'grab',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none',
+            pointerEvents: 'auto',
+            zIndex: 1,
           }}
         />
       </div>
