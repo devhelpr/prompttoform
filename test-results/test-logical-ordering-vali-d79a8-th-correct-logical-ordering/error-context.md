@@ -1,0 +1,99 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - navigation [ref=e5]:
+    - generic [ref=e7]:
+      - link "PromptToForm Logo" [ref=e9] [cursor=pointer]:
+        - /url: /
+        - img "PromptToForm Logo" [ref=e10] [cursor=pointer]
+      - generic [ref=e12]:
+        - button "View Flow" [ref=e13] [cursor=pointer]:
+          - img [ref=e14] [cursor=pointer]
+          - text: View Flow
+        - button "Import JSON" [ref=e16] [cursor=pointer]:
+          - img [ref=e17] [cursor=pointer]
+          - text: Import JSON
+        - button "Show History" [ref=e19] [cursor=pointer]
+        - button "Settings" [ref=e20] [cursor=pointer]
+  - main [ref=e21]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - button "Collapse sidebar" [ref=e26] [cursor=pointer]:
+          - img [ref=e27] [cursor=pointer]
+        - generic [ref=e29]:
+          - generic [ref=e32]:
+            - generic [ref=e33]:
+              - generic [ref=e34]:
+                - img [ref=e35]
+                - generic [ref=e37]: Active Session
+              - paragraph [ref=e38]: "ID: d7b6972d-adf6-432a-8241-82623421f401"
+            - generic [ref=e39]:
+              - generic [ref=e40]: Original Prompt
+              - textbox "Original prompt will appear here..." [ref=e41]: Imported form
+            - generic [ref=e42]:
+              - generic [ref=e43]: Update Form
+              - textbox "Describe the changes you want to make to the form..." [ref=e44]
+              - button "Update Form" [disabled] [ref=e45]:
+                - img [ref=e46]
+                - text: Update Form
+            - button "Form Changes" [ref=e49] [cursor=pointer]:
+              - generic [ref=e50] [cursor=pointer]: Form Changes
+              - img [ref=e51] [cursor=pointer]
+            - generic [ref=e53]:
+              - button "Evaluate & Improve" [disabled] [ref=e54]:
+                - img [ref=e55]
+                - text: Evaluate & Improve
+              - button "Deploy to Netlify" [ref=e57] [cursor=pointer]:
+                - img [ref=e58] [cursor=pointer]
+                - text: Deploy to Netlify
+            - generic [ref=e60]:
+              - paragraph [ref=e61]:
+                - strong [ref=e62]: "Update Form:"
+                - text: Applies precise changes using JSON-patch operations. Faster and more targeted.
+              - paragraph [ref=e63]:
+                - strong [ref=e64]: "Evaluate & Improve:"
+                - text: Analyzes your form and suggests comprehensive improvements. May regenerate the entire form.
+              - paragraph [ref=e65]:
+                - strong [ref=e66]: "Deploy to Netlify:"
+                - text: Creates a live, shareable version of your form.
+          - img [ref=e69]
+      - generic [ref=e74]:
+        - generic [ref=e75]:
+          - generic [ref=e76]:
+            - heading "Form Preview" [level=2] [ref=e77]
+            - generic [ref=e78]:
+              - button "Copy to clipboard" [ref=e79] [cursor=pointer]:
+                - img [ref=e80] [cursor=pointer]
+              - button "Download JSON" [ref=e82] [cursor=pointer]:
+                - img [ref=e83] [cursor=pointer]
+              - button "Download React form zip" [ref=e85] [cursor=pointer]:
+                - img [ref=e86] [cursor=pointer]
+              - button "Export JSON schema" [ref=e88] [cursor=pointer]:
+                - img [ref=e89] [cursor=pointer]
+          - tablist [ref=e92]:
+            - tab "Form Preview (1)" [active] [selected] [ref=e93] [cursor=pointer]:
+              - text: Form Preview
+              - generic [ref=e94] [cursor=pointer]: (1)
+            - tab "Visual Flow (2)" [ref=e95] [cursor=pointer]:
+              - text: Visual Flow
+              - generic [ref=e96] [cursor=pointer]: (2)
+            - tab "JSON (3)" [ref=e97] [cursor=pointer]:
+              - text: JSON
+              - generic [ref=e98] [cursor=pointer]: (3)
+        - tabpanel [ref=e100]:
+          - generic [ref=e103]:
+            - generic [ref=e104]:
+              - heading "Wrong Order Test" [level=1] [ref=e105]
+              - generic [ref=e106]: This application has 3 pages
+            - generic [ref=e108]:
+              - generic [ref=e110]: Step 1 of 3
+              - generic [ref=e113]:
+                - heading "Third Page" [level=2] [ref=e114]
+                - generic [ref=e117]:
+                  - generic [ref=e118]: Third Field
+                  - textbox "Third Field" [ref=e119]
+              - generic [ref=e120]:
+                - button "Previous" [disabled] [ref=e121]
+                - button "Next" [ref=e122] [cursor=pointer]
+```

@@ -8,4 +8,5 @@ export * from './lib/atoms';
 export * from './lib/molecules/FormRenderer';
 export * from './lib/types/field-types';
 export * from './lib/services/translation-service';
+export * from './lib/utils/page-ordering';
 export * from './examples';

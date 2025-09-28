@@ -36,6 +36,14 @@ import {
 } from '../interfaces/multi-language-interfaces';
 import { TranslationService } from '../services/translation-service';
 import { getClassNames, mergeClassNames, getText } from '../utils/class-utils';
+import {
+  calculateLogicalPageOrder,
+  getLogicalPageIndex,
+  getLogicalPageCount,
+  isFirstLogicalPage,
+  isLastLogicalPage,
+  LogicalPageOrder,
+} from '../utils/page-ordering';
 
 export const FormRenderer: React.FC<FormRendererProps> = ({
   formJson,
@@ -62,6 +70,25 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   >({});
   const [showThankYouPage, setShowThankYouPage] = useState(false);
   const initialEventTriggeredRef = useRef(false);
+
+  // Calculate logical page order based on flow structure
+  const logicalPageOrder = useMemo(() => {
+    return calculateLogicalPageOrder(formJson);
+  }, [formJson]);
+
+  // Initialize current step index to the logical first page
+  useEffect(() => {
+    if (logicalPageOrder.length > 0 && formJson?.app?.pages) {
+      const logicalFirstPageId = logicalPageOrder[0].pageId;
+      const arrayIndex = formJson.app.pages.findIndex(
+        (page) => page.id === logicalFirstPageId
+      );
+      if (arrayIndex !== -1 && arrayIndex !== currentStepIndex) {
+        setCurrentStepIndex(arrayIndex);
+        setStepHistory([arrayIndex]);
+      }
+    }
+  }, [logicalPageOrder, formJson?.app?.pages, currentStepIndex]);
 
   // Initialize form values with default values for all fields
   useEffect(() => {
@@ -170,24 +197,34 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         previousPageIndex !== undefined
           ? formJson.app.pages[previousPageIndex]
           : undefined;
-      const totalPages = formJson.app.pages.length;
+
+      // Get logical page information
+      const logicalNewPageIndex = getLogicalPageIndex(
+        newPage.id,
+        logicalPageOrder
+      );
+      const logicalPreviousPageIndex =
+        previousPageIndex !== undefined && previousPage
+          ? getLogicalPageIndex(previousPage.id, logicalPageOrder)
+          : undefined;
+      const totalLogicalPages = getLogicalPageCount(logicalPageOrder);
 
       const event: PageChangeEvent = {
         pageId: newPage.id,
-        pageIndex: newPageIndex,
+        pageIndex: logicalNewPageIndex, // Use logical index instead of array index
         pageTitle: newPage.title,
-        totalPages,
-        isFirstPage: newPageIndex === 0,
-        isLastPage: newPageIndex === totalPages - 1,
+        totalPages: totalLogicalPages, // Use logical total instead of array length
+        isFirstPage: isFirstLogicalPage(newPage.id, logicalPageOrder),
+        isLastPage: isLastLogicalPage(newPage.id, logicalPageOrder),
         isEndPage: newPage.isEndPage === true,
         isConfirmationPage: newPage.isConfirmationPage === true,
         previousPageId: previousPage?.id,
-        previousPageIndex: previousPageIndex,
+        previousPageIndex: logicalPreviousPageIndex, // Use logical index
       };
 
       onPageChange(event);
     },
-    [onPageChange, formJson]
+    [onPageChange, formJson, logicalPageOrder]
   );
 
   // Helper function to get field label for error messages
@@ -658,18 +695,23 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       onPageChange &&
       formJson?.app?.pages &&
       formJson.app.pages.length > 0 &&
+      logicalPageOrder.length > 0 &&
       !initialEventTriggeredRef.current
     ) {
       const initialPage = formJson.app.pages[0];
-      const totalPages = formJson.app.pages.length;
+      const logicalInitialPageIndex = getLogicalPageIndex(
+        initialPage.id,
+        logicalPageOrder
+      );
+      const totalLogicalPages = getLogicalPageCount(logicalPageOrder);
 
       const event: PageChangeEvent = {
         pageId: initialPage.id,
-        pageIndex: 0,
+        pageIndex: logicalInitialPageIndex, // Use logical index
         pageTitle: initialPage.title,
-        totalPages,
-        isFirstPage: true,
-        isLastPage: totalPages === 1,
+        totalPages: totalLogicalPages, // Use logical total
+        isFirstPage: isFirstLogicalPage(initialPage.id, logicalPageOrder),
+        isLastPage: isLastLogicalPage(initialPage.id, logicalPageOrder),
         isEndPage: initialPage.isEndPage === true,
         isConfirmationPage: initialPage.isConfirmationPage === true,
         previousPageId: undefined,
@@ -679,7 +721,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       onPageChange(event);
       initialEventTriggeredRef.current = true;
     }
-  }, [onPageChange, formJson?.app?.pages]);
+  }, [onPageChange, formJson?.app?.pages, logicalPageOrder]);
 
   const handleInputChange = (id: string, value: unknown) => {
     setFormValues((prev) => ({
@@ -825,14 +867,26 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         }
       }
 
-      // If no specific next page is defined, move to the next page in sequence
-      const totalSteps = formJson.app.pages?.length || 0;
-      if (currentStepIndex < totalSteps - 1) {
-        const nextIndex = currentStepIndex + 1;
-        setStepHistory((prev) => [...prev, nextIndex]);
-        setCurrentStepIndex(nextIndex);
-        triggerPageChangeEvent(nextIndex, currentStepIndex);
-        setIsSubmitted(false);
+      // If no specific next page is defined, move to the next page in logical sequence
+      const currentLogicalIndex =
+        getLogicalIndexFromArrayIndex(currentStepIndex);
+      const totalLogicalSteps = getLogicalPageCount(logicalPageOrder);
+
+      if (
+        currentLogicalIndex >= 0 &&
+        currentLogicalIndex < totalLogicalSteps - 1
+      ) {
+        const nextLogicalIndex = currentLogicalIndex + 1;
+        const nextArrayIndex = getArrayIndexFromLogicalIndex(nextLogicalIndex);
+
+        if (nextArrayIndex !== -1) {
+          setStepHistory((prev) => [...prev, nextArrayIndex]);
+          setCurrentStepIndex(nextArrayIndex);
+          triggerPageChangeEvent(nextArrayIndex, currentStepIndex);
+          setIsSubmitted(false);
+        } else {
+          handleFormSubmit('multistep-form');
+        }
       } else {
         handleFormSubmit('multistep-form');
       }
@@ -849,6 +903,21 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       });
       setCurrentStepIndex(previousIndex);
       triggerPageChangeEvent(previousIndex, currentStepIndex);
+    } else {
+      // If no history, try to go to previous logical page
+      const currentLogicalIndex =
+        getLogicalIndexFromArrayIndex(currentStepIndex);
+      if (currentLogicalIndex > 0) {
+        const previousLogicalIndex = currentLogicalIndex - 1;
+        const previousArrayIndex =
+          getArrayIndexFromLogicalIndex(previousLogicalIndex);
+
+        if (previousArrayIndex !== -1) {
+          setStepHistory([previousArrayIndex]);
+          setCurrentStepIndex(previousArrayIndex);
+          triggerPageChangeEvent(previousArrayIndex, currentStepIndex);
+        }
+      }
     }
   };
 
@@ -927,11 +996,41 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   };
 
   const getCurrentStep = (): { currentStep: number; totalSteps: number } => {
-    // Use the state value instead of hardcoding
-    const totalSteps = formJson?.app?.pages?.length || 0;
-    const currentStep = currentStepIndex + 1; // Convert to 1-indexed for display
+    // Use logical page ordering instead of array-based indexing
+    const currentPage = formJson?.app?.pages?.[currentStepIndex];
+    if (!currentPage) {
+      return { currentStep: 1, totalSteps: 1 };
+    }
 
-    return { currentStep, totalSteps };
+    const logicalPageIndex = getLogicalPageIndex(
+      currentPage.id,
+      logicalPageOrder
+    );
+    const totalLogicalSteps = getLogicalPageCount(logicalPageOrder);
+
+    // Convert to 1-indexed for display
+    const currentStep = logicalPageIndex + 1;
+
+    return { currentStep, totalSteps: totalLogicalSteps };
+  };
+
+  // Helper function to get the array index from logical page order
+  const getArrayIndexFromLogicalIndex = (logicalIndex: number): number => {
+    if (logicalIndex < 0 || logicalIndex >= logicalPageOrder.length) {
+      return -1;
+    }
+    const pageId = logicalPageOrder[logicalIndex].pageId;
+    return formJson?.app?.pages?.findIndex((page) => page.id === pageId) ?? -1;
+  };
+
+  // Helper function to get the logical index from array index
+  const getLogicalIndexFromArrayIndex = (arrayIndex: number): number => {
+    if (arrayIndex < 0 || arrayIndex >= (formJson?.app?.pages?.length ?? 0)) {
+      return -1;
+    }
+    const pageId = formJson?.app?.pages?.[arrayIndex]?.id;
+    if (!pageId) return -1;
+    return getLogicalPageIndex(pageId, logicalPageOrder);
   };
 
   const renderStepIndicator = (
@@ -2424,7 +2523,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                     )}
                   >
                     {translationService.translateUI('multiPageInfo', {
-                      pageCount: formJson.app.pages.length,
+                      pageCount: getLogicalPageCount(logicalPageOrder),
                     })}
                   </div>
                 )}

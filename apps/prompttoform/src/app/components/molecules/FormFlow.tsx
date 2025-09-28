@@ -46,6 +46,11 @@ import { FormPreviewSidebar } from '../flow/form-preview-sidebar';
 import { NodeEditorSidebar } from '../flow/node-editor-sidebar';
 import { CreateNodeModal } from '../flow/create-node-modal';
 import { Upload, X, Monitor, Download, Plus } from 'lucide-react';
+import {
+  insertPageInLogicalOrder,
+  reorderPagesByLogicalFlow,
+  findBestInsertPosition,
+} from '../../utils/flow-ordering';
 
 // Define the thank you page action type
 interface ThankYouPageAction {
@@ -606,11 +611,14 @@ const generateCompleteFormDefinition = (nodes: Node[], edges: Edge[]) => {
   // Check if there's a thank you page in the original form definition
   const hasThankYouPage = nodes.some((node) => node.id === 'thank-you-page');
 
+  // Reorder pages to match logical flow order
+  const reorderedPages = reorderPagesByLogicalFlow(updatedPages);
+
   const result: { app: any } = {
     // TODO infer app tyoe from FormDefinition
     app: {
       title: 'Generated Form',
-      pages: updatedPages,
+      pages: reorderedPages,
       ...(hasThankYouPage && { thankYouPage: {} as ThankYouPageConfig }), // Placeholder for thankYouPage
     },
   };
@@ -1412,13 +1420,31 @@ function Flow({
       // Add the new node to the flow
       setNodes((currentNodes) => [...currentNodes, newNode]);
 
-      // Update the form definition to include the new page
+      // Update the form definition to include the new page in the correct logical position
       const currentFormDef = currentForm;
+
+      // Find the best position to insert the new page
+      const insertPosition = findBestInsertPosition(
+        currentFormDef.app.pages,
+        newPage,
+        selectedNode || undefined
+      );
+
+      // Insert the page in the logical order
+      const reorderedPages = insertPageInLogicalOrder(
+        currentFormDef.app.pages,
+        newPage,
+        insertPosition.insertAfterPageId
+      );
+
+      // Reorder all pages to match logical flow
+      const finalPages = reorderPagesByLogicalFlow(reorderedPages);
+
       const updatedFormDef = {
         ...currentFormDef,
         app: {
           ...currentFormDef.app,
-          pages: [...currentFormDef.app.pages, newPage],
+          pages: finalPages,
         },
       };
 
@@ -1426,7 +1452,13 @@ function Flow({
       setImportedForm(updatedFormDef);
       setImportedFormName('Custom Form with New Node');
     },
-    [currentForm, setNodes, getAllExistingFieldIds, generateUniqueFieldId]
+    [
+      currentForm,
+      setNodes,
+      getAllExistingFieldIds,
+      generateUniqueFieldId,
+      selectedNode,
+    ]
   );
 
   return (
