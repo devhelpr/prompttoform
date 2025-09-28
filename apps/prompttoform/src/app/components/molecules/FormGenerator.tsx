@@ -885,7 +885,7 @@ export function FormGenerator({
             parsedJson.app && (
               <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
                 <FormFlow
-                  formDefinition={parsedJson}
+                  formJson={parsedJson}
                   onFormChange={handleFormChangeFromFlow}
                   onConflictDetected={handleConflictDetected}
                 />

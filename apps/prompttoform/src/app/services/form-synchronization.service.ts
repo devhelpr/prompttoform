@@ -47,6 +47,7 @@ export class FormSynchronizationService {
   private subscribers: Array<(formDefinition: FormDefinition) => void> = [];
   private changeHistory: FormChange[] = [];
   private conflicts: FormConflict[] = [];
+  private currentFormDefinition: FormDefinition | null = null;
   private maxHistorySize = 50;
 
   /**
@@ -352,10 +353,12 @@ export class FormSynchronizationService {
     edges: Edge[],
     originalForm: FormDefinition
   ): FormDefinition {
-    const pages = nodes.map((node) => node.data?.page).filter(Boolean);
+    const pages = nodes.map((node) => node.data?.page).filter(Boolean) as any[];
 
     // Filter out the thank you page from regular pages
-    const regularPages = pages.filter((page) => page.id !== 'thank-you-page');
+    const regularPages = pages.filter(
+      (page: any) => page.id !== 'thank-you-page'
+    );
 
     // Create a map of source nodes to their outgoing edges
     const nodeEdges = new Map<string, Edge[]>();
@@ -367,7 +370,7 @@ export class FormSynchronizationService {
     });
 
     // Update pages with edge information
-    const updatedPages = regularPages.map((page) => {
+    const updatedPages = regularPages.map((page: any) => {
       const pageEdges = nodeEdges.get(page.id) || [];
 
       if (pageEdges.length === 0) {
@@ -382,7 +385,6 @@ export class FormSynchronizationService {
         };
       } else if (pageEdges.length === 1) {
         // Single edge - set nextPage
-        console.log(`Page ${page.id}: Single edge to ${pageEdges[0].target}`);
         return {
           id: page.id,
           title: page.title,
@@ -394,13 +396,12 @@ export class FormSynchronizationService {
         };
       } else {
         // Multiple edges - set branches
-        console.log(`Page ${page.id}: Multiple edges, creating branches`);
         const existingBranches = page.branches || [];
         const branches = pageEdges.map((edge, index) => {
           // Try to match edges to existing branches using edge labels
           if (edge.label) {
             const edgeLabel = String(edge.label);
-            const matchingBranch = existingBranches.find((branch) => {
+            const matchingBranch = existingBranches.find((branch: any) => {
               const expectedLabel = `${branch.condition.field} ${branch.condition.operator} ${branch.condition.value}`;
               return edgeLabel === expectedLabel;
             });
@@ -415,7 +416,7 @@ export class FormSynchronizationService {
 
           // Try to find matching original branch by target
           const originalBranch = existingBranches.find(
-            (branch) => branch.nextPage === edge.target
+            (branch: any) => branch.nextPage === edge.target
           );
 
           if (originalBranch) {
@@ -496,6 +497,13 @@ export class FormSynchronizationService {
    */
   getActiveConflicts(): FormConflict[] {
     return [...this.conflicts];
+  }
+
+  /**
+   * Add a conflict to the conflicts array
+   */
+  private addConflict(conflict: FormConflict): void {
+    this.conflicts.push(conflict);
   }
 
   /**
