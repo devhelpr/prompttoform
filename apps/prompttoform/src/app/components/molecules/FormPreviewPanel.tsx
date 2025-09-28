@@ -186,8 +186,8 @@ export function FormPreviewPanel({
 
       case 'flow':
         return parsedJson && parsedJson.app ? (
-          <div className="grid grid-rows-[1fr] bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 max-h-[calc(100vh-230px)] overflow-auto">
-            <div className="w-full">
+          <div className="grid grid-rows-[1fr] bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 min-h-0 h-full overflow-hidden">
+            <div className="w-full h-full">
               <FormFlowMermaid formJson={parsedJson} />
             </div>
           </div>
