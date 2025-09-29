@@ -1,26 +1,4 @@
-// import React, { useCallback, useMemo } from 'react';
-// import ReactFlow, {
-//   Node,
-//   Edge,
-//   Background,
-//   Controls,
-//   MiniMap,
-//   useNodesState,
-//   useEdgesState,
-//   ReactFlowInstance,
-//   Position,
-//   MarkerType,
-// } from 'reactflow';
-// import dagre from 'dagre';
-// import 'reactflow/dist/style.css';
-
-import React, {
-  useCallback,
-  useState,
-  useMemo,
-  useEffect,
-  useRef,
-} from 'react';
+import React, { useCallback, useState, useMemo, useRef } from 'react';
 import {
   ReactFlow,
   type Node,
@@ -38,8 +16,6 @@ import {
   reconnectEdge,
 } from '@xyflow/react';
 
-import '@xyflow/react/dist/style.css';
-
 import { NodeTooltip, NodeTooltipContent } from '../flow/node-tooltip';
 import { BaseNode, BaseNodeContent } from '../flow/base-node';
 import {
@@ -51,12 +27,14 @@ import { LabeledHandle } from '../flow/labeled-handle';
 import { FormPreviewSidebar } from '../flow/form-preview-sidebar';
 import { NodeEditorSidebar } from '../flow/node-editor-sidebar';
 import { CreateNodeModal } from '../flow/create-node-modal';
-import { Upload, X, Monitor, Download, Plus } from 'lucide-react';
+import { Monitor, Download, Plus } from 'lucide-react';
 import {
   insertPageInLogicalOrder,
   reorderPagesByLogicalFlow,
   findBestInsertPosition,
 } from '../../utils/flow-ordering';
+
+import '@xyflow/react/dist/style.css';
 
 // Define the thank you page action type
 interface ThankYouPageAction {
@@ -73,18 +51,6 @@ interface ThankYouPageConfig {
   showRestartButton?: boolean;
   customActions?: ThankYouPageAction[];
 }
-
-// Define the form app type that includes thankYouPage
-// interface FormApp {
-//   title: string;
-//   pages: FormPage[];
-//   thankYouPage?: ThankYouPageConfig;
-// }
-
-// // Define the complete form definition type
-// interface FormDefinition {
-//   app: FormApp;
-// }
 
 // Mobile warning component
 function MobileWarning() {
