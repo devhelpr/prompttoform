@@ -31,6 +31,7 @@ import {
   parseJsonSafely,
 } from '../../utils/json-utils';
 import { FormGenerationService } from '../../services/form-generation.service';
+import { useAppState } from './AppStateManager';
 
 import { PIIValidationService } from '../../services/pii-validation.service';
 
@@ -54,6 +55,13 @@ export function FormGenerator({
   formJson: string;
   triggerDeploy: boolean;
 }) {
+  const {
+    state,
+    updateFormFromFlow,
+    updateFormFromJson,
+    markFormModified,
+    resolveFormConflicts,
+  } = useAppState();
   const [prompt, setPrompt] = useState('');
   const [updatePrompt, setUpdatePrompt] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -325,6 +333,9 @@ export function FormGenerator({
 
         setAndPersistGeneratedJson(formattedJson, parsed);
         setJsonError(null);
+
+        // Update form through synchronization service
+        updateFormFromJson(newJson);
       } else {
         setJsonError('Invalid JSON format');
         setGeneratedJson(newJson); // Keep the invalid JSON in the textarea
@@ -334,6 +345,21 @@ export function FormGenerator({
       setGeneratedJson(newJson); // Keep the invalid JSON in the textarea
       console.error('JSON parsing error:', error);
     }
+  };
+
+  // Synchronization handlers for flow editor
+  const handleFormChangeFromFlow = (nodes: any[], edges: any[]) => {
+    try {
+      updateFormFromFlow(nodes, edges);
+    } catch (error) {
+      console.error('Error synchronizing form changes from flow:', error);
+      setError('Failed to synchronize changes from flow editor');
+    }
+  };
+
+  const handleConflictDetected = (conflict: any) => {
+    console.warn('Conflict detected:', conflict);
+    setError(`Conflict detected: ${conflict.message || 'Unknown conflict'}`);
   };
 
   const validateAndUpdatePreview = () => {
@@ -773,6 +799,53 @@ export function FormGenerator({
                   JSON
                 </button>
               </div>
+              {/* Synchronization Status Indicator */}
+              {parsedJson && (
+                <div className="flex items-center space-x-2">
+                  <div
+                    className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
+                      state.syncStatus === 'synced'
+                        ? 'bg-green-100 text-green-800'
+                        : state.syncStatus === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : state.syncStatus === 'conflict'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        state.syncStatus === 'synced'
+                          ? 'bg-green-500'
+                          : state.syncStatus === 'pending'
+                          ? 'bg-yellow-500 animate-pulse'
+                          : state.syncStatus === 'conflict'
+                          ? 'bg-red-500'
+                          : 'bg-gray-500'
+                      }`}
+                    ></div>
+                    <span>
+                      {state.syncStatus === 'synced' && 'Synced'}
+                      {state.syncStatus === 'pending' && 'Syncing...'}
+                      {state.syncStatus === 'conflict' && 'Conflict'}
+                      {state.syncStatus === 'error' && 'Error'}
+                    </span>
+                  </div>
+                  {state.lastModifiedBy && (
+                    <span className="text-xs text-gray-500">
+                      Last modified: {state.lastModifiedBy}
+                    </span>
+                  )}
+                  {state.syncStatus === 'conflict' && (
+                    <button
+                      onClick={resolveFormConflicts}
+                      className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                      Resolve
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -811,7 +884,11 @@ export function FormGenerator({
             parsedJson &&
             parsedJson.app && (
               <div className="bg-white p-4 rounded-lg overflow-auto max-h-[800px] border border-zinc-300">
-                <FormFlow formJson={parsedJson} />
+                <FormFlow
+                  formJson={parsedJson}
+                  onFormChange={handleFormChangeFromFlow}
+                  onConflictDetected={handleConflictDetected}
+                />
               </div>
             )
           ) : (

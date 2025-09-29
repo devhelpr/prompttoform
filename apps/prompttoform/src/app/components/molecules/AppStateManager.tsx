@@ -1,5 +1,10 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { UIJson } from '../../types/form-generator.types';
+import {
+  FormSynchronizationService,
+  SyncSource,
+  SyncStatus,
+} from '../../services/form-synchronization.service';
 
 export type ViewMode = 'form' | 'flow' | 'mermaid-flow' | 'json';
 export type AppView = 'initial' | 'editor';
@@ -16,6 +21,12 @@ interface AppState {
   error: string | null;
   // Multi-language support
   currentLanguage: string;
+  // Form synchronization
+  formSynchronizationService: FormSynchronizationService;
+  lastModifiedBy: SyncSource;
+  formVersion: number;
+  pendingChanges: boolean;
+  syncStatus: SyncStatus;
 }
 
 interface AppStateContextType {
@@ -32,6 +43,11 @@ interface AppStateContextType {
   resetState: () => void;
   // Multi-language support
   setCurrentLanguage: (language: string) => void;
+  // Form synchronization
+  updateFormFromFlow: (nodes: any[], edges: any[]) => void;
+  updateFormFromJson: (jsonString: string) => void;
+  markFormModified: (source: SyncSource) => void;
+  resolveFormConflicts: () => void;
 }
 
 const initialState: AppState = {
@@ -45,6 +61,12 @@ const initialState: AppState = {
   isLoading: false,
   error: null,
   currentLanguage: 'en',
+  // Form synchronization
+  formSynchronizationService: new FormSynchronizationService(),
+  lastModifiedBy: 'prompt',
+  formVersion: 0,
+  pendingChanges: false,
+  syncStatus: 'synced',
 };
 
 const AppStateContext = createContext<AppStateContextType | undefined>(
@@ -140,6 +162,114 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     setState((prev) => ({ ...prev, currentLanguage: language }));
   };
 
+  // Form synchronization methods
+  const updateFormFromFlow = (nodes: any[], edges: any[]) => {
+    setState((prev) => {
+      if (!prev.parsedJson) return prev;
+
+      try {
+        const updatedForm = prev.formSynchronizationService.updateFromFlow(
+          nodes,
+          edges,
+          prev.parsedJson
+        );
+
+        const jsonString = JSON.stringify(updatedForm, null, 2);
+
+        // Check for conflicts
+        const conflicts = prev.formSynchronizationService.getActiveConflicts();
+        const syncStatus = conflicts.length > 0 ? 'conflict' : 'synced';
+
+        return {
+          ...prev,
+          generatedJson: jsonString,
+          parsedJson: updatedForm,
+          lastModifiedBy: 'flow',
+          formVersion: prev.formVersion + 1,
+          pendingChanges: false,
+          syncStatus,
+          error: null, // Clear any previous errors
+        };
+      } catch (error) {
+        console.error('Error updating form from flow:', error);
+        return {
+          ...prev,
+          syncStatus: 'error',
+          error: 'Failed to synchronize form changes from flow editor',
+        };
+      }
+    });
+  };
+
+  const updateFormFromJson = (jsonString: string) => {
+    setState((prev) => {
+      try {
+        const updatedForm =
+          prev.formSynchronizationService.updateFromJson(jsonString);
+
+        if (updatedForm) {
+          // Check for conflicts
+          const conflicts =
+            prev.formSynchronizationService.getActiveConflicts();
+          const syncStatus = conflicts.length > 0 ? 'conflict' : 'synced';
+
+          return {
+            ...prev,
+            generatedJson: jsonString,
+            parsedJson: updatedForm,
+            lastModifiedBy: 'json',
+            formVersion: prev.formVersion + 1,
+            pendingChanges: false,
+            syncStatus,
+            error: null, // Clear any previous errors
+          };
+        } else {
+          return {
+            ...prev,
+            syncStatus: 'error',
+            error: 'Invalid JSON format',
+          };
+        }
+      } catch (error) {
+        console.error('Error updating form from JSON:', error);
+        return {
+          ...prev,
+          syncStatus: 'error',
+          error: 'Failed to parse JSON',
+        };
+      }
+    });
+  };
+
+  const markFormModified = (source: SyncSource) => {
+    setState((prev) => ({
+      ...prev,
+      lastModifiedBy: source,
+      pendingChanges: true,
+      syncStatus: 'pending',
+    }));
+  };
+
+  const resolveFormConflicts = () => {
+    setState((prev) => {
+      const conflicts = prev.formSynchronizationService.getActiveConflicts();
+
+      if (conflicts.length > 0) {
+        // For now, just clear the conflicts and mark as synced
+        // In a real implementation, this would show a conflict resolution dialog
+        conflicts.forEach((conflict) => {
+          prev.formSynchronizationService.clearConflict(conflict.id);
+        });
+      }
+
+      return {
+        ...prev,
+        syncStatus: 'synced',
+        pendingChanges: false,
+      };
+    });
+  };
+
   const contextValue: AppStateContextType = {
     state,
     setPrompt,
@@ -153,6 +283,11 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     transitionToInitial,
     resetState,
     setCurrentLanguage,
+    // Form synchronization
+    updateFormFromFlow,
+    updateFormFromJson,
+    markFormModified,
+    resolveFormConflicts,
   };
 
   return (

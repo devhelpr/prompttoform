@@ -174,7 +174,9 @@ export interface FormRendererClasses {
   // Layout
   container?: string;
   header?: string;
+  headerTitle?: string;
   page?: string;
+  pageTitle?: string;
 
   // Navigation
   stepIndicator?: string;

@@ -45,7 +45,12 @@
     "reactflow": "^11.11.4",
     "unpdf": "^1.2.2",
     "zod": "^3.24.2",
-    "zod-openapi": "^4.2.4"
+    "zod-openapi": "^4.2.4",
+    "@xyflow/react": "^12.8.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.525.0",
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
     "@babel/core": "^7.14.5",
