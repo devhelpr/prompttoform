@@ -60,12 +60,13 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
   const idRef = useRef(`mermaid-${Math.random().toString(36).substr(2, 9)}`);
 
   // Zoom and pan state
-  const [zoom, setZoom] = useState(1); // Start with 1 for proper text rendering
+  const [zoom, setZoom] = useState(0.01); // Start with very small zoom to prevent jump
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [initialPan, setInitialPan] = useState({ x: 0, y: 0 });
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isRendering, setIsRendering] = useState(true);
 
   // Zoom and pan control functions
   const handleZoomIn = useCallback(() => {
@@ -417,16 +418,49 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
               setTimeout(() => {
                 const svg = mermaidRef.current?.querySelector('svg');
                 if (svg && svg.getBBox && svg.getBBox().width > 0) {
-                  // Use multiple requestAnimationFrame calls for smoother transition
-                  requestAnimationFrame(() => {
+                  // Calculate fit-to-screen immediately
+                  if (containerRef.current) {
+                    const container = containerRef.current;
+                    const containerRect = container.getBoundingClientRect();
+
+                    // Get SVG dimensions from the actual SVG element
+                    const svgWidth = svg.getBBox
+                      ? svg.getBBox().width
+                      : svg.clientWidth;
+                    const svgHeight = svg.getBBox
+                      ? svg.getBBox().height
+                      : svg.clientHeight;
+
+                    // Account for control panel space (80px from right) and add padding
+                    const padding = 40;
+                    const availableWidth =
+                      containerRect.width - 100 - padding * 2;
+                    const availableHeight = containerRect.height - padding * 2;
+
+                    const scaleX = availableWidth / svgWidth;
+                    const scaleY = availableHeight / svgHeight;
+                    const scale = Math.min(scaleX, scaleY, 1);
+
+                    // Calculate centered position
+                    const scaledWidth = svgWidth * scale;
+                    const scaledHeight = svgHeight * scale;
+                    const centerX = (containerRect.width - scaledWidth) / 2;
+                    const centerY = (containerRect.height - scaledHeight) / 2;
+
+                    // Set the final zoom and position immediately
+                    setZoom(scale);
+                    setPan({ x: centerX, y: centerY });
+                    setIsInitialized(true);
+
+                    // Use requestAnimationFrame to ensure the state updates are applied before showing
                     requestAnimationFrame(() => {
-                      handleFitToScreen();
+                      setIsRendering(false);
                     });
-                  });
+                  }
                 } else {
                   attemptFit(attempts + 1);
                 }
-              }, 100 * (attempts + 1));
+              }, 50 * (attempts + 1));
             }
           };
           attemptFit();
@@ -526,11 +560,16 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: 'top left',
-            transition: isInitialized ? 'transform 0.2s ease-out' : 'none',
+            transition:
+              isInitialized && !isRendering
+                ? 'transform 0.2s ease-out'
+                : 'none',
             userSelect: 'none',
             WebkitUserSelect: 'none',
             MozUserSelect: 'none',
             msUserSelect: 'none',
+            opacity: isRendering ? 0 : 1,
+            visibility: isRendering ? 'hidden' : 'visible',
           }}
         />
 
