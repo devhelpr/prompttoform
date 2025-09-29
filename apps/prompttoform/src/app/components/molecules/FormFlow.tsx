@@ -616,6 +616,7 @@ function Flow({
   onConflictDetected?: (conflict: any) => void;
   readOnly?: boolean;
 }) {
+  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [selectedFormIndex, setSelectedFormIndex] = useState(0);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [importedForm, setImportedForm] = useState<any>(null);
@@ -949,12 +950,14 @@ function Flow({
     }));
   }, [edges, selectedEdge]);
 
-  // Apply active page highlighting to nodes
+  // Apply active page highlighting to nodes and manage z-index for dragged nodes
   const styledNodes = useMemo(() => {
     return nodes.map((node) => ({
       ...node,
       style: {
         ...node.style,
+        zIndex:
+          draggedNodeId === node.id ? 9999 : activePageId === node.id ? 10 : 1,
         filter:
           activePageId === node.id
             ? 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.6))'
@@ -965,7 +968,7 @@ function Flow({
             : node.style?.border || 'none',
       },
     }));
-  }, [nodes, activePageId]);
+  }, [nodes, activePageId, draggedNodeId]);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -1502,6 +1505,16 @@ function Flow({
           onReconnect={onReconnect}
           onNodeClick={onNodeClick}
           onEdgeClick={onEdgeClick}
+          onNodeDragStart={(event, node) => {
+            setDraggedNodeId(node.id);
+          }}
+          onNodeDrag={(event, node) => {
+            // Keep the dragged node ID set during drag
+            setDraggedNodeId(node.id);
+          }}
+          onNodeDragStop={(event, node) => {
+            setDraggedNodeId(null);
+          }}
           edgesReconnectable={true}
           fitView
           fitViewOptions={{ padding: 0.2, includeHiddenNodes: false }}
