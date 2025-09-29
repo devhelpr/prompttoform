@@ -142,10 +142,12 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
-      // Check if Ctrl/Cmd key is pressed for zooming
-      if (e.ctrlKey || e.metaKey) {
-        // Zoom functionality with pointer as center
-        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      // Check if this is a trackpad gesture (small deltaY values typically indicate trackpad)
+      const isTrackpad = Math.abs(e.deltaY) < 100 && e.deltaMode === 0;
+
+      if (isTrackpad && Math.abs(e.deltaY) > 0) {
+        // Trackpad zoom - use regular wheel events for zooming with pointer as center
+        const delta = e.deltaY > 0 ? 0.95 : 1.05;
         const newZoom = Math.max(0.1, Math.min(5, zoom * delta));
 
         // Calculate new pan to keep pointer position fixed
@@ -156,32 +158,17 @@ const FormFlowMermaid: React.FC<FormFlowMermaidProps> = ({ formJson }) => {
         setZoom(newZoom);
         setPan({ x: newPanX, y: newPanY });
       } else {
-        // Check if this is a trackpad gesture (small deltaY values typically indicate trackpad)
-        const isTrackpad = Math.abs(e.deltaY) < 100 && e.deltaMode === 0;
+        // Mouse wheel - always zoom with pointer as center
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        const newZoom = Math.max(0.1, Math.min(5, zoom * delta));
 
-        if (isTrackpad && Math.abs(e.deltaY) > 0) {
-          // Trackpad zoom - use regular wheel events for zooming with pointer as center
-          const delta = e.deltaY > 0 ? 0.95 : 1.05;
-          const newZoom = Math.max(0.1, Math.min(5, zoom * delta));
+        // Calculate new pan to keep pointer position fixed
+        const zoomRatio = newZoom / zoom;
+        const newPanX = mouseX - (mouseX - pan.x) * zoomRatio;
+        const newPanY = mouseY - (mouseY - pan.y) * zoomRatio;
 
-          // Calculate new pan to keep pointer position fixed
-          const zoomRatio = newZoom / zoom;
-          const newPanX = mouseX - (mouseX - pan.x) * zoomRatio;
-          const newPanY = mouseY - (mouseY - pan.y) * zoomRatio;
-
-          setZoom(newZoom);
-          setPan({ x: newPanX, y: newPanY });
-        } else {
-          // Mouse wheel or large trackpad movements - use for panning when zoomed in
-          if (zoom > 1) {
-            const deltaX = e.deltaX || 0;
-            const deltaY = e.deltaY || 0;
-            setPan((prev) => ({
-              x: prev.x - deltaX,
-              y: prev.y - deltaY,
-            }));
-          }
-        }
+        setZoom(newZoom);
+        setPan({ x: newPanX, y: newPanY });
       }
     };
 
