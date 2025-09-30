@@ -62,7 +62,7 @@ export function FormPreviewPanel({
   const tabs = useMemo(
     () => [
       { id: 'form' as ViewMode, label: 'Form Preview', shortcut: '1' },
-      { id: 'flow' as ViewMode, label: 'Visual Flow', shortcut: '2' },
+      { id: 'flow' as ViewMode, label: 'Form Logic', shortcut: '2' },
       { id: 'json' as ViewMode, label: 'JSON', shortcut: '3' },
     ],
     []

@@ -51,8 +51,8 @@ test.describe('Manual Form Synchronization Test', () => {
     await page.click('button:has-text("Update Preview")');
     await page.waitForTimeout(2000);
 
-    // Switch to Visual Flow view using the View Flow button in the header
-    await page.click('button:has-text("View Flow")');
+    // Switch to Form Logic view using the View/Edit Form Flow button in the header
+    await page.click('button:has-text("View/Edit Form Flow")');
     await page.waitForTimeout(2000);
 
     // Check if the flow editor shows the form

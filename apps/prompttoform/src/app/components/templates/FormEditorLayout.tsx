@@ -143,7 +143,7 @@ export function FormEditorLayout({
       </div>
 
       {/* Main Content Area */}
-      <div className="grid grid-rows-[1fr] h-full min-h-0">
+      <div className="grid grid-rows-[auto_1fr] md:grid-rows-[1fr] h-full min-h-0">
         {/* Menu Bar - Show when sidebar is collapsed or on mobile */}
         {showNavbar && (sidebarCollapsed || isMobile) && (
           <ResponsiveNavbar

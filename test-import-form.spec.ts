@@ -56,14 +56,14 @@ test('Test Import Form functionality', async ({ page }) => {
 
     // Check if we now have view mode buttons
     const viewButtons = page.locator(
-      'button:has-text("Form Preview"), button:has-text("Visual Flow"), button:has-text("JSON")'
+      'button:has-text("Form Preview"), button:has-text("Form Logic"), button:has-text("JSON")'
     );
     const viewButtonCount = await viewButtons.count();
     console.log('View mode buttons after Import Form:', viewButtonCount);
 
     if (viewButtonCount > 0) {
-      // Switch to Visual Flow view using the View Flow button in the header
-      await page.click('button:has-text("View Flow")');
+      // Switch to Form Logic view using the View/Edit Form Flow button in the header
+      await page.click('button:has-text("View/Edit Form Flow")');
       await page.waitForTimeout(2000);
 
       // Check if the flow editor shows the form

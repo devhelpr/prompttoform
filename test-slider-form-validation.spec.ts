@@ -109,8 +109,8 @@ test('Test Slider Form Validation in Flow Editor', async ({ page }) => {
   await page.click('button:has-text("Import Form")');
   await page.waitForTimeout(3000);
 
-  // Click the View Flow button in the header
-  await page.click('button:has-text("View Flow")');
+  // Click the View/Edit Form Flow button in the header
+  await page.click('button:has-text("View/Edit Form Flow")');
   await page.waitForTimeout(2000);
 
   // Verify the flow editor is working

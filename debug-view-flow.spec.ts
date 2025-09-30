@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Debug View Flow Button', async ({ page }) => {
+test('Debug View/Edit Form Flow Button', async ({ page }) => {
   // Navigate to the app
   await page.goto('http://localhost:4200');
 
@@ -29,24 +29,29 @@ test('Debug View Flow Button', async ({ page }) => {
     }
   }
 
-  // Look for View Flow button specifically - use the first one
-  const viewFlowButton = page.locator('button:has-text("View Flow")').first();
+  // Look for View/Edit Form Flow button specifically - use the first one
+  const viewFlowButton = page
+    .locator('button:has-text("View/Edit Form Flow")')
+    .first();
   const viewFlowExists = (await viewFlowButton.count()) > 0;
-  console.log('View Flow button exists:', viewFlowExists);
+  console.log('View/Edit Form Flow button exists:', viewFlowExists);
 
   if (viewFlowExists) {
     const isVisible = await viewFlowButton.isVisible();
-    console.log('View Flow button visible:', isVisible);
+    console.log('View/Edit Form Flow button visible:', isVisible);
 
     if (isVisible) {
-      // Click the View Flow button
+      // Click the View/Edit Form Flow button
       await viewFlowButton.click();
       await page.waitForTimeout(3000);
 
       // Check if we now have a flow editor
       const flowEditor = page.locator('.react-flow');
       const flowEditorExists = (await flowEditor.count()) > 0;
-      console.log('Flow editor exists after View Flow:', flowEditorExists);
+      console.log(
+        'Flow editor exists after View/Edit Form Flow:',
+        flowEditorExists
+      );
 
       if (flowEditorExists) {
         const isVisible = await flowEditor.isVisible();

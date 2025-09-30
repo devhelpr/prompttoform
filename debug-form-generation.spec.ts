@@ -40,7 +40,7 @@ test('Debug Form Generation Process', async ({ page }) => {
 
   // Check if we have view mode buttons
   const viewButtons = page.locator(
-    'button:has-text("Form Preview"), button:has-text("Visual Flow"), button:has-text("JSON")'
+    'button:has-text("Form Preview"), button:has-text("Form Logic"), button:has-text("JSON")'
   );
   const viewButtonCount = await viewButtons.count();
   console.log('View mode buttons found:', viewButtonCount);

@@ -785,7 +785,7 @@ export function FormGenerator({
                       : 'bg-white text-gray-700 hover:bg-gray-50'
                   } border border-gray-300 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:z-10`}
                 >
-                  Visual Flow
+                  Form Logic
                 </button>
                 <button
                   type="button"

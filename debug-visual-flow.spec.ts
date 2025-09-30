@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Debug Visual Flow View', async ({ page }) => {
+test('Debug Form Logic View', async ({ page }) => {
   // Navigate to the app
   await page.goto('http://localhost:4200');
 
@@ -50,17 +50,17 @@ test('Debug Visual Flow View', async ({ page }) => {
   await importFormButton.click();
   await page.waitForTimeout(3000);
 
-  // Switch to Visual Flow view
-  await page.click('button:has-text("Visual Flow")');
+  // Switch to Form Logic view
+  await page.click('button:has-text("Form Logic")');
   await page.waitForTimeout(3000);
 
   // Take a screenshot
   await page.screenshot({ path: 'debug-visual-flow.png' });
 
-  // Check what's actually in the Visual Flow view
+  // Check what's actually in the Form Logic view
   const bodyText = await page.locator('body').textContent();
   console.log(
-    'Body text in Visual Flow view (first 500 chars):',
+    'Body text in Form Logic view (first 500 chars):',
     bodyText?.substring(0, 500)
   );
 

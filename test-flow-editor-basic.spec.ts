@@ -72,7 +72,7 @@ test.describe('Flow Editor Basic Test', () => {
     await page.waitForTimeout(3000);
 
     // Switch to Flow view
-    await page.click('button:has-text("View Flow")');
+    await page.click('button:has-text("View/Edit Form Flow")');
     await page.waitForTimeout(3000);
 
     // Check if flow editor loaded

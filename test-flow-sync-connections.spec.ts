@@ -85,7 +85,7 @@ test.describe('Flow Editor Sync - Connection Preservation', () => {
     await page.waitForTimeout(3000);
 
     // Switch to Flow view
-    await page.click('button:has-text("View Flow")');
+    await page.click('button:has-text("View/Edit Form Flow")');
     await page.waitForTimeout(2000);
 
     // Verify the flow editor loaded with nodes
@@ -224,7 +224,7 @@ test.describe('Flow Editor Sync - Connection Preservation', () => {
     await page.waitForTimeout(3000);
 
     // Switch to Flow view
-    await page.click('button:has-text("View Flow")');
+    await page.click('button:has-text("View/Edit Form Flow")');
     await page.waitForTimeout(2000);
 
     // Verify the flow editor loaded with nodes
@@ -332,7 +332,7 @@ test.describe('Flow Editor Sync - Connection Preservation', () => {
     await page.waitForTimeout(3000);
 
     // Switch to Flow view
-    await page.click('button:has-text("View Flow")');
+    await page.click('button:has-text("View/Edit Form Flow")');
     await page.waitForTimeout(2000);
 
     // Add a new node

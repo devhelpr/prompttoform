@@ -70,7 +70,7 @@ test.describe('Simple Connection Sync Test', () => {
     await page.screenshot({ path: 'debug-initial-form.png' });
 
     // Switch to Flow view
-    await page.click('button:has-text("View Flow")');
+    await page.click('button:has-text("View/Edit Form Flow")');
     await page.waitForTimeout(3000);
 
     // Take a screenshot of the flow editor
