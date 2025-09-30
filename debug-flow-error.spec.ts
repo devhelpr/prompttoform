@@ -50,8 +50,8 @@ test('Debug Flow Error', async ({ page }) => {
   await importFormButton.click();
   await page.waitForTimeout(3000);
 
-  // Switch to Visual Flow view
-  await page.click('button:has-text("Visual Flow")');
+  // Switch to Form Logic view
+  await page.click('button:has-text("Form Logic")');
   await page.waitForTimeout(3000);
 
   // Check for error messages

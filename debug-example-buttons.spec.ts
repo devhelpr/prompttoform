@@ -31,7 +31,7 @@ test('Debug example form buttons', async ({ page }) => {
 
   // Check if the form is already loaded by looking at the view mode buttons
   const viewButtons = page.locator(
-    'button:has-text("Form Preview"), button:has-text("Visual Flow"), button:has-text("JSON")'
+    'button:has-text("Form Preview"), button:has-text("Form Logic"), button:has-text("JSON")'
   );
   const viewButtonCount = await viewButtons.count();
   console.log('View mode buttons found:', viewButtonCount);

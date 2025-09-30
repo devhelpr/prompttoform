@@ -117,8 +117,8 @@ test.describe('Form Node Indexing Validation', () => {
     await page.click('button:has-text("Import Form")');
     await page.waitForTimeout(3000);
 
-    // Click the View Flow button in the header
-    await page.click('button:has-text("View Flow")');
+    // Click the View/Edit Form Flow button in the header
+    await page.click('button:has-text("View/Edit Form Flow")');
     await page.waitForTimeout(2000);
 
     // Open the form preview sidebar
@@ -209,7 +209,7 @@ test.describe('Form Node Indexing Validation', () => {
     await page.click('button:has-text("Import Form")');
     await page.waitForTimeout(3000);
 
-    await page.click('button:has-text("View Flow")');
+    await page.click('button:has-text("View/Edit Form Flow")');
     await page.waitForTimeout(2000);
 
     // Open the form preview sidebar
@@ -329,7 +329,7 @@ test.describe('Form Node Indexing Validation', () => {
     await page.click('button:has-text("Import Form")');
     await page.waitForTimeout(3000);
 
-    await page.click('button:has-text("View Flow")');
+    await page.click('button:has-text("View/Edit Form Flow")');
     await page.waitForTimeout(2000);
 
     // Open the form preview sidebar

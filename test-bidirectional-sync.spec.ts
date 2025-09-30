@@ -48,8 +48,8 @@ test.describe('Bidirectional Form Synchronization', () => {
       await page.click('button:has-text("Update Preview")');
       await page.waitForTimeout(2000);
 
-      // Switch to flow view using the View Flow button in the header
-      await page.click('button:has-text("View Flow")');
+      // Switch to flow view using the View/Edit Form Flow button in the header
+      await page.click('button:has-text("View/Edit Form Flow")');
       await page.waitForTimeout(2000);
 
       // Check if the flow editor shows the modified title
@@ -74,8 +74,8 @@ test.describe('Bidirectional Form Synchronization', () => {
     await page.click('button:has-text("Simple Contact Form")');
     await page.waitForTimeout(2000);
 
-    // Switch to flow view using the View Flow button in the header
-    await page.click('button:has-text("View Flow")');
+    // Switch to flow view using the View/Edit Form Flow button in the header
+    await page.click('button:has-text("View/Edit Form Flow")');
     await page.waitForTimeout(2000);
 
     // Wait for flow editor to load
@@ -178,8 +178,8 @@ test.describe('Bidirectional Form Synchronization', () => {
     await page.click('button:has-text("Simple Contact Form")');
     await page.waitForTimeout(2000);
 
-    // Switch to flow view using the View Flow button in the header
-    await page.click('button:has-text("View Flow")');
+    // Switch to flow view using the View/Edit Form Flow button in the header
+    await page.click('button:has-text("View/Edit Form Flow")');
     await page.waitForTimeout(2000);
 
     // Wait for flow editor to load
@@ -246,7 +246,7 @@ test.describe('Bidirectional Form Synchronization', () => {
       await page.waitForTimeout(1000);
 
       // Make changes in flow editor
-      await page.click('button:has-text("Visual Flow")');
+      await page.click('button:has-text("Form Logic")');
       await page.waitForTimeout(2000);
 
       // Try to modify the same page in flow editor

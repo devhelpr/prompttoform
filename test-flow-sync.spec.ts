@@ -18,8 +18,8 @@ test.describe('Flow Editor Synchronization Test', () => {
     await page.click('button:has-text("Simple Contact Form")');
     await page.waitForTimeout(3000);
 
-    // Click the View Flow button in the header
-    await page.click('button:has-text("View Flow")');
+    // Click the View/Edit Form Flow button in the header
+    await page.click('button:has-text("View/Edit Form Flow")');
     await page.waitForTimeout(2000);
 
     // Verify the flow editor is working

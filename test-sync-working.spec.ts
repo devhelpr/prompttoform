@@ -51,8 +51,8 @@ test.describe('Working Bidirectional Synchronization Test', () => {
         await page.click('button:has-text("Import Form")');
         await page.waitForTimeout(2000);
 
-        // Switch to flow view using the View Flow button in the header
-        await page.click('button:has-text("View Flow")');
+        // Switch to flow view using the View/Edit Form Flow button in the header
+        await page.click('button:has-text("View/Edit Form Flow")');
         await page.waitForTimeout(2000);
 
         // Check if the flow editor shows the modified title
@@ -75,7 +75,7 @@ test.describe('Working Bidirectional Synchronization Test', () => {
     console.log('=== Testing Flow to JSON Synchronization ===');
 
     // Make sure we're in the flow view
-    await page.click('button:has-text("View Flow")');
+    await page.click('button:has-text("View/Edit Form Flow")');
     await page.waitForTimeout(2000);
 
     // Click on the first node to select it

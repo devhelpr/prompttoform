@@ -61,7 +61,7 @@ export function ResponsiveNavbar({
                       d="M13 10V3L4 14h7v7l9-11h-7z"
                     />
                   </svg>
-                  View Flow
+                  View/Edit Form Flow
                 </button>
               )}
               <button
@@ -169,7 +169,7 @@ export function ResponsiveNavbar({
                     d="M13 10V3L4 14h7v7l9-11h-7z"
                   />
                 </svg>
-                View Flow
+                View/Edit Form Flow
               </div>
             </button>
           )}
