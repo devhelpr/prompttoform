@@ -6,6 +6,10 @@
 
 ---
 
+## Try it out
+
+https://app.prompttoform.ai
+
 ## Features
 
 * Prompt-to-JSON form generation
@@ -48,13 +52,7 @@ PRs are welcome! Issues, discussions, and feedback are even more welcome.
 
 ---
 
-## Hire Me (Sweden-based Developers, Read This!)
-
-Hey! I'm currently working as a freelance full-stack developer in the Netherlands, and I'm relocating to **Sweden** within the next half year (november 2025 and onwards). I'm actively looking for a **permanent full-stack developer role** — React, TypeScript, Node.js, .Net C#, Python and anything AI-powered or infinite-canvas related is my sweet spot.
-
-If you're a Swedish company working on interesting tools, platforms, or creative developer experiences, **I'd love to chat**. PromptToForm.ai is one of my open projects to showcase my thinking, problem-solving, and product-building ability.
-
-Reach out:
+Reach out if you need help with your prompttoform project or got questions:
 
 * Email: [maikel@devhelpr.com](mailto:maikel@devhelpr.com)
 * LinkedIn: [linkedin.com/in/devhelpr](https://linkedin.com/in/devhelpr)
@@ -126,7 +124,8 @@ make a form that is complex , has branches at least 4 layers deep... so a real d
 
 - [x] "summary" component type
 - [x] "single-form"-mode
-- [ ] "readonly"-field type
+- [x] "readonly"-field type
+- [ ] basic expression-engine
 - [ ] autocomplete-field type
 - [ ] send data to prefill the form
 - [ ] info-icons with popovers/tooltips
