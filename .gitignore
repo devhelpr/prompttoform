@@ -31,3 +31,7 @@ dist-ssr
 .github/instructions/nx.instructions.md
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+
+# Playwright
+playwright-report
+test-results
