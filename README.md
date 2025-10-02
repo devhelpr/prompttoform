@@ -220,7 +220,7 @@ npm run build-react-forms
 
 ## 💖 **Support the Project**
 
-PromptToForm.ai is built with ❤️ and maintained by a small team. Your support helps us:
+PromptToForm.ai is built with ❤️ and maintained by a one man team. Your support helps me:
 
 - **Maintain Infrastructure**: Keep the web app running smoothly
 - **Add New Features**: Implement community-requested functionality
@@ -237,29 +237,9 @@ PromptToForm.ai is built with ❤️ and maintained by a small team. Your suppor
 
 ---
 
-## 📚 **Documentation**
+## 🔗 **Contact**
 
-### **User Guides**
-- [Getting Started Guide](https://app.prompttoform.ai/docs/getting-started)
-- [Advanced Features](https://app.prompttoform.ai/docs/advanced)
-- [Multi-language Setup](https://app.prompttoform.ai/docs/multilang)
-- [Deployment Guide](https://app.prompttoform.ai/docs/deployment)
-
-### **Developer Resources**
-- [React Forms Library Documentation](https://github.com/devhelpr/prompttoform/tree/main/libs/react-forms/README.md)
-- [API Reference](https://app.prompttoform.ai/docs/api)
-- [Schema Documentation](https://prompttoform.ai/schema/v0.1/schema.json)
-- [Contributing Guidelines](https://github.com/devhelpr/prompttoform/blob/main/CONTRIBUTING.md)
-
----
-
-## 🔗 **Links**
-
-- **🌐 Web App**: [https://app.prompttoform.ai](https://app.prompttoform.ai)
-- **📖 Documentation**: [https://app.prompttoform.ai/docs](https://app.prompttoform.ai/docs)
-- **🐛 Issues**: [GitHub Issues](https://github.com/devhelpr/prompttoform/issues)
-- **💬 Discussions**: [GitHub Discussions](https://github.com/devhelpr/prompttoform/discussions)
-- **📧 Contact**: [maikel@devhelpr.com](mailto:maikel@devhelpr.com)
+[maikel@devhelpr.com](mailto:maikel@devhelpr.com)
 
 ---
 
