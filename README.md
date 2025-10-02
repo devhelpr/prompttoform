@@ -181,8 +181,7 @@ Forms follow a structured JSON schema that supports:
 
 ### **✅ Enterprise Features**
 - **Netlify Integration**: One-click deployment
-- **Schema Export**: OpenAPI schema generation
-- **Form Analytics**: Built-in form submission tracking
+- **Schema Export**: Json-schema generation for validation
 - **Custom Styling**: Complete theme customization support
 
 ---
