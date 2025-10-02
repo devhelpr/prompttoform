@@ -81,6 +81,15 @@ export class TranslationService {
     const lang = language || this.currentLanguage;
     let translation = this.getTranslationByPath(path, lang);
 
+    // If we have a fallback and it's different from the stored translation,
+    // prioritize the fallback for dynamic content (like page titles)
+    if (fallback && translation && translation !== fallback) {
+      // For dynamic content like page titles, use the fallback if it's different
+      if (path.includes('.title') || path.includes('pages.')) {
+        return this.replacePlaceholders(fallback, params);
+      }
+    }
+
     if (translation) {
       return this.replacePlaceholders(translation, params);
     }
@@ -150,6 +159,20 @@ export class TranslationService {
             return fallback !== undefined ? fallback : property;
           }
         }
+
+        // If we have a fallback and it's different from the stored translation,
+        // prioritize the fallback for dynamic content (like component labels)
+        if (fallback && typeof current === 'string' && current !== fallback) {
+          // For dynamic content like component labels, use the fallback if it's different
+          if (
+            property === 'label' ||
+            property.includes('label') ||
+            property.includes('placeholder')
+          ) {
+            return fallback;
+          }
+        }
+
         return typeof current === 'string'
           ? current
           : fallback !== undefined
@@ -165,7 +188,8 @@ export class TranslationService {
     property: string,
     fallback?: string
   ): string {
-    return this.translate(`pages.${pageIndex}.${property}`, fallback);
+    const path = `pages.${pageIndex}.${property}`;
+    return this.translate(path, fallback);
   }
 
   translateApp(property: string, fallback?: string): string {

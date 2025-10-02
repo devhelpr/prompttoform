@@ -21,19 +21,67 @@ export function FormFlowPage({ formDefinition }: FormFlowPageProps) {
   );
 
   const handleFormChange = (nodes: any[], edges: any[]) => {
+    console.log(
+      'FormFlowPage: handleFormChange called with',
+      nodes.length,
+      'nodes and',
+      edges.length,
+      'edges'
+    );
+    console.log('FormFlowPage: formData available:', !!formData);
+    console.log('FormFlowPage: updatedFormData available:', !!updatedFormData);
+
     // Use the form synchronization service to properly convert nodes and edges back to form definition
     if (formData) {
       const syncService = new FormSynchronizationService();
-      const updatedForm = syncService.updateFromFlow(nodes, edges, formData);
-      setUpdatedFormData(updatedForm);
+      // Use the current updatedFormData if available, otherwise use the original formData
+      const currentFormData = updatedFormData || formData;
+      console.log(
+        'FormFlowPage: Using currentFormData with title:',
+        currentFormData.app?.title
+      );
+
+      try {
+        const updatedForm = syncService.updateFromFlow(
+          nodes,
+          edges,
+          currentFormData
+        );
+        console.log(
+          'FormFlowPage: Sync service returned form with title:',
+          updatedForm.app?.title
+        );
+        console.log(
+          'FormFlowPage: First page title:',
+          updatedForm.app?.pages?.[0]?.title
+        );
+        setUpdatedFormData(updatedForm);
+      } catch (error) {
+        console.error('FormFlowPage: Error in sync service:', error);
+      }
+    } else {
+      console.log('FormFlowPage: No formData available, cannot sync');
     }
   };
 
   const handleBackToEditor = () => {
-    // Pass the updated form data back to the main editor
+    console.log('FormFlowPage: handleBackToEditor called');
+    console.log('FormFlowPage: updatedFormData available:', !!updatedFormData);
     if (updatedFormData) {
+      console.log('FormFlowPage: Navigating back with updated form data');
+      console.log(
+        'FormFlowPage: Updated form title:',
+        updatedFormData.app?.title
+      );
+      console.log(
+        'FormFlowPage: First page title:',
+        updatedFormData.app?.pages?.[0]?.title
+      );
       navigate('/', { state: { updatedFormDefinition: updatedFormData } });
     } else {
+      console.log(
+        'FormFlowPage: No updated form data, navigating back without changes'
+      );
       navigate('/');
     }
   };

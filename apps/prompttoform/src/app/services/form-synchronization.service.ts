@@ -449,8 +449,11 @@ export class FormSynchronizationService {
     // Check if there's a thank you page in the original form definition
     const hasThankYouPage = originalForm.app.thankYouPage;
 
+    // Preserve all properties from the original form, not just the app structure
     const result: FormDefinition = {
+      ...originalForm, // Preserve all top-level properties (translations, defaultLanguage, etc.)
       app: {
+        ...originalForm.app, // Preserve all app properties
         title: originalForm.app.title,
         pages: updatedPages,
         ...(hasThankYouPage && { thankYouPage: originalForm.app.thankYouPage }),

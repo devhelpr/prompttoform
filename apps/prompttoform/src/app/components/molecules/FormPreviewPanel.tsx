@@ -167,6 +167,7 @@ export function FormPreviewPanel({
             {/* Form Renderer */}
             <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto h-full">
               <FormRenderer
+                key={JSON.stringify(parsedJson)}
                 formJson={parsedJson}
                 settings={
                   {
