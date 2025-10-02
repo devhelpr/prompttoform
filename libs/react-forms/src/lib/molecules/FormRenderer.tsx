@@ -76,13 +76,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     return calculateLogicalPageOrder(formJson);
   }, [formJson]);
 
-  // Initialize current step index to the logical first page (only on initial load)
+  // Initialize current step index to the logical first page
   useEffect(() => {
-    if (
-      logicalPageOrder.length > 0 &&
-      formJson?.app?.pages &&
-      currentStepIndex === 0
-    ) {
+    if (logicalPageOrder.length > 0 && formJson?.app?.pages) {
       const logicalFirstPageId = logicalPageOrder[0].pageId;
       const arrayIndex = formJson.app.pages.findIndex(
         (page) => page.id === logicalFirstPageId
@@ -92,13 +88,25 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         setStepHistory([arrayIndex]);
       }
     }
-  }, [logicalPageOrder, formJson?.app?.pages]);
+  }, [logicalPageOrder, formJson?.app?.pages, currentStepIndex]);
 
-  // Initialize form values with default values for all fields
+  // Reset all form state when formJson changes
   useEffect(() => {
     if (!formJson) {
       return;
     }
+
+    // Reset all form state to initial values
+    setValidationErrors({});
+    setValidation({});
+    setRequired({});
+    setBlurredFields({});
+    setIsSubmitted(false);
+    setCurrentStepIndex(0);
+    setStepHistory([0]);
+    setFormSubmissions({});
+    setShowThankYouPage(false);
+    initialEventTriggeredRef.current = false;
 
     const initialValues: FormValues = {};
 

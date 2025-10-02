@@ -90,14 +90,24 @@ export function MainAppPage({
     );
     if (updatedFormDefinition) {
       console.log('MainAppPage: Processing updated form definition');
+      console.log(
+        'MainAppPage: Updated form title:',
+        updatedFormDefinition.app?.title
+      );
+      console.log(
+        'MainAppPage: First page title:',
+        updatedFormDefinition.app?.pages?.[0]?.title
+      );
+
       // Update the form data with the changes from the flow editor
       const formattedJson = formatJsonForDisplay(updatedFormDefinition);
+      console.log('MainAppPage: Calling setGeneratedJson with formatted JSON');
       setGeneratedJson(formattedJson, updatedFormDefinition);
 
       // Clear the updated form definition to prevent re-processing
       // Note: This is a simplified approach - in a real app you might want to use a more sophisticated state management
     } else {
-      console.log('MainAppPage: No updated form definition to process');
+      console.log('MainAppPage: No updatedFormDefinition to process');
     }
   }, [updatedFormDefinition]);
 
