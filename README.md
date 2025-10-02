@@ -7,7 +7,7 @@ PromptToForm.ai is an open-source platform that bridges the gap between idea and
 [![Try PromptToForm.ai](https://img.shields.io/badge/Try%20Live-Demo-blue?style=for-the-badge&logo=react)](https://app.prompttoform.ai)
 [![GitHub Sponsors](https://img.shields.io/badge/Sponsor-❤️-red?style=for-the-badge&logo=github)](https://github.com/sponsors/devhelpr)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/devhelpr/prompttoform)
+[![Ask DeepWiki](https://img.shields.io/badge/DeepWiki-Project_Documentation-blue?style=for-the-badge)](https://deepwiki.com/devhelpr/prompttoform)
 
 ---
 
