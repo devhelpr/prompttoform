@@ -70,6 +70,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   >({});
   const [showThankYouPage, setShowThankYouPage] = useState(false);
   const initialEventTriggeredRef = useRef(false);
+  const logicalPageInitializedRef = useRef(false);
 
   // Calculate logical page order based on flow structure
   const logicalPageOrder = useMemo(() => {
@@ -78,17 +79,22 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
   // Initialize current step index to the logical first page
   useEffect(() => {
-    if (logicalPageOrder.length > 0 && formJson?.app?.pages) {
+    if (
+      logicalPageOrder.length > 0 &&
+      formJson?.app?.pages &&
+      !logicalPageInitializedRef.current
+    ) {
       const logicalFirstPageId = logicalPageOrder[0].pageId;
       const arrayIndex = formJson.app.pages.findIndex(
         (page) => page.id === logicalFirstPageId
       );
-      if (arrayIndex !== -1 && arrayIndex !== currentStepIndex) {
+      if (arrayIndex !== -1) {
         setCurrentStepIndex(arrayIndex);
         setStepHistory([arrayIndex]);
       }
+      logicalPageInitializedRef.current = true;
     }
-  }, [logicalPageOrder, formJson?.app?.pages, currentStepIndex]);
+  }, [logicalPageOrder, formJson?.app?.pages]);
 
   // Reset all form state when formJson changes
   useEffect(() => {
@@ -107,6 +113,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     setFormSubmissions({});
     setShowThankYouPage(false);
     initialEventTriggeredRef.current = false;
+    logicalPageInitializedRef.current = false;
 
     const initialValues: FormValues = {};
 
@@ -906,7 +913,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         handleFormSubmit('multistep-form');
       }
     }
-  }, [formJson, currentStepIndex, validateForm, getNextPage, handleFormSubmit]);
+  }, [
+    formJson,
+    currentStepIndex,
+    validateForm,
+    getNextPage,
+    handleFormSubmit,
+    formValues,
+  ]);
 
   const handlePrevious = () => {
     if (stepHistory.length > 1) {
