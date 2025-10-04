@@ -18,8 +18,7 @@ import {
   FormSliderRangeField,
   FormExpressionField,
 } from '../atoms';
-import { CalculatedValuesProvider } from '../contexts/calculated-values-context';
-import { ExpressionWithCalculatedContextProvider } from '../contexts/expression-with-calculated-context';
+import { ExpressionContextProvider } from '../contexts/expression-context';
 import {
   FormRendererProps,
   FormValues,
@@ -2499,98 +2498,96 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [settings.theme]);
 
   return (
-    <CalculatedValuesProvider>
-      <ExpressionWithCalculatedContextProvider
-        formValues={formValues}
-        validation={validation}
-        required={required}
-        errors={Object.fromEntries(
-          Object.entries(validationErrors).map(([key, value]) => [
-            key,
-            Array.isArray(value) ? value.join(', ') : value,
-          ])
-        )}
-        metadata={{
-          currentStep: getCurrentStep().currentStep,
-          totalSteps: getCurrentStep().totalSteps,
-          isSubmitted,
-          disabled,
-        }}
+    <ExpressionContextProvider
+      formValues={formValues}
+      validation={validation}
+      required={required}
+      errors={Object.fromEntries(
+        Object.entries(validationErrors).map(([key, value]) => [
+          key,
+          Array.isArray(value) ? value.join(', ') : value,
+        ])
+      )}
+      metadata={{
+        currentStep: getCurrentStep().currentStep,
+        totalSteps: getCurrentStep().totalSteps,
+        isSubmitted,
+        disabled,
+      }}
+    >
+      <div
+        className={getClassNames('w-full', settings.classes?.container)}
+        style={themeStyles}
       >
-        <div
-          className={getClassNames('w-full', settings.classes?.container)}
-          style={themeStyles}
-        >
-          {/* Check for invalid form data */}
-          {!formJson || !formJson.app ? (
-            <div className="p-4 text-red-500">
-              {translationService.translateUI('invalidFormData')}
-            </div>
-          ) : showThankYouPage ? (
-            renderThankYouPage()
-          ) : (
-            <>
-              <div
+        {/* Check for invalid form data */}
+        {!formJson || !formJson.app ? (
+          <div className="p-4 text-red-500">
+            {translationService.translateUI('invalidFormData')}
+          </div>
+        ) : showThankYouPage ? (
+          renderThankYouPage()
+        ) : (
+          <>
+            <div
+              className={getClassNames(
+                'mb-4 bg-indigo-50 p-4 rounded-md',
+                settings.classes?.header
+              )}
+            >
+              <h1
                 className={getClassNames(
-                  'mb-4 bg-indigo-50 p-4 rounded-md',
-                  settings.classes?.header
+                  'text-2xl font-bold text-indigo-700',
+                  settings.classes?.headerTitle
                 )}
               >
-                <h1
-                  className={getClassNames(
-                    'text-2xl font-bold text-indigo-700',
-                    settings.classes?.headerTitle
-                  )}
-                >
-                  {translationService.translateApp('title', formJson.app.title)}
-                </h1>
-                {Array.isArray(formJson.app.pages) &&
-                  formJson.app.pages.length > 1 &&
-                  !disabled && (
-                    <div
-                      className={getClassNames(
-                        'mt-2 text-sm text-indigo-500',
-                        settings.classes?.header
-                      )}
-                    >
-                      {translationService.translateUI('multiPageInfo', {
-                        pageCount: getLogicalPageCount(logicalPageOrder),
-                      })}
-                    </div>
-                  )}
-              </div>
-
-              <div className="space-y-8">{renderMultiStepForm()}</div>
-
-              {hasSubmissions && !disabled && settings.showFormSubmissions && (
-                <div
-                  className={getClassNames(
-                    'mt-8 border-t pt-6',
-                    settings.classes?.submissionsContainer
-                  )}
-                >
-                  <h3
-                    className={getClassNames(
-                      'text-lg font-medium mb-4',
-                      settings.classes?.submissionsTitle
-                    )}
-                  >
-                    {translationService.translateUI('submissionsTitle')}
-                  </h3>
+                {translationService.translateApp('title', formJson.app.title)}
+              </h1>
+              {Array.isArray(formJson.app.pages) &&
+                formJson.app.pages.length > 1 &&
+                !disabled && (
                   <div
                     className={getClassNames(
-                      'bg-gray-50 p-4 rounded-md',
-                      settings.classes?.submissionsData
+                      'mt-2 text-sm text-indigo-500',
+                      settings.classes?.header
                     )}
                   >
-                    {renderSubmissionData()}
+                    {translationService.translateUI('multiPageInfo', {
+                      pageCount: getLogicalPageCount(logicalPageOrder),
+                    })}
                   </div>
+                )}
+            </div>
+
+            <div className="space-y-8">{renderMultiStepForm()}</div>
+
+            {hasSubmissions && !disabled && settings.showFormSubmissions && (
+              <div
+                className={getClassNames(
+                  'mt-8 border-t pt-6',
+                  settings.classes?.submissionsContainer
+                )}
+              >
+                <h3
+                  className={getClassNames(
+                    'text-lg font-medium mb-4',
+                    settings.classes?.submissionsTitle
+                  )}
+                >
+                  {translationService.translateUI('submissionsTitle')}
+                </h3>
+                <div
+                  className={getClassNames(
+                    'bg-gray-50 p-4 rounded-md',
+                    settings.classes?.submissionsData
+                  )}
+                >
+                  {renderSubmissionData()}
                 </div>
-              )}
-            </>
-          )}
-        </div>
-      </ExpressionWithCalculatedContextProvider>
-    </CalculatedValuesProvider>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </ExpressionContextProvider>
   );
 };

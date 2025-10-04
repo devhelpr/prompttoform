@@ -6,7 +6,6 @@ import React, {
   useState,
 } from 'react';
 import { useExpressionContext } from '../contexts/expression-context';
-import { useCalculatedValues } from '../contexts/calculated-values-context';
 import { ExpressionConfig } from '../interfaces/expression-interfaces';
 import { expressionEngine } from '../services/expression-engine.service';
 
@@ -34,7 +33,6 @@ export function withExpression<P extends object>(
   const WithExpressionComponent = (props: P & WithExpressionProps) => {
     const { expression, fieldId, onChange, ...restProps } = props;
     const { evaluateExpression, context } = useExpressionContext();
-    const { setCalculatedValue } = useCalculatedValues();
     const contextValues = (context as any).values;
     const isUpdatingRef = useRef(false);
     const lastUpdateTimeRef = useRef(0);
@@ -104,6 +102,19 @@ export function withExpression<P extends object>(
 
       return results;
     });
+
+    // Set calculated values in the service when expression results change
+    useEffect(() => {
+      if (
+        actualExpression &&
+        actualExpression.mode === 'value' &&
+        fieldId &&
+        expressionResults.value !== null &&
+        expressionResults.value !== undefined
+      ) {
+        expressionEngine.setCalculatedValue(fieldId, expressionResults.value);
+      }
+    }, [actualExpression, fieldId, expressionResults.value]);
 
     // Update expression results when dependencies change
     useEffect(() => {
@@ -238,11 +249,6 @@ export function withExpression<P extends object>(
         enhanced.value = expressionResults.value;
         // Ensure the field is read-only for calculated fields
         enhanced.readOnly = true;
-
-        // Propagate calculated value to the context for other expressions to use
-        if (fieldId) {
-          setCalculatedValue(fieldId, expressionResults.value);
-        }
       }
 
       // Apply disabled expression

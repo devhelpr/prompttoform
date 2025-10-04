@@ -28,6 +28,7 @@ export class ExpressionEngineService {
   private parser: Parser;
   private cache: Map<string, any> = new Map();
   private dependencyCache: Map<string, string[]> = new Map();
+  private calculatedValues: Map<string, any> = new Map();
 
   constructor() {
     this.parser = new Parser();
@@ -525,6 +526,13 @@ export class ExpressionEngineService {
       evalContext[arrayName] = arrayData;
     });
 
+    // Add calculated values to evaluation context (these override form values)
+    this.calculatedValues.forEach((value, fieldId) => {
+      if (value !== null && value !== undefined) {
+        evalContext[fieldId] = value;
+      }
+    });
+
     return evalContext;
   }
 
@@ -667,6 +675,62 @@ export class ExpressionEngineService {
   clearCache(): void {
     this.cache.clear();
     this.dependencyCache.clear();
+  }
+
+  /**
+   * Set a calculated value for a field
+   */
+  setCalculatedValue(fieldId: string, value: any) {
+    this.calculatedValues.set(fieldId, value);
+    // Clear cache for expressions that might depend on this field
+    this.clearCacheForField(fieldId);
+  }
+
+  /**
+   * Get a calculated value for a field
+   */
+  getCalculatedValue(fieldId: string): any {
+    return this.calculatedValues.get(fieldId);
+  }
+
+  /**
+   * Get all calculated values
+   */
+  getAllCalculatedValues(): Record<string, any> {
+    const result: Record<string, any> = {};
+    this.calculatedValues.forEach((value, fieldId) => {
+      result[fieldId] = value;
+    });
+    return result;
+  }
+
+  /**
+   * Clear calculated values for a specific field
+   */
+  clearCalculatedValue(fieldId: string) {
+    this.calculatedValues.delete(fieldId);
+    this.clearCacheForField(fieldId);
+  }
+
+  /**
+   * Clear all calculated values
+   */
+  clearAllCalculatedValues() {
+    this.calculatedValues.clear();
+    this.cache.clear();
+  }
+
+  /**
+   * Clear cache entries that might depend on a specific field
+   */
+  private clearCacheForField(fieldId: string) {
+    const keysToDelete: string[] = [];
+    this.cache.forEach((_, key) => {
+      if (key.includes(fieldId)) {
+        keysToDelete.push(key);
+      }
+    });
+    keysToDelete.forEach((key) => this.cache.delete(key));
   }
 
   /**

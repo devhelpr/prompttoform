@@ -15,7 +15,6 @@ interface ExpressionContextProviderProps {
   required: Record<string, boolean>;
   errors: Record<string, string | undefined>;
   metadata?: Record<string, any>;
-  calculatedValues?: Record<string, any>;
 }
 
 interface ExpressionContextValue {
@@ -36,15 +35,7 @@ const ExpressionContext = createContext<ExpressionContextValue | undefined>(
 
 export const ExpressionContextProvider: React.FC<
   ExpressionContextProviderProps
-> = ({
-  children,
-  formValues,
-  validation,
-  required,
-  errors,
-  metadata = {},
-  calculatedValues = {},
-}) => {
+> = ({ children, formValues, validation, required, errors, metadata = {} }) => {
   // Convert to form context for expression engine
   const formContext = useMemo((): FormContext => {
     const ctx: FormContext = {};
@@ -57,21 +48,6 @@ export const ExpressionContextProvider: React.FC<
         required: required[fieldId] ?? false,
         error: errors[fieldId],
       };
-    });
-
-    // Add calculated values to context (these override form values for expression evaluation)
-    Object.keys(calculatedValues).forEach((fieldId) => {
-      if (
-        calculatedValues[fieldId] !== null &&
-        calculatedValues[fieldId] !== undefined
-      ) {
-        ctx[fieldId] = {
-          value: calculatedValues[fieldId],
-          valid: validation[fieldId] ?? true,
-          required: required[fieldId] ?? false,
-          error: errors[fieldId],
-        };
-      }
     });
 
     // Add array field values to context for expression evaluation
@@ -98,7 +74,7 @@ export const ExpressionContextProvider: React.FC<
     // Don't clear cache here as it can cause infinite loops
     // The cache will be invalidated naturally when dependencies change
     return ctx;
-  }, [formValues, validation, required, errors, calculatedValues]);
+  }, [formValues, validation, required, errors]);
 
   // Create expression context with processed values
   const context = useMemo(
