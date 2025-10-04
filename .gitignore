@@ -35,3 +35,9 @@ vitest.config.*.timestamp*
 # Playwright
 playwright-report
 test-results
+playwright-tests/playwright-report/
+playwright-tests/test-results/
+playwright-tests/screenshots/
+playwright-tests/*.png
+playwright-tests/debug-*.png
+playwright-tests/test-*.png

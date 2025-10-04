@@ -83,7 +83,9 @@ test.describe('Form Pagination Bug Test', () => {
     await page.waitForTimeout(3000);
 
     // Take initial screenshot
-    await page.screenshot({ path: 'debug-pagination-initial.png' });
+    await page.screenshot({
+      path: 'playwright-tests/screenshots/debug-pagination-initial.png',
+    });
 
     // Verify we're on the first page
     const firstPageTitle = page.locator('h2:has-text("First Page")');
@@ -102,7 +104,9 @@ test.describe('Form Pagination Bug Test', () => {
     await page.waitForTimeout(500);
 
     // Take screenshot before clicking Next
-    await page.screenshot({ path: 'debug-pagination-before-next.png' });
+    await page.screenshot({
+      path: 'playwright-tests/screenshots/debug-pagination-before-next.png',
+    });
 
     // Look for the Next button
     const nextButton = page.locator('button:has-text("Next")');
@@ -132,7 +136,9 @@ test.describe('Form Pagination Bug Test', () => {
     await page.waitForTimeout(2000);
 
     // Take screenshot after clicking Next
-    await page.screenshot({ path: 'debug-pagination-after-next.png' });
+    await page.screenshot({
+      path: 'playwright-tests/screenshots/debug-pagination-after-next.png',
+    });
 
     // Check if we're still on the first page (bug)
     const stillOnFirstPage =
@@ -165,7 +171,9 @@ test.describe('Form Pagination Bug Test', () => {
         '❌ PAGINATION BUG CONFIRMED: Next button did not navigate to next page'
       );
       // Take a final debug screenshot
-      await page.screenshot({ path: 'debug-pagination-bug-confirmed.png' });
+      await page.screenshot({
+        path: 'playwright-tests/screenshots/debug-pagination-bug-confirmed.png',
+      });
     } else {
       console.log('✅ Pagination working correctly');
     }
@@ -265,7 +273,9 @@ test.describe('Form Pagination Bug Test', () => {
     await page.waitForTimeout(3000);
 
     // Take initial screenshot
-    await page.screenshot({ path: 'debug-simple-pagination-initial.png' });
+    await page.screenshot({
+      path: 'playwright-tests/screenshots/debug-simple-pagination-initial.png',
+    });
 
     // Verify we're on the first page
     const firstPageTitle = page.locator('h2:has-text("First Page")');
@@ -279,7 +289,9 @@ test.describe('Form Pagination Bug Test', () => {
     await page.waitForTimeout(2000);
 
     // Take screenshot after clicking Next
-    await page.screenshot({ path: 'debug-simple-pagination-after-next.png' });
+    await page.screenshot({
+      path: 'playwright-tests/screenshots/debug-simple-pagination-after-next.png',
+    });
 
     // Check if we navigated to the second page
     const stillOnFirstPage =
@@ -311,7 +323,7 @@ test.describe('Form Pagination Bug Test', () => {
         '❌ PAGINATION BUG CONFIRMED: Next button did not navigate even without required fields'
       );
       await page.screenshot({
-        path: 'debug-simple-pagination-bug-confirmed.png',
+        path: 'playwright-tests/screenshots/debug-simple-pagination-bug-confirmed.png',
       });
     } else {
       console.log('✅ Simple pagination working correctly');
