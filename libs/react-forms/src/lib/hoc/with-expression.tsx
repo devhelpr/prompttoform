@@ -209,56 +209,8 @@ export function withExpression<P extends object>(
       [onChange, fieldId] // Remove restProps from dependencies to prevent recreating on every render
     );
 
-    // Update form state for read-only calculated fields
-    useEffect(() => {
-      if (
-        actualExpression &&
-        actualExpression.mode === 'value' &&
-        expressionResults.value !== null &&
-        expressionResults.value !== undefined &&
-        stableOnChange &&
-        isReadOnly &&
-        !isUpdatingRef.current
-      ) {
-        // Only update if the current form value is different from the expression result
-        const currentValue = contextValues[fieldId];
-
-        // Add additional checks to prevent infinite loops
-        const isValueDifferent = currentValue !== expressionResults.value;
-        const isValueValid =
-          !isNaN(expressionResults.value) && isFinite(expressionResults.value);
-        const isNotSameAsLastSet =
-          lastSetValueRef.current !== expressionResults.value;
-
-        if (isValueDifferent && isValueValid && isNotSameAsLastSet) {
-          const now = Date.now();
-          // Prevent updates more than once every 100ms to avoid infinite loops
-          if (now - lastUpdateTimeRef.current > 100) {
-            // Set flag to prevent infinite loops
-            isUpdatingRef.current = true;
-            lastUpdateTimeRef.current = now;
-            lastSetValueRef.current = expressionResults.value;
-
-            // Update the form value immediately - no setTimeout needed
-            stableOnChange(expressionResults.value);
-
-            // Reset flag after a short delay
-            setTimeout(() => {
-              isUpdatingRef.current = false;
-            }, 50);
-          }
-        }
-      }
-    }, [
-      expressionResults.value, // Use .value specifically to trigger on value changes
-      expressionResults.success, // Also depend on success to catch evaluation changes
-      expressionResults.error, // Also depend on error to catch evaluation changes
-      fieldId,
-      stableOnChange,
-      isReadOnly,
-      actualExpression,
-      // Remove contextValues[fieldId] to prevent circular dependency
-    ]);
+    // For calculated fields, we'll handle the value through the enhanced props
+    // instead of trying to update the form state directly to avoid infinite loops
 
     // Apply expression results to props
     const enhancedProps = useMemo(() => {
@@ -284,6 +236,8 @@ export function withExpression<P extends object>(
         isReadOnly
       ) {
         enhanced.value = expressionResults.value;
+        // Ensure the field is read-only for calculated fields
+        enhanced.readOnly = true;
       }
 
       // Apply disabled expression

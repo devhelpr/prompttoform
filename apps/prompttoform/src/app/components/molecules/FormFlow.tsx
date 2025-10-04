@@ -832,7 +832,7 @@ function Flow({
         id: node.id,
         pageId: (node.data as { page: PageProps })?.page?.id,
         pageTitle: (node.data as { page: PageProps })?.page?.title,
-        pageContent: (node.data as { page: PageProps })?.page, // Include full page content
+        // Remove pageContent to prevent infinite loops from expression evaluations
       }))
       .sort((a, b) => a.id.localeCompare(b.id));
 

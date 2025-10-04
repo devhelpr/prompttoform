@@ -124,6 +124,9 @@ export function FormPreviewSidebar({
                 }-${memoizedFormDefinition?.app?.pages?.length || 0}`}
                 formJson={memoizedFormDefinition}
                 onPageChange={handlePageChange}
+                settings={{
+                  showFormSubmissions: true,
+                }}
               />
             </div>
           </div>
