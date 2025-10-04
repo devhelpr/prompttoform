@@ -1,5 +1,5 @@
 import { UIJson } from '../../types/form-generator.types';
-import { ViewMode } from './AppStateManager';
+import { ViewMode } from '../../store/use-app-store';
 import {
   FormRenderer,
   PageChangeEvent,
@@ -167,7 +167,9 @@ export function FormPreviewPanel({
             {/* Form Renderer */}
             <div className="bg-white p-4 sm:p-6 rounded-lg border border-zinc-300 overflow-auto h-full">
               <FormRenderer
-                key={JSON.stringify(parsedJson)}
+                key={`form-${parsedJson?.app?.title || 'default'}-${
+                  parsedJson?.app?.pages?.length || 0
+                }`}
                 formJson={parsedJson}
                 settings={
                   {

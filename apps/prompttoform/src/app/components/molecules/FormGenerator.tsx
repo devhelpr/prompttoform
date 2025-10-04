@@ -31,7 +31,7 @@ import {
   parseJsonSafely,
 } from '../../utils/json-utils';
 import { FormGenerationService } from '../../services/form-generation.service';
-import { useAppState } from './AppStateManager';
+import { useAppStore } from '../../store/use-app-store';
 
 import { PIIValidationService } from '../../services/pii-validation.service';
 
@@ -56,12 +56,13 @@ export function FormGenerator({
   triggerDeploy: boolean;
 }) {
   const {
-    state,
+    syncStatus,
+    lastModifiedBy,
     updateFormFromFlow,
     updateFormFromJson,
     markFormModified,
     resolveFormConflicts,
-  } = useAppState();
+  } = useAppStore();
   const [prompt, setPrompt] = useState('');
   const [updatePrompt, setUpdatePrompt] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -804,39 +805,39 @@ export function FormGenerator({
                 <div className="flex items-center space-x-2">
                   <div
                     className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
-                      state.syncStatus === 'synced'
+                      syncStatus === 'synced'
                         ? 'bg-green-100 text-green-800'
-                        : state.syncStatus === 'pending'
+                        : syncStatus === 'pending'
                         ? 'bg-yellow-100 text-yellow-800'
-                        : state.syncStatus === 'conflict'
+                        : syncStatus === 'conflict'
                         ? 'bg-red-100 text-red-800'
                         : 'bg-gray-100 text-gray-800'
                     }`}
                   >
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        state.syncStatus === 'synced'
+                        syncStatus === 'synced'
                           ? 'bg-green-500'
-                          : state.syncStatus === 'pending'
+                          : syncStatus === 'pending'
                           ? 'bg-yellow-500 animate-pulse'
-                          : state.syncStatus === 'conflict'
+                          : syncStatus === 'conflict'
                           ? 'bg-red-500'
                           : 'bg-gray-500'
                       }`}
                     ></div>
                     <span>
-                      {state.syncStatus === 'synced' && 'Synced'}
-                      {state.syncStatus === 'pending' && 'Syncing...'}
-                      {state.syncStatus === 'conflict' && 'Conflict'}
-                      {state.syncStatus === 'error' && 'Error'}
+                      {syncStatus === 'synced' && 'Synced'}
+                      {syncStatus === 'pending' && 'Syncing...'}
+                      {syncStatus === 'conflict' && 'Conflict'}
+                      {syncStatus === 'error' && 'Error'}
                     </span>
                   </div>
-                  {state.lastModifiedBy && (
+                  {lastModifiedBy && (
                     <span className="text-xs text-gray-500">
-                      Last modified: {state.lastModifiedBy}
+                      Last modified: {lastModifiedBy}
                     </span>
                   )}
-                  {state.syncStatus === 'conflict' && (
+                  {syncStatus === 'conflict' && (
                     <button
                       onClick={resolveFormConflicts}
                       className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"

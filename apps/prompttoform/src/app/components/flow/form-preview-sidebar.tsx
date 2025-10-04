@@ -1,6 +1,6 @@
-import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
-import { FormRenderer, type FormDefinition } from "@devhelpr/react-forms";
-import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { FormRenderer, type FormDefinition } from '@devhelpr/react-forms';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 interface FormPreviewSidebarProps {
   formDefinition: FormDefinition;
@@ -19,52 +19,65 @@ export function FormPreviewSidebar({
 }: FormPreviewSidebarProps) {
   const [activePageId, setActivePageId] = useState<string | null>(null);
 
+  // Memoize formDefinition to prevent unnecessary re-renders
+  const memoizedFormDefinition = useMemo(
+    () => formDefinition,
+    [
+      formDefinition?.app?.title,
+      formDefinition?.app?.pages?.length,
+      JSON.stringify(formDefinition?.app?.pages?.map((page) => page.id)),
+    ]
+  );
+
   useEffect(() => {
     console.log(
-      "useeffect form-preview-sidebar formDefinition",
-      formDefinition
+      'useeffect form-preview-sidebar formDefinition',
+      memoizedFormDefinition
     );
-  }, [formDefinition]);
+  }, [memoizedFormDefinition]);
 
   // Reset active page when sidebar is closed
   useEffect(() => {
-    console.log("useeffect form-preview-sidebar ", isOpen, activePageId);
+    console.log('useeffect form-preview-sidebar ', isOpen, activePageId);
     if (!isOpen && activePageId) {
       setActivePageId(null);
       onActivePageChange?.(null);
     }
   }, [isOpen, activePageId, onActivePageChange]);
 
-  const handlePageChange = (event: {
-    pageId: string;
-    pageIndex: number;
-    pageTitle: string;
-    totalPages: number;
-    isFirstPage: boolean;
-    isLastPage: boolean;
-    isEndPage: boolean;
-    isConfirmationPage: boolean;
-    previousPageId?: string;
-    previousPageIndex?: number;
-  }) => {
-    console.log("Page change event received:", event);
+  const handlePageChange = useCallback(
+    (event: {
+      pageId: string;
+      pageIndex: number;
+      pageTitle: string;
+      totalPages: number;
+      isFirstPage: boolean;
+      isLastPage: boolean;
+      isEndPage: boolean;
+      isConfirmationPage: boolean;
+      previousPageId?: string;
+      previousPageIndex?: number;
+    }) => {
+      console.log('Page change event received:', event);
 
-    // Only update active page if it's not an automatic reset to the first page
-    // when we already have an active page
-    //event.pageIndex === 0 && event.pageId === "page1")
-    if (activePageId && event.isFirstPage) {
-      console.log("Ignoring automatic reset to first page", activePageId);
-      return;
-    }
+      // Only update active page if it's not an automatic reset to the first page
+      // when we already have an active page
+      //event.pageIndex === 0 && event.pageId === "page1")
+      if (activePageId && event.isFirstPage) {
+        console.log('Ignoring automatic reset to first page', activePageId);
+        return;
+      }
 
-    setActivePageId(event.pageId);
-    onActivePageChange?.(event.pageId);
-  };
+      setActivePageId(event.pageId);
+      onActivePageChange?.(event.pageId);
+    },
+    [activePageId, onActivePageChange]
+  );
 
   return (
     <div
       className={`fixed right-0 top-0 h-full bg-white shadow-lg border-l border-gray-200 transition-all duration-300 ease-in-out z-20 ${
-        isOpen ? "w-96" : "w-12"
+        isOpen ? 'w-96' : 'w-12'
       }`}
     >
       {/* Toggle Button */}
@@ -106,7 +119,10 @@ export function FormPreviewSidebar({
           <div className="flex-1 overflow-auto p-4">
             <div className="bg-gray-50 rounded-lg p-4 min-h-full">
               <FormRenderer
-                formJson={formDefinition}
+                key={`form-preview-${
+                  memoizedFormDefinition?.app?.title || 'default'
+                }-${memoizedFormDefinition?.app?.pages?.length || 0}`}
+                formJson={memoizedFormDefinition}
                 onPageChange={handlePageChange}
               />
             </div>

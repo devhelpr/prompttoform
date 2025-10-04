@@ -36,6 +36,7 @@ export function withExpression<P extends object>(
     const contextValues = (context as any).values;
     const isUpdatingRef = useRef(false);
     const lastUpdateTimeRef = useRef(0);
+    const lastSetValueRef = useRef<any>(null);
 
     // Extract expression from props.expression if it exists
     const actualExpression =
@@ -205,7 +206,7 @@ export function withExpression<P extends object>(
           }
         }
       },
-      [onChange, fieldId, restProps]
+      [onChange, fieldId] // Remove restProps from dependencies to prevent recreating on every render
     );
 
     // Update form state for read-only calculated fields
@@ -226,14 +227,17 @@ export function withExpression<P extends object>(
         const isValueDifferent = currentValue !== expressionResults.value;
         const isValueValid =
           !isNaN(expressionResults.value) && isFinite(expressionResults.value);
+        const isNotSameAsLastSet =
+          lastSetValueRef.current !== expressionResults.value;
 
-        if (isValueDifferent && isValueValid) {
+        if (isValueDifferent && isValueValid && isNotSameAsLastSet) {
           const now = Date.now();
           // Prevent updates more than once every 100ms to avoid infinite loops
           if (now - lastUpdateTimeRef.current > 100) {
             // Set flag to prevent infinite loops
             isUpdatingRef.current = true;
             lastUpdateTimeRef.current = now;
+            lastSetValueRef.current = expressionResults.value;
 
             // Update the form value immediately - no setTimeout needed
             stableOnChange(expressionResults.value);
@@ -253,7 +257,7 @@ export function withExpression<P extends object>(
       stableOnChange,
       isReadOnly,
       actualExpression,
-      contextValues[fieldId], // Add this back to ensure we get fresh context values
+      // Remove contextValues[fieldId] to prevent circular dependency
     ]);
 
     // Apply expression results to props
