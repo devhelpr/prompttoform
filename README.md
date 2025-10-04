@@ -209,7 +209,7 @@ npm install
 npm run test
 
 # Run Playwright tests
-npx playwright test
+npm run test-playwright
 
 # Build the library
 npm run build-react-forms
