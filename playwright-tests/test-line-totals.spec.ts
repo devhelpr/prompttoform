@@ -8,27 +8,46 @@ test.describe('Line Total Calculations', () => {
     // Read the form JSON file
     const formJson = readFileSync('improved-product-list.json', 'utf8');
 
-    // Navigate to the form and set the JSON in localStorage
+    // Navigate to the form
     await page.goto('http://localhost:4200');
 
-    // Set the form JSON in localStorage to trigger the form loading
-    await page.evaluate((json) => {
-      localStorage.setItem('formJson', json);
-    }, formJson);
+    // Click the "Import JSON" button (first one)
+    const importButton = page.locator('button:has-text("Import JSON")').first();
+    await expect(importButton).toBeVisible();
+    await importButton.click();
 
-    // Reload the page to trigger the form loading
-    await page.reload();
+    // Wait for the modal to appear
+    await page.waitForSelector('textarea', { timeout: 5000 });
+
+    // Fill the textarea with the JSON
+    const textarea = page.locator(
+      'textarea[placeholder*="Paste your JSON form definition here"]'
+    );
+    await textarea.fill(formJson);
+
+    // Click the Import button in the modal
+    const modalImportButton = page.locator('button:has-text("Import Form")');
+    await expect(modalImportButton).toBeEnabled();
+    await modalImportButton.click();
 
     // Wait for the form to load
     await page.waitForSelector('input[type="text"], input[type="number"]', {
       timeout: 10000,
     });
 
+    // Click "Add Item" button to add the first product
+    const addItemButton = page.locator('button:has-text("Add Item")');
+    await expect(addItemButton).toBeVisible();
+    await addItemButton.click();
+
+    // Wait for the product input fields to appear
+    await page.waitForSelector('input[type="text"]', { timeout: 5000 });
+
     // Get all input fields
     const inputs = await page
       .locator('input[type="text"], input[type="number"]')
       .all();
-    console.log('Found inputs after loading:', inputs.length);
+    console.log('Found inputs after adding item:', inputs.length);
 
     // Take a screenshot to see the form
     await page.screenshot({ path: 'form-loaded.png' });
@@ -66,13 +85,43 @@ test.describe('Line Total Calculations', () => {
   });
 
   test('should update line totals when values change', async ({ page }) => {
+    // Read the form JSON file
+    const formJson = readFileSync('improved-product-list.json', 'utf8');
+
     // Navigate to the form
     await page.goto('http://localhost:4200');
+
+    // Click the "Import JSON" button (first one)
+    const importButton = page.locator('button:has-text("Import JSON")').first();
+    await expect(importButton).toBeVisible();
+    await importButton.click();
+
+    // Wait for the modal to appear
+    await page.waitForSelector('textarea', { timeout: 5000 });
+
+    // Fill the textarea with the JSON
+    const textarea = page.locator(
+      'textarea[placeholder*="Paste your JSON form definition here"]'
+    );
+    await textarea.fill(formJson);
+
+    // Click the Import button in the modal
+    const modalImportButton = page.locator('button:has-text("Import Form")');
+    await expect(modalImportButton).toBeEnabled();
+    await modalImportButton.click();
 
     // Wait for the form to load
     await page.waitForSelector('input[type="text"], input[type="number"]', {
       timeout: 10000,
     });
+
+    // Click "Add Item" button to add the first product
+    const addItemButton = page.locator('button:has-text("Add Item")');
+    await expect(addItemButton).toBeVisible();
+    await addItemButton.click();
+
+    // Wait for the product input fields to appear
+    await page.waitForSelector('input[type="text"]', { timeout: 5000 });
 
     // Fill in initial values
     const productNameInput = page.locator('input[type="text"]').first();

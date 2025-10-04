@@ -227,13 +227,12 @@ export function withExpression<P extends object>(
         }
       }
 
-      // For read-only calculated fields, override the value directly
+      // For calculated fields, override the value directly
       if (
         actualExpression &&
         actualExpression.mode === 'value' &&
         expressionResults.value !== null &&
-        expressionResults.value !== undefined &&
-        isReadOnly
+        expressionResults.value !== undefined
       ) {
         enhanced.value = expressionResults.value;
         // Ensure the field is read-only for calculated fields
