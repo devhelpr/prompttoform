@@ -120,13 +120,13 @@
             "type": "input",
             "label": "Subtotal",
             "expression": {
-              "expression": "sumLineTotal(products)",
+              "expression": "parseFloat(products[0].quantity) * parseFloat(products[0].unitPrice)",
               "mode": "value",
-              "dependencies": ["products"],
+              "dependencies": ["products[0].quantity", "products[0].unitPrice"],
               "evaluateOnChange": true,
               "debounceMs": 100,
               "defaultValue": 0,
-              "calculatedFieldHelperText": "Calculated automatically from all line totals"
+              "calculatedFieldHelperText": "Sum of all line totals"
             },
             "props": {
               "inputType": "number",
@@ -164,13 +164,13 @@
             "type": "input",
             "label": "Grand Total",
             "expression": {
-              "expression": "10 * 1.1",
+              "expression": "(parseFloat(products[0].quantity) * parseFloat(products[0].unitPrice)) * 1.1",
               "mode": "value",
-              "dependencies": [],
+              "dependencies": ["products[0].quantity", "products[0].unitPrice"],
               "evaluateOnChange": true,
               "debounceMs": 100,
               "defaultValue": 0,
-              "calculatedFieldHelperText": "Static test value (10 * 1.1 = 11)"
+              "calculatedFieldHelperText": "Subtotal with 10% tax"
             },
             "props": {
               "inputType": "number",

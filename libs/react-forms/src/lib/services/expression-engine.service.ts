@@ -50,7 +50,16 @@ export class ExpressionEngineService {
       sqrt: Math.sqrt,
       pow: Math.pow,
       // Utility functions
-      parseFloat: parseFloat,
+      parseFloat: (value: any) => {
+        const result = parseFloat(value);
+        console.log('Custom parseFloat called with:', value, 'result:', result);
+        return result;
+      },
+      toNumber: (value: any) => {
+        const result = parseFloat(value);
+        console.log('Custom toNumber called with:', value, 'result:', result);
+        return result;
+      },
       parseInt: parseInt,
       isNaN: isNaN,
       isFinite: isFinite,

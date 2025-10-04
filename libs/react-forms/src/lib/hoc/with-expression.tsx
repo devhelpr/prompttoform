@@ -6,6 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { useExpressionContext } from '../contexts/expression-context';
+import { useCalculatedValues } from '../contexts/calculated-values-context';
 import { ExpressionConfig } from '../interfaces/expression-interfaces';
 import { expressionEngine } from '../services/expression-engine.service';
 
@@ -33,6 +34,7 @@ export function withExpression<P extends object>(
   const WithExpressionComponent = (props: P & WithExpressionProps) => {
     const { expression, fieldId, onChange, ...restProps } = props;
     const { evaluateExpression, context } = useExpressionContext();
+    const { setCalculatedValue } = useCalculatedValues();
     const contextValues = (context as any).values;
     const isUpdatingRef = useRef(false);
     const lastUpdateTimeRef = useRef(0);
@@ -134,7 +136,6 @@ export function withExpression<P extends object>(
       }
 
       // Only evaluate if we have a stable expression
-
       if (actualExpression.expression) {
         const evaluation = evaluateExpression(
           actualExpression.expression,
@@ -237,6 +238,11 @@ export function withExpression<P extends object>(
         enhanced.value = expressionResults.value;
         // Ensure the field is read-only for calculated fields
         enhanced.readOnly = true;
+
+        // Propagate calculated value to the context for other expressions to use
+        if (fieldId) {
+          setCalculatedValue(fieldId, expressionResults.value);
+        }
       }
 
       // Apply disabled expression

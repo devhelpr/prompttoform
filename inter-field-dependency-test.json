@@ -1,0 +1,72 @@
+{
+  "app": {
+    "title": "Inter-Field Dependency Test",
+    "pages": [
+      {
+        "id": "testPage",
+        "title": "Test Calculated Field Dependencies",
+        "route": "/test",
+        "layout": "vertical",
+        "components": [
+          {
+            "id": "baseValue",
+            "type": "input",
+            "label": "Base Value",
+            "props": {
+              "inputType": "number",
+              "placeholder": "Enter a number"
+            },
+            "validation": {
+              "required": true
+            }
+          },
+          {
+            "id": "multiplied",
+            "type": "input",
+            "label": "Multiplied (Base * 2)",
+            "expression": {
+              "expression": "parseFloat(baseValue || 0) * 2",
+              "mode": "value",
+              "dependencies": ["baseValue"],
+              "evaluateOnChange": true,
+              "debounceMs": 100,
+              "defaultValue": 0,
+              "calculatedFieldHelperText": "Base value multiplied by 2"
+            },
+            "props": {
+              "inputType": "number",
+              "readOnly": true
+            },
+            "validation": {
+              "required": true
+            }
+          },
+          {
+            "id": "finalResult",
+            "type": "input",
+            "label": "Final Result (Multiplied + 10)",
+            "expression": {
+              "expression": "parseFloat(multiplied || 0) + 10",
+              "mode": "value",
+              "dependencies": ["multiplied"],
+              "evaluateOnChange": true,
+              "debounceMs": 100,
+              "defaultValue": 10,
+              "calculatedFieldHelperText": "Multiplied value plus 10"
+            },
+            "props": {
+              "inputType": "number",
+              "readOnly": true
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ],
+        "isEndPage": true
+      }
+    ]
+  },
+  "defaultLanguage": "en",
+  "supportedLanguages": ["en"]
+}
