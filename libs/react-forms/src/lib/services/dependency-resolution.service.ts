@@ -478,19 +478,28 @@ export class DependencyResolutionService {
       if (!Array.isArray(array)) return 0;
       return array.reduce((sum, item) => {
         if (item && typeof item === 'object' && 'lineTotal' in item) {
-          return sum + this.toNumber(item.lineTotal);
+          return sum + this.safeToNumber((item as any).lineTotal);
         }
         return sum;
       }, 0);
     });
 
     this.customFunctions.set('toNumber', (value: any) => {
-      return this.toNumber(value);
+      return this.safeToNumber(value);
     });
 
     this.customFunctions.set('parseFloat', (value: any) => {
-      return this.toNumber(value);
+      return this.safeToNumber(value);
     });
+  }
+
+  /**
+   * Convert value to number safely, handling strings and nullish values
+   */
+  private safeToNumber(value: any): number {
+    if (value === null || value === undefined) return 0;
+    const n = typeof value === 'number' ? value : parseFloat(String(value));
+    return isNaN(n) ? 0 : n;
   }
 
   /**

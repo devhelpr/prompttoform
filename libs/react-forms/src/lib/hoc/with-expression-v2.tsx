@@ -395,10 +395,14 @@ export function withExpression<P extends object>(
         expressionResults.value !== undefined
       ) {
         // Check if this is a TextFormField component by looking for the specific props structure
+        const propsObj = (restProps as any)?.props as
+          | Record<string, any>
+          | null
+          | undefined;
         if (
-          restProps.props &&
-          typeof restProps.props === 'object' &&
-          !restProps.props.inputType
+          propsObj &&
+          typeof propsObj === 'object' &&
+          !('inputType' in propsObj)
         ) {
           // For TextFormField, set the content in the props object
           enhanced.props = {

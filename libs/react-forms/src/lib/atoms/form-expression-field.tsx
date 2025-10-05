@@ -54,8 +54,9 @@ export const FormExpressionField: React.FC<FormExpressionFieldProps> = ({
     }
 
     // Clone the child with the expression configuration
-    const childWithExpression = React.cloneElement(child, {
-      ...child.props,
+    const childPropsObj = (child as unknown as React.ReactElement<any>)
+      .props as Record<string, unknown> | undefined;
+    const newProps: any = Object.assign({}, childPropsObj || {}, {
       fieldId,
       expression: {
         expression,
@@ -65,6 +66,7 @@ export const FormExpressionField: React.FC<FormExpressionFieldProps> = ({
         debounceMs: 100,
       },
     });
+    const childWithExpression = React.cloneElement(child as any, newProps);
 
     return (
       <ExpressionWrapper
