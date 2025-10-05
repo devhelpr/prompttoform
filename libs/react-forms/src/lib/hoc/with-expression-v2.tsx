@@ -394,8 +394,22 @@ export function withExpression<P extends object>(
         expressionResults.value !== null &&
         expressionResults.value !== undefined
       ) {
-        enhanced.value = expressionResults.value;
-        enhanced.readOnly = true;
+        // Check if this is a TextFormField component by looking for the specific props structure
+        if (
+          restProps.props &&
+          typeof restProps.props === 'object' &&
+          !restProps.props.inputType
+        ) {
+          // For TextFormField, set the content in the props object
+          enhanced.props = {
+            ...enhanced.props,
+            content: expressionResults.value,
+          };
+        } else {
+          // For other components (like input fields), set as value
+          enhanced.value = expressionResults.value;
+          enhanced.readOnly = true;
+        }
       }
 
       // Apply other expression results

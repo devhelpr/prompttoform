@@ -1,6 +1,6 @@
 import React from 'react';
 import { getClassNames } from '../utils/class-utils';
-import { useExpressionEvaluation } from '../hooks/use-expression-evaluation';
+import { withExpression } from '../hoc/with-expression-v2';
 import { ExpressionContext as ExpressionContextType } from '../interfaces/expression-interfaces';
 
 interface FormExpressionFieldProps {
@@ -28,6 +28,7 @@ interface FormExpressionFieldProps {
 
 /**
  * Wrapper component that applies expression-based behavior to form fields
+ * Now uses the new with-expression-v2 system for better dependency resolution
  */
 export const FormExpressionField: React.FC<FormExpressionFieldProps> = ({
   fieldId,
@@ -39,21 +40,12 @@ export const FormExpressionField: React.FC<FormExpressionFieldProps> = ({
   children,
   classes,
 }) => {
-  const { value, hasError, error, isEvaluating } = useExpressionEvaluation({
-    expression: {
-      expression,
-      mode,
-      dependencies,
-      evaluateOnChange: true,
-      debounceMs: 100,
-    },
-    context,
-  });
-
-  // Don't render if visibility expression evaluates to false
-  if (mode === 'visibility' && value === false) {
-    return null;
-  }
+  // Create a wrapper component that applies the expression
+  const ExpressionWrapper = withExpression(
+    ({ children: wrappedChildren, ...props }: any) => {
+      return <>{wrappedChildren}</>;
+    }
+  );
 
   // Apply expression-based modifications to children
   const modifiedChildren = React.Children.map(children, (child) => {
@@ -61,114 +53,37 @@ export const FormExpressionField: React.FC<FormExpressionFieldProps> = ({
       return child;
     }
 
-    const childProps: any = { ...(child.props || {}) };
+    // Clone the child with the expression configuration
+    const childWithExpression = React.cloneElement(child, {
+      ...child.props,
+      fieldId,
+      expression: {
+        expression,
+        mode,
+        dependencies,
+        evaluateOnChange: true,
+        debounceMs: 100,
+      },
+    });
 
-    switch (mode) {
-      case 'value':
-        if (value !== null && value !== undefined) {
-          // Special handling for TextFormField components
-          const childType = child.type as any;
-          const isTextFormField =
-            childType?.displayName === 'TextFormField' ||
-            childType?.name === 'TextFormField' ||
-            (child.props as any)?.props !== undefined; // TextFormField has a props prop
-
-          if (isTextFormField) {
-            // For TextFormField, set the content in the props object
-            childProps.props = {
-              ...childProps.props,
-              content: value,
-            };
-          } else {
-            // For other components, set as value
-            childProps.value = value;
-          }
-        }
-        break;
-      case 'disabled':
-        childProps.disabled = value === true;
-        break;
-      case 'required':
-        childProps.required = value === true;
-        break;
-      case 'label':
-        if (typeof value === 'string') {
-          childProps.label = value;
-        }
-        break;
-      case 'helperText':
-        if (typeof value === 'string') {
-          // Special handling for TextFormField components
-          const childType = child.type as any;
-          const isTextFormField =
-            childType?.displayName === 'TextFormField' ||
-            childType?.name === 'TextFormField' ||
-            (child.props as any)?.props !== undefined; // TextFormField has a props prop
-
-          if (isTextFormField) {
-            // For TextFormField, set the helperText in the props object
-            childProps.props = {
-              ...childProps.props,
-              helperText: value,
-            };
-          } else {
-            childProps.helperText = value;
-          }
-        }
-        break;
-      case 'validation':
-        if (value === false) {
-          childProps.showError = true;
-          childProps.validationErrors = [
-            error || 'Expression validation failed',
-          ];
-        }
-        break;
-      default:
-        // For other modes, try to set as value
-        if (value !== null && value !== undefined) {
-          // Special handling for TextFormField components
-          const childType = child.type as any;
-          const isTextFormField =
-            childType?.displayName === 'TextFormField' ||
-            childType?.name === 'TextFormField' ||
-            (child.props as any)?.props !== undefined; // TextFormField has a props prop
-
-          if (isTextFormField) {
-            // For TextFormField, set the content in the props object
-            childProps.props = {
-              ...childProps.props,
-              content: value,
-            };
-          } else {
-            childProps.value = value;
-          }
-        }
-        break;
-    }
-
-    return React.cloneElement(child, childProps);
+    return (
+      <ExpressionWrapper
+        fieldId={fieldId}
+        expression={{
+          expression,
+          mode,
+          dependencies,
+          evaluateOnChange: true,
+          debounceMs: 100,
+        }}
+      >
+        {childWithExpression}
+      </ExpressionWrapper>
+    );
   });
 
   return (
     <div className={getClassNames('mb-4', classes?.field)}>
-      {/* Expression Error Display */}
-      {hasError && (
-        <div
-          className={getClassNames(
-            'text-red-500 text-sm mb-2',
-            classes?.fieldError
-          )}
-        >
-          Expression Error: {error}
-        </div>
-      )}
-
-      {/* Loading Indicator */}
-      {isEvaluating && (
-        <div className="text-gray-500 text-sm mb-2">Calculating...</div>
-      )}
-
       {/* Modified Children */}
       {modifiedChildren}
     </div>
