@@ -45,6 +45,17 @@ export function withExpression<P extends object>(
       });
       return values;
     }, [contextValues]);
+
+    // Merge primitive form values with any already calculated values from the engine
+    const mergedValues = useMemo(() => {
+      try {
+        const calculated = expressionEngine.getAllCalculatedValues?.();
+        if (calculated && typeof calculated === 'object') {
+          return { ...primitiveValues, ...calculated } as Record<string, any>;
+        }
+      } catch {}
+      return primitiveValues;
+    }, [primitiveValues]);
     const [isRegistered, setIsRegistered] = useState(false);
 
     // Extract expression from props.expression if it exists
@@ -209,7 +220,7 @@ export function withExpression<P extends object>(
               // Use the new dependency resolution system
               const calculatedValues =
                 await expressionEngine.evaluateAllWithDependencies(
-                  primitiveValues,
+                  mergedValues,
                   {
                     fieldId,
                   }
@@ -225,6 +236,10 @@ export function withExpression<P extends object>(
                 calculatedValues[fieldId] !== null
               ) {
                 results.value = calculatedValues[fieldId];
+                // Persist calculated value so dependents (e.g., grandTotal) can see it in subsequent evaluations
+                try {
+                  expressionEngine.setCalculatedValue?.(fieldId, results.value);
+                } catch {}
                 console.log(
                   `✅ [${fieldId}] Using dependency resolution result:`,
                   results.value
@@ -239,6 +254,9 @@ export function withExpression<P extends object>(
                   fieldId
                 );
                 results.value = evaluation.value;
+                try {
+                  expressionEngine.setCalculatedValue?.(fieldId, results.value);
+                } catch {}
                 console.log(
                   `🔄 [${fieldId}] Direct evaluation result:`,
                   results.value
@@ -266,6 +284,9 @@ export function withExpression<P extends object>(
                 evaluation.value !== undefined
               ) {
                 results.value = evaluation.value;
+                try {
+                  expressionEngine.setCalculatedValue?.(fieldId, results.value);
+                } catch {}
                 console.log(
                   `✅ [${fieldId}] Using direct evaluation result:`,
                   results.value
