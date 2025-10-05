@@ -53,20 +53,30 @@ export function withExpression<P extends object>(
 
     // Register field with dependency resolution system
     useEffect(() => {
-      if (actualExpression?.expression && fieldId) {
-        const dependencies = actualExpression.dependencies || [];
-        console.log(`📝 [${fieldId}] Registering field with expression:`, {
-          expression: actualExpression.expression,
-          dependencies,
-          mode: actualExpression.mode,
-        });
-        expressionEngine.registerField(
-          fieldId,
-          actualExpression.expression,
-          dependencies
-        );
-        setIsRegistered(true);
-        console.log(`✅ [${fieldId}] Field registered successfully`);
+      if (fieldId) {
+        if (actualExpression?.expression) {
+          const dependencies = actualExpression.dependencies || [];
+          console.log(`📝 [${fieldId}] Registering field with expression:`, {
+            expression: actualExpression.expression,
+            dependencies,
+            mode: actualExpression.mode,
+          });
+          expressionEngine.registerField(
+            fieldId,
+            actualExpression.expression,
+            dependencies
+          );
+          setIsRegistered(true);
+          console.log(`✅ [${fieldId}] Field registered successfully`);
+        } else {
+          // Register field without expression (input field)
+          console.log(
+            `📝 [${fieldId}] Registering input field without expression`
+          );
+          expressionEngine.registerField(fieldId, '', []);
+          setIsRegistered(true);
+          console.log(`✅ [${fieldId}] Input field registered successfully`);
+        }
       } else {
         console.log(`❌ [${fieldId}] Cannot register field:`, {
           hasExpression: !!actualExpression?.expression,
@@ -148,12 +158,25 @@ export function withExpression<P extends object>(
         }, {} as Record<string, string>),
       });
 
-      if (!actualExpression || !isRegistered) {
-        console.log(
-          `❌ [${fieldId}] No expression or not registered, setting defaults`
-        );
+      if (!isRegistered) {
+        console.log(`❌ [${fieldId}] Field not registered, setting defaults`);
         setExpressionResults({
           value: null,
+          visibility: true,
+          validation: true,
+          disabled: false,
+          required: false,
+          label: undefined,
+          helperText: undefined,
+        });
+        return;
+      }
+
+      // If no expression, this is an input field - just pass through the value
+      if (!actualExpression?.expression) {
+        console.log(`📝 [${fieldId}] Input field - passing through value`);
+        setExpressionResults({
+          value: primitiveValues[fieldId] || null,
           visibility: true,
           validation: true,
           disabled: false,
@@ -197,17 +220,27 @@ export function withExpression<P extends object>(
                 calculatedValues
               );
 
-              if (calculatedValues[fieldId] !== undefined) {
+              if (
+                calculatedValues[fieldId] !== undefined &&
+                calculatedValues[fieldId] !== null
+              ) {
                 results.value = calculatedValues[fieldId];
                 console.log(
                   `✅ [${fieldId}] Using dependency resolution result:`,
                   results.value
                 );
               } else {
-                // Fallback to default value if not calculated
-                results.value = actualExpression.defaultValue ?? 0;
+                // Fallback to direct evaluation if dependency resolution failed
                 console.log(
-                  `⚠️ [${fieldId}] No dependency result, using default:`,
+                  `⚠️ [${fieldId}] Dependency resolution returned null, falling back to direct evaluation`
+                );
+                const evaluation = evaluateExpression(
+                  actualExpression.expression,
+                  fieldId
+                );
+                results.value = evaluation.value;
+                console.log(
+                  `🔄 [${fieldId}] Direct evaluation result:`,
                   results.value
                 );
               }

@@ -439,11 +439,15 @@ export class DependencyResolutionService {
         isFinite: isFinite,
       };
 
-      // Use Function constructor to evaluate with context
-      return Function(
-        ...Object.keys(context),
-        `return ${expression}`
-      )(...Object.values(context));
+      // Use eval with a controlled context
+      // This allows function calls like parseFloat(quantity) to work properly
+      const contextKeys = Object.keys(context);
+      const contextValues = Object.values(context);
+
+      // Create a function that evaluates the expression with the context
+      const evalFunction = new Function(...contextKeys, `return ${expression}`);
+
+      return evalFunction(...contextValues);
     } catch (error) {
       console.error('Safe evaluation error:', error);
       return null;
