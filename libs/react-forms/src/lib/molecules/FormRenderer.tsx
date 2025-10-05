@@ -1577,6 +1577,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 }}
               >
                 <TextFormField
+                  fieldId={prefixedFieldId}
                   label={translatedLabel}
                   props={processPropsWithTemplates(translatedProps)}
                   classes={{
@@ -1591,8 +1592,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             // Use regular TextFormField for text components without expressions
             return (
               <TextFormField
+                fieldId={prefixedFieldId}
                 label={translatedLabel}
-                props={processPropsWithTemplates(translatedProps)}
+                props={translatedProps}
+                formValues={formValues}
                 classes={{
                   field: settings.classes?.field,
                   fieldLabel: settings.classes?.fieldLabel,
