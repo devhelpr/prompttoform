@@ -1,0 +1,72 @@
+{
+  "app": {
+    "title": "Simple Dependency Test",
+    "pages": [
+      {
+        "id": "testPage",
+        "title": "Simple Test",
+        "route": "/test",
+        "layout": "vertical",
+        "components": [
+          {
+            "id": "input1",
+            "type": "input",
+            "label": "Input 1",
+            "props": {
+              "inputType": "number",
+              "placeholder": "Enter a number"
+            },
+            "validation": {
+              "required": true
+            }
+          },
+          {
+            "id": "calculated1",
+            "type": "input",
+            "label": "Calculated 1 (Input1 * 2)",
+            "expression": {
+              "expression": "toNumber(input1) * 2",
+              "mode": "value",
+              "dependencies": ["input1"],
+              "evaluateOnChange": true,
+              "debounceMs": 100,
+              "defaultValue": 0,
+              "calculatedFieldHelperText": "Input1 multiplied by 2"
+            },
+            "props": {
+              "inputType": "number",
+              "readOnly": true
+            },
+            "validation": {
+              "required": true
+            }
+          },
+          {
+            "id": "calculated2",
+            "type": "input",
+            "label": "Calculated 2 (Calculated1 + 5)",
+            "expression": {
+              "expression": "toNumber(calculated1) + 5",
+              "mode": "value",
+              "dependencies": ["calculated1"],
+              "evaluateOnChange": true,
+              "debounceMs": 100,
+              "defaultValue": 5,
+              "calculatedFieldHelperText": "Calculated1 plus 5"
+            },
+            "props": {
+              "inputType": "number",
+              "readOnly": true
+            },
+            "validation": {
+              "required": true
+            }
+          }
+        ],
+        "isEndPage": true
+      }
+    ]
+  },
+  "defaultLanguage": "en",
+  "supportedLanguages": ["en"]
+}

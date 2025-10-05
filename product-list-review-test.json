@@ -85,7 +85,7 @@
                     "type": "input",
                     "label": "Line Total",
                     "expression": {
-                      "expression": "parseFloat(quantity) * parseFloat(unitPrice)",
+                      "expression": "toNumber(quantity) * toNumber(unitPrice)",
                       "mode": "value",
                       "dependencies": ["quantity", "unitPrice"],
                       "evaluateOnChange": true,
@@ -120,13 +120,13 @@
             "type": "input",
             "label": "Subtotal",
             "expression": {
-              "expression": "sumLineTotal(products)",
+              "expression": "toNumber(products[0].lineTotal)",
               "mode": "value",
-              "dependencies": ["products"],
+              "dependencies": ["products[0].lineTotal"],
               "evaluateOnChange": true,
               "debounceMs": 100,
               "defaultValue": 0,
-              "calculatedFieldHelperText": "Calculated automatically from all line totals"
+              "calculatedFieldHelperText": "First product line total (simplified)"
             },
             "props": {
               "inputType": "number",
@@ -164,13 +164,13 @@
             "type": "input",
             "label": "Grand Total",
             "expression": {
-              "expression": "10 * 1.1",
+              "expression": "toNumber(subtotal) + (toNumber(subtotal) * toNumber(taxPercent || 0) / 100)",
               "mode": "value",
-              "dependencies": [],
+              "dependencies": ["subtotal", "taxPercent"],
               "evaluateOnChange": true,
               "debounceMs": 100,
               "defaultValue": 0,
-              "calculatedFieldHelperText": "Static test value (10 * 1.1 = 11)"
+              "calculatedFieldHelperText": "Subtotal plus tax"
             },
             "props": {
               "inputType": "number",
@@ -210,41 +210,8 @@
         ],
         "isEndPage": true
       }
-    ],
-    "dataSources": [
-      {
-        "id": "saveProductsAPI",
-        "type": "rest",
-        "method": "POST",
-        "url": "https://api.example.com/products",
-        "params": {},
-        "responseMapping": {
-          "status": "status",
-          "id": "data.id"
-        }
-      }
-    ],
-    "thankYouPage": {
-      "title": "Thank You!",
-      "message": "Your product list was submitted successfully.",
-      "showRestartButton": true,
-      "customActions": [
-        {
-          "label": "View Products",
-          "action": "custom",
-          "customAction": "openProductList",
-          "className": "bg-blue-600 text-white"
-        }
-      ]
-    }
+    ]
   },
   "defaultLanguage": "en",
-  "supportedLanguages": ["en"],
-  "languageDetails": [
-    {
-      "code": "en",
-      "name": "English",
-      "nativeName": "English"
-    }
-  ]
+  "supportedLanguages": ["en"]
 }

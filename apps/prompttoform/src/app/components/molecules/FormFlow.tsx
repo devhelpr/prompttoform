@@ -36,6 +36,18 @@ import {
 
 import '@xyflow/react/dist/style.css';
 
+// Debounce utility function
+function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
 // Define the thank you page action type
 interface ThankYouPageAction {
   label: string;
@@ -820,7 +832,7 @@ function Flow({
         id: node.id,
         pageId: (node.data as { page: PageProps })?.page?.id,
         pageTitle: (node.data as { page: PageProps })?.page?.title,
-        pageContent: (node.data as { page: PageProps })?.page, // Include full page content
+        // Remove pageContent to prevent infinite loops from expression evaluations
       }))
       .sort((a, b) => a.id.localeCompare(b.id));
 
@@ -851,9 +863,19 @@ function Flow({
       ).app.thankYouPage;
     }
 
-    setLastUpdated(new Date());
     return definition;
   }, [formStructureKey]);
+
+  // Move side effect to useEffect (as recommended in research)
+  React.useEffect(() => {
+    setLastUpdated(new Date());
+  }, [completeFormDefinition]);
+
+  // Create debounced version of onFormChange to prevent rapid-fire updates
+  const debouncedOnFormChange = useMemo(
+    () => (onFormChange ? debounce(onFormChange, 300) : undefined),
+    [onFormChange]
+  );
 
   // Handle exporting form definition as JSON
   const handleExportForm = useCallback(() => {
@@ -981,8 +1003,8 @@ function Flow({
           const updatedNodes = applyNodeChanges(changes, nodesSnapshot);
 
           // Notify parent about form changes for synchronization
-          if (onFormChange) {
-            onFormChange(updatedNodes, edges);
+          if (debouncedOnFormChange) {
+            debouncedOnFormChange(updatedNodes, edges);
           }
 
           return updatedNodes;
@@ -1050,7 +1072,7 @@ function Flow({
         setIsSelectionChanging(false);
       }, 500);
     },
-    [setNodes, activePageId, onFormChange, edges, selectedNode]
+    [setNodes, activePageId, debouncedOnFormChange, edges, selectedNode]
   );
 
   const onEdgesChange = useCallback(
@@ -1064,8 +1086,8 @@ function Flow({
           const updatedEdges = applyEdgeChanges(changes, edgesSnapshot);
 
           // Notify parent about form changes for synchronization
-          if (onFormChange) {
-            onFormChange(nodes, updatedEdges);
+          if (debouncedOnFormChange) {
+            debouncedOnFormChange(nodes, updatedEdges);
           }
 
           return updatedEdges;
@@ -1082,7 +1104,7 @@ function Flow({
         }
       });
     },
-    [onFormChange, nodes]
+    [debouncedOnFormChange, nodes]
   );
 
   const onConnect = useCallback(
@@ -1091,14 +1113,14 @@ function Flow({
         const updatedEdges = addEdge(params, edgesSnapshot);
 
         // Notify parent about form changes for synchronization
-        if (onFormChange) {
-          onFormChange(nodes, updatedEdges);
+        if (debouncedOnFormChange) {
+          debouncedOnFormChange(nodes, updatedEdges);
         }
 
         return updatedEdges;
       });
     },
-    [onFormChange, nodes]
+    [debouncedOnFormChange, nodes]
   );
 
   // Handle edge reconnection
@@ -1112,14 +1134,14 @@ function Flow({
         );
 
         // Notify parent about form changes for synchronization
-        if (onFormChange) {
-          onFormChange(nodes, updatedEdges);
+        if (debouncedOnFormChange) {
+          debouncedOnFormChange(nodes, updatedEdges);
         }
 
         return updatedEdges;
       });
     },
-    [onFormChange, nodes]
+    [debouncedOnFormChange, nodes]
   );
 
   const onEdgeClick = useCallback(
@@ -1208,7 +1230,7 @@ function Flow({
         }
 
         // Notify parent about form changes for synchronization
-        if (onFormChange) {
+        if (debouncedOnFormChange) {
           console.log(
             'FormFlow: Calling onFormChange with',
             updatedNodes.length,
@@ -1216,7 +1238,7 @@ function Flow({
             edges.length,
             'edges'
           );
-          onFormChange(updatedNodes, edges);
+          debouncedOnFormChange(updatedNodes, edges);
         } else {
           console.log('FormFlow: onFormChange is not defined');
         }
@@ -1224,7 +1246,7 @@ function Flow({
         return updatedNodes;
       });
     },
-    [onFormChange, edges]
+    [debouncedOnFormChange, edges]
   );
 
   const onUpdateEdge = useCallback(
@@ -1274,14 +1296,14 @@ function Flow({
         });
 
         // Notify parent about form changes for synchronization
-        if (onFormChange) {
-          onFormChange(nodes, updatedEdges);
+        if (debouncedOnFormChange) {
+          debouncedOnFormChange(nodes, updatedEdges);
         }
 
         return updatedEdges;
       });
     },
-    [nodes, onFormChange]
+    [nodes, debouncedOnFormChange]
   );
 
   // Helper function to extract all existing field IDs from the current flow

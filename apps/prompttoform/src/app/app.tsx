@@ -4,7 +4,7 @@ import { ErrorBoundary } from './components/molecules/ErrorBoundary';
 import { FormFlowPage } from './components/pages/form-flow-page';
 import { MainAppPage } from './components/pages/main-app-page';
 
-import { AppStateProvider } from './components/molecules/AppStateManager';
+// AppStateProvider removed - using Zustand store instead
 
 function AppContent() {
   const navigate = useNavigate();
@@ -36,9 +36,7 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <AppStateProvider>
-        <AppContent />
-      </AppStateProvider>
+      <AppContent />
     </ErrorBoundary>
   );
 }

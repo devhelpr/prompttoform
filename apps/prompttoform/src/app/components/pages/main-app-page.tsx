@@ -1,9 +1,8 @@
-import React, { useState, Suspense, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, Suspense, useEffect } from 'react';
 import { MainLayout } from '../templates/MainLayout';
 import { InitialStateLayout } from '../templates/InitialStateLayout';
 import { FormEditorLayout } from '../templates/FormEditorLayout';
-import { InitialPromptInput } from '../molecules/InitialPromptInput';
+// InitialPromptInput removed - not used in this component
 import { AgentPromptInput } from '../molecules/AgentPromptInput';
 import { AgentStateProvider } from '../molecules/AgentStateManager';
 import { FormEditorSidebar } from '../molecules/FormEditorSidebar';
@@ -13,7 +12,7 @@ import { Settings } from '../molecules/Settings';
 import { SessionHistory } from '../molecules/SessionHistory';
 import { ImportJsonModal } from '../molecules/ImportJsonModal';
 import { DeploymentOverlay } from '../molecules/DeploymentOverlay';
-import { useAppState } from '../molecules/AppStateManager';
+import { useAppStore } from '../../store/use-app-store';
 import { FormGenerationService } from '../../services/form-generation.service';
 import { UISchema } from '../../types/ui-schema';
 import schemaJson from '@schema';
@@ -53,7 +52,16 @@ export function MainAppPage({
   updatedFormDefinition,
 }: MainAppPageProps) {
   const {
-    state,
+    currentView,
+    isLoading,
+    error,
+    parsedJson,
+    prompt,
+    generatedJson,
+    currentSessionId,
+    activeTab,
+    sidebarCollapsed,
+    currentLanguage,
     setPrompt,
     setGeneratedJson,
     setCurrentSessionId,
@@ -64,7 +72,7 @@ export function MainAppPage({
     transitionToEditor,
     transitionToInitial,
     setCurrentLanguage,
-  } = useAppState();
+  } = useAppStore();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSessionHistoryOpen, setIsSessionHistoryOpen] = useState(false);
@@ -151,7 +159,7 @@ export function MainAppPage({
   };
 
   const handleEvaluate = async () => {
-    if (!updatePrompt.trim() || !state.generatedJson) {
+    if (!updatePrompt.trim() || !generatedJson) {
       setError('Please enter an update prompt and ensure form is generated');
       return;
     }
@@ -172,9 +180,9 @@ export function MainAppPage({
       }
 
       const result = await evaluateAndRerunIfNeeded(
-        state.prompt,
+        prompt,
         systemMessage,
-        state.generatedJson,
+        generatedJson,
         apiConfig
       );
 
@@ -186,9 +194,9 @@ export function MainAppPage({
             setGeneratedJson(formattedJson, parsedOutput);
 
             // Store update in session
-            if (state.currentSessionId) {
+            if (currentSessionId) {
               await FormSessionService.storeUpdate(
-                state.currentSessionId,
+                currentSessionId,
                 updatePrompt,
                 formattedJson,
                 'evaluate'
@@ -208,7 +216,7 @@ export function MainAppPage({
   };
 
   const handleUpdate = async () => {
-    if (!updatePrompt.trim() || !state.generatedJson) {
+    if (!updatePrompt.trim() || !generatedJson) {
       setError('Please enter an update prompt and ensure form is generated');
       return;
     }
@@ -220,9 +228,9 @@ export function MainAppPage({
       // Use the form generation service's updateForm method which uses JSON-patch
       const formGenerationService = new FormGenerationService(uiSchema, true);
       const result = await formGenerationService.updateForm(
-        state.generatedJson,
+        generatedJson,
         updatePrompt,
-        state.currentSessionId || undefined
+        currentSessionId || undefined
       );
 
       if (result.success && result.updatedJson) {
@@ -248,14 +256,14 @@ export function MainAppPage({
   };
 
   const handleDeploy = async () => {
-    if (!state.generatedJson) {
+    if (!generatedJson) {
       setError('No form generated to deploy');
       return;
     }
 
     console.log('🚀 Starting deployment process...');
-    console.log('📦 Current session ID:', state.currentSessionId);
-    console.log('📄 Form JSON length:', state.generatedJson.length);
+    console.log('📦 Current session ID:', currentSessionId);
+    console.log('📄 Form JSON length:', generatedJson.length);
 
     setIsDeploying(true);
     setDeploymentOverlay({
@@ -267,13 +275,13 @@ export function MainAppPage({
 
     try {
       // Store current session ID and form JSON for post-authentication restoration
-      if (state.currentSessionId) {
+      if (currentSessionId) {
         console.log(
           '💾 Storing session data for post-authentication restoration...'
         );
         // Note: These functions need to be imported from local-storage utils
-        // saveSessionIdToLocalStorage(state.currentSessionId);
-        // saveFormJsonToLocalStorage(state.generatedJson);
+        // saveSessionIdToLocalStorage(currentSessionId);
+        // saveFormJsonToLocalStorage(generatedJson);
         console.log('✅ Session data stored in localStorage');
       } else {
         console.log(
@@ -281,7 +289,7 @@ export function MainAppPage({
         );
       }
 
-      const zipBlob = await createFormZip(state.generatedJson);
+      const zipBlob = await createFormZip(generatedJson);
       const base64 = await blobToBase64(zipBlob);
 
       setDeploymentOverlay((prev) => ({
@@ -296,14 +304,14 @@ export function MainAppPage({
           setSiteUrl(url);
 
           // Update session with Netlify site ID
-          if (state.currentSessionId) {
+          if (currentSessionId) {
             // Extract site ID from URL
             const siteId = url.split('/').pop()?.split('.')[0];
             if (siteId) {
               console.log('🔗 Updating session with Netlify site ID:', siteId);
               FormSessionService.updateSession(
-                state.currentSessionId,
-                state.generatedJson,
+                currentSessionId,
+                generatedJson,
                 siteId
               );
             }
@@ -353,11 +361,11 @@ export function MainAppPage({
   };
 
   const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(state.generatedJson);
+    navigator.clipboard.writeText(generatedJson);
   };
 
   const handleDownload = () => {
-    const blob = new Blob([state.generatedJson], { type: 'application/json' });
+    const blob = new Blob([generatedJson], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -369,14 +377,14 @@ export function MainAppPage({
   };
 
   const handleDownloadZip = async () => {
-    if (!state.generatedJson) {
+    if (!generatedJson) {
       setError('No form generated to download');
       return;
     }
 
     setIsZipDownloading(true);
     try {
-      const zip = await createFormZip(state.generatedJson);
+      const zip = await createFormZip(generatedJson);
       downloadZip(zip, `react-form.zip?v=${Date.now()}`);
     } catch (err) {
       setError('Failed to create zip file');
@@ -387,14 +395,14 @@ export function MainAppPage({
   };
 
   const handleExportSchema = () => {
-    if (!state.generatedJson || !state.parsedJson) {
+    if (!generatedJson || !parsedJson) {
       setError('No form generated to export schema');
       return;
     }
 
     try {
-      const schema = generateJsonSchema(state.parsedJson);
-      const filename = `${state.parsedJson.app.title
+      const schema = generateJsonSchema(parsedJson);
+      const filename = `${parsedJson.app.title
         .toLowerCase()
         .replace(/\s+/g, '-')}-schema.json`;
       downloadJsonSchema(schema, filename);
@@ -481,15 +489,15 @@ export function MainAppPage({
   };
 
   const handleNavigateToFormFlow = () => {
-    if (state.parsedJson) {
-      onNavigateToFormFlow(state.parsedJson);
+    if (parsedJson) {
+      onNavigateToFormFlow(parsedJson);
     } else {
       setError('No form data available to view in form flow');
     }
   };
 
   // Show initial state or editor based on current view
-  if (state.currentView === 'initial') {
+  if (currentView === 'initial') {
     return (
       <ErrorBoundary>
         <InitialStateLayout
@@ -532,8 +540,8 @@ export function MainAppPage({
                 }
               }}
               onError={setError}
-              isLoading={state.isLoading}
-              error={state.error}
+              isLoading={isLoading}
+              error={error}
               enableAgent={true}
             />
           </AgentStateProvider>
@@ -578,13 +586,13 @@ export function MainAppPage({
         onHistoryClick={() => setIsSessionHistoryOpen(true)}
         onImportJsonClick={() => setIsImportJsonOpen(true)}
         onFormFlowClick={handleNavigateToFormFlow}
-        showFormFlowButton={!!state.parsedJson}
+        showFormFlowButton={!!parsedJson}
       >
         <div className="grid grid-rows-[1fr] h-full min-h-0">
           <FormEditorLayout
             sidebar={
               <FormEditorSidebar
-                originalPrompt={state.prompt}
+                originalPrompt={prompt}
                 updatePrompt={updatePrompt}
                 onUpdatePromptChange={setUpdatePrompt}
                 onDeploy={handleDeploy}
@@ -593,30 +601,30 @@ export function MainAppPage({
                 isDeploying={isDeploying}
                 isEvaluating={isEvaluating}
                 isUpdating={isUpdating}
-                currentSessionId={state.currentSessionId}
+                currentSessionId={currentSessionId}
               />
             }
             mainContent={
               <Suspense fallback={<LoadingSpinner />}>
                 <FormPreviewPanel
-                  parsedJson={state.parsedJson}
-                  activeTab={state.activeTab}
+                  parsedJson={parsedJson}
+                  activeTab={activeTab}
                   onTabChange={setActiveTab}
                   onJsonChange={setGeneratedJson}
-                  generatedJson={state.generatedJson}
+                  generatedJson={generatedJson}
                   onCopyToClipboard={handleCopyToClipboard}
                   onDownload={handleDownload}
                   onDownloadZip={handleDownloadZip}
                   onExportSchema={handleExportSchema}
                   isZipDownloading={isZipDownloading}
                   siteUrl={siteUrl}
-                  currentLanguage={state.currentLanguage}
+                  currentLanguage={currentLanguage}
                   onLanguageChange={setCurrentLanguage}
                 />
               </Suspense>
             }
-            sidebarCollapsed={state.sidebarCollapsed}
-            onToggleSidebar={() => setSidebarCollapsed(!state.sidebarCollapsed)}
+            sidebarCollapsed={sidebarCollapsed}
+            onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
             onSettingsClick={() => setIsSettingsOpen(true)}
             onHistoryClick={() => setIsSessionHistoryOpen(true)}
             onImportJsonClick={() => setIsImportJsonOpen(true)}

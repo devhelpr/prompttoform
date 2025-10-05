@@ -746,10 +746,19 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [onPageChange, formJson?.app?.pages, logicalPageOrder]);
 
   const handleInputChange = (id: string, value: unknown) => {
-    setFormValues((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
+    console.log(
+      `🔄 FormRenderer: handleInputChange called for ${id} with value:`,
+      value,
+      typeof value
+    );
+    setFormValues((prev) => {
+      const newValues = {
+        ...prev,
+        [id]: value,
+      };
+      console.log(`📝 FormRenderer: Updated formValues for ${id}:`, newValues);
+      return newValues;
+    });
   };
 
   const handleArrayItemChange = (
@@ -1577,6 +1586,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 }}
               >
                 <TextFormField
+                  fieldId={prefixedFieldId}
                   label={translatedLabel}
                   props={processPropsWithTemplates(translatedProps)}
                   classes={{
@@ -1591,8 +1601,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             // Use regular TextFormField for text components without expressions
             return (
               <TextFormField
+                fieldId={prefixedFieldId}
                 label={translatedLabel}
-                props={processPropsWithTemplates(translatedProps)}
+                props={translatedProps}
+                formValues={formValues}
                 classes={{
                   field: settings.classes?.field,
                   fieldLabel: settings.classes?.fieldLabel,

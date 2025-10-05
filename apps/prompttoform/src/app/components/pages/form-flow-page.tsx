@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import FormFlow from '../molecules/FormFlow';
-import { FormSynchronizationService } from '../../services/form-synchronization.service';
+import { formSyncService } from '../../store/use-app-store';
 import { FormDefinition } from '@devhelpr/react-forms';
 
 interface FormFlowPageProps {
@@ -33,7 +33,6 @@ export function FormFlowPage({ formDefinition }: FormFlowPageProps) {
 
     // Use the form synchronization service to properly convert nodes and edges back to form definition
     if (formData) {
-      const syncService = new FormSynchronizationService();
       // Use the current updatedFormData if available, otherwise use the original formData
       const currentFormData = updatedFormData || formData;
       console.log(
@@ -42,7 +41,7 @@ export function FormFlowPage({ formDefinition }: FormFlowPageProps) {
       );
 
       try {
-        const updatedForm = syncService.updateFromFlow(
+        const updatedForm = formSyncService.updateFromFlow(
           nodes,
           edges,
           currentFormData

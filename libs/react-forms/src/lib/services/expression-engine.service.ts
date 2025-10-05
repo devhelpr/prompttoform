@@ -1,4 +1,13 @@
 import { Parser } from 'expr-eval';
+import {
+  DependencyResolutionService,
+  EvaluationContext,
+  EvaluationResult,
+} from './dependency-resolution.service';
+import {
+  TemplateProcessingService,
+  TemplateContext,
+} from './template-processing.service';
 
 /**
  * Form context interface for expression evaluation
@@ -23,14 +32,20 @@ export interface ExpressionResult {
 
 /**
  * Expression engine service for dynamic form calculations
+ * Now integrated with dependency resolution and template processing
  */
 export class ExpressionEngineService {
   private parser: Parser;
   private cache: Map<string, any> = new Map();
   private dependencyCache: Map<string, string[]> = new Map();
+  private calculatedValues: Map<string, any> = new Map();
+  private dependencyService: DependencyResolutionService;
+  private templateService: TemplateProcessingService;
 
   constructor() {
     this.parser = new Parser();
+    this.dependencyService = new DependencyResolutionService();
+    this.templateService = new TemplateProcessingService();
     this.setupCustomFunctions();
   }
 
@@ -50,7 +65,16 @@ export class ExpressionEngineService {
       sqrt: Math.sqrt,
       pow: Math.pow,
       // Utility functions
-      parseFloat: parseFloat,
+      parseFloat: (value: any) => {
+        const result = parseFloat(value);
+        console.log('Custom parseFloat called with:', value, 'result:', result);
+        return result;
+      },
+      toNumber: (value: any) => {
+        const result = parseFloat(value);
+        console.log('Custom toNumber called with:', value, 'result:', result);
+        return result;
+      },
       parseInt: parseInt,
       isNaN: isNaN,
       isFinite: isFinite,
@@ -516,6 +540,13 @@ export class ExpressionEngineService {
       evalContext[arrayName] = arrayData;
     });
 
+    // Add calculated values to evaluation context (these override form values)
+    this.calculatedValues.forEach((value, fieldId) => {
+      if (value !== null && value !== undefined) {
+        evalContext[fieldId] = value;
+      }
+    });
+
     return evalContext;
   }
 
@@ -661,6 +692,62 @@ export class ExpressionEngineService {
   }
 
   /**
+   * Set a calculated value for a field
+   */
+  setCalculatedValue(fieldId: string, value: any) {
+    this.calculatedValues.set(fieldId, value);
+    // Clear cache for expressions that might depend on this field
+    this.clearCacheForField(fieldId);
+  }
+
+  /**
+   * Get a calculated value for a field
+   */
+  getCalculatedValue(fieldId: string): any {
+    return this.calculatedValues.get(fieldId);
+  }
+
+  /**
+   * Get all calculated values
+   */
+  getAllCalculatedValues(): Record<string, any> {
+    const result: Record<string, any> = {};
+    this.calculatedValues.forEach((value, fieldId) => {
+      result[fieldId] = value;
+    });
+    return result;
+  }
+
+  /**
+   * Clear calculated values for a specific field
+   */
+  clearCalculatedValue(fieldId: string) {
+    this.calculatedValues.delete(fieldId);
+    this.clearCacheForField(fieldId);
+  }
+
+  /**
+   * Clear all calculated values
+   */
+  clearAllCalculatedValues() {
+    this.calculatedValues.clear();
+    this.cache.clear();
+  }
+
+  /**
+   * Clear cache entries that might depend on a specific field
+   */
+  private clearCacheForField(fieldId: string) {
+    const keysToDelete: string[] = [];
+    this.cache.forEach((_, key) => {
+      if (key.includes(fieldId)) {
+        keysToDelete.push(key);
+      }
+    });
+    keysToDelete.forEach((key) => this.cache.delete(key));
+  }
+
+  /**
    * Get cache statistics
    */
   getCacheStats(): { cacheSize: number; dependencyCacheSize: number } {
@@ -668,6 +755,97 @@ export class ExpressionEngineService {
       cacheSize: this.cache.size,
       dependencyCacheSize: this.dependencyCache.size,
     };
+  }
+
+  /**
+   * Register a field with its expression and dependencies for dependency resolution
+   */
+  registerField(
+    fieldId: string,
+    expression: string,
+    dependencies: string[] = []
+  ): void {
+    this.dependencyService.registerField(fieldId, expression, dependencies);
+  }
+
+  /**
+   * Unregister a field from dependency resolution
+   */
+  unregisterField(fieldId: string): void {
+    this.dependencyService.unregisterField(fieldId);
+  }
+
+  /**
+   * Evaluate all expressions with proper dependency resolution
+   */
+  async evaluateAllWithDependencies(
+    formValues: Record<string, any>,
+    metadata?: Record<string, any>
+  ): Promise<Record<string, any>> {
+    const context: EvaluationContext = {
+      formValues,
+      calculatedValues: this.getAllCalculatedValues(),
+      metadata,
+    };
+
+    this.dependencyService.updateFormValues(formValues);
+    return await this.dependencyService.evaluateAll(context);
+  }
+
+  /**
+   * Process template strings with variable substitution
+   */
+  processTemplate(template: string, formValues: Record<string, any>): string {
+    const context: TemplateContext = {
+      formValues,
+      calculatedValues: this.getAllCalculatedValues(),
+    };
+
+    return this.templateService.processTemplate(template, context);
+  }
+
+  /**
+   * Check if a template has variables that need processing
+   */
+  hasTemplateVariables(template: string): boolean {
+    return this.templateService.hasVariables(template);
+  }
+
+  /**
+   * Get dependency graph for debugging
+   */
+  getDependencyGraph() {
+    return this.dependencyService.getDependencyGraph();
+  }
+
+  /**
+   * Get template processing cache statistics
+   */
+  getTemplateCacheStats() {
+    return this.templateService.getCacheStats();
+  }
+
+  /**
+   * Clear all caches (expression, dependency, and template)
+   */
+  clearAllCaches(): void {
+    this.clearCache();
+    this.dependencyService.clearCache();
+    this.templateService.clearCache();
+  }
+
+  /**
+   * Register custom function for both expression evaluation and template processing
+   */
+  registerCustomFunction(name: string, fn: Function): void {
+    // Register with dependency service
+    this.dependencyService.registerCustomFunction(name, fn);
+
+    // Register with template service
+    this.templateService.registerCustomFunction(name, fn);
+
+    // Register with expr-eval parser
+    this.parser.functions[name] = fn;
   }
 }
 
