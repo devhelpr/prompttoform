@@ -78,7 +78,7 @@ Example:
 
 #### classes
 
-The `classes` object allows you to override CSS classes for different form components:
+The `classes` object allows you to override CSS classes for different form components. **Note: This is the legacy approach. For new projects, use `colorClasses` and `styleClasses` instead.**
 
 ```tsx
 <FormRenderer 
@@ -110,6 +110,52 @@ The `classes` object allows you to override CSS classes for different form compo
   }}
 />
 ```
+
+#### colorClasses and styleClasses (Recommended)
+
+For better organization and maintainability, you can now split CSS classes into two categories:
+
+- **`colorClasses`**: Controls colors, backgrounds, borders, and text colors
+- **`styleClasses`**: Controls spacing, sizing, positioning, borders, shadows, etc.
+
+```tsx
+<FormRenderer 
+  formJson={formDefinition}
+  settings={{
+    colorClasses: {
+      // Color-related classes
+      container: 'bg-blue-50',
+      header: 'bg-blue-100',
+      headerTitle: 'text-blue-800',
+      nextButton: 'bg-blue-600 hover:bg-blue-700 text-white',
+      previousButton: 'border-blue-300 text-blue-700',
+      fieldLabel: 'text-gray-700',
+      fieldInput: 'border-gray-300',
+      fieldError: 'text-red-500',
+      fieldHelperText: 'text-gray-500',
+    },
+    styleClasses: {
+      // Style and layout classes
+      container: 'w-full',
+      header: 'p-4 rounded-md',
+      headerTitle: 'text-2xl font-bold',
+      nextButton: 'px-4 py-2 rounded',
+      previousButton: 'px-4 py-2 border rounded',
+      field: 'mb-4',
+      fieldLabel: 'block text-sm font-medium mb-1',
+      fieldInput: 'w-full p-2 border rounded-md',
+      fieldError: 'mt-1 text-sm',
+      fieldHelperText: 'mt-1 text-sm',
+    }
+  }}
+/>
+```
+
+This approach provides several benefits:
+- **Better organization**: Separate color and layout concerns
+- **Easier theming**: Change colors without affecting layout
+- **Improved maintainability**: Clear separation of visual and structural styles
+- **Backward compatibility**: Legacy `classes` still works
 
 #### theme
 

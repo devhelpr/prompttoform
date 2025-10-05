@@ -118,7 +118,43 @@ const bootstrapSettings = {
   },
 };
 
-// Example 3: Theme-based styling
+// Example 3: Split color and style classes (Recommended)
+const splitClassSettings = {
+  showFormSubmissions: true,
+  colorClasses: {
+    // Color-related classes
+    container: 'bg-blue-50',
+    header: 'bg-blue-100',
+    headerTitle: 'text-blue-800',
+    nextButton: 'bg-blue-600 hover:bg-blue-700 text-white',
+    previousButton: 'border-blue-300 text-blue-700',
+    fieldLabel: 'text-gray-700',
+    fieldInput: 'border-gray-300',
+    fieldError: 'text-red-500',
+    fieldHelperText: 'text-gray-500',
+  },
+  styleClasses: {
+    // Style and layout classes
+    container: 'w-full',
+    header: 'p-4 rounded-md',
+    headerTitle: 'text-2xl font-bold',
+    nextButton: 'px-6 py-2 rounded-md',
+    previousButton: 'px-6 py-2 border rounded-md',
+    field: 'mb-4',
+    fieldLabel: 'block text-sm font-medium mb-1',
+    fieldInput: 'w-full p-2 border rounded-md',
+    fieldError: 'mt-1 text-sm',
+    fieldHelperText: 'mt-1 text-sm',
+  },
+  texts: {
+    nextButton: 'Continue',
+    previousButton: 'Go Back',
+    submitButton: 'Send Form',
+    stepIndicator: 'Page {currentStep} of {totalSteps}',
+  },
+};
+
+// Example 4: Theme-based styling
 const themeSettings = {
   showFormSubmissions: true,
   theme: {
@@ -174,6 +210,8 @@ export const CustomStylingExample: React.FC = () => {
         return simpleOverrideSettings;
       case 'bootstrap':
         return bootstrapSettings;
+      case 'split':
+        return splitClassSettings;
       case 'theme':
         return themeSettings;
       default:
@@ -241,6 +279,16 @@ export const CustomStylingExample: React.FC = () => {
             }`}
           >
             Bootstrap Style
+          </button>
+          <button
+            onClick={() => setCurrentStyle('split')}
+            className={`px-3 py-2 rounded-md text-sm font-medium ${
+              currentStyle === 'split'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            Split Classes (Recommended)
           </button>
           <button
             onClick={() => setCurrentStyle('theme')}

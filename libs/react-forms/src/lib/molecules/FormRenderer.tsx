@@ -35,7 +35,17 @@ import {
   FormRendererSettings as MultiLanguageFormRendererSettings,
 } from '../interfaces/multi-language-interfaces';
 import { TranslationService } from '../services/translation-service';
-import { getClassNames, mergeClassNames, getText } from '../utils/class-utils';
+import {
+  getClassNames,
+  mergeClassNames,
+  getText,
+  getClassNamesWithColorAndStyle,
+  convertToFieldClasses,
+} from '../utils/class-utils';
+import {
+  defaultColorClasses,
+  defaultStyleClasses,
+} from '../config/default-classes';
 import {
   calculateLogicalPageOrder,
   getLogicalPageIndex,
@@ -44,6 +54,41 @@ import {
   isLastLogicalPage,
   LogicalPageOrder,
 } from '../utils/page-ordering';
+
+/**
+ * Helper function to merge color and style classes with legacy support
+ */
+const getMergedClasses = (
+  componentKey: keyof typeof defaultColorClasses,
+  settings: any
+) => {
+  // Use new color and style classes if available
+  if (settings.colorClasses || settings.styleClasses) {
+    const colorClass =
+      settings.colorClasses?.[componentKey] ||
+      defaultColorClasses[componentKey] ||
+      '';
+    const styleClass =
+      settings.styleClasses?.[componentKey] ||
+      defaultStyleClasses[componentKey] ||
+      '';
+    return getClassNamesWithColorAndStyle(colorClass, styleClass);
+  }
+
+  // Fallback to legacy classes
+  return settings.classes?.[componentKey] || '';
+};
+
+/**
+ * Helper function to get field classes with new structure support
+ */
+const getFieldClasses = (settings: any) => {
+  return convertToFieldClasses(
+    settings.colorClasses,
+    settings.styleClasses,
+    settings.classes
+  );
+};
 
 export const FormRenderer: React.FC<FormRendererProps> = ({
   formJson,
@@ -1082,16 +1127,16 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     return (
       <div
-        className={getClassNames(
-          'mb-4 flex items-center justify-between',
-          settings.classes?.stepIndicator
-        )}
+        className={
+          getMergedClasses('stepIndicator', settings) ||
+          'mb-4 flex items-center justify-between'
+        }
       >
         <div
-          className={getClassNames(
-            'text-sm font-medium text-gray-700',
-            settings.classes?.stepIndicatorItem
-          )}
+          className={
+            getMergedClasses('stepIndicatorItem', settings) ||
+            'text-sm font-medium text-gray-700'
+          }
         >
           {translationService.translateUI('stepIndicator', {
             currentStep,
@@ -1099,16 +1144,16 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           })}
         </div>
         <div
-          className={getClassNames(
-            'w-2/3 bg-gray-200 rounded-full h-2.5',
-            settings.classes?.stepIndicator
-          )}
+          className={
+            getMergedClasses('stepIndicator', settings) ||
+            'w-2/3 bg-gray-200 rounded-full h-2.5'
+          }
         >
           <div
-            className={getClassNames(
-              'bg-indigo-600 h-2.5 rounded-full',
-              settings.classes?.stepIndicatorActive
-            )}
+            className={
+              getMergedClasses('stepIndicatorActive', settings) ||
+              'bg-indigo-600 h-2.5 rounded-full'
+            }
             style={{ width: `${(currentStep / totalSteps) * 100}%` }}
           ></div>
         </div>
@@ -1150,21 +1195,21 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     return (
       <div
-        className={getClassNames(
-          'mt-6 flex justify-between',
-          settings.classes?.navigationButtons
-        )}
+        className={
+          getMergedClasses('navigationButtons', settings) ||
+          'mt-6 flex justify-between'
+        }
       >
         <button
           type="button"
-          className={getClassNames(
+          className={
+            getMergedClasses('previousButton', settings) ||
             `px-4 py-2 border border-indigo-300 text-indigo-700 rounded-md ${
               currentStep === 1
                 ? 'opacity-50 cursor-not-allowed'
                 : 'hover:bg-indigo-50'
-            }`,
-            settings.classes?.previousButton
-          )}
+            }`
+          }
           disabled={currentStep === 1}
           onClick={handlePrevious}
         >
@@ -1172,10 +1217,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         </button>
         <button
           type="button"
-          className={getClassNames(
-            'px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700',
-            settings.classes?.nextButton
-          )}
+          className={
+            getMergedClasses('nextButton', settings) ||
+            'px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700'
+          }
           onClick={handleNext}
         >
           {nextButtonText}
@@ -1578,22 +1623,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                     return acc;
                   }, {} as Record<string, string | undefined>),
                 }}
-                classes={{
-                  field: settings.classes?.field,
-                  fieldLabel: settings.classes?.fieldLabel,
-                  fieldError: settings.classes?.fieldError,
-                  fieldHelperText: settings.classes?.fieldHelperText,
-                }}
+                classes={getFieldClasses(settings)}
               >
                 <TextFormField
                   fieldId={prefixedFieldId}
                   label={translatedLabel}
                   props={processPropsWithTemplates(translatedProps)}
-                  classes={{
-                    field: settings.classes?.field,
-                    fieldLabel: settings.classes?.fieldLabel,
-                    fieldText: settings.classes?.fieldText,
-                  }}
+                  classes={getFieldClasses(settings)}
                 />
               </FormExpressionField>
             );
@@ -1605,11 +1641,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 label={translatedLabel}
                 props={translatedProps}
                 formValues={formValues}
-                classes={{
-                  field: settings.classes?.field,
-                  fieldLabel: settings.classes?.fieldLabel,
-                  fieldText: settings.classes?.fieldText,
-                }}
+                classes={getFieldClasses(settings)}
               />
             );
           }
@@ -1634,13 +1666,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               showError={showError}
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
-              classes={{
-                field: settings.classes?.field,
-                fieldLabel: settings.classes?.fieldLabel,
-                fieldInput: settings.classes?.fieldInput,
-                fieldError: settings.classes?.fieldError,
-                fieldHelperText: settings.classes?.fieldHelperText,
-              }}
+              classes={getFieldClasses(settings)}
             />
           );
 
@@ -1664,13 +1690,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               showError={showError}
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
-              classes={{
-                field: settings.classes?.field,
-                fieldLabel: settings.classes?.fieldLabel,
-                fieldTextarea: settings.classes?.fieldTextarea,
-                fieldError: settings.classes?.fieldError,
-                fieldHelperText: settings.classes?.fieldHelperText,
-              }}
+              classes={getFieldClasses(settings)}
             />
           );
 
@@ -1690,13 +1710,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               showError={showError}
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
-              classes={{
-                field: settings.classes?.field,
-                fieldLabel: settings.classes?.fieldLabel,
-                fieldRadio: settings.classes?.fieldRadio,
-                fieldError: settings.classes?.fieldError,
-                fieldHelperText: settings.classes?.fieldHelperText,
-              }}
+              classes={getFieldClasses(settings)}
             />
           );
 
@@ -1713,13 +1727,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               showError={showError}
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
-              classes={{
-                field: settings.classes?.field,
-                fieldLabel: settings.classes?.fieldLabel,
-                fieldCheckbox: settings.classes?.fieldCheckbox,
-                fieldError: settings.classes?.fieldError,
-                fieldHelperText: settings.classes?.fieldHelperText,
-              }}
+              classes={getFieldClasses(settings)}
             />
           );
 
@@ -1740,13 +1748,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               showError={showError}
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
-              classes={{
-                field: settings.classes?.field,
-                fieldLabel: settings.classes?.fieldLabel,
-                fieldSelect: settings.classes?.fieldSelect,
-                fieldError: settings.classes?.fieldError,
-                fieldHelperText: settings.classes?.fieldHelperText,
-              }}
+              classes={getFieldClasses(settings)}
             />
           );
 
@@ -1767,13 +1769,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               showError={showError}
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
-              classes={{
-                field: settings.classes?.field,
-                fieldLabel: settings.classes?.fieldLabel,
-                fieldDate: settings.classes?.fieldDate,
-                fieldError: settings.classes?.fieldError,
-                fieldHelperText: settings.classes?.fieldHelperText,
-              }}
+              classes={getFieldClasses(settings)}
             />
           );
 
@@ -1812,12 +1808,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               label={label}
               children={component.children}
               renderComponent={renderComponent}
-              classes={{
-                field: settings.classes?.field,
-                fieldLabel: settings.classes?.fieldLabel,
-                noContentText:
-                  translationService.translateUI('noContentInSection'),
-              }}
+              classes={getFieldClasses(settings)}
             />
           );
 
@@ -1937,13 +1928,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               showError={showError}
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
-              classes={{
-                field: settings.classes?.field,
-                fieldLabel: settings.classes?.fieldLabel,
-                fieldSlider: settings.classes?.fieldSlider,
-                fieldError: settings.classes?.fieldError,
-                fieldHelperText: settings.classes?.fieldHelperText,
-              }}
+              classes={getFieldClasses(settings)}
             />
           );
 
@@ -2063,13 +2048,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             // Array item field props
             isArrayItem={true}
             arrayItemChangeHandler={handleArrayItemChange}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldInput: settings.classes?.fieldInput,
-              fieldError: settings.classes?.fieldError,
-              fieldHelperText: settings.classes?.fieldHelperText,
-            }}
+            classes={getFieldClasses(settings)}
           />
         );
 
@@ -2091,13 +2070,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldTextarea: settings.classes?.fieldTextarea,
-              fieldError: settings.classes?.fieldError,
-              fieldHelperText: settings.classes?.fieldHelperText,
-            }}
+            classes={getFieldClasses(settings)}
           />
         );
 
@@ -2116,13 +2089,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldSelect: settings.classes?.fieldSelect,
-              fieldError: settings.classes?.fieldError,
-              fieldHelperText: settings.classes?.fieldHelperText,
-            }}
+            classes={getFieldClasses(settings)}
           />
         );
 
@@ -2140,13 +2107,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldRadio: settings.classes?.fieldRadio,
-              fieldError: settings.classes?.fieldError,
-              fieldHelperText: settings.classes?.fieldHelperText,
-            }}
+            classes={getFieldClasses(settings)}
           />
         );
 
@@ -2165,13 +2126,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldCheckbox: settings.classes?.fieldCheckbox,
-              fieldError: settings.classes?.fieldError,
-              fieldHelperText: settings.classes?.fieldHelperText,
-            }}
+            classes={getFieldClasses(settings)}
           />
         );
 
@@ -2190,13 +2145,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldDate: settings.classes?.fieldDate,
-              fieldError: settings.classes?.fieldError,
-              fieldHelperText: settings.classes?.fieldHelperText,
-            }}
+            classes={getFieldClasses(settings)}
           />
         );
 
@@ -2224,13 +2173,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             showError={showError}
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
-            classes={{
-              field: settings.classes?.field,
-              fieldLabel: settings.classes?.fieldLabel,
-              fieldSlider: settings.classes?.fieldSlider,
-              fieldError: settings.classes?.fieldError,
-              fieldHelperText: settings.classes?.fieldHelperText,
-            }}
+            classes={getFieldClasses(settings)}
           />
         );
 
@@ -2345,13 +2288,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         <div
           className={getClassNames(
             'mb-4 bg-green-50 p-4 rounded-md',
-            settings.classes?.thankYouContainer
+            getMergedClasses('thankYouContainer', settings)
           )}
         >
           <h1
             className={getClassNames(
               'text-2xl font-bold text-green-700',
-              settings.classes?.thankYouTitle
+              getMergedClasses('thankYouTitle', settings)
             )}
           >
             {translationService.translateApp('title', thankYouPage.title) ||
@@ -2362,7 +2305,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         <div
           className={getClassNames(
             'bg-white rounded-md shadow-sm p-6',
-            settings.classes?.thankYouContainer
+            getMergedClasses('thankYouContainer', settings)
           )}
         >
           {thankYouPage.message && (
@@ -2370,7 +2313,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               <p
                 className={getClassNames(
                   'text-lg text-gray-700 leading-relaxed',
-                  settings.classes?.thankYouMessage
+                  getMergedClasses('thankYouMessage', settings)
                 )}
               >
                 {thankYouPage.message}
@@ -2393,7 +2336,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 onClick={() => handleThankYouAction('restart')}
                 className={getClassNames(
                   'px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
-                  settings.classes?.thankYouButton
+                  getMergedClasses('thankYouButton', settings)
                 )}
               >
                 {translationService.translateUI('restartButton')}
@@ -2447,13 +2390,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         key={page.id}
         className={getClassNames(
           'bg-white rounded-md shadow-sm p-6',
-          settings.classes?.page
+          getMergedClasses('page', settings)
         )}
       >
         <h2
           className={getClassNames(
             'text-xl font-bold mb-6',
-            settings.classes?.pageTitle
+            getMergedClasses('pageTitle', settings)
           )}
         >
           {translationService.translatePage(
@@ -2528,7 +2471,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       }}
     >
       <div
-        className={getClassNames('w-full', settings.classes?.container)}
+        className={getMergedClasses('container', settings) || 'w-full'}
         style={themeStyles}
       >
         {/* Check for invalid form data */}
@@ -2541,16 +2484,16 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         ) : (
           <>
             <div
-              className={getClassNames(
-                'mb-4 bg-indigo-50 p-4 rounded-md',
-                settings.classes?.header
-              )}
+              className={
+                getMergedClasses('header', settings) ||
+                'mb-4 bg-indigo-50 p-4 rounded-md'
+              }
             >
               <h1
-                className={getClassNames(
-                  'text-2xl font-bold text-indigo-700',
-                  settings.classes?.headerTitle
-                )}
+                className={
+                  getMergedClasses('headerTitle', settings) ||
+                  'text-2xl font-bold text-indigo-700'
+                }
               >
                 {translationService.translateApp('title', formJson.app.title)}
               </h1>
@@ -2560,7 +2503,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                   <div
                     className={getClassNames(
                       'mt-2 text-sm text-indigo-500',
-                      settings.classes?.header
+                      getMergedClasses('header', settings)
                     )}
                   >
                     {translationService.translateUI('multiPageInfo', {
@@ -2576,13 +2519,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               <div
                 className={getClassNames(
                   'mt-8 border-t pt-6',
-                  settings.classes?.submissionsContainer
+                  getMergedClasses('submissionsContainer', settings)
                 )}
               >
                 <h3
                   className={getClassNames(
                     'text-lg font-medium mb-4',
-                    settings.classes?.submissionsTitle
+                    getMergedClasses('submissionsTitle', settings)
                   )}
                 >
                   {translationService.translateUI('submissionsTitle')}
@@ -2590,7 +2533,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 <div
                   className={getClassNames(
                     'bg-gray-50 p-4 rounded-md',
-                    settings.classes?.submissionsData
+                    getMergedClasses('submissionsData', settings)
                   )}
                 >
                   {renderSubmissionData()}
