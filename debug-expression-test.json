@@ -1,0 +1,52 @@
+{
+  "app": {
+    "title": "Debug Expression Test",
+    "pages": [
+      {
+        "id": "testPage",
+        "title": "Test Page",
+        "route": "/test",
+        "layout": "vertical",
+        "components": [
+          {
+            "id": "input1",
+            "type": "input",
+            "label": "Input 1",
+            "props": {
+              "inputType": "number",
+              "placeholder": "Enter a number"
+            }
+          },
+          {
+            "id": "calculated1",
+            "type": "input",
+            "label": "Calculated 1 (input1 * 2)",
+            "expression": {
+              "expression": "input1 * 2",
+              "mode": "value",
+              "dependencies": ["input1"],
+              "evaluateOnChange": true,
+              "debounceMs": 100,
+              "defaultValue": 0
+            },
+            "props": {
+              "inputType": "number",
+              "readOnly": true,
+              "helperText": "Calculated automatically"
+            }
+          }
+        ],
+        "isEndPage": true
+      }
+    ]
+  },
+  "defaultLanguage": "en",
+  "supportedLanguages": ["en"],
+  "languageDetails": [
+    {
+      "code": "en",
+      "name": "English",
+      "nativeName": "English"
+    }
+  ]
+}

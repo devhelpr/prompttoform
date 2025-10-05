@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { getClassNames } from '../utils/class-utils';
-import { withExpression } from '../hoc/with-expression';
+import { withExpression } from '../hoc/with-expression-v2';
 import { useExpressionContext } from '../contexts/expression-context';
+import { expressionEngine } from '../services/expression-engine.service';
 
 interface TextFormFieldProps {
   fieldId?: string;
@@ -25,97 +26,20 @@ const TextFormFieldBase: React.FC<TextFormFieldProps> = ({
   classes,
   formValues = {},
 }) => {
-  // Process templates reactively when form values change
+  // Process templates using the new template processing service
   const processedProps = useMemo(() => {
     if (!props) return props;
 
     const processed = { ...props };
 
-    // Process helperText templates
+    // Process helperText templates using the expression engine's template processor
     if (
       typeof props.helperText === 'string' &&
-      /\{\{[^}]+\}\}/.test(props.helperText)
+      expressionEngine.hasTemplateVariables(props.helperText)
     ) {
-      processed.helperText = props.helperText.replace(
-        /\{\{([^}]+)\}\}/g,
-        (match, variable) => {
-          const varName = variable.trim();
-
-          // Handle nested variable paths like "applicant.fullName"
-          if (varName.includes('.')) {
-            const keys = varName.split('.');
-            let value: unknown = formValues;
-
-            for (const key of keys) {
-              if (value && typeof value === 'object' && key in value) {
-                value = (value as Record<string, unknown>)[key];
-              } else {
-                value = undefined;
-                break;
-              }
-            }
-
-            if (value !== null && value !== undefined && value !== '') {
-              // Handle arrays by getting their length
-              if (Array.isArray(value)) {
-                return String(value.length);
-              }
-              return String(value);
-            }
-          }
-
-          // Try direct field name match
-          let directValue = formValues[varName];
-          if (
-            directValue !== null &&
-            directValue !== undefined &&
-            directValue !== ''
-          ) {
-            // Handle arrays by getting their length
-            if (Array.isArray(directValue)) {
-              return String(directValue.length);
-            }
-            return String(directValue);
-          }
-
-          // Try common field name variations
-          const variations = [
-            varName.toLowerCase(),
-            varName.replace(/([A-Z])/g, '_$1').toLowerCase(), // camelCase to snake_case
-            varName.replace(/_/g, ''), // remove underscores
-            varName.replace(/[._]/g, ''), // remove dots and underscores
-          ];
-
-          for (const variation of variations) {
-            const value = formValues[variation];
-            if (value !== null && value !== undefined && value !== '') {
-              // Handle arrays by getting their length
-              if (Array.isArray(value)) {
-                return String(value.length);
-              }
-              return String(value);
-            }
-          }
-
-          // Try to find partial matches in field names
-          const matchingKey = Object.keys(formValues).find(
-            (key) =>
-              key.toLowerCase().includes(varName.toLowerCase()) ||
-              varName.toLowerCase().includes(key.toLowerCase())
-          );
-
-          if (
-            matchingKey &&
-            formValues[matchingKey] !== null &&
-            formValues[matchingKey] !== undefined &&
-            formValues[matchingKey] !== ''
-          ) {
-            return String(formValues[matchingKey]);
-          }
-
-          // Return a dash for missing/empty fields
-          return '-';
-        }
+      processed.helperText = expressionEngine.processTemplate(
+        props.helperText,
+        formValues
       );
     }
 

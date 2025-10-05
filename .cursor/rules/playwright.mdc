@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+---
+
+use the option "--reporter=line" when running playwright tests for debugging and getting feedback on the test results to improve the code.
+
+store playwright tests in the playwright-tests folder and use the file name to describe the test.
+
+store test-results in the test-results folder.
+store screenshots in the screenshots folder.

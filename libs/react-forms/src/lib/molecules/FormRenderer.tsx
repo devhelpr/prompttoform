@@ -746,10 +746,19 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [onPageChange, formJson?.app?.pages, logicalPageOrder]);
 
   const handleInputChange = (id: string, value: unknown) => {
-    setFormValues((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
+    console.log(
+      `🔄 FormRenderer: handleInputChange called for ${id} with value:`,
+      value,
+      typeof value
+    );
+    setFormValues((prev) => {
+      const newValues = {
+        ...prev,
+        [id]: value,
+      };
+      console.log(`📝 FormRenderer: Updated formValues for ${id}:`, newValues);
+      return newValues;
+    });
   };
 
   const handleArrayItemChange = (

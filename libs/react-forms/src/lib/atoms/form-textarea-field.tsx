@@ -1,6 +1,6 @@
 import React from 'react';
 import { getClassNames } from '../utils/class-utils';
-import { withExpression } from '../hoc/with-expression';
+import { withExpression } from '../hoc/with-expression-v2';
 import { ExpressionConfig } from '../interfaces/expression-interfaces';
 
 interface FormTextareaFieldProps {

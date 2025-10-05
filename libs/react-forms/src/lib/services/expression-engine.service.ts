@@ -1,4 +1,13 @@
 import { Parser } from 'expr-eval';
+import {
+  DependencyResolutionService,
+  EvaluationContext,
+  EvaluationResult,
+} from './dependency-resolution.service';
+import {
+  TemplateProcessingService,
+  TemplateContext,
+} from './template-processing.service';
 
 /**
  * Form context interface for expression evaluation
@@ -23,15 +32,20 @@ export interface ExpressionResult {
 
 /**
  * Expression engine service for dynamic form calculations
+ * Now integrated with dependency resolution and template processing
  */
 export class ExpressionEngineService {
   private parser: Parser;
   private cache: Map<string, any> = new Map();
   private dependencyCache: Map<string, string[]> = new Map();
   private calculatedValues: Map<string, any> = new Map();
+  private dependencyService: DependencyResolutionService;
+  private templateService: TemplateProcessingService;
 
   constructor() {
     this.parser = new Parser();
+    this.dependencyService = new DependencyResolutionService();
+    this.templateService = new TemplateProcessingService();
     this.setupCustomFunctions();
   }
 
@@ -741,6 +755,97 @@ export class ExpressionEngineService {
       cacheSize: this.cache.size,
       dependencyCacheSize: this.dependencyCache.size,
     };
+  }
+
+  /**
+   * Register a field with its expression and dependencies for dependency resolution
+   */
+  registerField(
+    fieldId: string,
+    expression: string,
+    dependencies: string[] = []
+  ): void {
+    this.dependencyService.registerField(fieldId, expression, dependencies);
+  }
+
+  /**
+   * Unregister a field from dependency resolution
+   */
+  unregisterField(fieldId: string): void {
+    this.dependencyService.unregisterField(fieldId);
+  }
+
+  /**
+   * Evaluate all expressions with proper dependency resolution
+   */
+  async evaluateAllWithDependencies(
+    formValues: Record<string, any>,
+    metadata?: Record<string, any>
+  ): Promise<Record<string, any>> {
+    const context: EvaluationContext = {
+      formValues,
+      calculatedValues: this.getAllCalculatedValues(),
+      metadata,
+    };
+
+    this.dependencyService.updateFormValues(formValues);
+    return await this.dependencyService.evaluateAll(context);
+  }
+
+  /**
+   * Process template strings with variable substitution
+   */
+  processTemplate(template: string, formValues: Record<string, any>): string {
+    const context: TemplateContext = {
+      formValues,
+      calculatedValues: this.getAllCalculatedValues(),
+    };
+
+    return this.templateService.processTemplate(template, context);
+  }
+
+  /**
+   * Check if a template has variables that need processing
+   */
+  hasTemplateVariables(template: string): boolean {
+    return this.templateService.hasVariables(template);
+  }
+
+  /**
+   * Get dependency graph for debugging
+   */
+  getDependencyGraph() {
+    return this.dependencyService.getDependencyGraph();
+  }
+
+  /**
+   * Get template processing cache statistics
+   */
+  getTemplateCacheStats() {
+    return this.templateService.getCacheStats();
+  }
+
+  /**
+   * Clear all caches (expression, dependency, and template)
+   */
+  clearAllCaches(): void {
+    this.clearCache();
+    this.dependencyService.clearCache();
+    this.templateService.clearCache();
+  }
+
+  /**
+   * Register custom function for both expression evaluation and template processing
+   */
+  registerCustomFunction(name: string, fn: Function): void {
+    // Register with dependency service
+    this.dependencyService.registerCustomFunction(name, fn);
+
+    // Register with template service
+    this.templateService.registerCustomFunction(name, fn);
+
+    // Register with expr-eval parser
+    this.parser.functions[name] = fn;
   }
 }
 
