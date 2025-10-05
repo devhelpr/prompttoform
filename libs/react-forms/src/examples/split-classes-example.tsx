@@ -10,6 +10,7 @@ const testForm: FormDefinition = {
       {
         id: 'page1',
         title: 'Test Form',
+        route: '/page1',
         components: [
           {
             id: 'name',

@@ -196,7 +196,7 @@ const themeSettings = {
 
 export const CustomStylingExample: React.FC = () => {
   const [currentStyle, setCurrentStyle] = React.useState<
-    'default' | 'simple' | 'bootstrap' | 'theme'
+    'default' | 'simple' | 'bootstrap' | 'split' | 'theme'
   >('default');
 
   const handleSubmit = (formValues: Record<string, unknown>) => {
