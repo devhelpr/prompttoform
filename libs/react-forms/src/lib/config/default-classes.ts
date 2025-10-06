@@ -12,7 +12,7 @@ export const defaultColorClasses: FormRendererColorClasses = {
   container: '',
   header: 'bg-indigo-50',
   headerTitle: 'text-indigo-700',
-  page: '',
+  page: 'bg-white',
   pageTitle: '',
 
   // Navigation Colors
@@ -51,6 +51,7 @@ export const defaultColorClasses: FormRendererColorClasses = {
 
   // Thank You Page Colors
   thankYouContainer: 'bg-green-50',
+  thankYouMessageContainer: 'bg-white',
   thankYouTitle: 'text-green-700',
   thankYouMessage: 'text-gray-700',
   thankYouButton: 'bg-indigo-600 hover:bg-indigo-700 text-white',
@@ -104,6 +105,7 @@ export const defaultStyleClasses: FormRendererStyleClasses = {
 
   // Thank You Page Styles
   thankYouContainer: 'p-4 rounded-md',
+  thankYouMessageContainer: 'rounded-md shadow-sm p-',
   thankYouTitle: 'text-2xl font-bold',
   thankYouMessage: 'text-lg leading-relaxed',
   thankYouButton: 'px-6 py-2 rounded-md transition-colors',

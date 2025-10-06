@@ -217,7 +217,9 @@ export interface FormRendererColorClasses {
   submissionsData?: string;
 
   // Thank You Page Colors
+
   thankYouContainer?: string;
+  thankYouMessageContainer?: string;
   thankYouTitle?: string;
   thankYouMessage?: string;
   thankYouButton?: string;
@@ -271,6 +273,7 @@ export interface FormRendererStyleClasses {
 
   // Thank You Page Styles
   thankYouContainer?: string;
+  thankYouMessageContainer?: string;
   thankYouTitle?: string;
   thankYouMessage?: string;
   thankYouButton?: string;

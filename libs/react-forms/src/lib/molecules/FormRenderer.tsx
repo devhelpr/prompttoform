@@ -52,7 +52,6 @@ import {
   getLogicalPageCount,
   isFirstLogicalPage,
   isLastLogicalPage,
-  LogicalPageOrder,
 } from '../utils/page-ordering';
 
 /**
@@ -2287,7 +2286,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       <div className="w-full">
         <div
           className={getClassNames(
-            'mb-4 bg-green-50 p-4 rounded-md',
+            'mb-4p-4 rounded-md',
             getMergedClasses('thankYouContainer', settings)
           )}
         >
@@ -2304,8 +2303,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
         <div
           className={getClassNames(
-            'bg-white rounded-md shadow-sm p-6',
-            getMergedClasses('thankYouContainer', settings)
+            'rounded-md shadow-sm p-6',
+            getMergedClasses('thankYouMessageContainer', settings)
           )}
         >
           {thankYouPage.message && (
@@ -2389,7 +2388,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       <div
         key={page.id}
         className={getClassNames(
-          'bg-white rounded-md shadow-sm p-6',
+          ' rounded-md shadow-sm p-6',
           getMergedClasses('page', settings)
         )}
       >
