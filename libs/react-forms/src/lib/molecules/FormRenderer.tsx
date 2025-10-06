@@ -1235,7 +1235,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       formJson.app.pages.length === 0
     ) {
       return (
-        <div className="p-4 text-red-500">
+        <div
+          className={
+            getMergedClasses('noPagesDefined', settings) || 'p-4 text-red-500'
+          }
+        >
           {translationService.translateUI('noPagesDefined')}
         </div>
       );
@@ -1248,7 +1252,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     if (!currentPage) {
       return (
-        <div className="p-4 text-red-500">
+        <div
+          className={
+            getMergedClasses('invalidPageIndex', settings) || 'p-4 text-red-500'
+          }
+        >
           {translationService.translateUI('invalidPageIndex')}
         </div>
       );
@@ -1266,7 +1274,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const renderSubmissionData = (): React.ReactElement => {
     if (Object.keys(formSubmissions).length === 0) {
       return (
-        <div className="text-gray-500 italic">
+        <div
+          className={
+            getMergedClasses('noSubmissionsText', settings) ||
+            'text-gray-500 italic'
+          }
+        >
           {translationService.translateUI('noSubmissionsText')}
         </div>
       );
@@ -1813,7 +1826,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
         case 'form':
           return (
-            <div className="mb-6">
+            <div className={getMergedClasses('formLayout', settings) || 'mb-6'}>
               {label && <h3 className="text-lg font-medium mb-4">{label}</h3>}
               <form
                 data-netlify="true"
@@ -1836,7 +1849,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             <div className="mb-6 overflow-x-auto">
               {label && <h3 className="text-lg font-medium mb-4">{label}</h3>}
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead
+                  className={
+                    getMergedClasses('tableHeader', settings) || 'bg-gray-50'
+                  }
+                >
                   {Array.isArray(props?.headers) &&
                     props.headers.length > 0 && (
                       <tr>
@@ -1844,7 +1861,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                           <th
                             key={index}
                             scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            className={
+                              getMergedClasses('tableCell', settings) ||
+                              'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+                            }
                           >
                             {header}
                           </th>
@@ -1860,7 +1880,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                           row.map((cell, cellIndex) => (
                             <td
                               key={cellIndex}
-                              className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                              className={
+                                getMergedClasses('tableCell', settings) ||
+                                'px-6 py-4 whitespace-nowrap text-sm text-gray-500'
+                              }
                             >
                               {String(cell)}
                             </td>
@@ -1933,7 +1956,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
         default:
           return (
-            <div className="text-sm text-gray-500">
+            <div
+              className={
+                getMergedClasses('unsupportedComponent', settings) ||
+                'text-sm text-gray-500'
+              }
+            >
               Unsupported component type: {type}
             </div>
           );
@@ -2178,7 +2206,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
       default:
         return (
-          <div className="text-sm text-gray-500">
+          <div
+            className={
+              getMergedClasses('unsupportedArrayComponent', settings) ||
+              'text-sm text-gray-500'
+            }
+          >
             Unsupported array item component type: {comp.type}
           </div>
         );
@@ -2214,15 +2247,30 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       <div className="mb-4">
         <label
           htmlFor={prefixedFieldId}
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className={
+            getMergedClasses('fieldLabel', settings) ||
+            'block text-sm font-medium text-gray-700 mb-1'
+          }
         >
           {typeof component.label === 'string' ? component.label : ''}
           {!!component.validation?.required && (
-            <span className="text-red-500 ml-1">*</span>
+            <span
+              className={
+                getMergedClasses('requiredIndicator', settings) ||
+                'text-red-500 ml-1'
+              }
+            >
+              *
+            </span>
           )}
         </label>
         {showError && (
-          <div className="mt-1 text-sm text-red-500">
+          <div
+            className={
+              getMergedClasses('fieldError', settings) ||
+              'mt-1 text-sm text-red-500'
+            }
+          >
             {validationErrors[fieldId].map((error, index) => (
               <p key={index}>{error}</p>
             ))}
@@ -2231,17 +2279,33 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         {typeof component.props?.helperText === 'string' &&
           component.props.helperText.trim() !== '' &&
           !showError && (
-            <p className="mt-1 text-sm text-gray-500">
+            <p
+              className={
+                getMergedClasses('fieldHelperText', settings) ||
+                'mt-1 text-sm text-gray-500'
+              }
+            >
               {component.props.helperText}
             </p>
           )}
         {items.map((_, index) => (
-          <div key={index} className="flex items-center mb-2">
+          <div
+            key={index}
+            className={
+              getMergedClasses('arrayItemContainer', settings) ||
+              'flex items-center mb-2'
+            }
+          >
             <div className="flex-1">
               {component.arrayItems?.map((arrayItem) => (
                 <div key={arrayItem.id} className="mb-2">
                   {arrayItem.components.map((comp) => (
-                    <div key={comp.id} className="mb-2">
+                    <div
+                      key={comp.id}
+                      className={
+                        getMergedClasses('arrayItemField', settings) || 'mb-2'
+                      }
+                    >
                       {renderArrayItemComponent(comp, fieldId, index)}
                     </div>
                   ))}
@@ -2278,7 +2342,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     const thankYouPage = formJson.app.thankYouPage;
     if (!thankYouPage) {
       return (
-        <div className="p-4 text-red-500">Thank you page not configured</div>
+        <div
+          className={
+            getMergedClasses('thankYouNotConfigured', settings) ||
+            'p-4 text-red-500'
+          }
+        >
+          Thank you page not configured
+        </div>
       );
     }
 
@@ -2475,7 +2546,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       >
         {/* Check for invalid form data */}
         {!formJson || !formJson.app ? (
-          <div className="p-4 text-red-500">
+          <div
+            className={
+              getMergedClasses('invalidFormData', settings) ||
+              'p-4 text-red-500'
+            }
+          >
             {translationService.translateUI('invalidFormData')}
           </div>
         ) : showThankYouPage ? (

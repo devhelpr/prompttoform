@@ -133,6 +133,17 @@ For better organization and maintainability, you can now split CSS classes into 
       fieldInput: 'border-gray-300',
       fieldError: 'text-red-500',
       fieldHelperText: 'text-gray-500',
+      
+      // Error and status colors
+      errorMessage: 'text-red-600',
+      invalidFormData: 'text-red-600',
+      noPagesDefined: 'text-red-600',
+      unsupportedComponent: 'text-orange-500',
+      
+      // Form layout colors
+      tableHeader: 'bg-blue-50',
+      tableCell: 'text-gray-600',
+      requiredIndicator: 'text-red-600',
     },
     styleClasses: {
       // Style and layout classes
@@ -146,6 +157,20 @@ For better organization and maintainability, you can now split CSS classes into 
       fieldInput: 'w-full p-2 border rounded-md',
       fieldError: 'mt-1 text-sm',
       fieldHelperText: 'mt-1 text-sm',
+      
+      // Error and status styles
+      errorMessage: 'p-4 rounded-md',
+      invalidFormData: 'p-4 rounded-md',
+      noPagesDefined: 'p-4 rounded-md',
+      unsupportedComponent: 'text-sm italic',
+      
+      // Form layout styles
+      formLayout: 'mb-6 p-4',
+      tableHeader: '',
+      tableCell: 'px-4 py-2 text-sm',
+      arrayItemContainer: 'flex items-center gap-2 mb-3',
+      arrayItemField: 'flex-1',
+      requiredIndicator: 'ml-1',
     }
   }}
 />

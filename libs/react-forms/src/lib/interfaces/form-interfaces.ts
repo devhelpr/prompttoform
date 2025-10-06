@@ -217,12 +217,29 @@ export interface FormRendererColorClasses {
   submissionsData?: string;
 
   // Thank You Page Colors
-
   thankYouContainer?: string;
   thankYouMessageContainer?: string;
   thankYouTitle?: string;
   thankYouMessage?: string;
   thankYouButton?: string;
+
+  // Error and Status Colors
+  errorMessage?: string;
+  invalidFormData?: string;
+  noPagesDefined?: string;
+  invalidPageIndex?: string;
+  noSubmissionsText?: string;
+  unsupportedComponent?: string;
+  unsupportedArrayComponent?: string;
+  thankYouNotConfigured?: string;
+
+  // Form Layout Colors
+  formLayout?: string;
+  tableHeader?: string;
+  tableCell?: string;
+  arrayItemContainer?: string;
+  arrayItemField?: string;
+  requiredIndicator?: string;
 }
 
 /**
@@ -277,6 +294,24 @@ export interface FormRendererStyleClasses {
   thankYouTitle?: string;
   thankYouMessage?: string;
   thankYouButton?: string;
+
+  // Error and Status Styles
+  errorMessage?: string;
+  invalidFormData?: string;
+  noPagesDefined?: string;
+  invalidPageIndex?: string;
+  noSubmissionsText?: string;
+  unsupportedComponent?: string;
+  unsupportedArrayComponent?: string;
+  thankYouNotConfigured?: string;
+
+  // Form Layout Styles
+  formLayout?: string;
+  tableHeader?: string;
+  tableCell?: string;
+  arrayItemContainer?: string;
+  arrayItemField?: string;
+  requiredIndicator?: string;
 }
 
 /**

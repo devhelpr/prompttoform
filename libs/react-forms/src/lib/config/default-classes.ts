@@ -55,6 +55,24 @@ export const defaultColorClasses: FormRendererColorClasses = {
   thankYouTitle: 'text-green-700',
   thankYouMessage: 'text-gray-700',
   thankYouButton: 'bg-indigo-600 hover:bg-indigo-700 text-white',
+
+  // Error and Status Colors
+  errorMessage: 'text-red-500',
+  invalidFormData: 'text-red-500',
+  noPagesDefined: 'text-red-500',
+  invalidPageIndex: 'text-red-500',
+  noSubmissionsText: 'text-gray-500',
+  unsupportedComponent: 'text-gray-500',
+  unsupportedArrayComponent: 'text-gray-500',
+  thankYouNotConfigured: 'text-red-500',
+
+  // Form Layout Colors
+  formLayout: '',
+  tableHeader: 'bg-gray-50',
+  tableCell: 'text-gray-500',
+  arrayItemContainer: '',
+  arrayItemField: '',
+  requiredIndicator: 'text-red-500',
 };
 
 /**
@@ -109,6 +127,24 @@ export const defaultStyleClasses: FormRendererStyleClasses = {
   thankYouTitle: 'text-2xl font-bold',
   thankYouMessage: 'text-lg leading-relaxed',
   thankYouButton: 'px-6 py-2 rounded-md transition-colors',
+
+  // Error and Status Styles
+  errorMessage: 'p-4',
+  invalidFormData: 'p-4',
+  noPagesDefined: 'p-4',
+  invalidPageIndex: 'p-4',
+  noSubmissionsText: 'italic',
+  unsupportedComponent: 'text-sm',
+  unsupportedArrayComponent: 'text-sm',
+  thankYouNotConfigured: 'p-4',
+
+  // Form Layout Styles
+  formLayout: 'mb-6',
+  tableHeader: '',
+  tableCell: 'px-6 py-4 whitespace-nowrap text-sm',
+  arrayItemContainer: 'flex items-center mb-2',
+  arrayItemField: 'flex-1 mb-2',
+  requiredIndicator: 'ml-1',
 };
 
 /**
