@@ -53,7 +53,7 @@ export const defaultColorClasses: FormRendererColorClasses = {
   thankYouContainer: 'bg-green-50',
   thankYouMessageContainer: 'bg-white',
   thankYouTitle: 'text-green-700',
-  thankYouMessage: 'text-gray-700',
+  thankYouMessage: 'text-pink-700',
   thankYouButton: 'bg-indigo-600 hover:bg-indigo-700 text-white',
 
   // Error and Status Colors

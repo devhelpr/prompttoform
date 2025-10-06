@@ -2356,16 +2356,16 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     return (
       <div className="w-full">
         <div
-          className={getClassNames(
-            'mb-4p-4 rounded-md',
-            getMergedClasses('thankYouContainer', settings)
-          )}
+          className={
+            getMergedClasses('thankYouContainer', settings) ||
+            'mb-4 p-4 rounded-md'
+          }
         >
           <h1
-            className={getClassNames(
-              'text-2xl font-bold text-green-700',
-              getMergedClasses('thankYouTitle', settings)
-            )}
+            className={
+              getMergedClasses('thankYouTitle', settings) ||
+              'text-2xl font-bold text-green-700'
+            }
           >
             {translationService.translateApp('title', thankYouPage.title) ||
               translationService.translateUI('thankYouTitle')}
@@ -2373,18 +2373,18 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         </div>
 
         <div
-          className={getClassNames(
-            'rounded-md shadow-sm p-6',
-            getMergedClasses('thankYouMessageContainer', settings)
-          )}
+          className={
+            getMergedClasses('thankYouMessageContainer', settings) ||
+            'rounded-md shadow-sm p-6'
+          }
         >
           {thankYouPage.message && (
             <div className="mb-6">
               <p
-                className={getClassNames(
-                  'text-lg text-gray-700 leading-relaxed',
-                  getMergedClasses('thankYouMessage', settings)
-                )}
+                className={
+                  getMergedClasses('thankYouMessage', settings) ||
+                  'text-lg text-gray-700 leading-relaxed'
+                }
               >
                 {thankYouPage.message}
               </p>
@@ -2404,10 +2404,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               <button
                 type="button"
                 onClick={() => handleThankYouAction('restart')}
-                className={getClassNames(
-                  'px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
-                  getMergedClasses('thankYouButton', settings)
-                )}
+                className={
+                  getMergedClasses('thankYouButton', settings) ||
+                  'px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors'
+                }
               >
                 {translationService.translateUI('restartButton')}
               </button>
@@ -2458,16 +2458,15 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     return (
       <div
         key={page.id}
-        className={getClassNames(
-          ' rounded-md shadow-sm p-6',
-          getMergedClasses('page', settings)
-        )}
+        className={
+          getMergedClasses('page', settings) ||
+          'bg-white rounded-md shadow-sm p-6'
+        }
       >
         <h2
-          className={getClassNames(
-            'text-xl font-bold mb-6',
-            getMergedClasses('pageTitle', settings)
-          )}
+          className={
+            getMergedClasses('pageTitle', settings) || 'text-xl font-bold mb-6'
+          }
         >
           {translationService.translatePage(
             currentStepIndex,
@@ -2576,10 +2575,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 formJson.app.pages.length > 1 &&
                 !disabled && (
                   <div
-                    className={getClassNames(
-                      'mt-2 text-sm text-indigo-500',
-                      getMergedClasses('header', settings)
-                    )}
+                    className={
+                      getMergedClasses('header', settings) ||
+                      'mt-2 text-sm text-indigo-500'
+                    }
                   >
                     {translationService.translateUI('multiPageInfo', {
                       pageCount: getLogicalPageCount(logicalPageOrder),
@@ -2592,24 +2591,24 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
             {hasSubmissions && !disabled && settings.showFormSubmissions && (
               <div
-                className={getClassNames(
-                  'mt-8 border-t pt-6',
-                  getMergedClasses('submissionsContainer', settings)
-                )}
+                className={
+                  getMergedClasses('submissionsContainer', settings) ||
+                  'mt-8 border-t pt-6'
+                }
               >
                 <h3
-                  className={getClassNames(
-                    'text-lg font-medium mb-4',
-                    getMergedClasses('submissionsTitle', settings)
-                  )}
+                  className={
+                    getMergedClasses('submissionsTitle', settings) ||
+                    'text-lg font-medium mb-4'
+                  }
                 >
                   {translationService.translateUI('submissionsTitle')}
                 </h3>
                 <div
-                  className={getClassNames(
-                    'bg-gray-50 p-4 rounded-md',
-                    getMergedClasses('submissionsData', settings)
-                  )}
+                  className={
+                    getMergedClasses('submissionsData', settings) ||
+                    'bg-gray-50 p-4 rounded-md'
+                  }
                 >
                   {renderSubmissionData()}
                 </div>
