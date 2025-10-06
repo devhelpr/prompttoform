@@ -66,7 +66,7 @@ export const defaultStyleClasses: FormRendererStyleClasses = {
   container: 'w-full',
   header: 'p-4 rounded-md',
   headerTitle: 'text-2xl font-bold',
-  page: 'bg-white rounded-md shadow-sm p-6',
+  page: 'rounded-md shadow-sm p-6',
   pageTitle: 'text-xl font-bold mb-6',
 
   // Navigation Styles
