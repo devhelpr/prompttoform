@@ -3,6 +3,10 @@ import {
   FormRendererStyleClasses,
   FieldClasses,
 } from '../interfaces/form-interfaces';
+import {
+  defaultColorClasses,
+  defaultStyleClasses,
+} from '../config/default-classes';
 
 /**
  * Utility function to get class names with optional overrides
@@ -138,8 +142,11 @@ export const convertToFieldClasses = (
     ];
 
     fieldKeys.forEach((key) => {
-      const colorClass = colorClasses?.[key] || '';
-      const styleClass = styleClasses?.[key] || '';
+      // If only colorClasses is provided, use default style classes
+      // If only styleClasses is provided, use default color classes
+      // If both are provided, use both
+      const colorClass = colorClasses?.[key] || defaultColorClasses[key] || '';
+      const styleClass = styleClasses?.[key] || defaultStyleClasses[key] || '';
       fieldClasses[key] = mergeColorAndStyleClasses(colorClass, styleClass);
     });
   }

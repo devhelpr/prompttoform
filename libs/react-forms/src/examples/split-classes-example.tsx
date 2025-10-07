@@ -51,8 +51,10 @@ export const SplitClassesExample: React.FC = () => {
           Split Classes Example
         </h3>
         <p className="text-green-700 text-sm">
-          This example demonstrates the new split class structure with separate
-          color and style classes.
+          This example demonstrates the new split class structure. You can now
+          use just colorClasses to override colors while keeping default styles,
+          or just styleClasses to override layout while keeping default colors,
+          or both together.
         </p>
       </div>
 
@@ -61,6 +63,19 @@ export const SplitClassesExample: React.FC = () => {
         onSubmit={handleSubmit}
         settings={{
           showFormSubmissions: true,
+          // You can now use just colorClasses to override colors while keeping default styles:
+          // colorClasses: {
+          //   fieldLabel: 'text-blue-600',
+          //   fieldInput: 'border-blue-300 focus:border-blue-500',
+          //   fieldError: 'text-red-600',
+          // },
+          // Or just styleClasses to override layout while keeping default colors:
+          // styleClasses: {
+          //   fieldLabel: 'font-bold mb-2',
+          //   fieldInput: 'p-3 rounded-lg',
+          //   fieldError: 'mt-2 text-sm',
+          // },
+          // Or both together (as shown below):
           colorClasses: {
             // Color-related classes
             container: 'bg-green-50',

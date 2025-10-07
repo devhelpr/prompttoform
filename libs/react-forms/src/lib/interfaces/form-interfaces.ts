@@ -203,6 +203,7 @@ export interface FormRendererColorClasses {
   fieldText?: string;
   fieldError?: string;
   fieldHelperText?: string;
+  noContentText?: string;
 
   // Special Component Colors
   confirmationField?: string;
@@ -275,6 +276,7 @@ export interface FormRendererStyleClasses {
   fieldText?: string;
   fieldError?: string;
   fieldHelperText?: string;
+  noContentText?: string;
 
   // Special Component Styles
   confirmationField?: string;

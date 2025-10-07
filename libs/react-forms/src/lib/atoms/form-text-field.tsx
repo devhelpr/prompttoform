@@ -50,8 +50,13 @@ const TextFormFieldBase: React.FC<TextFormFieldProps> = ({
     fieldKey: 'field' | 'fieldLabel' | 'fieldText'
   ) => {
     if (colorClasses || styleClasses) {
-      const colorClass = colorClasses?.[fieldKey] || '';
-      const styleClass = styleClasses?.[fieldKey] || '';
+      // If only colorClasses is provided, use default style classes
+      // If only styleClasses is provided, use default color classes
+      // If both are provided, use both
+      const colorClass =
+        colorClasses?.[fieldKey] || defaultColorClasses[fieldKey] || '';
+      const styleClass =
+        styleClasses?.[fieldKey] || defaultStyleClasses[fieldKey] || '';
       return getClassNamesWithColorAndStyle(colorClass, styleClass);
     }
     return classes?.[fieldKey] || '';

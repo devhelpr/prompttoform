@@ -36,6 +36,7 @@ export const defaultColorClasses: FormRendererColorClasses = {
   fieldText: 'text-gray-700',
   fieldError: 'text-red-500',
   fieldHelperText: 'text-gray-500',
+  noContentText: 'text-gray-500',
 
   // Special Component Colors
   confirmationField: '',
@@ -108,6 +109,7 @@ export const defaultStyleClasses: FormRendererStyleClasses = {
   fieldText: '',
   fieldError: 'mt-1 text-sm',
   fieldHelperText: 'mt-1 text-sm',
+  noContentText: 'text-sm',
 
   // Special Component Styles
   confirmationField: '',
