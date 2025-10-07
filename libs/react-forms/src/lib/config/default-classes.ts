@@ -5,7 +5,7 @@ import {
 
 /**
  * Default color classes for form components
- * These classes control colors, backgrounds, borders, and text colors
+ * These classes control colors, backgrounds, borders, shadows,and text colors
  */
 export const defaultColorClasses: FormRendererColorClasses = {
   // Layout Colors
@@ -44,7 +44,7 @@ export const defaultColorClasses: FormRendererColorClasses = {
   confirmationInfoText: 'text-blue-800',
   confirmationWarningBox: 'bg-yellow-50 border-yellow-200',
   confirmationWarningText: 'text-yellow-800',
-  confirmationContainer: 'bg-white border-gray-200',
+  confirmationContainer: 'bg-white border-gray-200 shadow-sm',
   confirmationSectionHeader: 'bg-gray-50 border-gray-200',
   confirmationSectionTitle: 'text-gray-900',
   confirmationSectionContent: '',
@@ -92,7 +92,7 @@ export const defaultColorClasses: FormRendererColorClasses = {
 
 /**
  * Default style classes for form components
- * These classes control spacing, sizing, positioning, borders, shadows, etc.
+ * These classes control spacing, sizing, positioning, borders, etc.
  */
 export const defaultStyleClasses: FormRendererStyleClasses = {
   // Layout Styles
@@ -131,7 +131,7 @@ export const defaultStyleClasses: FormRendererStyleClasses = {
   confirmationInfoText: '',
   confirmationWarningBox: 'border rounded-md p-4',
   confirmationWarningText: '',
-  confirmationContainer: 'border rounded-lg shadow-sm',
+  confirmationContainer: 'border rounded-lg',
   confirmationSectionHeader: 'px-6 py-3 border-b',
   confirmationSectionTitle: 'text-md font-medium',
   confirmationSectionContent: 'px-6 py-4',
