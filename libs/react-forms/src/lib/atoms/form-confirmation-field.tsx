@@ -3,6 +3,14 @@ import {
   FormValues,
   FormComponentFieldProps,
 } from '../interfaces/form-interfaces';
+import {
+  getClassNames,
+  getClassNamesWithColorAndStyle,
+} from '../utils/class-utils';
+import {
+  defaultColorClasses,
+  defaultStyleClasses,
+} from '../config/default-classes';
 
 interface FormConfirmationFieldProps {
   fieldId: string;
@@ -18,6 +26,27 @@ interface FormConfirmationFieldProps {
       customMessage?: string;
     };
   };
+  classes?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldText?: string;
+    fieldError?: string;
+    fieldHelperText?: string;
+  };
+  colorClasses?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldText?: string;
+    fieldError?: string;
+    fieldHelperText?: string;
+  };
+  styleClasses?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldText?: string;
+    fieldError?: string;
+    fieldHelperText?: string;
+  };
 }
 
 export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
@@ -26,7 +55,26 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
   formValues,
   formComponents,
   props,
+  classes,
+  colorClasses,
+  styleClasses,
 }) => {
+  // Helper function to get merged classes
+  const getMergedFieldClasses = (
+    fieldKey:
+      | 'field'
+      | 'fieldLabel'
+      | 'fieldText'
+      | 'fieldError'
+      | 'fieldHelperText'
+  ) => {
+    if (colorClasses || styleClasses) {
+      const colorClass = colorClasses?.[fieldKey] || '';
+      const styleClass = styleClasses?.[fieldKey] || '';
+      return getClassNamesWithColorAndStyle(colorClass, styleClass);
+    }
+    return classes?.[fieldKey] || '';
+  };
   const settings = props?.confirmationSettings || {};
   const {
     showSummary = true,
@@ -308,11 +356,24 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
 
   if (!showSummary && !hasTemplateVariables) {
     return (
-      <div className="mb-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">
+      <div className={getMergedFieldClasses('field') || 'mb-6'}>
+        <h3
+          className={
+            getMergedFieldClasses('fieldLabel') ||
+            'text-lg font-medium text-gray-900 mb-4'
+          }
+        >
           {customTitle}
         </h3>
-        {customMessage && <p className="text-gray-600 mb-4">{customMessage}</p>}
+        {customMessage && (
+          <p
+            className={
+              getMergedFieldClasses('fieldText') || 'text-gray-600 mb-4'
+            }
+          >
+            {customMessage}
+          </p>
+        )}
         <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
           <p className="text-blue-800">
             Ready to submit your form. Click submit to continue.
@@ -327,8 +388,13 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
 
   if (formValueItems.length === 0) {
     return (
-      <div className="mb-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">
+      <div className={getMergedFieldClasses('field') || 'mb-6'}>
+        <h3
+          className={
+            getMergedFieldClasses('fieldLabel') ||
+            'text-lg font-medium text-gray-900 mb-4'
+          }
+        >
           {customTitle}
         </h3>
         <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
@@ -341,10 +407,19 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
   }
 
   return (
-    <div className="mb-6">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">{customTitle}</h3>
+    <div className={getMergedFieldClasses('field') || 'mb-6'}>
+      <h3
+        className={
+          getMergedFieldClasses('fieldLabel') ||
+          'text-lg font-medium text-gray-900 mb-4'
+        }
+      >
+        {customTitle}
+      </h3>
       {customMessage && (
-        <div className="text-gray-600 mb-6">
+        <div
+          className={getMergedFieldClasses('fieldText') || 'text-gray-600 mb-6'}
+        >
           {hasTemplateVariables ? (
             <div className="whitespace-pre-line">
               {replaceTemplateVariables(customMessage, formValues)}

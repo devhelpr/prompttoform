@@ -1,5 +1,12 @@
 import React from 'react';
-import { getClassNames } from '../utils/class-utils';
+import {
+  getClassNames,
+  getClassNamesWithColorAndStyle,
+} from '../utils/class-utils';
+import {
+  defaultColorClasses,
+  defaultStyleClasses,
+} from '../config/default-classes';
 import { Option } from '../interfaces/form-interfaces';
 
 interface FormRadioFieldProps {
@@ -22,6 +29,23 @@ interface FormRadioFieldProps {
     fieldRadio?: string;
     fieldError?: string;
     fieldHelperText?: string;
+    requiredIndicator?: string;
+  };
+  colorClasses?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldRadio?: string;
+    fieldError?: string;
+    fieldHelperText?: string;
+    requiredIndicator?: string;
+  };
+  styleClasses?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldRadio?: string;
+    fieldError?: string;
+    fieldHelperText?: string;
+    requiredIndicator?: string;
   };
 }
 
@@ -36,7 +60,26 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
   validationErrors,
   disabled = false,
   classes,
+  colorClasses,
+  styleClasses,
 }) => {
+  // Helper function to get merged classes
+  const getMergedFieldClasses = (
+    fieldKey:
+      | 'field'
+      | 'fieldLabel'
+      | 'fieldRadio'
+      | 'fieldError'
+      | 'fieldHelperText'
+      | 'requiredIndicator'
+  ) => {
+    if (colorClasses || styleClasses) {
+      const colorClass = colorClasses?.[fieldKey] || '';
+      const styleClass = styleClasses?.[fieldKey] || '';
+      return getClassNamesWithColorAndStyle(colorClass, styleClass);
+    }
+    return classes?.[fieldKey] || '';
+  };
   const errorId = `${fieldId}-error`;
   const helperId = `${fieldId}-helper`;
   const describedBy = showError
@@ -46,16 +89,21 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
     : undefined;
 
   return (
-    <div className={getClassNames('mb-4', classes?.field)}>
+    <div className={getMergedFieldClasses('field') || 'mb-4'}>
       <label
-        className={getClassNames(
-          'block text-sm font-medium text-gray-700 mb-1',
-          classes?.fieldLabel
-        )}
+        className={
+          getMergedFieldClasses('fieldLabel') ||
+          'block text-sm font-medium text-gray-700 mb-1'
+        }
       >
         {typeof label === 'string' ? label : ''}
         {!!validation?.required && (
-          <span className="text-red-500 ml-1" aria-hidden="true">
+          <span
+            className={
+              getMergedFieldClasses('requiredIndicator') || 'text-red-500 ml-1'
+            }
+            aria-hidden="true"
+          >
             *
           </span>
         )}
@@ -83,12 +131,12 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
                   value={optionValue}
                   checked={value === optionValue}
                   onChange={(e) => onChange(e.target.value)}
-                  className={getClassNames(
+                  className={
+                    getMergedFieldClasses('fieldRadio') ||
                     `h-4 w-4 text-indigo-600 focus:ring-indigo-500 ${
                       disabled ? 'cursor-not-allowed opacity-50' : ''
-                    }`,
-                    classes?.fieldRadio
-                  )}
+                    }`
+                  }
                   required={!!validation?.required}
                   disabled={disabled}
                 />
@@ -108,10 +156,9 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
       {showError && (
         <div
           id={errorId}
-          className={getClassNames(
-            'mt-1 text-sm text-red-500',
-            classes?.fieldError
-          )}
+          className={
+            getMergedFieldClasses('fieldError') || 'mt-1 text-sm text-red-500'
+          }
           role="alert"
           aria-live="polite"
         >
@@ -125,10 +172,10 @@ export const FormRadioField: React.FC<FormRadioFieldProps> = ({
         !showError && (
           <p
             id={helperId}
-            className={getClassNames(
-              'mt-1 text-sm text-gray-500',
-              classes?.fieldHelperText
-            )}
+            className={
+              getMergedFieldClasses('fieldHelperText') ||
+              'mt-1 text-sm text-gray-500'
+            }
           >
             {props.helperText}
           </p>

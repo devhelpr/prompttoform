@@ -1642,6 +1642,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                   label={translatedLabel}
                   props={processPropsWithTemplates(translatedProps)}
                   classes={getFieldClasses(settings)}
+                  colorClasses={settings.colorClasses}
+                  styleClasses={settings.styleClasses}
                 />
               </FormExpressionField>
             );
@@ -1654,6 +1656,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 props={translatedProps}
                 formValues={formValues}
                 classes={getFieldClasses(settings)}
+                colorClasses={settings.colorClasses}
+                styleClasses={settings.styleClasses}
               />
             );
           }
@@ -1679,6 +1683,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
               classes={getFieldClasses(settings)}
+              colorClasses={settings.colorClasses}
+              styleClasses={settings.styleClasses}
             />
           );
 
@@ -1703,6 +1709,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
               classes={getFieldClasses(settings)}
+              colorClasses={settings.colorClasses}
+              styleClasses={settings.styleClasses}
             />
           );
 
@@ -1723,6 +1731,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
               classes={getFieldClasses(settings)}
+              colorClasses={settings.colorClasses}
+              styleClasses={settings.styleClasses}
             />
           );
 
@@ -1740,6 +1750,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
               classes={getFieldClasses(settings)}
+              colorClasses={settings.colorClasses}
+              styleClasses={settings.styleClasses}
             />
           );
 
@@ -1761,6 +1773,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
               classes={getFieldClasses(settings)}
+              colorClasses={settings.colorClasses}
+              styleClasses={settings.styleClasses}
             />
           );
 
@@ -1782,6 +1796,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
               classes={getFieldClasses(settings)}
+              colorClasses={settings.colorClasses}
+              styleClasses={settings.styleClasses}
             />
           );
 
@@ -1821,6 +1837,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               children={component.children}
               renderComponent={renderComponent}
               classes={getFieldClasses(settings)}
+              colorClasses={settings.colorClasses}
+              styleClasses={settings.styleClasses}
             />
           );
 
@@ -1922,6 +1940,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               formValues={formValues}
               formComponents={getAllFormComponents()}
               props={processPropsWithTemplates(props)}
+              classes={getFieldClasses(settings)}
+              colorClasses={settings.colorClasses}
+              styleClasses={settings.styleClasses}
             />
           );
 
@@ -1951,6 +1972,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               validationErrors={validationErrors[fieldId] || []}
               disabled={disabled}
               classes={getFieldClasses(settings)}
+              colorClasses={settings.colorClasses}
+              styleClasses={settings.styleClasses}
             />
           );
 
@@ -2076,6 +2099,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             isArrayItem={true}
             arrayItemChangeHandler={handleArrayItemChange}
             classes={getFieldClasses(settings)}
+            colorClasses={settings.colorClasses}
+            styleClasses={settings.styleClasses}
           />
         );
 
@@ -2098,6 +2123,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
             classes={getFieldClasses(settings)}
+            colorClasses={settings.colorClasses}
+            styleClasses={settings.styleClasses}
           />
         );
 
@@ -2117,6 +2144,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
             classes={getFieldClasses(settings)}
+            colorClasses={settings.colorClasses}
+            styleClasses={settings.styleClasses}
           />
         );
 
@@ -2135,6 +2164,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
             classes={getFieldClasses(settings)}
+            colorClasses={settings.colorClasses}
+            styleClasses={settings.styleClasses}
           />
         );
 
@@ -2154,6 +2185,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
             classes={getFieldClasses(settings)}
+            colorClasses={settings.colorClasses}
+            styleClasses={settings.styleClasses}
           />
         );
 
@@ -2173,6 +2206,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
             classes={getFieldClasses(settings)}
+            colorClasses={settings.colorClasses}
+            styleClasses={settings.styleClasses}
           />
         );
 
@@ -2201,6 +2236,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             validationErrors={validationErrors[fieldId] || []}
             disabled={disabled}
             classes={getFieldClasses(settings)}
+            colorClasses={settings.colorClasses}
+            styleClasses={settings.styleClasses}
           />
         );
 

@@ -1,5 +1,12 @@
 import React, { useMemo } from 'react';
-import { getClassNames } from '../utils/class-utils';
+import {
+  getClassNames,
+  getClassNamesWithColorAndStyle,
+} from '../utils/class-utils';
+import {
+  defaultColorClasses,
+  defaultStyleClasses,
+} from '../config/default-classes';
 import { withExpression } from '../hoc/with-expression-v2';
 import { useExpressionContext } from '../contexts/expression-context';
 import { expressionEngine } from '../services/expression-engine.service';
@@ -18,14 +25,37 @@ interface TextFormFieldProps {
     fieldLabel?: string;
     fieldText?: string;
   };
+  colorClasses?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldText?: string;
+  };
+  styleClasses?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldText?: string;
+  };
 }
 
 const TextFormFieldBase: React.FC<TextFormFieldProps> = ({
   label,
   props,
   classes,
+  colorClasses,
+  styleClasses,
   formValues = {},
 }) => {
+  // Helper function to get merged classes
+  const getMergedFieldClasses = (
+    fieldKey: 'field' | 'fieldLabel' | 'fieldText'
+  ) => {
+    if (colorClasses || styleClasses) {
+      const colorClass = colorClasses?.[fieldKey] || '';
+      const styleClass = styleClasses?.[fieldKey] || '';
+      return getClassNamesWithColorAndStyle(colorClass, styleClass);
+    }
+    return classes?.[fieldKey] || '';
+  };
   // Process templates using the new template processing service
   const processedProps = useMemo(() => {
     if (!props) return props;
@@ -47,30 +77,30 @@ const TextFormFieldBase: React.FC<TextFormFieldProps> = ({
   }, [props, formValues]);
 
   return (
-    <div className={getClassNames('mb-4', classes?.field)}>
+    <div className={getMergedFieldClasses('field') || 'mb-4'}>
       {label && (
         <label
-          className={getClassNames(
-            'block text-sm font-medium text-gray-700 mb-1',
-            classes?.fieldLabel
-          )}
+          className={
+            getMergedFieldClasses('fieldLabel') ||
+            'block text-sm font-medium text-gray-700 mb-1'
+          }
         >
           {label}
         </label>
       )}
       {typeof processedProps?.content === 'string' && (
-        <p className={getClassNames('text-gray-700', classes?.fieldText)}>
+        <p className={getMergedFieldClasses('fieldText') || 'text-gray-700'}>
           {processedProps.content}
         </p>
       )}
       {typeof processedProps?.text === 'string' && (
-        <p className={getClassNames('text-gray-700', classes?.fieldText)}>
+        <p className={getMergedFieldClasses('fieldText') || 'text-gray-700'}>
           {processedProps.text}
         </p>
       )}
       {typeof processedProps?.helperText === 'string' &&
         processedProps.helperText.trim() !== '' && (
-          <p className={getClassNames('text-gray-700', classes?.fieldText)}>
+          <p className={getMergedFieldClasses('fieldText') || 'text-gray-700'}>
             {processedProps.helperText}
           </p>
         )}
