@@ -32,6 +32,20 @@ interface FormConfirmationFieldProps {
     fieldText?: string;
     fieldError?: string;
     fieldHelperText?: string;
+    confirmationInfoBox?: string;
+    confirmationInfoText?: string;
+    confirmationWarningBox?: string;
+    confirmationWarningText?: string;
+    confirmationContainer?: string;
+    confirmationSectionHeader?: string;
+    confirmationSectionTitle?: string;
+    confirmationSectionContent?: string;
+    confirmationFieldList?: string;
+    confirmationFieldItem?: string;
+    confirmationFieldLabel?: string;
+    confirmationFieldValue?: string;
+    confirmationTemplateText?: string;
+    confirmationSectionBorder?: string;
   };
   colorClasses?: {
     field?: string;
@@ -39,6 +53,20 @@ interface FormConfirmationFieldProps {
     fieldText?: string;
     fieldError?: string;
     fieldHelperText?: string;
+    confirmationInfoBox?: string;
+    confirmationInfoText?: string;
+    confirmationWarningBox?: string;
+    confirmationWarningText?: string;
+    confirmationContainer?: string;
+    confirmationSectionHeader?: string;
+    confirmationSectionTitle?: string;
+    confirmationSectionContent?: string;
+    confirmationFieldList?: string;
+    confirmationFieldItem?: string;
+    confirmationFieldLabel?: string;
+    confirmationFieldValue?: string;
+    confirmationTemplateText?: string;
+    confirmationSectionBorder?: string;
   };
   styleClasses?: {
     field?: string;
@@ -46,6 +74,20 @@ interface FormConfirmationFieldProps {
     fieldText?: string;
     fieldError?: string;
     fieldHelperText?: string;
+    confirmationInfoBox?: string;
+    confirmationInfoText?: string;
+    confirmationWarningBox?: string;
+    confirmationWarningText?: string;
+    confirmationContainer?: string;
+    confirmationSectionHeader?: string;
+    confirmationSectionTitle?: string;
+    confirmationSectionContent?: string;
+    confirmationFieldList?: string;
+    confirmationFieldItem?: string;
+    confirmationFieldLabel?: string;
+    confirmationFieldValue?: string;
+    confirmationTemplateText?: string;
+    confirmationSectionBorder?: string;
   };
 }
 
@@ -67,6 +109,20 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
       | 'fieldText'
       | 'fieldError'
       | 'fieldHelperText'
+      | 'confirmationInfoBox'
+      | 'confirmationInfoText'
+      | 'confirmationWarningBox'
+      | 'confirmationWarningText'
+      | 'confirmationContainer'
+      | 'confirmationSectionHeader'
+      | 'confirmationSectionTitle'
+      | 'confirmationSectionContent'
+      | 'confirmationFieldList'
+      | 'confirmationFieldItem'
+      | 'confirmationFieldLabel'
+      | 'confirmationFieldValue'
+      | 'confirmationTemplateText'
+      | 'confirmationSectionBorder'
   ) => {
     if (colorClasses || styleClasses) {
       // If only colorClasses is provided, use default style classes
@@ -379,8 +435,8 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
             {customMessage}
           </p>
         )}
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-          <p className="text-blue-800">
+        <div className={getMergedFieldClasses('confirmationInfoBox')}>
+          <p className={getMergedFieldClasses('confirmationInfoText')}>
             Ready to submit your form. Click submit to continue.
           </p>
         </div>
@@ -402,8 +458,8 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
         >
           {customTitle}
         </h3>
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-          <p className="text-yellow-800">
+        <div className={getMergedFieldClasses('confirmationWarningBox')}>
+          <p className={getMergedFieldClasses('confirmationWarningText')}>
             No form data to display. Please go back and fill out the form.
           </p>
         </div>
@@ -426,7 +482,7 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
           className={getMergedFieldClasses('fieldText') || 'text-gray-600 mb-6'}
         >
           {hasTemplateVariables ? (
-            <div className="whitespace-pre-line">
+            <div className={getMergedFieldClasses('confirmationTemplateText')}>
               {replaceTemplateVariables(customMessage, formValues)}
             </div>
           ) : (
@@ -435,30 +491,44 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+      <div className={getMergedFieldClasses('confirmationContainer')}>
         {Object.entries(groupedValues).map(([groupName, items], groupIndex) => (
           <div
             key={groupIndex}
-            className="border-b border-gray-200 last:border-b-0"
+            className={getMergedFieldClasses('confirmationSectionBorder')}
           >
             {groupBySection && (
-              <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
-                <h4 className="text-md font-medium text-gray-900">
+              <div
+                className={getMergedFieldClasses('confirmationSectionHeader')}
+              >
+                <h4
+                  className={getMergedFieldClasses('confirmationSectionTitle')}
+                >
                   {groupName}
                 </h4>
               </div>
             )}
-            <div className="px-6 py-4">
-              <dl className="space-y-4">
+            <div
+              className={getMergedFieldClasses('confirmationSectionContent')}
+            >
+              <dl className={getMergedFieldClasses('confirmationFieldList')}>
                 {items.map(({ component, value }, itemIndex) => (
                   <div
                     key={itemIndex}
-                    className="flex flex-col sm:flex-row sm:justify-between"
+                    className={getMergedFieldClasses('confirmationFieldItem')}
                   >
-                    <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+                    <dt
+                      className={getMergedFieldClasses(
+                        'confirmationFieldLabel'
+                      )}
+                    >
                       {getComponentLabel(component)}
                     </dt>
-                    <dd className="text-sm text-gray-900 sm:text-right max-w-xs break-words">
+                    <dd
+                      className={getMergedFieldClasses(
+                        'confirmationFieldValue'
+                      )}
+                    >
                       {getDisplayValue(component, value)}
                     </dd>
                   </div>
@@ -469,8 +539,10 @@ export const FormConfirmationField: React.FC<FormConfirmationFieldProps> = ({
         ))}
       </div>
 
-      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-        <p className="text-blue-800 text-sm">
+      <div className={`mt-4 ${getMergedFieldClasses('confirmationInfoBox')}`}>
+        <p
+          className={`${getMergedFieldClasses('confirmationInfoText')} text-sm`}
+        >
           Please review the information above. If everything looks correct,
           click submit to proceed. If you need to make changes, use the Previous
           button to go back.

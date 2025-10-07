@@ -12,7 +12,7 @@ export const defaultColorClasses: FormRendererColorClasses = {
   container: '',
   header: 'bg-indigo-50',
   headerTitle: 'text-indigo-700',
-  page: 'bg-white',
+  page: 'bg-white shadow-sm',
   pageTitle: '',
 
   // Navigation Colors
@@ -40,6 +40,20 @@ export const defaultColorClasses: FormRendererColorClasses = {
 
   // Special Component Colors
   confirmationField: '',
+  confirmationInfoBox: 'bg-blue-50 border-blue-200',
+  confirmationInfoText: 'text-blue-800',
+  confirmationWarningBox: 'bg-yellow-50 border-yellow-200',
+  confirmationWarningText: 'text-yellow-800',
+  confirmationContainer: 'bg-white border-gray-200',
+  confirmationSectionHeader: 'bg-gray-50 border-gray-200',
+  confirmationSectionTitle: 'text-gray-900',
+  confirmationSectionContent: '',
+  confirmationFieldList: '',
+  confirmationFieldItem: '',
+  confirmationFieldLabel: 'text-gray-500',
+  confirmationFieldValue: 'text-gray-900',
+  confirmationTemplateText: '',
+  confirmationSectionBorder: 'border-gray-200',
   arrayField: '',
   arrayItem: '',
   arrayAddButton: 'bg-indigo-600 hover:bg-indigo-700 text-white',
@@ -52,7 +66,7 @@ export const defaultColorClasses: FormRendererColorClasses = {
 
   // Thank You Page Colors
   thankYouContainer: 'bg-green-50',
-  thankYouMessageContainer: 'bg-white',
+  thankYouMessageContainer: 'bg-white shadow-sm',
   thankYouTitle: 'text-green-700',
   thankYouMessage: 'text-pink-700',
   thankYouButton: 'bg-indigo-600 hover:bg-indigo-700 text-white',
@@ -85,7 +99,7 @@ export const defaultStyleClasses: FormRendererStyleClasses = {
   container: 'w-full',
   header: 'p-4 rounded-md',
   headerTitle: 'text-2xl font-bold',
-  page: 'rounded-md shadow-sm p-6',
+  page: 'rounded-md  p-6',
   pageTitle: 'text-xl font-bold mb-6',
 
   // Navigation Styles
@@ -113,6 +127,20 @@ export const defaultStyleClasses: FormRendererStyleClasses = {
 
   // Special Component Styles
   confirmationField: '',
+  confirmationInfoBox: 'border rounded-md p-4',
+  confirmationInfoText: '',
+  confirmationWarningBox: 'border rounded-md p-4',
+  confirmationWarningText: '',
+  confirmationContainer: 'border rounded-lg shadow-sm',
+  confirmationSectionHeader: 'px-6 py-3 border-b',
+  confirmationSectionTitle: 'text-md font-medium',
+  confirmationSectionContent: 'px-6 py-4',
+  confirmationFieldList: 'space-y-4',
+  confirmationFieldItem: 'flex flex-col sm:flex-row sm:justify-between',
+  confirmationFieldLabel: 'text-sm font-medium mb-1 sm:mb-0',
+  confirmationFieldValue: 'text-sm sm:text-right max-w-xs break-words',
+  confirmationTemplateText: 'whitespace-pre-line',
+  confirmationSectionBorder: 'border-b last:border-b-0',
   arrayField: '',
   arrayItem: '',
   arrayAddButton: 'px-4 py-2 rounded-md',
@@ -125,7 +153,7 @@ export const defaultStyleClasses: FormRendererStyleClasses = {
 
   // Thank You Page Styles
   thankYouContainer: 'p-4 rounded-md',
-  thankYouMessageContainer: 'rounded-md shadow-sm p-',
+  thankYouMessageContainer: 'rounded-md  p-6',
   thankYouTitle: 'text-2xl font-bold',
   thankYouMessage: 'text-lg leading-relaxed',
   thankYouButton: 'px-6 py-2 rounded-md transition-colors',

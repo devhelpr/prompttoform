@@ -207,6 +207,20 @@ export interface FormRendererColorClasses {
 
   // Special Component Colors
   confirmationField?: string;
+  confirmationInfoBox?: string;
+  confirmationInfoText?: string;
+  confirmationWarningBox?: string;
+  confirmationWarningText?: string;
+  confirmationContainer?: string;
+  confirmationSectionHeader?: string;
+  confirmationSectionTitle?: string;
+  confirmationSectionContent?: string;
+  confirmationFieldList?: string;
+  confirmationFieldItem?: string;
+  confirmationFieldLabel?: string;
+  confirmationFieldValue?: string;
+  confirmationTemplateText?: string;
+  confirmationSectionBorder?: string;
   arrayField?: string;
   arrayItem?: string;
   arrayAddButton?: string;
@@ -280,6 +294,20 @@ export interface FormRendererStyleClasses {
 
   // Special Component Styles
   confirmationField?: string;
+  confirmationInfoBox?: string;
+  confirmationInfoText?: string;
+  confirmationWarningBox?: string;
+  confirmationWarningText?: string;
+  confirmationContainer?: string;
+  confirmationSectionHeader?: string;
+  confirmationSectionTitle?: string;
+  confirmationSectionContent?: string;
+  confirmationFieldList?: string;
+  confirmationFieldItem?: string;
+  confirmationFieldLabel?: string;
+  confirmationFieldValue?: string;
+  confirmationTemplateText?: string;
+  confirmationSectionBorder?: string;
   arrayField?: string;
   arrayItem?: string;
   arrayAddButton?: string;
@@ -352,6 +380,20 @@ export interface FormRendererClasses {
 
   // Special Components
   confirmationField?: string;
+  confirmationInfoBox?: string;
+  confirmationInfoText?: string;
+  confirmationWarningBox?: string;
+  confirmationWarningText?: string;
+  confirmationContainer?: string;
+  confirmationSectionHeader?: string;
+  confirmationSectionTitle?: string;
+  confirmationSectionContent?: string;
+  confirmationFieldList?: string;
+  confirmationFieldItem?: string;
+  confirmationFieldLabel?: string;
+  confirmationFieldValue?: string;
+  confirmationTemplateText?: string;
+  confirmationSectionBorder?: string;
   arrayField?: string;
   arrayItem?: string;
   arrayAddButton?: string;
