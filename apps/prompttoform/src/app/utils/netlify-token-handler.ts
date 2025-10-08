@@ -40,6 +40,17 @@ export const handleNetlifyRedirect = () => {
   // Process the token if present
   if (accessToken) {
     netlifyTokenHandler();
+
+    // Check if we need to trigger deployment after authentication
+    const pendingDeploy = localStorage.getItem('netlify_pending_deploy');
+    if (pendingDeploy === 'true') {
+      console.log(
+        '✅ Netlify authentication successful, deployment will be triggered'
+      );
+      // Set a flag to trigger deployment after the page loads
+      localStorage.setItem('netlify_trigger_deploy', 'true');
+      localStorage.removeItem('netlify_pending_deploy');
+    }
   }
 
   // Handle state parameter to redirect back to the original location
