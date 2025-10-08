@@ -52,25 +52,6 @@ export const handleNetlifyRedirect = () => {
       localStorage.removeItem('netlify_pending_deploy');
     }
   }
-
-  // Handle state parameter to redirect back to the original location
-  if (stateParam) {
-    try {
-      // The state parameter contains the original URL where the user was before authentication
-      const originalUrl = decodeURIComponent(stateParam);
-      console.log('Redirecting back to original URL:', originalUrl);
-
-      // Clean up URL parameters to avoid infinite redirects
-      const cleanUrl = originalUrl.split('?')[0];
-
-      // Use a small delay to ensure the token is processed
-      setTimeout(() => {
-        window.location.href = cleanUrl;
-      }, 100);
-    } catch (error) {
-      console.error('Error processing state parameter:', error);
-    }
-  }
 };
 
 export const setNetlifySiteId = (siteId: string) => {
