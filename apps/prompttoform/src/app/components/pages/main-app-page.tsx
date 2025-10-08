@@ -122,22 +122,13 @@ export function MainAppPage({
   // Check for pending deployment after Netlify authentication
   useEffect(() => {
     const triggerDeploy = localStorage.getItem('netlify_trigger_deploy');
-    if (
-      triggerDeploy === 'true' &&
-      generatedJson &&
-      parsedJson &&
-      currentView === 'editor'
-    ) {
+    if (triggerDeploy === 'true' && generatedJson && parsedJson) {
       console.log('🚀 Triggering deployment after Netlify authentication');
-      console.log('📄 Form data available:', !!generatedJson, !!parsedJson);
       localStorage.removeItem('netlify_trigger_deploy');
-
-      // Add a small delay to ensure the UI is ready
-      setTimeout(() => {
-        handleDeploy();
-      }, 500);
+      // Trigger deployment
+      handleDeploy();
     }
-  }, [generatedJson, parsedJson, currentView]);
+  }, [generatedJson, parsedJson]);
 
   const handleGenerate = async (prompt: string) => {
     setPrompt(prompt);

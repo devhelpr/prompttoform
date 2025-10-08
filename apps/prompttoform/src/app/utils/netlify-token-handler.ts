@@ -43,49 +43,13 @@ export const handleNetlifyRedirect = () => {
 
     // Check if we need to trigger deployment after authentication
     const pendingDeploy = localStorage.getItem('netlify_pending_deploy');
-    const authTimestamp = localStorage.getItem('netlify_auth_timestamp');
-
-    if (pendingDeploy === 'true' && authTimestamp) {
-      // Check if the authentication is recent (within last 5 minutes)
-      const now = Date.now();
-      const authTime = parseInt(authTimestamp);
-      const timeDiff = now - authTime;
-
-      if (timeDiff < 5 * 60 * 1000) {
-        // 5 minutes
-        console.log(
-          '✅ Netlify authentication successful, deployment will be triggered'
-        );
-        // Set a flag to trigger deployment after the page loads
-        localStorage.setItem('netlify_trigger_deploy', 'true');
-        localStorage.removeItem('netlify_pending_deploy');
-        localStorage.removeItem('netlify_auth_timestamp');
-      } else {
-        console.log(
-          '⚠️ Netlify authentication too old, skipping deployment trigger'
-        );
-        localStorage.removeItem('netlify_pending_deploy');
-        localStorage.removeItem('netlify_auth_timestamp');
-      }
-    }
-  }
-
-  // Handle state parameter to redirect back to the original location
-  if (stateParam) {
-    try {
-      // The state parameter contains the original URL where the user was before authentication
-      const originalUrl = decodeURIComponent(stateParam);
-      console.log('Redirecting back to original URL:', originalUrl);
-
-      // Clean up URL parameters to avoid infinite redirects
-      const cleanUrl = originalUrl.split('?')[0];
-
-      // Use a small delay to ensure the token is processed
-      setTimeout(() => {
-        window.location.href = cleanUrl;
-      }, 100);
-    } catch (error) {
-      console.error('Error processing state parameter:', error);
+    if (pendingDeploy === 'true') {
+      console.log(
+        '✅ Netlify authentication successful, deployment will be triggered'
+      );
+      // Set a flag to trigger deployment after the page loads
+      localStorage.setItem('netlify_trigger_deploy', 'true');
+      localStorage.removeItem('netlify_pending_deploy');
     }
   }
 };

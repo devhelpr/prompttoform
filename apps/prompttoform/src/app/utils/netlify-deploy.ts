@@ -43,8 +43,6 @@ export const deployWithNetlify = (
   } else {
     // Store a flag to trigger deployment after authentication
     localStorage.setItem('netlify_pending_deploy', 'true');
-    // Store the current timestamp to ensure we only trigger for recent authentication
-    localStorage.setItem('netlify_auth_timestamp', Date.now().toString());
 
     const redirectUrl = `https://form-generator-worker.maikel-f16.workers.dev/netlify/auth-prompttoform?state=${window.location.href}`;
 
