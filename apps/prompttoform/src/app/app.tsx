@@ -1,14 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from './components/molecules/ErrorBoundary';
 import { FormFlowPage } from './components/pages/form-flow-page';
 import { MainAppPage } from './components/pages/main-app-page';
+import { handleNetlifyRedirect } from './utils/netlify-token-handler';
 
 // AppStateProvider removed - using Zustand store instead
 
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Handle Netlify authentication redirect on app load
+  useEffect(() => {
+    handleNetlifyRedirect();
+  }, []);
 
   const handleNavigateToFormFlow = (formDefinition: unknown) => {
     navigate('/form-flow', { state: { formDefinition } });
