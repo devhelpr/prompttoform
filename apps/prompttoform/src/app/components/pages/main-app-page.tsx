@@ -237,39 +237,7 @@ export function MainAppPage({
     }
   }, [updatedFormDefinition, setGeneratedJson]);
 
-  // Handle session restoration after Netlify authentication
-  useEffect(() => {
-    // Check URL parameters for triggerDeploy flag
-    const urlParams = new URLSearchParams(window.location.search);
-    const triggerDeploy = urlParams.get('triggerDeploy') === 'true';
-
-    console.log('🔍 MainAppPage useEffect - triggerDeploy:', triggerDeploy);
-    console.log('🔍 MainAppPage useEffect - currentView:', currentView);
-
-    if (triggerDeploy) {
-      console.log('🔄 TriggerDeploy: Detected post-authentication redirect');
-
-      // Get stored data from localStorage
-      const formJson = loadFormJsonFromLocalStorage();
-      const storedSessionId = loadSessionIdFromLocalStorage();
-
-      console.log('📦 Stored session ID:', storedSessionId);
-      console.log(
-        '📄 Form JSON from localStorage:',
-        formJson ? 'Present' : 'Missing'
-      );
-
-      if (formJson && storedSessionId) {
-        // Restore session data and trigger deployment
-        handlePostAuthenticationRestoration(storedSessionId, formJson);
-      } else {
-        console.log(
-          '⚠️ Missing stored data for post-authentication restoration'
-        );
-      }
-    }
-  }, [currentView, handlePostAuthenticationRestoration]);
-
+  // Define handlePostAuthenticationRestoration before using it in useEffect
   const handlePostAuthenticationRestoration = useCallback(
     async (sessionId: string, formJson: string) => {
       try {
@@ -375,6 +343,39 @@ export function MainAppPage({
       handleDeploy,
     ]
   );
+
+  // Handle session restoration after Netlify authentication
+  useEffect(() => {
+    // Check URL parameters for triggerDeploy flag
+    const urlParams = new URLSearchParams(window.location.search);
+    const triggerDeploy = urlParams.get('triggerDeploy') === 'true';
+
+    console.log('🔍 MainAppPage useEffect - triggerDeploy:', triggerDeploy);
+    console.log('🔍 MainAppPage useEffect - currentView:', currentView);
+
+    if (triggerDeploy) {
+      console.log('🔄 TriggerDeploy: Detected post-authentication redirect');
+
+      // Get stored data from localStorage
+      const formJson = loadFormJsonFromLocalStorage();
+      const storedSessionId = loadSessionIdFromLocalStorage();
+
+      console.log('📦 Stored session ID:', storedSessionId);
+      console.log(
+        '📄 Form JSON from localStorage:',
+        formJson ? 'Present' : 'Missing'
+      );
+
+      if (formJson && storedSessionId) {
+        // Restore session data and trigger deployment
+        handlePostAuthenticationRestoration(storedSessionId, formJson);
+      } else {
+        console.log(
+          '⚠️ Missing stored data for post-authentication restoration'
+        );
+      }
+    }
+  }, [currentView, handlePostAuthenticationRestoration]);
 
   const handleGenerate = async (prompt: string) => {
     setPrompt(prompt);
