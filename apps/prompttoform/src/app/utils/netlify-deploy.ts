@@ -41,7 +41,13 @@ export const deployWithNetlify = (
         onError?.(error.message);
       });
   } else {
-    const redirectUrl = `https://form-generator-worker.maikel-f16.workers.dev/netlify/auth-prompttoform?state=${window.location.href}`;
+    // Add triggerDeploy parameter to the current URL for post-authentication restoration
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('triggerDeploy', 'true');
+
+    const redirectUrl = `https://form-generator-worker.maikel-f16.workers.dev/netlify/auth-prompttoform?state=${encodeURIComponent(
+      currentUrl.toString()
+    )}`;
 
     window.location.href = redirectUrl;
   }
