@@ -239,6 +239,9 @@ export function MainAppPage({
   useEffect(() => {
     const triggerDeploy = sessionStorage.getItem('triggerDeploy') === 'true';
 
+    console.log('🔍 MainAppPage useEffect - triggerDeploy:', triggerDeploy);
+    console.log('🔍 MainAppPage useEffect - currentView:', currentView);
+
     if (triggerDeploy) {
       console.log(
         '🔄 MainAppPage: Handling post-authentication session restoration'
@@ -265,6 +268,9 @@ export function MainAppPage({
 
           // Transition to editor view
           transitionToEditor();
+
+          console.log('🔄 Called transitionToEditor()');
+          console.log('🔍 Current view after transition:', currentView);
 
           console.log('✅ Session restoration completed');
 
@@ -299,6 +305,7 @@ export function MainAppPage({
     transitionToEditor,
     setError,
     handleDeploy,
+    currentView,
   ]);
 
   const handleGenerate = async (prompt: string) => {
@@ -573,8 +580,38 @@ export function MainAppPage({
     }
   };
 
-  // Show initial state or editor based on current view
-  if (currentView === 'initial') {
+  // Check if we have session restoration data that should trigger editor view
+  const triggerDeploy = sessionStorage.getItem('triggerDeploy') === 'true';
+  const hasRestorationData =
+    triggerDeploy &&
+    sessionStorage.getItem('restoreSessionId') &&
+    sessionStorage.getItem('restoreFormJson');
+
+  // If we have restoration data but no generatedJson yet, we should show editor
+  // The useEffect will handle setting the data
+  const shouldShowEditor =
+    currentView === 'editor' ||
+    (hasRestorationData &&
+      (generatedJson || sessionStorage.getItem('restoreFormJson')));
+
+  // Debug logging for view determination
+  console.log('🔍 MainAppPage render - currentView:', currentView);
+  console.log(
+    '🔍 MainAppPage render - hasRestorationData:',
+    hasRestorationData
+  );
+  console.log('🔍 MainAppPage render - shouldShowEditor:', shouldShowEditor);
+  console.log(
+    '🔍 MainAppPage render - generatedJson length:',
+    generatedJson?.length || 0
+  );
+  console.log(
+    '🔍 MainAppPage render - sessionStorage triggerDeploy:',
+    sessionStorage.getItem('triggerDeploy')
+  );
+
+  // Show initial state or editor based on current view or restoration data
+  if (!shouldShowEditor) {
     return (
       <ErrorBoundary>
         <InitialStateLayout
