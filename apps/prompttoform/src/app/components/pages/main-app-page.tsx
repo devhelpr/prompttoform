@@ -31,6 +31,8 @@ import { getCurrentAPIConfig } from '../../services/llm-api';
 import {
   saveSessionIdToLocalStorage,
   saveFormJsonToLocalStorage,
+  loadFormJsonFromLocalStorage,
+  loadSessionIdFromLocalStorage,
 } from '../../utils/local-storage';
 
 // Initialize services
@@ -237,76 +239,142 @@ export function MainAppPage({
 
   // Handle session restoration after Netlify authentication
   useEffect(() => {
-    const triggerDeploy = sessionStorage.getItem('triggerDeploy') === 'true';
+    // Check URL parameters for triggerDeploy flag
+    const urlParams = new URLSearchParams(window.location.search);
+    const triggerDeploy = urlParams.get('triggerDeploy') === 'true';
 
     console.log('🔍 MainAppPage useEffect - triggerDeploy:', triggerDeploy);
     console.log('🔍 MainAppPage useEffect - currentView:', currentView);
 
     if (triggerDeploy) {
+      console.log('🔄 TriggerDeploy: Detected post-authentication redirect');
+
+      // Get stored data from localStorage
+      const formJson = loadFormJsonFromLocalStorage();
+      const storedSessionId = loadSessionIdFromLocalStorage();
+
+      console.log('📦 Stored session ID:', storedSessionId);
       console.log(
-        '🔄 MainAppPage: Handling post-authentication session restoration'
+        '📄 Form JSON from localStorage:',
+        formJson ? 'Present' : 'Missing'
       );
 
-      const restoreSessionId = sessionStorage.getItem('restoreSessionId');
-      const restoreFormJson = sessionStorage.getItem('restoreFormJson');
-      const restorePrompt = sessionStorage.getItem('restorePrompt');
-      const restoreParsedJson = sessionStorage.getItem('restoreParsedJson');
+      if (formJson && storedSessionId) {
+        // Restore session data and trigger deployment
+        handlePostAuthenticationRestoration(storedSessionId, formJson);
+      } else {
+        console.log(
+          '⚠️ Missing stored data for post-authentication restoration'
+        );
+      }
+    }
+  }, [currentView, handlePostAuthenticationRestoration]);
 
-      if (restoreSessionId && restoreFormJson && restoreParsedJson) {
-        console.log('📦 Restoring session ID:', restoreSessionId);
-        console.log('📝 Restoring prompt:', restorePrompt);
-        console.log('📄 Restoring form JSON (length):', restoreFormJson.length);
+  const handlePostAuthenticationRestoration = useCallback(
+    async (sessionId: string, formJson: string) => {
+      try {
+        console.log('🔄 Loading session data from IndexedDB...');
 
-        try {
-          // Parse the stored parsed JSON
-          const parsedJson = JSON.parse(restoreParsedJson);
+        // Load session data from IndexedDB
+        const sessionData = await FormSessionService.getSessionWithLatestJson(
+          sessionId
+        );
 
-          // Set the restored data
-          setCurrentSessionId(restoreSessionId);
-          setPrompt(restorePrompt || '');
-          setGeneratedJson(restoreFormJson, parsedJson);
+        if (sessionData) {
+          console.log('✅ Session data loaded from IndexedDB');
+          console.log('📝 Session prompt:', sessionData.session.prompt);
+          console.log('📄 Session JSON length:', sessionData.latestJson.length);
 
-          // Transition to editor view
+          // Parse the JSON to validate it
+          const parsedJson = parseJsonSafely(sessionData.latestJson);
+          if (parsedJson) {
+            console.log('✅ JSON parsed successfully');
+
+            // Set the restored data directly in the component state
+            setCurrentSessionId(sessionId);
+            setPrompt(sessionData.session.prompt);
+            setGeneratedJson(sessionData.latestJson, parsedJson);
+
+            // Transition to editor view
+            transitionToEditor();
+
+            console.log('🔄 Called transitionToEditor()');
+            console.log('✅ Session restoration completed');
+
+            // Trigger deployment after a short delay to ensure state is set
+            setTimeout(() => {
+              console.log(
+                '🚀 Auto-triggering deployment after session restoration...'
+              );
+              handleDeploy();
+            }, 500);
+          } else {
+            console.log('⚠️ JSON parsing failed, using localStorage data');
+            // Fallback to localStorage data
+            const fallbackParsedJson = parseJsonSafely(formJson);
+            if (fallbackParsedJson) {
+              setCurrentSessionId(sessionId);
+              setPrompt('');
+              setGeneratedJson(formJson, fallbackParsedJson);
+              transitionToEditor();
+
+              setTimeout(() => {
+                console.log(
+                  '🚀 Auto-triggering deployment after fallback restoration...'
+                );
+                handleDeploy();
+              }, 500);
+            }
+          }
+        } else {
+          console.log(
+            '❌ Session not found in IndexedDB, using localStorage data'
+          );
+          // Fallback to localStorage data
+          const parsedJson = parseJsonSafely(formJson);
+          if (parsedJson) {
+            setCurrentSessionId(sessionId);
+            setPrompt('');
+            setGeneratedJson(formJson, parsedJson);
+            transitionToEditor();
+
+            setTimeout(() => {
+              console.log(
+                '🚀 Auto-triggering deployment after localStorage fallback...'
+              );
+              handleDeploy();
+            }, 500);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Failed to load session data from IndexedDB:', error);
+        console.log('🔄 Falling back to localStorage data...');
+
+        // Fallback to localStorage data
+        const parsedJson = parseJsonSafely(formJson);
+        if (parsedJson) {
+          setCurrentSessionId(sessionId);
+          setPrompt('');
+          setGeneratedJson(formJson, parsedJson);
           transitionToEditor();
 
-          console.log('🔄 Called transitionToEditor()');
-          console.log('🔍 Current view after transition:', currentView);
-
-          console.log('✅ Session restoration completed');
-
-          // Clear the session storage data
-          sessionStorage.removeItem('triggerDeploy');
-          sessionStorage.removeItem('restoreSessionId');
-          sessionStorage.removeItem('restoreFormJson');
-          sessionStorage.removeItem('restorePrompt');
-          sessionStorage.removeItem('restoreParsedJson');
-
-          // Trigger deployment after a short delay to ensure state is set
           setTimeout(() => {
             console.log(
-              '🚀 Auto-triggering deployment after session restoration...'
+              '🚀 Auto-triggering deployment after error fallback...'
             );
             handleDeploy();
           }, 500);
-        } catch (error) {
-          console.error('❌ Failed to restore session data:', error);
-          setError('Failed to restore session after authentication');
         }
-      } else {
-        console.log('⚠️ Missing session restoration data');
-        // Clear the trigger flag even if data is missing
-        sessionStorage.removeItem('triggerDeploy');
       }
-    }
-  }, [
-    setCurrentSessionId,
-    setPrompt,
-    setGeneratedJson,
-    transitionToEditor,
-    setError,
-    handleDeploy,
-    currentView,
-  ]);
+    },
+    [
+      setCurrentSessionId,
+      setPrompt,
+      setGeneratedJson,
+      transitionToEditor,
+      handleDeploy,
+    ]
+  );
 
   const handleGenerate = async (prompt: string) => {
     setPrompt(prompt);
@@ -580,38 +648,15 @@ export function MainAppPage({
     }
   };
 
-  // Check if we have session restoration data that should trigger editor view
-  const triggerDeploy = sessionStorage.getItem('triggerDeploy') === 'true';
-  const hasRestorationData =
-    triggerDeploy &&
-    sessionStorage.getItem('restoreSessionId') &&
-    sessionStorage.getItem('restoreFormJson');
-
-  // If we have restoration data but no generatedJson yet, we should show editor
-  // The useEffect will handle setting the data
-  const shouldShowEditor =
-    currentView === 'editor' ||
-    (hasRestorationData &&
-      (generatedJson || sessionStorage.getItem('restoreFormJson')));
-
   // Debug logging for view determination
   console.log('🔍 MainAppPage render - currentView:', currentView);
-  console.log(
-    '🔍 MainAppPage render - hasRestorationData:',
-    hasRestorationData
-  );
-  console.log('🔍 MainAppPage render - shouldShowEditor:', shouldShowEditor);
   console.log(
     '🔍 MainAppPage render - generatedJson length:',
     generatedJson?.length || 0
   );
-  console.log(
-    '🔍 MainAppPage render - sessionStorage triggerDeploy:',
-    sessionStorage.getItem('triggerDeploy')
-  );
 
-  // Show initial state or editor based on current view or restoration data
-  if (!shouldShowEditor) {
+  // Show initial state or editor based on current view
+  if (currentView === 'initial') {
     return (
       <ErrorBoundary>
         <InitialStateLayout
