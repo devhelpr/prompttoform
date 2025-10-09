@@ -117,18 +117,18 @@ export function MainAppPage({
     } else {
       console.log('MainAppPage: No updatedFormDefinition to process');
     }
-  }, [updatedFormDefinition, setGeneratedJson]);
+  }, [updatedFormDefinition]);
 
-  // Check for pending view transition after Netlify authentication
+  // Check for pending deployment after Netlify authentication
   useEffect(() => {
-    const triggerEditor = localStorage.getItem('netlify_trigger_editor');
-    if (triggerEditor === 'true') {
-      console.log('🔄 Switching to editor view after Netlify authentication');
-      localStorage.removeItem('netlify_trigger_editor');
-      // Transition to editor view
-      transitionToEditor();
+    const triggerDeploy = localStorage.getItem('netlify_trigger_deploy');
+    if (triggerDeploy === 'true' && generatedJson && parsedJson) {
+      console.log('🚀 Triggering deployment after Netlify authentication');
+      localStorage.removeItem('netlify_trigger_deploy');
+      // Trigger deployment
+      handleDeploy();
     }
-  }, [transitionToEditor]);
+  }, [generatedJson, parsedJson]);
 
   const handleGenerate = async (prompt: string) => {
     setPrompt(prompt);

@@ -45,10 +45,10 @@ export const handleNetlifyRedirect = () => {
     const pendingDeploy = localStorage.getItem('netlify_pending_deploy');
     if (pendingDeploy === 'true') {
       console.log(
-        '✅ Netlify authentication successful, switching to editor view'
+        '✅ Netlify authentication successful, deployment will be triggered'
       );
-      // Set a flag to trigger view transition and deployment after the page loads
-      localStorage.setItem('netlify_trigger_editor', 'true');
+      // Set a flag to trigger deployment after the page loads
+      localStorage.setItem('netlify_trigger_deploy', 'true');
       localStorage.removeItem('netlify_pending_deploy');
     }
   }

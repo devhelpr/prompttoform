@@ -14,20 +14,6 @@ function AppContent() {
   // Handle Netlify authentication redirect on app load
   useEffect(() => {
     handleNetlifyRedirect();
-
-    // Clean up any stale deployment flags on app start (but not if we just came from Netlify auth)
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasNetlifyParams =
-      urlParams.get('access_token') || urlParams.get('state');
-
-    if (!hasNetlifyParams) {
-      // Clear any stale flags if we're not coming from Netlify auth
-      const triggerEditor = localStorage.getItem('netlify_trigger_editor');
-      if (triggerEditor === 'true') {
-        console.log('🧹 Cleaning up stale editor trigger flag');
-        localStorage.removeItem('netlify_trigger_editor');
-      }
-    }
   }, []);
 
   const handleNavigateToFormFlow = (formDefinition: unknown) => {
