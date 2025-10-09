@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from './components/molecules/ErrorBoundary';
 import { FormFlowPage } from './components/pages/form-flow-page';
 import { MainAppPage } from './components/pages/main-app-page';
+import { netlifyTokenHandler } from './utils/netlify-token-handler';
 
 // AppStateProvider removed - using Zustand store instead
 
@@ -16,6 +17,11 @@ function AppContent() {
 
   // Check if we're returning from the flow page with updated data
   const updatedFormDefinition = location.state?.updatedFormDefinition;
+
+  // Initialize Netlify token handler to check for access_token in URL
+  React.useEffect(() => {
+    netlifyTokenHandler();
+  }, []);
 
   return (
     <Routes>

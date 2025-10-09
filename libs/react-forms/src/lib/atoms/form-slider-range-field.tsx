@@ -1,5 +1,12 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { getClassNames } from '../utils/class-utils';
+import {
+  getClassNames,
+  getClassNamesWithColorAndStyle,
+} from '../utils/class-utils';
+import {
+  defaultColorClasses,
+  defaultStyleClasses,
+} from '../config/default-classes';
 import { withExpression } from '../hoc/with-expression-v2';
 import { ExpressionConfig } from '../interfaces/expression-interfaces';
 
@@ -43,6 +50,23 @@ interface FormSliderRangeFieldProps {
     fieldSlider?: string;
     fieldError?: string;
     fieldHelperText?: string;
+    requiredIndicator?: string;
+  };
+  colorClasses?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldSlider?: string;
+    fieldError?: string;
+    fieldHelperText?: string;
+    requiredIndicator?: string;
+  };
+  styleClasses?: {
+    field?: string;
+    fieldLabel?: string;
+    fieldSlider?: string;
+    fieldError?: string;
+    fieldHelperText?: string;
+    requiredIndicator?: string;
   };
 }
 
@@ -58,7 +82,31 @@ const FormSliderRangeFieldBase: React.FC<FormSliderRangeFieldProps> = ({
   validationErrors,
   disabled,
   classes,
+  colorClasses,
+  styleClasses,
 }) => {
+  // Helper function to get merged classes
+  const getMergedFieldClasses = (
+    fieldKey:
+      | 'field'
+      | 'fieldLabel'
+      | 'fieldSlider'
+      | 'fieldError'
+      | 'fieldHelperText'
+      | 'requiredIndicator'
+  ) => {
+    if (colorClasses || styleClasses) {
+      // If only colorClasses is provided, use default style classes
+      // If only styleClasses is provided, use default color classes
+      // If both are provided, use both
+      const colorClass =
+        colorClasses?.[fieldKey] || defaultColorClasses[fieldKey] || '';
+      const styleClass =
+        styleClasses?.[fieldKey] || defaultStyleClasses[fieldKey] || '';
+      return getClassNamesWithColorAndStyle(colorClass, styleClass);
+    }
+    return classes?.[fieldKey] || '';
+  };
   const [isDragging, setIsDragging] = useState<'min' | 'max' | null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
 
@@ -289,17 +337,22 @@ const FormSliderRangeFieldBase: React.FC<FormSliderRangeFieldProps> = ({
   );
 
   return (
-    <div className={getClassNames('mb-4', classes?.field)}>
+    <div className={getMergedFieldClasses('field') || 'mb-4'}>
       <label
         htmlFor={fieldId}
-        className={getClassNames(
-          'block text-sm font-medium text-gray-700 mb-1',
-          classes?.fieldLabel
-        )}
+        className={
+          getMergedFieldClasses('fieldLabel') ||
+          'block text-sm font-medium text-gray-700 mb-1'
+        }
       >
         {typeof label === 'string' ? label : ''}
         {!!validation?.required && (
-          <span className="text-red-500 ml-1" aria-hidden="true">
+          <span
+            className={
+              getMergedFieldClasses('requiredIndicator') || 'text-red-500 ml-1'
+            }
+            aria-hidden="true"
+          >
             *
           </span>
         )}
@@ -410,10 +463,9 @@ const FormSliderRangeFieldBase: React.FC<FormSliderRangeFieldProps> = ({
       {showError && (
         <div
           id={errorId}
-          className={getClassNames(
-            'mt-1 text-sm text-red-500',
-            classes?.fieldError
-          )}
+          className={
+            getMergedFieldClasses('fieldError') || 'mt-1 text-sm text-red-500'
+          }
           role="alert"
           aria-live="polite"
         >
@@ -428,10 +480,10 @@ const FormSliderRangeFieldBase: React.FC<FormSliderRangeFieldProps> = ({
         props.helperText.trim() !== '' && (
           <p
             id={helperId}
-            className={getClassNames(
-              'mt-1 text-sm text-gray-500',
-              classes?.fieldHelperText
-            )}
+            className={
+              getMergedFieldClasses('fieldHelperText') ||
+              'mt-1 text-sm text-gray-500'
+            }
           >
             {props.helperText}
           </p>

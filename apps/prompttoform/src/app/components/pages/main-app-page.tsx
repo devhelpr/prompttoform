@@ -1,4 +1,4 @@
-import React, { useState, Suspense, useEffect } from 'react';
+import React, { useState, Suspense, useEffect, useCallback } from 'react';
 import { MainLayout } from '../templates/MainLayout';
 import { InitialStateLayout } from '../templates/InitialStateLayout';
 import { FormEditorLayout } from '../templates/FormEditorLayout';
@@ -28,6 +28,12 @@ import {
 } from '../../utils/schema-generator';
 import { getSystemPrompt } from '../../prompt-library/system-prompt';
 import { getCurrentAPIConfig } from '../../services/llm-api';
+import {
+  saveSessionIdToLocalStorage,
+  saveFormJsonToLocalStorage,
+  loadFormJsonFromLocalStorage,
+  loadSessionIdFromLocalStorage,
+} from '../../utils/local-storage';
 
 // Initialize services
 const uiSchema = schemaJson as unknown as UISchema;
@@ -43,8 +49,8 @@ function LoadingSpinner() {
 }
 
 interface MainAppPageProps {
-  onNavigateToFormFlow: (formDefinition: any) => void;
-  updatedFormDefinition?: any;
+  onNavigateToFormFlow: (formDefinition: unknown) => void;
+  updatedFormDefinition?: unknown;
 }
 
 export function MainAppPage({
@@ -90,6 +96,118 @@ export function MainAppPage({
     siteUrl: '',
   });
 
+  // Define handleDeploy with useCallback to prevent dependency issues
+  const handleDeploy = useCallback(async () => {
+    if (!generatedJson) {
+      setError('No form generated to deploy');
+      return;
+    }
+
+    console.log('🚀 Starting deployment process...');
+    console.log('📦 Current session ID:', currentSessionId);
+    console.log('📄 Form JSON length:', generatedJson.length);
+
+    setIsDeploying(true);
+    setDeploymentOverlay({
+      isVisible: true,
+      message: 'Preparing deployment...',
+      isSuccess: false,
+      siteUrl: '',
+    });
+
+    try {
+      // Store current session ID and form JSON for post-authentication restoration
+      if (currentSessionId) {
+        console.log(
+          '💾 Storing session data for post-authentication restoration...'
+        );
+        saveSessionIdToLocalStorage(currentSessionId);
+        saveFormJsonToLocalStorage(generatedJson);
+        console.log('✅ Session data stored in localStorage');
+      } else {
+        console.log(
+          '⚠️ No session ID available, skipping localStorage storage'
+        );
+      }
+
+      const zipBlob = await createFormZip(generatedJson);
+      const base64 = await blobToBase64(zipBlob);
+
+      setDeploymentOverlay((prev) => ({
+        ...prev,
+        message: 'Deploying to Netlify...',
+      }));
+
+      deployWithNetlify(
+        base64,
+        (url) => {
+          console.log('🎉 Deployment successful! URL:', url);
+          setSiteUrl(url);
+
+          // Update session with Netlify site ID
+          if (currentSessionId) {
+            // Extract site ID from URL
+            const siteId = url.split('/').pop()?.split('.')[0];
+            if (siteId) {
+              console.log('🔗 Updating session with Netlify site ID:', siteId);
+              FormSessionService.updateSession(
+                currentSessionId,
+                generatedJson,
+                siteId
+              );
+            }
+          }
+
+          // Clear stored data after successful deployment
+          console.log(
+            '🧹 Clearing localStorage data after successful deployment'
+          );
+          // clearFormJsonFromLocalStorage();
+          // clearSessionIdFromLocalStorage();
+
+          setIsDeploying(false);
+          setDeploymentOverlay({
+            isVisible: true,
+            message: 'Your form has been successfully deployed to Netlify!',
+            isSuccess: true,
+            siteUrl: url,
+          });
+        },
+        () => {
+          // Success callback - handled in the URL callback
+        },
+        (errorMessage) => {
+          console.error('❌ Deployment failed:', errorMessage);
+          setError('Failed to deploy to Netlify');
+          setIsDeploying(false);
+          setDeploymentOverlay({
+            isVisible: true,
+            message: `Deployment failed: ${errorMessage}`,
+            isSuccess: false,
+            siteUrl: '',
+          });
+        }
+      );
+    } catch (err) {
+      console.error('❌ Deployment failed:', err);
+      setError('Failed to deploy to Netlify');
+      setIsDeploying(false);
+      setDeploymentOverlay({
+        isVisible: true,
+        message: 'Failed to prepare deployment',
+        isSuccess: false,
+        siteUrl: '',
+      });
+    }
+  }, [
+    generatedJson,
+    currentSessionId,
+    setError,
+    setSiteUrl,
+    setIsDeploying,
+    setDeploymentOverlay,
+  ]);
+
   // Handle updated form definition from flow page
   useEffect(() => {
     console.log(
@@ -100,24 +218,164 @@ export function MainAppPage({
       console.log('MainAppPage: Processing updated form definition');
       console.log(
         'MainAppPage: Updated form title:',
-        updatedFormDefinition.app?.title
+        (updatedFormDefinition as any)?.app?.title
       );
       console.log(
         'MainAppPage: First page title:',
-        updatedFormDefinition.app?.pages?.[0]?.title
+        (updatedFormDefinition as any)?.app?.pages?.[0]?.title
       );
 
       // Update the form data with the changes from the flow editor
-      const formattedJson = formatJsonForDisplay(updatedFormDefinition);
+      const formattedJson = formatJsonForDisplay(updatedFormDefinition as any);
       console.log('MainAppPage: Calling setGeneratedJson with formatted JSON');
-      setGeneratedJson(formattedJson, updatedFormDefinition);
+      setGeneratedJson(formattedJson, updatedFormDefinition as any);
 
       // Clear the updated form definition to prevent re-processing
       // Note: This is a simplified approach - in a real app you might want to use a more sophisticated state management
     } else {
       console.log('MainAppPage: No updatedFormDefinition to process');
     }
-  }, [updatedFormDefinition]);
+  }, [updatedFormDefinition, setGeneratedJson]);
+
+  // Define handlePostAuthenticationRestoration before using it in useEffect
+  const handlePostAuthenticationRestoration = useCallback(
+    async (sessionId: string, formJson: string) => {
+      try {
+        console.log('🔄 Loading session data from IndexedDB...');
+
+        // Load session data from IndexedDB
+        const sessionData = await FormSessionService.getSessionWithLatestJson(
+          sessionId
+        );
+
+        if (sessionData) {
+          console.log('✅ Session data loaded from IndexedDB');
+          console.log('📝 Session prompt:', sessionData.session.prompt);
+          console.log('📄 Session JSON length:', sessionData.latestJson.length);
+
+          // Parse the JSON to validate it
+          const parsedJson = parseJsonSafely(sessionData.latestJson);
+          if (parsedJson) {
+            console.log('✅ JSON parsed successfully');
+
+            // Set the restored data directly in the component state
+            setCurrentSessionId(sessionId);
+            setPrompt(sessionData.session.prompt);
+            setGeneratedJson(sessionData.latestJson, parsedJson);
+
+            // Transition to editor view
+            transitionToEditor();
+
+            console.log('🔄 Called transitionToEditor()');
+            console.log('✅ Session restoration completed');
+
+            // Trigger deployment after a short delay to ensure state is set
+            setTimeout(() => {
+              console.log(
+                '🚀 Auto-triggering deployment after session restoration...'
+              );
+              handleDeploy();
+            }, 500);
+          } else {
+            console.log('⚠️ JSON parsing failed, using localStorage data');
+            // Fallback to localStorage data
+            const fallbackParsedJson = parseJsonSafely(formJson);
+            if (fallbackParsedJson) {
+              setCurrentSessionId(sessionId);
+              setPrompt('');
+              setGeneratedJson(formJson, fallbackParsedJson);
+              transitionToEditor();
+
+              setTimeout(() => {
+                console.log(
+                  '🚀 Auto-triggering deployment after fallback restoration...'
+                );
+                handleDeploy();
+              }, 500);
+            }
+          }
+        } else {
+          console.log(
+            '❌ Session not found in IndexedDB, using localStorage data'
+          );
+          // Fallback to localStorage data
+          const parsedJson = parseJsonSafely(formJson);
+          if (parsedJson) {
+            setCurrentSessionId(sessionId);
+            setPrompt('');
+            setGeneratedJson(formJson, parsedJson);
+            transitionToEditor();
+
+            setTimeout(() => {
+              console.log(
+                '🚀 Auto-triggering deployment after localStorage fallback...'
+              );
+              handleDeploy();
+            }, 500);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Failed to load session data from IndexedDB:', error);
+        console.log('🔄 Falling back to localStorage data...');
+
+        // Fallback to localStorage data
+        const parsedJson = parseJsonSafely(formJson);
+        if (parsedJson) {
+          setCurrentSessionId(sessionId);
+          setPrompt('');
+          setGeneratedJson(formJson, parsedJson);
+          transitionToEditor();
+
+          setTimeout(() => {
+            console.log(
+              '🚀 Auto-triggering deployment after error fallback...'
+            );
+            handleDeploy();
+          }, 500);
+        }
+      }
+    },
+    [
+      setCurrentSessionId,
+      setPrompt,
+      setGeneratedJson,
+      transitionToEditor,
+      handleDeploy,
+    ]
+  );
+
+  // Handle session restoration after Netlify authentication
+  useEffect(() => {
+    // Check URL parameters for triggerDeploy flag
+    const urlParams = new URLSearchParams(window.location.search);
+    const triggerDeploy = urlParams.get('triggerDeploy') === 'true';
+
+    console.log('🔍 MainAppPage useEffect - triggerDeploy:', triggerDeploy);
+    console.log('🔍 MainAppPage useEffect - currentView:', currentView);
+
+    if (triggerDeploy) {
+      console.log('🔄 TriggerDeploy: Detected post-authentication redirect');
+
+      // Get stored data from localStorage
+      const formJson = loadFormJsonFromLocalStorage();
+      const storedSessionId = loadSessionIdFromLocalStorage();
+
+      console.log('📦 Stored session ID:', storedSessionId);
+      console.log(
+        '📄 Form JSON from localStorage:',
+        formJson ? 'Present' : 'Missing'
+      );
+
+      if (formJson && storedSessionId) {
+        // Restore session data and trigger deployment
+        handlePostAuthenticationRestoration(storedSessionId, formJson);
+      } else {
+        console.log(
+          '⚠️ Missing stored data for post-authentication restoration'
+        );
+      }
+    }
+  }, [currentView, handlePostAuthenticationRestoration]);
 
   const handleGenerate = async (prompt: string) => {
     setPrompt(prompt);
@@ -252,111 +510,6 @@ export function MainAppPage({
       console.error(err);
     } finally {
       setIsUpdating(false);
-    }
-  };
-
-  const handleDeploy = async () => {
-    if (!generatedJson) {
-      setError('No form generated to deploy');
-      return;
-    }
-
-    console.log('🚀 Starting deployment process...');
-    console.log('📦 Current session ID:', currentSessionId);
-    console.log('📄 Form JSON length:', generatedJson.length);
-
-    setIsDeploying(true);
-    setDeploymentOverlay({
-      isVisible: true,
-      message: 'Preparing deployment...',
-      isSuccess: false,
-      siteUrl: '',
-    });
-
-    try {
-      // Store current session ID and form JSON for post-authentication restoration
-      if (currentSessionId) {
-        console.log(
-          '💾 Storing session data for post-authentication restoration...'
-        );
-        // Note: These functions need to be imported from local-storage utils
-        // saveSessionIdToLocalStorage(currentSessionId);
-        // saveFormJsonToLocalStorage(generatedJson);
-        console.log('✅ Session data stored in localStorage');
-      } else {
-        console.log(
-          '⚠️ No session ID available, skipping localStorage storage'
-        );
-      }
-
-      const zipBlob = await createFormZip(generatedJson);
-      const base64 = await blobToBase64(zipBlob);
-
-      setDeploymentOverlay((prev) => ({
-        ...prev,
-        message: 'Deploying to Netlify...',
-      }));
-
-      deployWithNetlify(
-        base64,
-        (url) => {
-          console.log('🎉 Deployment successful! URL:', url);
-          setSiteUrl(url);
-
-          // Update session with Netlify site ID
-          if (currentSessionId) {
-            // Extract site ID from URL
-            const siteId = url.split('/').pop()?.split('.')[0];
-            if (siteId) {
-              console.log('🔗 Updating session with Netlify site ID:', siteId);
-              FormSessionService.updateSession(
-                currentSessionId,
-                generatedJson,
-                siteId
-              );
-            }
-          }
-
-          // Clear stored data after successful deployment
-          console.log(
-            '🧹 Clearing localStorage data after successful deployment'
-          );
-          // clearFormJsonFromLocalStorage();
-          // clearSessionIdFromLocalStorage();
-
-          setIsDeploying(false);
-          setDeploymentOverlay({
-            isVisible: true,
-            message: 'Your form has been successfully deployed to Netlify!',
-            isSuccess: true,
-            siteUrl: url,
-          });
-        },
-        () => {
-          // Success callback - handled in the URL callback
-        },
-        (errorMessage) => {
-          console.error('❌ Deployment failed:', errorMessage);
-          setError('Failed to deploy to Netlify');
-          setIsDeploying(false);
-          setDeploymentOverlay({
-            isVisible: true,
-            message: `Deployment failed: ${errorMessage}`,
-            isSuccess: false,
-            siteUrl: '',
-          });
-        }
-      );
-    } catch (err) {
-      console.error('❌ Deployment failed:', err);
-      setError('Failed to deploy to Netlify');
-      setIsDeploying(false);
-      setDeploymentOverlay({
-        isVisible: true,
-        message: 'Failed to prepare deployment',
-        isSuccess: false,
-        siteUrl: '',
-      });
     }
   };
 
@@ -495,6 +648,13 @@ export function MainAppPage({
       setError('No form data available to view in form flow');
     }
   };
+
+  // Debug logging for view determination
+  console.log('🔍 MainAppPage render - currentView:', currentView);
+  console.log(
+    '🔍 MainAppPage render - generatedJson length:',
+    generatedJson?.length || 0
+  );
 
   // Show initial state or editor based on current view
   if (currentView === 'initial') {

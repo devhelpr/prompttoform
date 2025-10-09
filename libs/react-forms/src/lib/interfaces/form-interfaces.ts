@@ -170,6 +170,184 @@ export interface FormRendererTexts {
   noContentInSection?: string; // Default: "No content in this section"
 }
 
+/**
+ * Color-related CSS classes for form components
+ * These classes control colors, backgrounds, borders, and text colors
+ */
+export interface FormRendererColorClasses {
+  // Layout Colors
+  container?: string;
+  header?: string;
+  headerTitle?: string;
+  page?: string;
+  pageTitle?: string;
+
+  // Navigation Colors
+  stepIndicator?: string;
+  stepIndicatorItem?: string;
+  stepIndicatorActive?: string;
+  navigationButtons?: string;
+  nextButton?: string;
+  previousButton?: string;
+
+  // Form Field Colors
+  field?: string;
+  fieldLabel?: string;
+  fieldInput?: string;
+  fieldTextarea?: string;
+  fieldSelect?: string;
+  fieldCheckbox?: string;
+  fieldRadio?: string;
+  fieldDate?: string;
+  fieldSlider?: string;
+  fieldText?: string;
+  fieldError?: string;
+  fieldHelperText?: string;
+  noContentText?: string;
+
+  // Special Component Colors
+  confirmationField?: string;
+  confirmationInfoBox?: string;
+  confirmationInfoText?: string;
+  confirmationWarningBox?: string;
+  confirmationWarningText?: string;
+  confirmationContainer?: string;
+  confirmationSectionHeader?: string;
+  confirmationSectionTitle?: string;
+  confirmationSectionContent?: string;
+  confirmationFieldList?: string;
+  confirmationFieldItem?: string;
+  confirmationFieldLabel?: string;
+  confirmationFieldValue?: string;
+  confirmationTemplateText?: string;
+  confirmationSectionBorder?: string;
+  arrayField?: string;
+  arrayItem?: string;
+  arrayAddButton?: string;
+  arrayRemoveButton?: string;
+
+  // Submissions Colors
+  submissionsContainer?: string;
+  submissionsTitle?: string;
+  submissionsData?: string;
+
+  // Thank You Page Colors
+  thankYouContainer?: string;
+  thankYouMessageContainer?: string;
+  thankYouTitle?: string;
+  thankYouMessage?: string;
+  thankYouButton?: string;
+
+  // Error and Status Colors
+  errorMessage?: string;
+  invalidFormData?: string;
+  noPagesDefined?: string;
+  invalidPageIndex?: string;
+  noSubmissionsText?: string;
+  unsupportedComponent?: string;
+  unsupportedArrayComponent?: string;
+  thankYouNotConfigured?: string;
+
+  // Form Layout Colors
+  formLayout?: string;
+  tableHeader?: string;
+  tableCell?: string;
+  arrayItemContainer?: string;
+  arrayItemField?: string;
+  requiredIndicator?: string;
+}
+
+/**
+ * Style and layout CSS classes for form components
+ * These classes control spacing, sizing, positioning, borders, shadows, etc.
+ */
+export interface FormRendererStyleClasses {
+  // Layout Styles
+  container?: string;
+  header?: string;
+  headerTitle?: string;
+  page?: string;
+  pageTitle?: string;
+
+  // Navigation Styles
+  stepIndicator?: string;
+  stepIndicatorItem?: string;
+  stepIndicatorActive?: string;
+  navigationButtons?: string;
+  nextButton?: string;
+  previousButton?: string;
+
+  // Form Field Styles
+  field?: string;
+  fieldLabel?: string;
+  fieldInput?: string;
+  fieldTextarea?: string;
+  fieldSelect?: string;
+  fieldCheckbox?: string;
+  fieldRadio?: string;
+  fieldDate?: string;
+  fieldSlider?: string;
+  fieldText?: string;
+  fieldError?: string;
+  fieldHelperText?: string;
+  noContentText?: string;
+
+  // Special Component Styles
+  confirmationField?: string;
+  confirmationInfoBox?: string;
+  confirmationInfoText?: string;
+  confirmationWarningBox?: string;
+  confirmationWarningText?: string;
+  confirmationContainer?: string;
+  confirmationSectionHeader?: string;
+  confirmationSectionTitle?: string;
+  confirmationSectionContent?: string;
+  confirmationFieldList?: string;
+  confirmationFieldItem?: string;
+  confirmationFieldLabel?: string;
+  confirmationFieldValue?: string;
+  confirmationTemplateText?: string;
+  confirmationSectionBorder?: string;
+  arrayField?: string;
+  arrayItem?: string;
+  arrayAddButton?: string;
+  arrayRemoveButton?: string;
+
+  // Submissions Styles
+  submissionsContainer?: string;
+  submissionsTitle?: string;
+  submissionsData?: string;
+
+  // Thank You Page Styles
+  thankYouContainer?: string;
+  thankYouMessageContainer?: string;
+  thankYouTitle?: string;
+  thankYouMessage?: string;
+  thankYouButton?: string;
+
+  // Error and Status Styles
+  errorMessage?: string;
+  invalidFormData?: string;
+  noPagesDefined?: string;
+  invalidPageIndex?: string;
+  noSubmissionsText?: string;
+  unsupportedComponent?: string;
+  unsupportedArrayComponent?: string;
+  thankYouNotConfigured?: string;
+
+  // Form Layout Styles
+  formLayout?: string;
+  tableHeader?: string;
+  tableCell?: string;
+  arrayItemContainer?: string;
+  arrayItemField?: string;
+  requiredIndicator?: string;
+}
+
+/**
+ * @deprecated Use FormRendererColorClasses and FormRendererStyleClasses instead
+ * Legacy interface for backward compatibility
+ */
 export interface FormRendererClasses {
   // Layout
   container?: string;
@@ -202,6 +380,20 @@ export interface FormRendererClasses {
 
   // Special Components
   confirmationField?: string;
+  confirmationInfoBox?: string;
+  confirmationInfoText?: string;
+  confirmationWarningBox?: string;
+  confirmationWarningText?: string;
+  confirmationContainer?: string;
+  confirmationSectionHeader?: string;
+  confirmationSectionTitle?: string;
+  confirmationSectionContent?: string;
+  confirmationFieldList?: string;
+  confirmationFieldItem?: string;
+  confirmationFieldLabel?: string;
+  confirmationFieldValue?: string;
+  confirmationTemplateText?: string;
+  confirmationSectionBorder?: string;
   arrayField?: string;
   arrayItem?: string;
   arrayAddButton?: string;
@@ -219,9 +411,33 @@ export interface FormRendererClasses {
   thankYouButton?: string;
 }
 
+/**
+ * Field component classes interface
+ * Used by individual field components
+ */
+export interface FieldClasses {
+  field?: string;
+  fieldLabel?: string;
+  fieldInput?: string;
+  fieldTextarea?: string;
+  fieldSelect?: string;
+  fieldCheckbox?: string;
+  fieldRadio?: string;
+  fieldDate?: string;
+  fieldSlider?: string;
+  fieldText?: string;
+  fieldError?: string;
+  fieldHelperText?: string;
+}
+
 export interface FormRendererSettings {
   showFormSubmissions?: boolean;
+  /** @deprecated Use colorClasses and styleClasses instead */
   classes?: FormRendererClasses;
+  /** Color-related CSS classes for form components */
+  colorClasses?: FormRendererColorClasses;
+  /** Style and layout CSS classes for form components */
+  styleClasses?: FormRendererStyleClasses;
   theme?: FormRendererTheme;
   texts?: FormRendererTexts;
 }

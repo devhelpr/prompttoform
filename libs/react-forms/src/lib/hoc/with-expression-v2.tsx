@@ -9,7 +9,7 @@ import { useExpressionContext } from '../contexts/expression-context';
 import { ExpressionConfig } from '../interfaces/expression-interfaces';
 import { expressionEngine } from '../services/expression-engine.service';
 
-interface WithExpressionProps {
+export interface WithExpressionProps {
   expression?: ExpressionConfig;
   fieldId: string;
   onChange?: (value: any) => void;
