@@ -1,6 +1,5 @@
 export let netlifyAccessToken = '';
 export let netlifySiteId = '';
-
 export const netlifyTokenHandler = () => {
   const siteId = document.cookie
     .split('; ')
@@ -25,41 +24,6 @@ export const netlifyTokenHandler = () => {
     }
   }
   console.log('Netlify Access Token:', netlifyAccessToken);
-};
-
-export const handleNetlifyRedirect = () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const stateParam = urlParams.get('state');
-  const accessToken = urlParams.get('access_token');
-
-  console.log('Netlify redirect detected:', {
-    stateParam,
-    accessToken: !!accessToken,
-  });
-
-  // Process the token if present
-  if (accessToken) {
-    netlifyTokenHandler();
-  }
-
-  // Handle state parameter to redirect back to the original location
-  if (stateParam) {
-    try {
-      // The state parameter contains the original URL where the user was before authentication
-      const originalUrl = decodeURIComponent(stateParam);
-      console.log('Redirecting back to original URL:', originalUrl);
-
-      // Clean up URL parameters to avoid infinite redirects
-      const cleanUrl = originalUrl.split('?')[0];
-
-      // Use a small delay to ensure the token is processed
-      setTimeout(() => {
-        window.location.href = cleanUrl;
-      }, 100);
-    } catch (error) {
-      console.error('Error processing state parameter:', error);
-    }
-  }
 };
 
 export const setNetlifySiteId = (siteId: string) => {
