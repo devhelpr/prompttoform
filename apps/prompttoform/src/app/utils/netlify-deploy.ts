@@ -41,9 +41,6 @@ export const deployWithNetlify = (
         onError?.(error.message);
       });
   } else {
-    // Store a flag to trigger deployment after authentication
-    localStorage.setItem('netlify_pending_deploy', 'true');
-
     const redirectUrl = `https://form-generator-worker.maikel-f16.workers.dev/netlify/auth-prompttoform?state=${window.location.href}`;
 
     window.location.href = redirectUrl;
