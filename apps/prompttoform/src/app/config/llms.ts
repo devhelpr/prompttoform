@@ -68,6 +68,16 @@ export const llmAPIs: APIConfig[] = [
     supportsTemperature: true,
   },
   {
+    name: 'Anthropic Claude Haiku 4.5',
+    baseUrl: 'https://api.anthropic.com/v1',
+    apiKey: '',
+    model: 'claude-haiku-4-5',
+    description:
+      "Anthropic's claude-haiku-4-5 model (provide your own API key)",
+    isChatCompletionCompatible: true,
+    supportsTemperature: true,
+  },
+  {
     name: 'Anthropic',
     baseUrl: 'https://api.anthropic.com/v1',
     apiKey: '',
