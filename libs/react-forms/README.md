@@ -5,13 +5,13 @@ React Forms is a library for building forms with React.
 ## Installation
 
 ```bash
-npm install react-forms
+npm install @devhelpr/react-forms
 ```
 
 ## Usage
 
 ```tsx
-import { FormRenderer } from 'react-forms';
+import { FormRenderer } from '@devhelpr/react-forms';
 
 <FormRenderer formJson={formDefinition} />
 ```
