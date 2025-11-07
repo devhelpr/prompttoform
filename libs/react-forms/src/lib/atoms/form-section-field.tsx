@@ -17,6 +17,7 @@ interface FormSectionFieldProps {
     component: FormComponentFieldProps,
     parentId?: string
   ) => React.ReactElement;
+  className?: string;
   classes?: {
     field?: string;
     fieldLabel?: string;
@@ -39,6 +40,7 @@ export const FormSectionField: React.FC<FormSectionFieldProps> = ({
   label,
   children,
   renderComponent,
+  className,
   classes,
   colorClasses,
   styleClasses,
@@ -59,13 +61,16 @@ export const FormSectionField: React.FC<FormSectionFieldProps> = ({
     }
     return classes?.[fieldKey] || '';
   };
+  
+  // Merge className prop with field classes
+  const fieldClasses = getMergedFieldClasses('field') ||
+    'mb-6 p-4 border border-gray-200 rounded-md bg-gray-50';
+  const finalClassName = className
+    ? getClassNames(fieldClasses, className)
+    : fieldClasses;
+  
   return (
-    <div
-      className={
-        getMergedFieldClasses('field') ||
-        'mb-6 p-4 border border-gray-200 rounded-md bg-gray-50'
-      }
-    >
+    <div className={finalClassName}>
       {label && (
         <h3
           className={
@@ -76,7 +81,8 @@ export const FormSectionField: React.FC<FormSectionFieldProps> = ({
           {label}
         </h3>
       )}
-      <div className="space-y-3">
+      {/* Only apply space-y-3 if className doesn't contain grid (to allow grid layouts) */}
+      <div className={className?.includes('grid') ? '' : 'space-y-3'}>
         {Array.isArray(children) && children.length > 0 ? (
           children.map((child, index) => (
             <div key={index}>{renderComponent(child, fieldId)}</div>

@@ -1836,6 +1836,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               label={label}
               children={component.children}
               renderComponent={renderComponent}
+              className={translatedProps?.className}
               classes={getFieldClasses(settings)}
               colorClasses={settings.colorClasses}
               styleClasses={settings.styleClasses}
