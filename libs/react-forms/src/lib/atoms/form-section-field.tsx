@@ -62,11 +62,17 @@ export const FormSectionField: React.FC<FormSectionFieldProps> = ({
     return classes?.[fieldKey] || '';
   };
   
+  // Debug: Log className received
+  if (className) {
+    console.log(`[FormSectionField] ${fieldId} received className:`, className);
+  }
+  
   // Check if className contains grid classes
   const hasGridClasses = className?.includes('grid') || false;
   
   // Extract grid-related classes from className
-  const gridClassPattern = /\b(grid|grid-cols-\d+|grid-rows-\d+|gap-\S+|col-span-\S+|row-span-\S+|grid-flow-\S+|auto-cols-\S+|auto-rows-\S+|place-\S+|justify-items-\S+|justify-self-\S+|items-\S+|self-\S+|col-start-\S+|col-end-\S+|row-start-\S+|row-end-\S+)\b/g;
+  // Order matters: more specific patterns first (grid-cols-* before grid) to avoid double matching
+  const gridClassPattern = /\b(grid-cols-\d+|grid-rows-\d+|grid-flow-\S+|auto-cols-\S+|auto-rows-\S+|col-span-\S+|row-span-\S+|col-start-\S+|col-end-\S+|row-start-\S+|row-end-\S+|gap-\S+|place-\S+|justify-items-\S+|justify-self-\S+|items-\S+|self-\S+|grid)\b/g;
   const gridClasses = className
     ? (className.match(gridClassPattern) || []).join(' ')
     : '';
@@ -116,6 +122,9 @@ export const FormSectionField: React.FC<FormSectionFieldProps> = ({
           children.map((child, index) => {
             // Extract className from child props if present (e.g., col-span-1 for grid items)
             const childClassName = (child.props as any)?.className || '';
+            if (childClassName) {
+              console.log(`[FormSectionField] Child ${child.id} className:`, childClassName);
+            }
             return (
               <div key={index} className={childClassName || undefined}>
                 {renderComponent(child, fieldId)}

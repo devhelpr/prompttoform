@@ -1830,13 +1830,18 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           );
 
         case 'section':
+          // Debug: Log className extraction
+          const sectionClassName = translatedProps?.className || props?.className;
+          if (sectionClassName) {
+            console.log(`[FormRenderer] Section ${prefixedFieldId} className:`, sectionClassName);
+          }
           return (
             <FormSectionField
               fieldId={prefixedFieldId}
               label={label}
               children={component.children}
               renderComponent={renderComponent}
-              className={translatedProps?.className}
+              className={sectionClassName}
               classes={getFieldClasses(settings)}
               colorClasses={settings.colorClasses}
               styleClasses={settings.styleClasses}
