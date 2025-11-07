@@ -346,7 +346,7 @@ export function withExpression<P extends object>(
       // Use a more reliable dependency tracking by including each dependency value explicitly
       // This ensures that when a dependency like 'sliderValue' changes, the expression re-evaluates
       ...(actualExpression?.dependencies || []).map(
-        (dep) => primitiveValues[dep] ?? null
+        (dep: string) => primitiveValues[dep] ?? null
       ),
       // Also include the stringified version as a fallback for cases where dependencies might not be specified
       JSON.stringify(primitiveValues),
