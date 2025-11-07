@@ -43,8 +43,12 @@ export function withExpression<P extends object>(
           values[key] = fieldContext;
         }
       });
+      // Debug: Log when sliderValue is in primitiveValues
+      if (values['sliderValue'] !== undefined) {
+        console.log(`📊 [${fieldId}] primitiveValues['sliderValue'] =`, values['sliderValue']);
+      }
       return values;
-    }, [contextValues]);
+    }, [contextValues, fieldId]);
 
     // Merge primitive form values with any already calculated values from the engine
     const mergedValues = useMemo(() => {
@@ -217,6 +221,13 @@ export function withExpression<P extends object>(
               actualExpression.expression
             );
             try {
+              // Debug: Log mergedValues to see if sliderValue is present
+              console.log(`🔍 [${fieldId}] mergedValues before evaluation:`, {
+                hasSliderValue: 'sliderValue' in mergedValues,
+                sliderValue: mergedValues['sliderValue'],
+                allKeys: Object.keys(mergedValues).filter(k => k.includes('slider') || k.includes('double')),
+              });
+
               // Use the new dependency resolution system
               const calculatedValues =
                 await expressionEngine.evaluateAllWithDependencies(
@@ -396,10 +407,19 @@ export function withExpression<P extends object>(
       // For calculated fields, override the value directly
       if (
         actualExpression &&
-        actualExpression.mode === 'value' &&
-        expressionResults.value !== null &&
-        expressionResults.value !== undefined
+        actualExpression.mode === 'value'
       ) {
+        // Always set the value, even if it's 0 (which is a valid calculated value)
+        // Only use null if the value is truly null/undefined
+        const calculatedValue = expressionResults.value;
+        
+        console.log(`💾 [${fieldId}] Setting calculated value:`, calculatedValue, {
+          expressionResultsValue: expressionResults.value,
+          hasExpression: !!actualExpression,
+          mode: actualExpression.mode,
+          type: typeof calculatedValue,
+        });
+
         // Check if this is a TextFormField component by looking for the specific props structure
         const propsObj = (restProps as any)?.props as
           | Record<string, any>
@@ -413,11 +433,19 @@ export function withExpression<P extends object>(
           // For TextFormField, set the content in the props object
           enhanced.props = {
             ...enhanced.props,
-            content: expressionResults.value,
+            content: calculatedValue,
           };
         } else {
           // For other components (like input fields), set as value
-          enhanced.value = expressionResults.value;
+          // Convert to string for input fields (they expect string values)
+          // Handle 0 as a valid value (don't treat it as falsy)
+          if (calculatedValue === 0 || calculatedValue === '0') {
+            enhanced.value = '0';
+          } else if (calculatedValue !== null && calculatedValue !== undefined) {
+            enhanced.value = String(calculatedValue);
+          } else {
+            enhanced.value = '';
+          }
           enhanced.readOnly = true;
         }
       }

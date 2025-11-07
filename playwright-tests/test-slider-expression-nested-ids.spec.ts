@@ -73,14 +73,17 @@ test('Slider expression update with nested field IDs', async ({ page }) => {
   expect(sliderRect).not.toBeNull();
 
   if (sliderRect) {
-    // Move slider to 25 (25% of the slider width)
+    // Click and drag on the slider track to 25% position
+    // The slider uses pointer events, so we need to simulate a pointer down, move, and up
     const targetX = sliderRect.x + sliderRect.width * 0.25;
     const targetY = sliderRect.y + sliderRect.height / 2;
 
+    // Use pointer events to interact with the slider
     await page.mouse.move(targetX, targetY);
-    await page.mouse.down();
-    await page.mouse.move(targetX, targetY);
-    await page.mouse.up();
+    await page.mouse.down({ button: 'left' });
+    // Small movement to ensure the event is registered
+    await page.mouse.move(targetX + 1, targetY);
+    await page.mouse.up({ button: 'left' });
 
     // Wait for expression evaluation (with debounce + extra time)
     await page.waitForTimeout(500);
@@ -118,9 +121,9 @@ test('Slider expression update with nested field IDs', async ({ page }) => {
     // Try moving slider to 50
     const targetX2 = sliderRect.x + sliderRect.width * 0.5;
     await page.mouse.move(targetX2, targetY);
-    await page.mouse.down();
-    await page.mouse.move(targetX2, targetY);
-    await page.mouse.up();
+    await page.mouse.down({ button: 'left' });
+    await page.mouse.move(targetX2 + 1, targetY);
+    await page.mouse.up({ button: 'left' });
 
     await page.waitForTimeout(500);
 
@@ -133,12 +136,18 @@ test('Slider expression update with nested field IDs', async ({ page }) => {
       path: 'playwright-tests/screenshots/test-slider-expression-nested-ids-final.png',
     });
 
-    // Log final state
+    // Log final state - check form values directly
     console.log('Final state:');
-    console.log('  - Slider value (expected ~50):', await page.evaluate(() => {
+    const formValues = await page.evaluate(() => {
+      // Try to get form values from React state or DOM
       const slider = document.querySelector('[id*="sliderValue"]');
-      return slider ? (slider as any).value : 'not found';
-    }));
+      const input = document.querySelector('input[id*="doubleValue"]');
+      return {
+        sliderValue: slider ? (slider as any).getAttribute('data-value') || (slider as any).value : 'not found',
+        calculatedValue: input ? (input as HTMLInputElement).value : 'not found',
+      };
+    });
+    console.log('  - Form values:', formValues);
     console.log('  - Calculated value (expected ~100):', numValue50);
   }
 });

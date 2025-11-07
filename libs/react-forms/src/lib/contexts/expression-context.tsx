@@ -54,15 +54,16 @@ export const ExpressionContextProvider: React.FC<
       const fieldIdParts = fieldId.split('.');
       if (fieldIdParts.length > 1) {
         const componentId = fieldIdParts[fieldIdParts.length - 1];
-        // Only add alias if it doesn't already exist (to avoid overwriting a direct field)
-        if (!ctx[componentId]) {
-          ctx[componentId] = {
-            value: formValues[fieldId],
-            valid: validation[fieldId] ?? true,
-            required: required[fieldId] ?? false,
-            error: errors[fieldId],
-          };
-        }
+        // Always create/update alias for nested fields to ensure expressions can reference them
+        // If a direct field with the same ID exists, the alias will point to the nested field
+        // This is intentional - nested fields should take precedence for expression evaluation
+        ctx[componentId] = {
+          value: formValues[fieldId],
+          valid: validation[fieldId] ?? true,
+          required: required[fieldId] ?? false,
+          error: errors[fieldId],
+        };
+        console.log(`🔗 Created alias: ${componentId} -> ${fieldId} (value: ${formValues[fieldId]})`);
       }
     });
 
