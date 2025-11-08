@@ -1640,7 +1640,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 <TextFormField
                   fieldId={prefixedFieldId}
                   label={translatedLabel}
-                  props={processPropsWithTemplates(translatedProps)}
+                  props={translatedProps}
+                  formValues={formValues}
                   classes={getFieldClasses(settings)}
                   colorClasses={settings.colorClasses}
                   styleClasses={settings.styleClasses}

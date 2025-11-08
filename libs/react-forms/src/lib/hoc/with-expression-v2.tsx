@@ -392,7 +392,13 @@ export function withExpression<P extends object>(
 
     // Apply expression results to props
     const enhancedProps = useMemo(() => {
-      const enhanced: any = { ...restProps, fieldId, onChange: stableOnChange };
+      const enhanced: any = { 
+        ...restProps, 
+        fieldId, 
+        onChange: stableOnChange,
+        // Pass formValues so components can use it for template processing
+        formValues: mergedValues,
+      };
 
       // Preserve original validation props unless overridden by expressions
       if (!actualExpression || actualExpression.mode !== 'validation') {
@@ -479,7 +485,7 @@ export function withExpression<P extends object>(
       }
 
       return enhanced;
-    }, [restProps, expressionResults, stableOnChange, actualExpression]);
+    }, [restProps, expressionResults, stableOnChange, actualExpression, mergedValues]);
 
     // Don't render if visibility expression evaluates to false
     if (expressionResults.visibility === false) {
