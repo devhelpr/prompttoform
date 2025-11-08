@@ -85,23 +85,25 @@ export const FormSectionField: React.FC<FormSectionFieldProps> = ({
         .join(' ')
     : '';
   
-  // Check if className contains ONLY grid classes (no other classes)
-  // This happens when a child section has className="col-span-1" - it should only be applied to wrapper
-  const hasOnlyGridClasses = className && gridClasses && !nonGridClasses.trim();
+  // Check if className is ONLY a grid item class (col-span-*, row-span-*, etc.)
+  // This is different from a grid container (which has "grid" or "grid-cols-*")
+  // Grid items should only be applied to wrapper, not to section's own container
+  const isGridItemOnly = className && /^(col-span|row-span|col-start|col-end|row-start|row-end)/.test(className.trim()) && !className.includes('grid');
   
   // Merge non-grid className prop with field classes for outer container
   const fieldClasses = getMergedFieldClasses('field') ||
     'mb-6 p-4 border border-gray-200 rounded-md bg-gray-50';
-  // If className has only grid classes, don't apply them to outer container
-  const outerClassName = hasOnlyGridClasses
+  // If className is only a grid item class, don't apply it to outer container
+  const outerClassName = isGridItemOnly
     ? fieldClasses
     : (nonGridClasses
         ? getClassNames(fieldClasses, nonGridClasses)
         : fieldClasses);
   
-  // Children container gets grid classes if present, otherwise default spacing
-  // If this section has only grid classes (like col-span-1), they should be applied by parent's wrapper
-  const childrenContainerClassName = hasGridClasses && !hasOnlyGridClasses
+  // Children container gets grid classes if this is a grid container (has "grid" or "grid-cols-*")
+  // Grid items (col-span-*) should be applied by parent's wrapper, not here
+  const isGridContainer = hasGridClasses && !isGridItemOnly;
+  const childrenContainerClassName = isGridContainer
     ? gridClasses
     : 'space-y-3';
   
