@@ -1831,9 +1831,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
         case 'section':
           // Debug: Log className extraction
-          const sectionClassName = translatedProps?.className || props?.className;
+          const sectionClassName =
+            translatedProps?.className || props?.className;
           if (sectionClassName) {
-            console.log(`[FormRenderer] Section ${prefixedFieldId} className:`, sectionClassName);
+            console.log(
+              `[FormRenderer] Section ${prefixedFieldId} className:`,
+              sectionClassName
+            );
           }
           return (
             <FormSectionField
@@ -2483,7 +2487,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     let layoutClass = '';
     switch (page.layout) {
       case 'grid':
-        layoutClass = 'grid-cols-1 md:grid-cols-2 gap-4';
+        layoutClass = 'grid-cols-1';
         break;
       case 'flex':
         layoutClass = 'flex flex-wrap';
