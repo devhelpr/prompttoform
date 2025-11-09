@@ -1,0 +1,561 @@
+{
+  "app": {
+    "title": "Mortgage Estimator",
+    "pages": [
+      {
+        "id": "mortgageForm",
+        "title": "Mortgage Calculator",
+        "route": "/mortgage-calculator",
+        "layout": "horizontal",
+        "components": [
+          {
+            "id": "inputSection",
+            "type": "section",
+            "label": "Financial Details",
+            "props": {},
+            "children": [
+              {
+                "id": "fullName",
+                "type": "input",
+                "label": "Full Name",
+                "props": {
+                  "placeholder": "Enter your full name",
+                  "helperText": "Please provide your legal first and last name"
+                },
+                "validation": {
+                  "required": true,
+                  "minLength": 3,
+                  "maxLength": 100,
+                  "errorMessages": {
+                    "required": "Please enter your full name",
+                    "minLength": "Name must be at least {minLength} characters long",
+                    "maxLength": "Name cannot exceed {maxLength} characters"
+                  }
+                }
+              },
+              {
+                "id": "email",
+                "type": "input",
+                "label": "Email",
+                "props": {
+                  "inputType": "email",
+                  "placeholder": "you@example.com",
+                  "helperText": "We'll never share your email with anyone else"
+                },
+                "validation": {
+                  "required": true,
+                  "errorMessages": {
+                    "required": "Please provide your email address",
+                    "invalidEmail": "Please enter a valid email address (e.g., user@domain.com)"
+                  }
+                }
+              },
+              {
+                "id": "annualIncome",
+                "type": "input",
+                "label": "Annual Gross Income (USD)",
+                "props": {
+                  "inputType": "number",
+                  "placeholder": "Enter annual income",
+                  "helperText": "Enter your gross annual income before tax"
+                },
+                "validation": {
+                  "required": true,
+                  "min": 0,
+                  "max": 100000000,
+                  "errorMessages": {
+                    "required": "Please enter your annual income",
+                    "invalidNumber": "Please enter a valid number",
+                    "min": "Income must be at least {min}",
+                    "max": "Please enter a realistic income (maximum {max})"
+                  }
+                }
+              },
+              {
+                "id": "otherIncome",
+                "type": "input",
+                "label": "Other Annual Income (USD)",
+                "props": {
+                  "inputType": "number",
+                  "placeholder": "Enter other annual income (rental, investments)",
+                  "helperText": "Include rental, investment or other recurring income"
+                },
+                "validation": {
+                  "required": false,
+                  "min": 0,
+                  "max": 100000000,
+                  "errorMessages": {
+                    "invalidNumber": "Please enter a valid number",
+                    "min": "Value cannot be negative",
+                    "max": "Please enter a realistic amount (maximum {max})"
+                  }
+                }
+              },
+              {
+                "id": "monthlyDebtPayments",
+                "type": "input",
+                "label": "Monthly Debt Payments (USD)",
+                "props": {
+                  "inputType": "number",
+                  "placeholder": "Enter total monthly debt payments",
+                  "helperText": "Include car loans, credit cards minimum payments, and other monthly debt"
+                },
+                "validation": {
+                  "required": true,
+                  "min": 0,
+                  "max": 1000000,
+                  "errorMessages": {
+                    "required": "Please enter your monthly debt payments",
+                    "invalidNumber": "Please enter a valid number",
+                    "min": "Value cannot be negative"
+                  }
+                }
+              },
+              {
+                "id": "downPayment",
+                "type": "input",
+                "label": "Available Down Payment (USD)",
+                "props": {
+                  "inputType": "number",
+                  "placeholder": "Enter available down payment",
+                  "helperText": "Amount you can put down upfront toward the property"
+                },
+                "validation": {
+                  "required": true,
+                  "min": 0,
+                  "max": 100000000,
+                  "errorMessages": {
+                    "required": "Please enter your down payment amount",
+                    "invalidNumber": "Please enter a valid number",
+                    "min": "Value cannot be negative"
+                  }
+                }
+              },
+              {
+                "id": "interestRate",
+                "type": "input",
+                "label": "Expected Annual Interest Rate (%)",
+                "props": {
+                  "inputType": "number",
+                  "placeholder": "e.g., 3.5",
+                  "helperText": "Enter the annual mortgage interest rate (percent)"
+                },
+                "validation": {
+                  "required": true,
+                  "min": 0,
+                  "max": 50,
+                  "errorMessages": {
+                    "required": "Please enter an interest rate",
+                    "invalidNumber": "Please enter a valid number",
+                    "min": "Interest rate must be at least {min}%",
+                    "max": "Interest rate cannot exceed {max}%"
+                  }
+                }
+              },
+              {
+                "id": "loanTermYears",
+                "type": "select",
+                "label": "Loan Term (years)",
+                "props": {
+                  "options": [
+                    {
+                      "label": "15",
+                      "value": 15
+                    },
+                    {
+                      "label": "20",
+                      "value": 20
+                    },
+                    {
+                      "label": "25",
+                      "value": 25
+                    },
+                    {
+                      "label": "30",
+                      "value": 30
+                    }
+                  ],
+                  "helperText": "Choose the mortgage length that best fits your plan"
+                },
+                "validation": {
+                  "required": true,
+                  "errorMessages": {
+                    "required": "Please select a loan term"
+                  }
+                }
+              },
+              {
+                "id": "propertyTaxAnnual",
+                "type": "input",
+                "label": "Estimated Annual Property Tax (USD)",
+                "props": {
+                  "inputType": "number",
+                  "placeholder": "Enter estimated annual property tax",
+                  "helperText": "If unknown, use a rough estimate (e.g., 1% of property value)"
+                },
+                "validation": {
+                  "required": true,
+                  "min": 0,
+                  "max": 1000000,
+                  "errorMessages": {
+                    "required": "Please enter an estimated annual property tax",
+                    "invalidNumber": "Please enter a valid number",
+                    "min": "Value cannot be negative"
+                  }
+                }
+              },
+              {
+                "id": "homeInsuranceAnnual",
+                "type": "input",
+                "label": "Estimated Annual Home Insurance (USD)",
+                "props": {
+                  "inputType": "number",
+                  "placeholder": "Enter estimated annual home insurance",
+                  "helperText": "Annual homeowner insurance estimate"
+                },
+                "validation": {
+                  "required": true,
+                  "min": 0,
+                  "max": 1000000,
+                  "errorMessages": {
+                    "required": "Please enter an estimated annual home insurance amount",
+                    "invalidNumber": "Please enter a valid number",
+                    "min": "Value cannot be negative"
+                  }
+                }
+              },
+              {
+                "id": "hoaAnnual",
+                "type": "input",
+                "label": "HOA Fees (Annual USD)",
+                "props": {
+                  "inputType": "number",
+                  "placeholder": "Enter annual HOA fees (if any)",
+                  "helperText": "Homeowners association fees; enter 0 if none"
+                },
+                "validation": {
+                  "required": true,
+                  "min": 0,
+                  "max": 1000000,
+                  "errorMessages": {
+                    "required": "Please enter HOA fees (enter 0 if none)",
+                    "invalidNumber": "Please enter a valid number",
+                    "min": "Value cannot be negative"
+                  }
+                }
+              },
+              {
+                "id": "creditScore",
+                "type": "slider-range",
+                "label": "Credit Score Estimate",
+                "props": {
+                  "min": 300,
+                  "max": 850,
+                  "step": 1,
+                  "mode": "single",
+                  "showLabels": true,
+                  "showValue": true,
+                  "helperText": "Estimate your credit score; affects offer assumptions"
+                },
+                "validation": {
+                  "required": true,
+                  "min": 300,
+                  "max": 850,
+                  "errorMessages": {
+                    "required": "Please provide an estimated credit score",
+                    "min": "Credit score must be at least {min}",
+                    "max": "Credit score cannot exceed {max}"
+                  }
+                }
+              },
+              {
+                "id": "calculateButton",
+                "type": "button",
+                "label": "Recalculate",
+                "props": {
+                  "className": "btn-primary"
+                },
+                "props_next": {},
+                "validation": {},
+                "children": [],
+                "bindings": {},
+                "events": {
+                  "onClick": "apiRequest"
+                }
+              }
+            ]
+          },
+          {
+            "id": "resultsSection",
+            "type": "section",
+            "label": "Estimated Maximum Mortgage",
+            "props": {},
+            "children": [
+              {
+                "id": "monthlyGrossIncome",
+                "type": "input",
+                "label": "Monthly Gross Income (Calculated)",
+                "props": {
+                  "inputType": "number",
+                  "readOnly": true,
+                  "helperText": "Calculated as (annualIncome + otherIncome) / 12",
+                  "expression": {
+                    "expression": "((parseFloat(annualIncome) || 0) + (parseFloat(otherIncome) || 0)) / 12",
+                    "mode": "value",
+                    "dependencies": ["annualIncome", "otherIncome"],
+                    "evaluateOnChange": true,
+                    "debounceMs": 100
+                  }
+                },
+                "validation": {
+                  "required": true,
+                  "errorMessages": {
+                    "required": "Calculated monthly income is required"
+                  }
+                }
+              },
+              {
+                "id": "monthlyDebtPaymentsCalc",
+                "type": "input",
+                "label": "Monthly Debt Payments (Echo)",
+                "props": {
+                  "inputType": "number",
+                  "readOnly": true,
+                  "helperText": "Echo of monthly debt payments for calculations",
+                  "expression": {
+                    "expression": "parseFloat(monthlyDebtPayments) || 0",
+                    "mode": "value",
+                    "dependencies": ["monthlyDebtPayments"],
+                    "evaluateOnChange": true,
+                    "debounceMs": 100
+                  }
+                },
+                "validation": {
+                  "required": true
+                }
+              },
+              {
+                "id": "maxMonthlyPayment",
+                "type": "input",
+                "label": "Maximum Affordable Monthly Payment (USD)",
+                "props": {
+                  "inputType": "number",
+                  "readOnly": true,
+                  "helperText": "Calculated using a 36% debt-to-income rule by default",
+                  "expression": {
+                    "expression": "((parseFloat(annualIncome) || 0 + parseFloat(otherIncome) || 0) / 12) * 0.36 - (parseFloat(monthlyDebtPayments) || 0) - ((parseFloat(propertyTaxAnnual) || 0 + parseFloat(homeInsuranceAnnual) || 0 + parseFloat(hoaAnnual) || 0) / 12)",
+                    "mode": "value",
+                    "dependencies": [
+                      "annualIncome",
+                      "otherIncome",
+                      "monthlyDebtPayments",
+                      "propertyTaxAnnual",
+                      "homeInsuranceAnnual",
+                      "hoaAnnual"
+                    ],
+                    "evaluateOnChange": true,
+                    "debounceMs": 150
+                  }
+                },
+                "validation": {
+                  "required": true,
+                  "errorMessages": {
+                    "required": "Unable to calculate maximum monthly payment with current data"
+                  }
+                }
+              },
+              {
+                "id": "monthlyInterestRate",
+                "type": "input",
+                "label": "Monthly Interest Rate (decimal)",
+                "props": {
+                  "inputType": "number",
+                  "readOnly": true,
+                  "helperText": "Monthly rate = interestRate / 100 / 12",
+                  "expression": {
+                    "expression": "(parseFloat(interestRate) || 0) / 100 / 12",
+                    "mode": "value",
+                    "dependencies": ["interestRate"],
+                    "evaluateOnChange": true,
+                    "debounceMs": 100
+                  }
+                },
+                "validation": {
+                  "required": true
+                }
+              },
+              {
+                "id": "numberOfPayments",
+                "type": "input",
+                "label": "Number of Payments",
+                "props": {
+                  "inputType": "number",
+                  "readOnly": true,
+                  "helperText": "Total number of monthly payments for the selected term",
+                  "expression": {
+                    "expression": "(parseFloat(loanTermYears) || 0) * 12",
+                    "mode": "value",
+                    "dependencies": ["loanTermYears"],
+                    "evaluateOnChange": true,
+                    "debounceMs": 100
+                  }
+                },
+                "validation": {
+                  "required": true
+                }
+              },
+              {
+                "id": "maxMortgage",
+                "type": "input",
+                "label": "Estimated Maximum Mortgage (USD)",
+                "props": {
+                  "inputType": "number",
+                  "readOnly": true,
+                  "helperText": "Calculated loan principal you can likely afford based on payment capacity",
+                  "expression": {
+                    "expression": "((parseFloat(maxMonthlyPayment) || 0) * (1 - Math.pow(1 + (parseFloat(interestRate) || 0)/100/12, -((parseFloat(loanTermYears) || 0)*12))) ) / ((parseFloat(interestRate) || 0)/100/12)",
+                    "mode": "value",
+                    "dependencies": [
+                      "maxMonthlyPayment",
+                      "interestRate",
+                      "loanTermYears"
+                    ],
+                    "evaluateOnChange": true,
+                    "debounceMs": 150
+                  }
+                },
+                "validation": {
+                  "required": true,
+                  "errorMessages": {
+                    "required": "Unable to compute maximum mortgage with current inputs"
+                  }
+                }
+              },
+              {
+                "id": "estimatedPropertyValue",
+                "type": "input",
+                "label": "Estimated Property Value (USD)",
+                "props": {
+                  "inputType": "number",
+                  "readOnly": true,
+                  "helperText": "Estimate based on mortgage + down payment",
+                  "expression": {
+                    "expression": "(parseFloat(maxMortgage) || 0) + (parseFloat(downPayment) || 0)",
+                    "mode": "value",
+                    "dependencies": ["maxMortgage", "downPayment"],
+                    "evaluateOnChange": true,
+                    "debounceMs": 150
+                  }
+                },
+                "validation": {
+                  "required": true
+                }
+              },
+              {
+                "id": "resultsText",
+                "type": "text",
+                "label": "Summary",
+                "props": {
+                  "helperText": "Maximum mortgage: {{maxMortgage}} • Estimated property value: {{estimatedPropertyValue}} • Monthly payment capacity: {{maxMonthlyPayment}}"
+                }
+              }
+            ]
+          }
+        ],
+        "isEndPage": false,
+        "branches": [],
+        "nextPage": "mortgageSummary"
+      },
+      {
+        "id": "mortgageSummary",
+        "title": "Review & Submit",
+        "route": "/mortgage-calculator/review",
+        "layout": "vertical",
+        "components": [
+          {
+            "id": "summarySection",
+            "type": "section",
+            "label": "Application Summary",
+            "props": {},
+            "children": [
+              {
+                "id": "personalSummary",
+                "type": "text",
+                "label": "Personal Information",
+                "props": {
+                  "helperText": "Name: {{fullName}}\nEmail: {{email}}"
+                }
+              },
+              {
+                "id": "financialSummary",
+                "type": "text",
+                "label": "Financial Summary",
+                "props": {
+                  "helperText": "Income: {{annualIncome}} • Other Income: {{otherIncome}} • Monthly Debts: {{monthlyDebtPayments}}"
+                }
+              },
+              {
+                "id": "mortgageSummaryText",
+                "type": "text",
+                "label": "Mortgage Estimate",
+                "props": {
+                  "helperText": "Estimated maximum mortgage: {{maxMortgage}}\nEstimated property value: {{estimatedPropertyValue}}\nEstimated monthly payment capacity: {{maxMonthlyPayment}}"
+                }
+              },
+              {
+                "id": "submitButton",
+                "type": "button",
+                "label": "Submit Application",
+                "props": {
+                  "className": "btn-submit"
+                },
+                "events": {
+                  "onClick": "submit"
+                }
+              }
+            ]
+          }
+        ],
+        "isEndPage": true,
+        "branches": [],
+        "nextPage": ""
+      }
+    ],
+    "dataSources": [
+      {
+        "id": "saveEstimate",
+        "type": "rest",
+        "url": "https://api.example.com/mortgage-estimates",
+        "method": "POST",
+        "params": {},
+        "responseMapping": {
+          "id": "estimateId",
+          "status": "status"
+        }
+      }
+    ],
+    "thankYouPage": {
+      "title": "Thank You!",
+      "message": "Your mortgage estimate request has been submitted. We will contact you shortly.",
+      "components": [],
+      "showRestartButton": true,
+      "customActions": [
+        {
+          "label": "View Estimates",
+          "action": "custom",
+          "customAction": "openEstimates",
+          "className": "bg-blue-600 text-white"
+        }
+      ]
+    }
+  },
+  "defaultLanguage": "en",
+  "supportedLanguages": ["en"],
+  "languageDetails": [
+    {
+      "code": "en",
+      "name": "English",
+      "nativeName": "English"
+    }
+  ]
+}

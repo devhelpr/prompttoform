@@ -1549,8 +1549,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       );
       const translatedProps: any = {
         ...props,
-        // Include expression if it exists on the component
+        // Include expression if it exists on the component or in props
         ...(component.expression && { expression: component.expression }),
+        ...(props?.expression && { expression: props.expression }),
       };
 
       // Only include placeholder if it exists in the original props
