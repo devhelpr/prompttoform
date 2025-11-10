@@ -48,6 +48,23 @@ export const ExpressionContextProvider: React.FC<
         required: required[fieldId] ?? false,
         error: errors[fieldId],
       };
+
+      // Add alias for the last component ID (e.g., "sliderValue" for "layoutSection.leftColumn.sliderValue")
+      // This allows expressions to reference fields by their component ID even when nested
+      const fieldIdParts = fieldId.split('.');
+      if (fieldIdParts.length > 1) {
+        const componentId = fieldIdParts[fieldIdParts.length - 1];
+        // Always create/update alias for nested fields to ensure expressions can reference them
+        // If a direct field with the same ID exists, the alias will point to the nested field
+        // This is intentional - nested fields should take precedence for expression evaluation
+        ctx[componentId] = {
+          value: formValues[fieldId],
+          valid: validation[fieldId] ?? true,
+          required: required[fieldId] ?? false,
+          error: errors[fieldId],
+        };
+        console.log(`🔗 Created alias: ${componentId} -> ${fieldId} (value: ${formValues[fieldId]})`);
+      }
     });
 
     // Add array field values to context for expression evaluation
