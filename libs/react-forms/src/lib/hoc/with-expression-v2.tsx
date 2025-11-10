@@ -55,7 +55,10 @@ export function withExpression<P extends object>(
       try {
         const calculated = expressionEngine.getAllCalculatedValues?.();
         if (calculated && typeof calculated === 'object') {
-          return { ...primitiveValues, ...calculated } as Record<string, any>;
+          // Merge calculated values, giving priority to calculated values for fields that have expressions
+          // This ensures chained expressions work correctly
+          const merged = { ...primitiveValues, ...calculated } as Record<string, any>;
+          return merged;
         }
       } catch {}
       return primitiveValues;

@@ -789,7 +789,18 @@ export class ExpressionEngineService {
     };
 
     this.dependencyService.updateFormValues(formValues);
-    return await this.dependencyService.evaluateAll(context);
+    const results = await this.dependencyService.evaluateAll(context);
+    
+    // Store all calculated values so they're available for subsequent evaluations
+    // This is critical for chained expressions where one expression depends on another
+    Object.keys(results).forEach((fieldId) => {
+      const node = this.dependencyService.getDependencyGraph().nodes.get(fieldId);
+      if (node?.isCalculated && results[fieldId] !== null && results[fieldId] !== undefined) {
+        this.setCalculatedValue(fieldId, results[fieldId]);
+      }
+    });
+    
+    return results;
   }
 
   /**
