@@ -221,21 +221,15 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     (formJson as MultiLanguageFormDefinition).defaultLanguage ||
     'en';
 
-  // Track current language in state to force re-render when it changes
-  const [renderKey, setRenderKey] = useState(0);
-  const prevLanguageRef = useRef(currentLanguageFromSettings);
-
+  // Create translation service - will be recreated when language or form changes
   const translationService = useMemo(() => {
     const multiLangForm = formJson as MultiLanguageFormDefinition;
-    const service = new TranslationService(
+    return new TranslationService(
       multiLangForm.translations || {},
       currentLanguageFromSettings,
       multiLangForm.defaultLanguage || 'en'
     );
-    // Ensure the service has the correct language set
-    service.setLanguage(currentLanguageFromSettings);
-    return service;
-  }, [formJson, currentLanguageFromSettings, renderKey]);
+  }, [formJson, currentLanguageFromSettings]);
 
   // Initialize array fields in formValues
   useEffect(() => {
@@ -731,32 +725,22 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
   }, [validateForm, formValues, isSubmitted, blurredFields]);
 
-  // Update translation service language when settings change and force re-render
+  // Re-validate form with new language when language changes
   useEffect(() => {
-    if (
-      currentLanguageFromSettings &&
-      prevLanguageRef.current !== currentLanguageFromSettings
-    ) {
-      prevLanguageRef.current = currentLanguageFromSettings;
-      // Force a re-render by updating renderKey
-      // The translationService is already recreated via useMemo with the new language
-      setRenderKey((prev) => prev + 1);
-
-      // Re-validate form with new language to update error messages
-      if (isSubmitted || Object.keys(validationErrors).length > 0) {
-        // Use setTimeout to avoid infinite loop and ensure validation runs after language change
-        // Skip setTimeout in test environments to avoid timing issues
-        if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
+    // Re-validate form with new language to update error messages
+    if (isSubmitted || Object.keys(validationErrors).length > 0) {
+      // Use setTimeout to avoid infinite loop and ensure validation runs after language change
+      // Skip setTimeout in test environments to avoid timing issues
+      if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
+        // Force a complete re-validation - validateForm will use the updated translation service
+        const isValid = validateForm();
+        // The validateForm function will call setValidationErrors with the new translated messages
+      } else {
+        setTimeout(() => {
           // Force a complete re-validation - validateForm will use the updated translation service
           const isValid = validateForm();
           // The validateForm function will call setValidationErrors with the new translated messages
-        } else {
-          setTimeout(() => {
-            // Force a complete re-validation - validateForm will use the updated translation service
-            const isValid = validateForm();
-            // The validateForm function will call setValidationErrors with the new translated messages
-          }, 0);
-        }
+        }, 0);
       }
     }
   }, [
@@ -2034,7 +2018,6 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       processPropsWithTemplates,
       shouldShowError,
       getPrefixedId,
-      renderKey, // Force recreation when language changes
     ]
   );
 
@@ -2526,12 +2509,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     return (
       <div
-        key={`${page.id}-${currentLanguageFromSettings}`}
+        key={page.id}
         className={
           getMergedClasses('page', settings) ||
           'bg-white rounded-md shadow-sm p-6'
         }
-        data-language={currentLanguageFromSettings}
       >
         <h2
           className={
@@ -2544,16 +2526,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             page.title
           )}
         </h2>
-        <div
-          className={`${page.layout ? `grid ${layoutClass}` : ''}`}
-          data-lang={currentLanguageFromSettings}
-          data-key={renderKey}
-        >
+        <div className={`${page.layout ? `grid ${layoutClass}` : ''}`}>
           {Array.isArray(page.components) &&
             page.components.map((component, index) => (
-              <div
-                key={`${component.id}-${currentLanguageFromSettings}-${renderKey}-${index}`}
-              >
+              <div key={`${component.id}-${index}`}>
                 {renderComponent(component)}
               </div>
             ))}
