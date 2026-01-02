@@ -215,18 +215,27 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [formJson]);
 
   // Initialize translation service
+  const multiLangSettings = settings as MultiLanguageFormRendererSettings;
+  const currentLanguageFromSettings =
+    multiLangSettings.currentLanguage ||
+    (formJson as MultiLanguageFormDefinition).defaultLanguage ||
+    'en';
+
+  // Track current language in state to force re-render when it changes
+  const [renderKey, setRenderKey] = useState(0);
+  const prevLanguageRef = useRef(currentLanguageFromSettings);
+
   const translationService = useMemo(() => {
     const multiLangForm = formJson as MultiLanguageFormDefinition;
-    const multiLangSettings = settings as MultiLanguageFormRendererSettings;
-
-    return new TranslationService(
+    const service = new TranslationService(
       multiLangForm.translations || {},
-      multiLangSettings.currentLanguage ||
-        multiLangForm.defaultLanguage ||
-        'en',
+      currentLanguageFromSettings,
       multiLangForm.defaultLanguage || 'en'
     );
-  }, [formJson, settings]);
+    // Ensure the service has the correct language set
+    service.setLanguage(currentLanguageFromSettings);
+    return service;
+  }, [formJson, currentLanguageFromSettings, renderKey]);
 
   // Initialize array fields in formValues
   useEffect(() => {
@@ -722,11 +731,16 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
   }, [validateForm, formValues, isSubmitted, blurredFields]);
 
-  // Update translation service language when settings change
+  // Update translation service language when settings change and force re-render
   useEffect(() => {
-    const multiLangSettings = settings as MultiLanguageFormRendererSettings;
-    if (multiLangSettings.currentLanguage) {
-      translationService.setLanguage(multiLangSettings.currentLanguage);
+    if (
+      currentLanguageFromSettings &&
+      prevLanguageRef.current !== currentLanguageFromSettings
+    ) {
+      prevLanguageRef.current = currentLanguageFromSettings;
+      // Force a re-render by updating renderKey
+      // The translationService is already recreated via useMemo with the new language
+      setRenderKey((prev) => prev + 1);
 
       // Re-validate form with new language to update error messages
       if (isSubmitted || Object.keys(validationErrors).length > 0) {
@@ -745,7 +759,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         }
       }
     }
-  }, [translationService, settings, isSubmitted, validateForm]);
+  }, [
+    currentLanguageFromSettings,
+    isSubmitted,
+    validateForm,
+    validationErrors,
+  ]);
 
   // Reset initial event trigger when form changes
   useEffect(() => {
@@ -2015,6 +2034,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       processPropsWithTemplates,
       shouldShowError,
       getPrefixedId,
+      renderKey, // Force recreation when language changes
     ]
   );
 
@@ -2506,11 +2526,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     return (
       <div
-        key={page.id}
+        key={`${page.id}-${currentLanguageFromSettings}`}
         className={
           getMergedClasses('page', settings) ||
           'bg-white rounded-md shadow-sm p-6'
         }
+        data-language={currentLanguageFromSettings}
       >
         <h2
           className={
@@ -2523,10 +2544,18 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             page.title
           )}
         </h2>
-        <div className={`${page.layout ? `grid ${layoutClass}` : ''}`}>
+        <div
+          className={`${page.layout ? `grid ${layoutClass}` : ''}`}
+          data-lang={currentLanguageFromSettings}
+          data-key={renderKey}
+        >
           {Array.isArray(page.components) &&
             page.components.map((component, index) => (
-              <div key={index}>{renderComponent(component)}</div>
+              <div
+                key={`${component.id}-${currentLanguageFromSettings}-${renderKey}-${index}`}
+              >
+                {renderComponent(component)}
+              </div>
             ))}
         </div>
       </div>
