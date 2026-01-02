@@ -160,24 +160,13 @@ export class TranslationService {
           }
         }
 
-        // If we have a fallback and it's different from the stored translation,
-        // prioritize the fallback for dynamic content (like component labels)
-        if (fallback && typeof current === 'string' && current !== fallback) {
-          // For dynamic content like component labels, use the fallback if it's different
-          if (
-            property === 'label' ||
-            property.includes('label') ||
-            property.includes('placeholder')
-          ) {
-            return fallback;
-          }
+        // Return the translation if we found one
+        if (typeof current === 'string') {
+          return current;
         }
-
-        return typeof current === 'string'
-          ? current
-          : fallback !== undefined
-          ? fallback
-          : property;
+        
+        // Otherwise return the fallback
+        return fallback !== undefined ? fallback : property;
       }
     }
     return fallback !== undefined ? fallback : property;

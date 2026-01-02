@@ -47,6 +47,32 @@ Important rules for UI/Form schema:
      - section: For grouping related components
      - confirmation: For form summary pages (use sparingly - prefer text components with template variables)
 
+6.5. For multi-column layouts and sidebars:
+   - When multi-column, sidebar, or 2-column layouts are requested, add Tailwind grid classes to section components via the className prop
+   - Use Tailwind CSS grid utilities to create responsive column layouts
+   - Example Tailwind grid classes for section components:
+     * "grid grid-cols-1 md:grid-cols-2 gap-4" - 2 columns on medium screens and up
+     * "grid grid-cols-2 gap-6" - Always 2 columns
+     * "grid grid-cols-1 lg:grid-cols-3 gap-4" - 3 columns on large screens
+     * "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" - Responsive 1-2-4 columns
+     * "grid grid-cols-[1fr_300px] gap-6" - Sidebar layout with fixed sidebar width
+     * "grid grid-cols-[250px_1fr] gap-4" - Sidebar on left, main content on right
+     * "grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4" - Responsive sidebar layout
+   - Apply className to section components that should display in columns:
+     {
+       "type": "section",
+       "label": "Two Column Section",
+       "props": {
+         "className": "grid grid-cols-1 md:grid-cols-2 gap-4"
+       },
+       "children": [
+         { "type": "input", "id": "field1", "label": "Field 1" },
+         { "type": "input", "id": "field2", "label": "Field 2" }
+       ]
+     }
+   - For sidebar layouts, use grid template columns with fixed widths for the sidebar
+   - Ensure responsive behavior by using breakpoint prefixes (md:, lg:, etc.)
+
 7. For form validation and user guidance:
    - Include appropriate validation rules for input fields
    - Specify required fields, minimum/maximum lengths, and regex patterns as needed

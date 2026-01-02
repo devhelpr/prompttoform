@@ -215,18 +215,21 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [formJson]);
 
   // Initialize translation service
+  const multiLangSettings = settings as MultiLanguageFormRendererSettings;
+  const currentLanguageFromSettings =
+    multiLangSettings.currentLanguage ||
+    (formJson as MultiLanguageFormDefinition).defaultLanguage ||
+    'en';
+
+  // Create translation service - will be recreated when language or form changes
   const translationService = useMemo(() => {
     const multiLangForm = formJson as MultiLanguageFormDefinition;
-    const multiLangSettings = settings as MultiLanguageFormRendererSettings;
-
     return new TranslationService(
       multiLangForm.translations || {},
-      multiLangSettings.currentLanguage ||
-        multiLangForm.defaultLanguage ||
-        'en',
+      currentLanguageFromSettings,
       multiLangForm.defaultLanguage || 'en'
     );
-  }, [formJson, settings]);
+  }, [formJson, currentLanguageFromSettings]);
 
   // Initialize array fields in formValues
   useEffect(() => {
@@ -722,30 +725,30 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
   }, [validateForm, formValues, isSubmitted, blurredFields]);
 
-  // Update translation service language when settings change
+  // Re-validate form with new language when language changes
   useEffect(() => {
-    const multiLangSettings = settings as MultiLanguageFormRendererSettings;
-    if (multiLangSettings.currentLanguage) {
-      translationService.setLanguage(multiLangSettings.currentLanguage);
-
-      // Re-validate form with new language to update error messages
-      if (isSubmitted || Object.keys(validationErrors).length > 0) {
-        // Use setTimeout to avoid infinite loop and ensure validation runs after language change
-        // Skip setTimeout in test environments to avoid timing issues
-        if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
+    // Re-validate form with new language to update error messages
+    if (isSubmitted || Object.keys(validationErrors).length > 0) {
+      // Use setTimeout to avoid infinite loop and ensure validation runs after language change
+      // Skip setTimeout in test environments to avoid timing issues
+      if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
+        // Force a complete re-validation - validateForm will use the updated translation service
+        const isValid = validateForm();
+        // The validateForm function will call setValidationErrors with the new translated messages
+      } else {
+        setTimeout(() => {
           // Force a complete re-validation - validateForm will use the updated translation service
           const isValid = validateForm();
           // The validateForm function will call setValidationErrors with the new translated messages
-        } else {
-          setTimeout(() => {
-            // Force a complete re-validation - validateForm will use the updated translation service
-            const isValid = validateForm();
-            // The validateForm function will call setValidationErrors with the new translated messages
-          }, 0);
-        }
+        }, 0);
       }
     }
-  }, [translationService, settings, isSubmitted, validateForm]);
+  }, [
+    currentLanguageFromSettings,
+    isSubmitted,
+    validateForm,
+    validationErrors,
+  ]);
 
   // Reset initial event trigger when form changes
   useEffect(() => {
@@ -1549,8 +1552,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       );
       const translatedProps: any = {
         ...props,
-        // Include expression if it exists on the component
+        // Include expression if it exists on the component or in props
         ...(component.expression && { expression: component.expression }),
+        ...(props?.expression && { expression: props.expression }),
       };
 
       // Only include placeholder if it exists in the original props
@@ -1640,7 +1644,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 <TextFormField
                   fieldId={prefixedFieldId}
                   label={translatedLabel}
-                  props={processPropsWithTemplates(translatedProps)}
+                  props={translatedProps}
+                  formValues={formValues}
                   classes={getFieldClasses(settings)}
                   colorClasses={settings.colorClasses}
                   styleClasses={settings.styleClasses}
@@ -1830,12 +1835,22 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           );
 
         case 'section':
+          // Debug: Log className extraction
+          const sectionClassName =
+            translatedProps?.className || props?.className;
+          if (sectionClassName) {
+            console.log(
+              `[FormRenderer] Section ${prefixedFieldId} className:`,
+              sectionClassName
+            );
+          }
           return (
             <FormSectionField
               fieldId={prefixedFieldId}
               label={label}
               children={component.children}
               renderComponent={renderComponent}
+              className={sectionClassName}
               classes={getFieldClasses(settings)}
               colorClasses={settings.colorClasses}
               styleClasses={settings.styleClasses}
@@ -2477,7 +2492,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     let layoutClass = '';
     switch (page.layout) {
       case 'grid':
-        layoutClass = 'grid-cols-1 md:grid-cols-2 gap-4';
+        layoutClass = 'grid-cols-1';
         break;
       case 'flex':
         layoutClass = 'flex flex-wrap';
@@ -2514,7 +2529,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         <div className={`${page.layout ? `grid ${layoutClass}` : ''}`}>
           {Array.isArray(page.components) &&
             page.components.map((component, index) => (
-              <div key={index}>{renderComponent(component)}</div>
+              <div key={`${component.id}-${index}`}>
+                {renderComponent(component)}
+              </div>
             ))}
         </div>
       </div>

@@ -177,6 +177,39 @@ export class DependencyResolutionService {
     Object.keys(context.formValues).forEach((fieldId) => {
       results[fieldId] = context.formValues[fieldId];
       fullContext[fieldId] = context.formValues[fieldId];
+      
+      // Also create alias for component ID (e.g., "maxMortgage" for "resultColumn.maxMortgage")
+      // This allows expressions to reference fields by their component ID
+      const fieldIdParts = fieldId.split('.');
+      if (fieldIdParts.length > 1) {
+        const componentId = fieldIdParts[fieldIdParts.length - 1];
+        // Only create alias if it doesn't already exist (nested fields take precedence)
+        if (fullContext[componentId] === undefined) {
+          fullContext[componentId] = context.formValues[fieldId];
+        }
+        if (results[componentId] === undefined) {
+          results[componentId] = context.formValues[fieldId];
+        }
+      }
+    });
+
+    // Also add any existing calculated values to results and context
+    Object.keys(context.calculatedValues).forEach((fieldId) => {
+      if (results[fieldId] === undefined) {
+        results[fieldId] = context.calculatedValues[fieldId];
+        fullContext[fieldId] = context.calculatedValues[fieldId];
+      }
+      
+      // Create alias for calculated values too
+      const fieldIdParts = fieldId.split('.');
+      if (fieldIdParts.length > 1) {
+        const componentId = fieldIdParts[fieldIdParts.length - 1];
+        // Calculated values take precedence over form values for aliases
+        fullContext[componentId] = context.calculatedValues[fieldId];
+        if (results[componentId] === undefined) {
+          results[componentId] = context.calculatedValues[fieldId];
+        }
+      }
     });
 
     // Evaluate in topological order
@@ -186,7 +219,11 @@ export class DependencyResolutionService {
 
       // If it's an input field (no expression), just use the form value
       if (!node.expression) {
-        results[fieldId] = context.formValues[fieldId] || null;
+        // Only set if not already set (might be in calculatedValues)
+        if (results[fieldId] === undefined) {
+          results[fieldId] = context.formValues[fieldId] || null;
+          fullContext[fieldId] = results[fieldId];
+        }
         node.value = results[fieldId];
         node.isCalculated = false;
         continue;
@@ -204,8 +241,20 @@ export class DependencyResolutionService {
         node.isCalculated = true;
         node.lastEvaluated = Date.now();
 
-        // Update context for next evaluations
+        // Update context for next evaluations - this is critical for chained expressions
         fullContext[fieldId] = result.value;
+        
+        // Also create alias for component ID (e.g., "maxMortgage" for "resultColumn.maxMortgage")
+        // This allows expressions to reference fields by their component ID
+        const fieldIdParts = fieldId.split('.');
+        if (fieldIdParts.length > 1) {
+          const componentId = fieldIdParts[fieldIdParts.length - 1];
+          fullContext[componentId] = result.value;
+          // Also add to results so it's available for subsequent evaluations
+          if (results[componentId] === undefined) {
+            results[componentId] = result.value;
+          }
+        }
 
         // Cache the result
         this.evaluationCache.set(fieldId, result);

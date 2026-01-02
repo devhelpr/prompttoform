@@ -1,0 +1,96 @@
+{
+  "app": {
+    "title": "Two-column Slider Calculation",
+    "pages": [
+      {
+        "id": "page1",
+        "title": "Slider Calculation",
+        "route": "/slider-calculation",
+        "layout": "grid",
+        "components": [
+          {
+            "id": "layoutSection",
+            "type": "section",
+            "label": "Calculation Grid",
+            "props": { "className": "grid grid-cols-2 gap-4" },
+            "children": [
+              {
+                "id": "leftColumn",
+                "type": "section",
+                "label": "Input",
+                "props": { "className": "col-span-1" },
+                "children": [
+                  {
+                    "id": "sliderValue",
+                    "type": "slider-range",
+                    "label": "Choose a value",
+                    "props": {
+                      "min": 0,
+                      "max": 100,
+                      "step": 1,
+                      "mode": "single",
+                      "showLabels": true,
+                      "showValue": true,
+                      "helperText": "Select a number. Use the slider to pick a value."
+                    },
+                    "validation": {
+                      "required": true,
+                      "errorMessages": {
+                        "required": "Please select a value using the slider"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "rightColumn",
+                "type": "section",
+                "label": "Result",
+                "props": { "className": "col-span-1" },
+                "children": [
+                  {
+                    "id": "doubleValue",
+                    "type": "input",
+                    "label": "Value × 2",
+                    "props": {
+                      "inputType": "number",
+                      "readOnly": true,
+                      "helperText": "Calculated automatically from your slider selection",
+                      "expression": {
+                        "expression": "sliderValue.value * 2",
+                        "mode": "value",
+                        "dependencies": ["sliderValue"],
+                        "evaluateOnChange": true,
+                        "debounceMs": 100
+                      }
+                    },
+                    "validation": {
+                      "required": true,
+                      "errorMessages": {
+                        "required": "Calculated value is required"
+                      }
+                    }
+                  },
+                  {
+                    "id": "resultText",
+                    "type": "text",
+                    "label": "Summary",
+                    "props": {
+                      "helperText": "You selected {{sliderValue}} — doubled is {{doubleValue}}"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "isEndPage": true
+      }
+    ]
+  },
+  "defaultLanguage": "en",
+  "supportedLanguages": ["en"],
+  "languageDetails": [
+    { "code": "en", "name": "English", "nativeName": "English" }
+  ]
+}
