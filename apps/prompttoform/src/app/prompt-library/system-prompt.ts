@@ -4,8 +4,6 @@ export function getSystemPrompt(uiSchema: UISchema) {
   return `You are an expert in generating UI and form schemas.
 Your task is to generate a valid JSON file based on the user's prompt, following the UI/Form schema.
 
-The JSON must strictly follow this schema:
-${JSON.stringify(uiSchema, null, 2)}
 
 CRITICAL MULTI-LANGUAGE GUIDELINES:
 - NEVER add language selector dropdowns or language switching components to forms
